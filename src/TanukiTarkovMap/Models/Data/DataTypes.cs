@@ -1,4 +1,6 @@
-﻿namespace TanukiTarkovMap.Models.Data
+﻿using System.Text.Json.Serialization;
+
+namespace TanukiTarkovMap.Models.Data
 {
     public class MapSetting
     {
@@ -47,7 +49,7 @@
 
     public class MapChangeData : WsMessage
     {
-        public string Map { get; set; } = "";
+        [JsonPropertyName("map")] public string Map { get; set; } = "";
 
         public override string ToString()
         {
@@ -57,9 +59,9 @@
 
     public class UpdatePositionData : WsMessage
     {
-        public float X { get; set; }
-        public float Y { get; set; }
-        public float Z { get; set; }
+        [JsonPropertyName("x")] public float X { get; set; }
+        [JsonPropertyName("y")] public float Y { get; set; }
+        [JsonPropertyName("z")] public float Z { get; set; }
 
         public override string ToString()
         {
@@ -69,6 +71,7 @@
 
     public class SendFilenameData : WsMessage
     {
+        [JsonPropertyName("filename")]
         public string Filename { get; set; } = "";
 
         public override string ToString()
@@ -79,8 +82,8 @@
 
     public class QuestUpdateData : WsMessage
     {
-        public string QuestId { get; set; } = "";
-        public string Status { get; set; } = "";
+        [JsonPropertyName("questId")] public string QuestId { get; set; } = "";
+        [JsonPropertyName("status")] public string Status { get; set; } = "";
 
         public override string ToString()
         {
@@ -90,19 +93,19 @@
 
     public class WsMessage
     {
-        public string MssageType { get; set; } = "";
-
+        [JsonPropertyName("messageType")] public string MessageType { get; set; } = "";
+        
         public override string ToString()
         {
-            return $"messageType: {MssageType}";
+            return $"messageType: {MessageType}";
         }
     }
 
     public class ConfigurationData : WsMessage
     {
-        public string GameFolder { get; set; } = "";
-        public string ScreenshotsFolder { get; set; } = "";
-        public string Version { get; set; } = "";
+        [JsonPropertyName("gameFolder")] public string GameFolder { get; set; } = "";
+        [JsonPropertyName("screenshotsFolder")] public string ScreenshotsFolder { get; set; } = "";
+        [JsonPropertyName("version")] public string Version { get; set; } = "";
 
         public override string ToString()
         {
@@ -114,6 +117,6 @@
 
     public class UpdateSettingsData : AppSettings
     {
-        public string MessageType { get; set; } = "";
+        [JsonPropertyName("messageType")] public string MessageType { get; set; } = "";
     }
 }

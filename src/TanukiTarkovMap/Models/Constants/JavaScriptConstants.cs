@@ -688,16 +688,92 @@ namespace TanukiTarkovMap.Models.Constants
                             var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
                             var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
                             var header = document.querySelector('#__nuxt > div > div > header');
-                            
+
                             var status = {
                                 panelLeftVisible: panelLeft ? (panelLeft.style.display !== 'none') : false,
                                 panelRightVisible: panelRight ? (panelRight.style.display !== 'none') : false,
                                 headerVisible: header ? (header.style.display !== 'none') : false
                             };
-                            
+
                             return JSON.stringify(status);
                         } catch { }
                     })();
+                ";
+
+        /// <summary>
+        /// 스크린샷 폴더 경로를 자동으로 입력하는 스크립트
+        /// {0} 자리에 스크린샷 폴더 경로가 들어갑니다.
+        /// Console 테스트를 통해 검증된 DOM 구조:
+        /// 1. div.mb-5 요소를 찾아서 "Screenshots folder (case sensitive)" 텍스트 매칭
+        /// 2. 부모 요소(mb-15 컨테이너)의 두 번째 자식 요소에서 input 찾기
+        /// </summary>
+        public const string AUTO_FILL_SCREENSHOTS_PATH =
+            @"
+                    (function() {{
+                        const debugInfo = [];
+
+                        try {{
+                            debugInfo.push('Starting search for Screenshots folder input...');
+
+                            // Find the label div with exact text ""Screenshots folder (case sensitive)""
+                            const screenshotLabelText = Array.from(document.querySelectorAll('div.mb-5')).find(div =>
+                                div.textContent.trim() === 'Screenshots folder (case sensitive)'
+                            );
+
+                            if (!screenshotLabelText) {{
+                                debugInfo.push('Label div not found');
+                                return JSON.stringify({{ status: 'label_not_found', debug: debugInfo }});
+                            }}
+
+                            debugInfo.push('Found label div');
+
+                            // Get the parent container (mb-15)
+                            const container = screenshotLabelText?.parentElement;
+                            if (!container) {{
+                                debugInfo.push('Parent container not found');
+                                return JSON.stringify({{ status: 'container_not_found', debug: debugInfo }});
+                            }}
+
+                            debugInfo.push('Found parent container');
+
+                            // Get the second child (input container)
+                            const children = Array.from(container?.children || []);
+                            const inputContainer = children[1];
+
+                            if (!inputContainer) {{
+                                debugInfo.push('Input container (2nd child) not found');
+                                return JSON.stringify({{ status: 'input_container_not_found', debug: debugInfo }});
+                            }}
+
+                            debugInfo.push('Found input container');
+
+                            // Get the input element
+                            const input = inputContainer?.querySelector('input');
+
+                            if (!input) {{
+                                debugInfo.push('Input element not found');
+                                return JSON.stringify({{ status: 'input_not_found', debug: debugInfo }});
+                            }}
+
+                            debugInfo.push(`Input found - placeholder: ${{input.placeholder}}`);
+                            debugInfo.push(`Current value: '${{input.value}}'`);
+
+                            // Set the value
+                            input.value = '{0}';
+
+                            // Dispatch events for Vue/Nuxt frameworks
+                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
+
+                            debugInfo.push('Value set successfully');
+                            return JSON.stringify({{ status: 'success', debug: debugInfo }});
+
+                        }} catch (e) {{
+                            debugInfo.push(`Error: ${{e.message}}`);
+                            return JSON.stringify({{ status: 'error', message: e.message, debug: debugInfo }});
+                        }}
+                    }})();
                 ";
     }
 }

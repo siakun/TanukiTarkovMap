@@ -15,7 +15,7 @@ namespace TanukiTarkovMap.Models.Services
 {
     static class Server
     {
-        const string WS_URL = "http://localhost:5123";  // Kestrel will handle WebSocket upgrade
+        const string WS_URL = "http://0.0.0.0:5123";  // Kestrel will handle WebSocket upgrade
 
         static volatile bool isClosing = false;
         static IHost? _host = null;
@@ -185,7 +185,7 @@ namespace TanukiTarkovMap.Models.Services
         {
             ConfigurationData data = new ConfigurationData()
             {
-                MssageType = WsMessageType.CONFIGURATION,
+                MessageType = WsMessageType.CONFIGURATION,
                 Version = Env.Version,
                 GameFolder = Env.GameFolder,
                 ScreenshotsFolder = Env.ScreenshotsFolder,
@@ -285,7 +285,7 @@ namespace TanukiTarkovMap.Models.Services
         {
             MapChangeData data = new MapChangeData()
             {
-                MssageType = WsMessageType.MAP_CHANGE,
+                MessageType = WsMessageType.MAP_CHANGE,
                 Map = map,
             };
 
@@ -297,7 +297,7 @@ namespace TanukiTarkovMap.Models.Services
         {
             UpdatePositionData posData = new UpdatePositionData()
             {
-                MssageType = WsMessageType.POSITION_UPDATE,
+                MessageType = WsMessageType.POSITION_UPDATE,
                 X = pos.X,
                 Y = pos.Y,
                 Z = pos.Z,
@@ -309,7 +309,7 @@ namespace TanukiTarkovMap.Models.Services
         {
             SendFilenameData data = new SendFilenameData()
             {
-                MssageType = WsMessageType.SEND_FILENAME,
+                MessageType = WsMessageType.SEND_FILENAME,
                 Filename = filename,
             };
 
@@ -320,7 +320,7 @@ namespace TanukiTarkovMap.Models.Services
         {
             ConfigurationData data = new ConfigurationData()
             {
-                MssageType = WsMessageType.CONFIGURATION,
+                MessageType = WsMessageType.CONFIGURATION,
                 Version = Env.Version,
                 GameFolder = Env.GameFolder,
                 ScreenshotsFolder = Env.ScreenshotsFolder,
@@ -331,9 +331,9 @@ namespace TanukiTarkovMap.Models.Services
 
         public static void SendQuestUpdate(string questId, string status)
         {
-            QuestUpdateData data = new QuestUpdateData()
+            QuestUpdateData data = new()
             {
-                MssageType = WsMessageType.QUEST_UPDATE,
+                MessageType = WsMessageType.QUEST_UPDATE,
                 QuestId = questId,
                 Status = status,
             };
@@ -343,21 +343,22 @@ namespace TanukiTarkovMap.Models.Services
 
         static T ParseJson<T>(string json)
         {
+            // Deserilize to object
             try
             {
-                // Deserilize to object
                 return JsonSerializer.Deserialize<T>(json);
             }
-            catch (Exception) { }
-            ; // ignore
-            return default(T);
+            catch (Exception) 
+            { 
+                return default;
+            }
         }
 
         static void ProcessMessage(string json)
         {
             WsMessage msg = ParseJson<WsMessage>(json);
 
-            if (msg != null && msg.MssageType == WsMessageType.SETTINGS_UPDATE)
+            if (msg != null && msg.MessageType == WsMessageType.SETTINGS_UPDATE)
             {
                 var settings = ParseJson<UpdateSettingsData>(json);
 
@@ -368,7 +369,7 @@ namespace TanukiTarkovMap.Models.Services
                 Watcher.Restart();
                 //Env.RestartApp();
             }
-            else if (msg != null && msg.MssageType == WsMessageType.SETTINGS_RESET)
+            else if (msg != null && msg.MessageType == WsMessageType.SETTINGS_RESET)
             {
                 Settings.Delete();
                 Env.ResetSettings();
