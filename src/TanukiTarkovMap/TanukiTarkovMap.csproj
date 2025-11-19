@@ -14,15 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 모든 Resources 폴더의 파일을 자동으로 포함 -->
+    <!-- 모든 Resources 폴더의 파일을 exe에 임베드 -->
     <Resource Include="Resources\**\*.*" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- 빌드 시 Resources 폴더를 출력 디렉토리에 복사 (더 안전) -->
-    <None Include="Resources\**\*.*">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
   </ItemGroup>
 
   <ItemGroup>
