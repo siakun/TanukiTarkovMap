@@ -95,6 +95,12 @@ namespace TanukiTarkovMap.Models.Utils
         [DllImport("user32.dll")]
         internal static extern short GetKeyState(int nVirtKey);
 
+        /// <summary>
+        /// 윈도우의 경계 사각형을 화면 좌표로 가져옵니다.
+        /// </summary>
+        [DllImport("user32.dll")]
+        internal static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
         #endregion
 
         #region User32.dll - 키보드 Hook
@@ -182,5 +188,20 @@ namespace TanukiTarkovMap.Models.Utils
         internal const int LWA_ALPHA = 0x2;
 
         #endregion
+    }
+
+    /// <summary>
+    /// 윈도우 사각형 구조체 (화면 좌표)
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct RECT
+    {
+        public int Left;
+        public int Top;
+        public int Right;
+        public int Bottom;
+
+        public int Width => Right - Left;
+        public int Height => Bottom - Top;
     }
 }

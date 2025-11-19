@@ -136,24 +136,9 @@ namespace TanukiTarkovMap.Views
         {
             if (_viewModel.IsPipMode)
             {
-                // PIP 모드 시작 시 현재 화면 저장
+                // PIP 모드 시작 시 현재 화면 저장 (LocationChanged에서 경계 체크에 사용)
                 var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
                 _windowBoundsService.SavePipModeScreen(windowHandle);
-
-                // 창 위치가 화면 밖이면 화면 안으로 이동
-                var dpiScale = VisualTreeHelper.GetDpi(this);
-                var newPosition = _windowBoundsService.EnsureWindowWithinScreen(
-                    this.Left,
-                    this.Top,
-                    this.ActualWidth,
-                    this.ActualHeight,
-                    dpiScale.DpiScaleX,
-                    dpiScale.DpiScaleY
-                );
-
-                // 위치 조정
-                this.Left = newPosition.X;
-                this.Top = newPosition.Y;
 
                 // PIP 모드 진입 시 JavaScript 적용
                 var activeWebView = GetActiveWebView();
@@ -505,36 +490,49 @@ namespace TanukiTarkovMap.Views
         }
 
         /// <summary>
-        /// PIP 모드에서 창 위치 변경 시 화면 경계 체크 (4개 코너 모두 체크)
+        /// 창 위치 변경 시 ViewModel 즉시 업데이트 및 PIP 모드에서 화면 경계 체크
         /// </summary>
         private void MainWindow_LocationChanged(object sender, EventArgs e)
         {
-            
-            if (!_viewModel.IsPipMode) return;      // PIP 모드일 때만 경계 체크
             if (_isClampingLocation) return;        // 무한 루프 방지
 
             try
             {
                 _isClampingLocation = true;
 
-                // DPI 스케일 가져오기
-                var dpiScale = VisualTreeHelper.GetDpi(this);
-
-                // WindowBoundsService를 사용하여 창 위치 체크 및 조정
-                var newPosition = _windowBoundsService.ClampWindowPosition(
-                    this.Left,
-                    this.Top,
-                    this.ActualWidth,
-                    this.ActualHeight,
-                    dpiScale.DpiScaleX,
-                    dpiScale.DpiScaleY
-                );
-
-                // 조정이 필요한 경우에만 위치 업데이트
-                if (newPosition.HasValue)
+                // ViewModel의 WindowLeft/WindowTop을 즉시 업데이트 (바인딩 지연 문제 해결)
+                if (!_viewModel.IsPipMode)
                 {
-                    this.Left = newPosition.Value.X;
-                    this.Top = newPosition.Value.Y;
+                    // 일반 모드: ViewModel 메서드를 통해 업데이트 (MVVM 패턴 준수)
+                    _viewModel.UpdateWindowPosition(this.Left, this.Top);
+                }
+                else
+                {
+                    // PIP 모드에서는 경계 체크도 수행
+                    var dpiScale = VisualTreeHelper.GetDpi(this);
+
+                    // WindowBoundsService를 사용하여 창 위치 체크 및 조정
+                    var newPosition = _windowBoundsService.ClampWindowPosition(
+                        this.Left,
+                        this.Top,
+                        this.ActualWidth,
+                        this.ActualHeight,
+                        dpiScale.DpiScaleX,
+                        dpiScale.DpiScaleY
+                    );
+
+                    // 조정이 필요한 경우에만 위치 업데이트
+                    if (newPosition.HasValue)
+                    {
+                        this.Left = newPosition.Value.X;
+                        this.Top = newPosition.Value.Y;
+                        _viewModel.UpdateWindowPosition(newPosition.Value.X, newPosition.Value.Y);
+                    }
+                    else
+                    {
+                        // 조정 불필요하면 ViewModel만 업데이트
+                        _viewModel.UpdateWindowPosition(this.Left, this.Top);
+                    }
                 }
             }
             finally

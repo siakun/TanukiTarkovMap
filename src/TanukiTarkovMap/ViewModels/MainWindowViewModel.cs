@@ -14,40 +14,40 @@ namespace TanukiTarkovMap.ViewModels
         private AppSettings _settings;
 
         #region Properties for Normal Mode
-        [ObservableProperty] private double _normalWidth = 1000;
-        [ObservableProperty] private double _normalHeight = 700;
-        [ObservableProperty] private double _normalLeft;
-        [ObservableProperty] private double _normalTop;
+        [ObservableProperty] public partial double NormalWidth { get; set; }
+        [ObservableProperty] public partial double NormalHeight { get; set; }
+        [ObservableProperty] public partial double NormalLeft { get; set; }
+        [ObservableProperty] public partial double NormalTop { get; set; }
         #endregion
 
         #region Properties for PIP Mode
-        [ObservableProperty] private string _currentMap;
-        [ObservableProperty] private bool _isPipMode;
-        [ObservableProperty] private double _pipWidth = 300;
-        [ObservableProperty] private double _pipHeight = 250;
-        [ObservableProperty] private double _pipLeft;
-        [ObservableProperty] private double _pipTop;
-        [ObservableProperty] private bool _pipHotkeyEnabled = true;
-        [ObservableProperty] private string _pipHotkeyKey = "F11";
+        [ObservableProperty] public partial string CurrentMap { get; set; }
+        [ObservableProperty] public partial bool IsPipMode { get; set; }
+        [ObservableProperty] public partial double PipWidth { get; set; }
+        [ObservableProperty] public partial double PipHeight { get; set; }
+        [ObservableProperty] public partial double PipLeft { get; set; }
+        [ObservableProperty] public partial double PipTop { get; set; }
+        [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; }
+        [ObservableProperty] public partial string PipHotkeyKey { get; set; }
         #endregion
 
         #region Window Properties
-        [ObservableProperty] private double _windowWidth;
-        [ObservableProperty] private double _windowHeight;
-        [ObservableProperty] private double _windowLeft;
-        [ObservableProperty] private double _windowTop;
-        [ObservableProperty] private WindowStyle _windowStyle = WindowStyle.SingleBorderWindow;
-        [ObservableProperty] private ResizeMode _resizeMode = ResizeMode.CanResize;
-        [ObservableProperty] private bool _isTopmost;
-        [ObservableProperty] private double _minWidth = 1000;
-        [ObservableProperty] private double _minHeight = 700;
+        [ObservableProperty] public partial double WindowWidth { get; set; }
+        [ObservableProperty] public partial double WindowHeight { get; set; }
+        [ObservableProperty] public partial double WindowLeft { get; set; }
+        [ObservableProperty] public partial double WindowTop { get; set; }
+        [ObservableProperty] public partial WindowStyle WindowStyle { get; set; }
+        [ObservableProperty] public partial ResizeMode ResizeMode { get; set; }
+        [ObservableProperty] public partial bool IsTopmost { get; set; }
+        [ObservableProperty] public partial double MinWidth { get; set; }
+        [ObservableProperty] public partial double MinHeight { get; set; }
         #endregion
 
         #region UI Visibility Properties
-        [ObservableProperty] private Visibility _tabSidebarVisibility = Visibility.Visible;
-        [ObservableProperty] private Thickness _tabContainerMargin = new Thickness(0);
-        [ObservableProperty] private int _tabContainerColumn = 1;
-        [ObservableProperty] private int _tabContainerColumnSpan = 1;
+        [ObservableProperty] public partial Visibility TabSidebarVisibility { get; set; }
+        [ObservableProperty] public partial Thickness TabContainerMargin { get; set; }
+        [ObservableProperty] public partial int TabContainerColumn { get; set; }
+        [ObservableProperty] public partial int TabContainerColumnSpan { get; set; }
         #endregion
 
         public MainWindowViewModel() : this(new PipService(), new WindowBoundsService()) { }
@@ -56,6 +56,23 @@ namespace TanukiTarkovMap.ViewModels
         {
             _pipService = pipService;
             _windowBoundsService = windowBoundsService;
+
+            // Set default values for properties (moved from initializers due to C# 13 partial properties)
+            NormalWidth = 1000;
+            NormalHeight = 700;
+            PipWidth = 300;
+            PipHeight = 250;
+            PipHotkeyEnabled = true;
+            PipHotkeyKey = "F11";
+            WindowStyle = WindowStyle.SingleBorderWindow;
+            ResizeMode = ResizeMode.CanResize;
+            MinWidth = 1000;
+            MinHeight = 700;
+            TabSidebarVisibility = Visibility.Visible;
+            TabContainerMargin = new Thickness(0);
+            TabContainerColumn = 1;
+            TabContainerColumnSpan = 1;
+
             LoadSettings();
             InitializeCommands();
             SubscribeToMapEvents();
@@ -376,6 +393,19 @@ namespace TanukiTarkovMap.ViewModels
             }
 
             _saveTimer.Start();
+        }
+
+        #endregion
+
+        #region Public Methods for View
+
+        /// <summary>
+        /// View에서 창 위치 변경 시 ViewModel 업데이트 (MVVM 패턴 준수)
+        /// </summary>
+        public void UpdateWindowPosition(double left, double top)
+        {
+            WindowLeft = left;
+            WindowTop = top;
         }
 
         #endregion

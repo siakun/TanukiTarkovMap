@@ -6,29 +6,14 @@ namespace TanukiTarkovMap.ViewModels
 {
     public partial class SettingsViewModel : ObservableObject
     {
-        [ObservableProperty]
-        private string _gameFolder;
-
-        [ObservableProperty]
-        private string _screenshotsFolder;
-
-        [ObservableProperty]
-        private bool _pipEnabled;
-
-        [ObservableProperty]
-        private bool _pipRememberPosition;
-
-        [ObservableProperty]
-        private bool _pipHotkeyEnabled;
-
-        [ObservableProperty]
-        private string _pipHotkeyKey;
-
-        [ObservableProperty]
-        private bool _autoDeleteLogs;
-
-        [ObservableProperty]
-        private bool _autoDeleteScreenshots;
+        [ObservableProperty] public partial string GameFolder { get; set; }
+        [ObservableProperty] public partial string ScreenshotsFolder { get; set; }
+        [ObservableProperty] public partial bool PipEnabled { get; set; }
+        [ObservableProperty] public partial bool PipRememberPosition { get; set; }
+        [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; }
+        [ObservableProperty] public partial string PipHotkeyKey { get; set; }
+        [ObservableProperty] public partial bool AutoDeleteLogs { get; set; }
+        [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; }
 
         // Commands
         [RelayCommand]
