@@ -10,13 +10,10 @@ namespace TanukiTarkovMap.Models.FileSystem
     public static class LogsWatcher
     {
         // PVP Map change - application.log
-        static readonly string LOCATION_SUBSTRING =
-            "application|TRACE-NetworkGameCreate profileStatus";
+        static readonly string LOCATION_SUBSTRING = "application|TRACE-NetworkGameCreate profileStatus";
         static readonly string LocationRe = @"location:\s*(?<loc>\S+),";
-        static readonly string NOTIFICATION_SUBSTRING =
-            "push-notifications|Got notification | ChatMessageReceived";
-        static readonly string LINE_START_WITH_DATE =
-            "^\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{3}";
+        static readonly string NOTIFICATION_SUBSTRING = "push-notifications|Got notification | ChatMessageReceived";
+        static readonly string LINE_START_WITH_DATE = "^\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{3}";
 
         // PVE Map change - application.log
         static readonly string LOCATION_SUBSTRING2 = "application|scene preset";
@@ -25,11 +22,12 @@ namespace TanukiTarkovMap.Models.FileSystem
         // BattlEye client initialization - application.log
         static readonly string BECLIENT_INIT_SUBSTRING = "BEClient inited successfully";
 
+        static string curLogFolder;
+        static Dictionary<string, long> filePositions = new();
+
         static FileSystemWatcher logsFoldersWatcher;
         static LogFileWatcher appLogFileWatcher;
         static LogFileWatcher notifLogFileWatcher;
-        static string curLogFolder;
-        static Dictionary<string, long> filePositions = new Dictionary<string, long>();
 
         static int _initialLogsReadCount = 0;
         static bool IsAllInitialLogsRead
