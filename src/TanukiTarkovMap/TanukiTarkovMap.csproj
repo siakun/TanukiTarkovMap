@@ -9,6 +9,11 @@
     <ApplicationIcon>Resources\korea.ico</ApplicationIcon>
   </PropertyGroup>
 
+  <!-- Release 모드에서만 관리자 권한 요구 (Visual Studio 디버그 모드 제외) -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
   <ItemGroup>
     <Folder Include="ViewModels\" />
   </ItemGroup>
@@ -19,8 +24,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
-    <PackageReference Include="Fleck" Version="1.2.0" />
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="1.1.0" />
     <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.0" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.3595.46" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

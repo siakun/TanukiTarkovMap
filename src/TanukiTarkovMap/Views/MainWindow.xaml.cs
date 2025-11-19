@@ -43,6 +43,9 @@ public partial class MainWindow : Window
             // 윈도우 로드 완료 후 초기화
             Loaded += MainWindow_Loaded;
             Closed += MainWindow_Closed;
+
+            // 키보드 이벤트 핸들러 추가 (디버그 모드용)
+            this.PreviewKeyDown += MainWindow_PreviewKeyDown;
         }
         catch (Exception)
         {
@@ -107,8 +110,44 @@ public partial class MainWindow : Window
         this.SizeChanged += MainWindow_SizeChanged;
         this.LocationChanged += MainWindow_LocationChanged;
 
-        // 핫키 매니저 초기화
+        // 핫키 매니저 초기화 (전역 단축키용)
+        // 디버그 모드에서는 작동하지 않을 수 있음
         InitializeHotkeyManager();
+    }
+
+    /// <summary>
+    /// MainWindow 내에서의 키 입력 처리 (디버그 모드용)
+    /// </summary>
+    private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        try
+        {
+            var settings = Env.GetSettings();
+
+            // 설정에서 핫키가 활성화되어 있고, 해당 키가 눌렸을 때
+            if (settings.PipHotkeyEnabled)
+            {
+                // F11 또는 설정된 키 확인
+                if ((settings.PipHotkeyKey == "F11" && e.Key == Key.F11) ||
+                    (settings.PipHotkeyKey == "Home" && e.Key == Key.Home) ||
+                    (settings.PipHotkeyKey == "F12" && e.Key == Key.F12) ||
+                    (settings.PipHotkeyKey == "F10" && e.Key == Key.F10) ||
+                    (settings.PipHotkeyKey == "F9" && e.Key == Key.F9))
+                {
+                    Logger.SimpleLog($"MainWindow KeyDown detected: {e.Key}");
+
+                    // PIP 모드 토글
+                    _pipController?.TogglePipWindowPosition();
+
+                    // 이벤트 처리 완료 표시
+                    e.Handled = true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("MainWindow_PreviewKeyDown error", ex);
+        }
     }
 
     // 탭 시스템 초기화 및 첫 번째 탭 생성
@@ -666,8 +705,8 @@ public partial class MainWindow : Window
             }
             _tabWebViews.Clear();
 
-            // 애플리케이션 종료
-            System.Windows.Application.Current.Shutdown();
+            // 시스템 트레이에서 종료하지 않는 한 애플리케이션은 계속 실행
+            // System.Windows.Application.Current.Shutdown();
         }
         catch (Exception)
         {
@@ -730,9 +769,14 @@ public partial class MainWindow : Window
         {
             var settings = Env.GetSettings();
 
+            // 로깅: 설정 상태 확인
+            Logger.SimpleLog($"PipHotkeyEnabled: {settings.PipHotkeyEnabled}");
+            Logger.SimpleLog($"PipHotkeyKey: {settings.PipHotkeyKey}");
+
             // 핫키 기능이 비활성화되어 있으면 종료
             if (!settings.PipHotkeyEnabled)
             {
+                Logger.SimpleLog("Hotkey is disabled in settings");
                 return;
             }
 
@@ -747,11 +791,17 @@ public partial class MainWindow : Window
                 settings.PipHotkeyKey,
                 () =>
                 {
+                    Logger.SimpleLog("Hotkey pressed! Toggling PIP mode");
                     _pipController?.TogglePipWindowPosition();
                 }
             );
+
+            Logger.SimpleLog($"Hotkey registration success: {success}");
         }
-        catch (Exception) { }
+        catch (Exception ex)
+        {
+            Logger.Error("InitializeHotkeyManager error", ex);
+        }
     }
 
     /// <summary>

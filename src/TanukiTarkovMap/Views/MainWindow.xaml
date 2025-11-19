@@ -105,7 +105,7 @@
             <TabControl x:Name="TabContainer" 
                         Grid.Column="1"
                         Panel.ZIndex="100"
-                        Background="#FF1A1A1A"
+                        Background="#FF212121"
                         BorderThickness="0">
                 <TabControl.Resources>
                     <!-- 탭 헤더 스타일 -->

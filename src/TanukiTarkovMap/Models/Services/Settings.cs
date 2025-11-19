@@ -50,7 +50,7 @@ namespace TanukiTarkovMap.Models.Services
                 ScreenshotsFolder = null,
                 PipEnabled = false,
                 PipRememberPosition = true,
-                PipHotkeyEnabled = false,
+                PipHotkeyEnabled = true,  // PIP 단축키 기본적으로 활성화
                 PipHotkeyKey = "F11",
                 NormalWidth = 1400,
                 NormalHeight = 900,

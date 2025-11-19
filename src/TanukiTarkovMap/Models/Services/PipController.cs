@@ -58,28 +58,19 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         public void TogglePipWindowPosition()
         {
+            // PIP 모드 켜기/끄기 토글
             if (!_isActive)
             {
-                return;
+                // PIP 모드 시작
+                Logger.SimpleLog("Toggling PIP ON");
+                ShowPip();
             }
-
-            try
+            else
             {
-                if (_mainWindow.WindowState == System.Windows.WindowState.Minimized)
-                {
-                    // 최소화 상태 → 복원 + 최상단 (포커스 변경 없이)
-                    {
-                        Utils.WindowTopmost.SetTopmost(_mainWindow);
-                    }
-                }
-                else
-                {
-                    // 최상단 상태 → 최소화
-                    Utils.WindowTopmost.RemoveTopmost(_mainWindow);
-                    _mainWindow.WindowState = System.Windows.WindowState.Minimized;
-                }
+                // PIP 모드 종료
+                Logger.SimpleLog("Toggling PIP OFF");
+                HidePip();
             }
-            catch { }
         }
 
        

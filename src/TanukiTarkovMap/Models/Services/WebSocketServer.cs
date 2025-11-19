@@ -1,19 +1,25 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
+using System.Net.WebSockets;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Windows;
-using Fleck;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using TanukiTarkovMap.Models.Data;
 
 namespace TanukiTarkovMap.Models.Services
 {
     static class Server
     {
-        const string WS_URL = "ws://0.0.0.0:5123";
+        const string WS_URL = "http://localhost:5123";  // Kestrel will handle WebSocket upgrade
 
         static volatile bool isClosing = false;
-        static WebSocketServer _server = null;
-        static readonly ConcurrentDictionary<IWebSocketConnection, bool> _sockets = new();
+        static IHost? _host = null;
+        static readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
 
         static Server()
         {
@@ -32,18 +38,33 @@ namespace TanukiTarkovMap.Models.Services
         {
             isClosing = true;
 
-            if (_server != null)
+            // 모든 WebSocket 연결 종료
+            foreach (var socket in _sockets.Values)
             {
-                // WebSocketServer doesn't have Dispose, just nullify
-                _server = null;
+                try
+                {
+                    if (socket.State == WebSocketState.Open)
+                    {
+                        socket.CloseAsync(WebSocketCloseStatus.NormalClosure,
+                            "Server shutting down", CancellationToken.None).Wait(1000);
+                    }
+                    socket.Dispose();
+                }
+                catch { }
             }
+            _sockets.Clear();
+
+            // ASP.NET Core 호스트 종료
+            _host?.StopAsync().Wait(5000);
+            _host?.Dispose();
+            _host = null;
         }
 
         public static void Start()
         {
             isClosing = false;
 
-            // Server start
+            // ASP.NET Core 서버 시작
             StartServer();
 
 #if DEBUG
@@ -54,26 +75,167 @@ namespace TanukiTarkovMap.Models.Services
 
         static void StartServer()
         {
-            FleckLog.Level = LogLevel.Debug;
-            _server = new WebSocketServer(WS_URL);
+            var builder = WebApplication.CreateBuilder();
 
-            _server.Start(socket =>
+            // Kestrel 서버 설정
+            builder.WebHost.UseUrls(WS_URL);
+            builder.WebHost.ConfigureKestrel(options =>
             {
-                socket.OnOpen = () =>
-                {
-                    _sockets.TryAdd(socket, true);
-
-                    SendConfiguration();
-                };
-                socket.OnClose = () =>
-                {
-                    _sockets.TryRemove(socket, out _);
-                };
-                socket.OnMessage = (msg) =>
-                {
-                    ProcessMessage(msg);
-                };
+                options.AllowSynchronousIO = true;
             });
+
+            // 로깅 설정 (필요시)
+            builder.Logging.ClearProviders();
+            builder.Logging.SetMinimumLevel(LogLevel.Warning);
+
+            // WebSocket 서비스 추가
+            builder.Services.AddCors(options =>
+            {
+                options.AddDefaultPolicy(policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyMethod()
+                          .AllowAnyHeader();
+                });
+            });
+
+            var app = builder.Build();
+
+            // CORS 활성화
+            app.UseCors();
+
+            // WebSocket 미들웨어 활성화
+            app.UseWebSockets(new WebSocketOptions
+            {
+                KeepAliveInterval = TimeSpan.FromSeconds(120)
+            });
+
+            // WebSocket 엔드포인트
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path == "/ws" || context.Request.Path == "/")
+                {
+                    if (context.WebSockets.IsWebSocketRequest)
+                    {
+                        var webSocket = await context.WebSockets.AcceptWebSocketAsync();
+                        var socketId = Guid.NewGuid().ToString();
+
+                        _sockets.TryAdd(socketId, webSocket);
+
+                        // 연결 시 설정 전송
+                        SendConfigurationToSocket(webSocket);
+
+                        // 메시지 수신 처리
+                        await HandleWebSocketAsync(socketId, webSocket);
+
+                        _sockets.TryRemove(socketId, out _);
+                    }
+                    else
+                    {
+                        context.Response.StatusCode = 400;
+                    }
+                }
+                else
+                {
+                    await next();
+                }
+            });
+
+            // 서버 시작
+            _host = app;
+            Task.Run(() => _host.Run());
+        }
+
+        static async Task HandleWebSocketAsync(string socketId, WebSocket webSocket)
+        {
+            var buffer = new ArraySegment<byte>(new byte[4096]);
+
+            while (webSocket.State == WebSocketState.Open && !isClosing)
+            {
+                try
+                {
+                    var result = await webSocket.ReceiveAsync(buffer, CancellationToken.None);
+
+                    if (result.MessageType == WebSocketMessageType.Text)
+                    {
+                        var message = Encoding.UTF8.GetString(buffer.Array, 0, result.Count);
+                        ProcessMessage(message);
+                    }
+                    else if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure,
+                            string.Empty, CancellationToken.None);
+                        break;
+                    }
+                }
+                catch (WebSocketException)
+                {
+                    // 연결이 끊어진 경우
+                    break;
+                }
+                catch (Exception)
+                {
+                    // 기타 오류
+                    break;
+                }
+            }
+        }
+
+        static async void SendConfigurationToSocket(WebSocket socket)
+        {
+            ConfigurationData data = new ConfigurationData()
+            {
+                MssageType = WsMessageType.CONFIGURATION,
+                Version = Env.Version,
+                GameFolder = Env.GameFolder,
+                ScreenshotsFolder = Env.ScreenshotsFolder,
+            };
+
+            await SendDataToSocket(socket, data);
+        }
+
+        static async Task SendDataToSocket(WebSocket socket, object data)
+        {
+            try
+            {
+                if (socket.State == WebSocketState.Open)
+                {
+                    var json = JsonSerializer.Serialize(data);
+                    var bytes = Encoding.UTF8.GetBytes(json);
+                    var buffer = new ArraySegment<byte>(bytes);
+
+                    await socket.SendAsync(buffer, WebSocketMessageType.Text,
+                        endOfMessage: true, CancellationToken.None);
+                }
+            }
+            catch { }
+        }
+
+        static void SendData(object data)
+        {
+            try
+            {
+                if (_sockets.Count == 0)
+                    return;
+
+                var json = JsonSerializer.Serialize(data);
+                var bytes = Encoding.UTF8.GetBytes(json);
+                var buffer = new ArraySegment<byte>(bytes);
+
+                // 모든 연결된 클라이언트에게 메시지 전송
+                var tasks = new List<Task>();
+                foreach (var socket in _sockets.Values.ToList())
+                {
+                    if (socket.State == WebSocketState.Open)
+                    {
+                        tasks.Add(socket.SendAsync(buffer, WebSocketMessageType.Text,
+                            endOfMessage: true, CancellationToken.None));
+                    }
+                }
+
+                Task.WaitAll(tasks.ToArray(), 1000);
+            }
+            catch (Exception) { }
         }
 
         static void SendRandomPosition()
@@ -118,25 +280,6 @@ namespace TanukiTarkovMap.Models.Services
                 Thread.Sleep(5000);
             }
         }
-
-        static void SendData(Object data)
-        {
-            try
-            {
-                if (_sockets.Count == 0)
-                    return;
-
-                var json = JsonSerializer.Serialize(data);
-
-                // Send message to all connected clients
-                foreach (var socket in _sockets.Keys.ToList().AsReadOnly())
-                {
-                    socket.Send(json);
-                }
-            }
-            catch (Exception) { }
-        }
-
 
         public static void SendMap(string map)
         {
@@ -232,7 +375,6 @@ namespace TanukiTarkovMap.Models.Services
                 SendConfiguration();
 
                 Watcher.Restart();
-                //Env.RestartApp();
             }
         }
     }

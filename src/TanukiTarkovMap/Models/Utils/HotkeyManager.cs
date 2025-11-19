@@ -128,10 +128,13 @@ namespace TanukiTarkovMap.Models.Utils
                 }
 
                 bool success = _hookID != IntPtr.Zero;
+                Logger.SimpleLog($"Hook installed: {success}, HookID: {_hookID}");
+                Logger.SimpleLog($"Registered Key: {_registeredKeyString} (VK: 0x{_registeredVirtualKey:X2})");
                 return success;
             }
-            catch (Exception)
+            catch (Exception ex)
             {
+                Logger.Error("InstallHook error", ex);
                 return false;
             }
         }
@@ -151,8 +154,13 @@ namespace TanukiTarkovMap.Models.Utils
                         // 키보드 입력 정보 구조체에서 가상 키 코드 추출
                         int vkCode = Marshal.ReadInt32(lParam);
 
+                        // 로깅: 모든 키 입력
+                        Logger.SimpleLog($"Key pressed: 0x{vkCode:X2} (registered: 0x{_instance._registeredVirtualKey:X2})");
+
                         if (_instance.IsRegisteredHotkey((uint)vkCode))
                         {
+                            Logger.SimpleLog("Hotkey matched! Executing action...");
+
                             // UI 스레드에서 액션 실행
                             _instance._window?.Dispatcher.BeginInvoke(_instance._registeredAction);
 
@@ -162,7 +170,10 @@ namespace TanukiTarkovMap.Models.Utils
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                Logger.Error("HookCallback error", ex);
+            }
 
             // 등록된 핫키가 아니면 다음 Hook에 전달
             return CallNextHookEx(_instance?._hookID ?? IntPtr.Zero, nCode, wParam, lParam);
