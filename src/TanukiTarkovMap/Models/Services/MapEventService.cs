@@ -4,18 +4,22 @@ using TanukiTarkovMap.Models.Utils;
 namespace TanukiTarkovMap.Models.Services
 {
     /// <summary>
-    /// 맵 변경 및 스크린샷 이벤트를 처리하는 서비스 구현
+    /// 맵 변경 및 스크린샷 이벤트를 처리하는 서비스
     /// 싱글톤 패턴으로 FileSystem 모니터링과 ViewModel을 연결
     /// </summary>
-    public class MapEventService : IMapEventService
+    public class MapEventService
     {
         private static MapEventService _instance;
         public static MapEventService Instance => _instance ??= new MapEventService();
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// 맵이 변경되었을 때 발생하는 이벤트
+        /// </summary>
         public event EventHandler<MapChangedEventArgs> MapChanged;
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// 스크린샷이 생성되었을 때 발생하는 이벤트
+        /// </summary>
         public event EventHandler ScreenshotTaken;
 
         private MapEventService()
@@ -23,7 +27,9 @@ namespace TanukiTarkovMap.Models.Services
             Logger.SimpleLog("[MapEventService] Instance created");
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// 맵 변경 이벤트 발생
+        /// </summary>
         public void OnMapChanged(string mapName)
         {
             Logger.SimpleLog($"[MapEventService] OnMapChanged called: {mapName}");
@@ -36,7 +42,9 @@ namespace TanukiTarkovMap.Models.Services
             Logger.SimpleLog($"[MapEventService] MapChanged event invoked for map: {mapName}");
         }
 
-        /// <inheritdoc/>
+        /// <summary>
+        /// 스크린샷 생성 이벤트 발생
+        /// </summary>
         public void OnScreenshotTaken()
         {
             Logger.SimpleLog("[MapEventService] OnScreenshotTaken called");
@@ -47,6 +55,19 @@ namespace TanukiTarkovMap.Models.Services
             ScreenshotTaken?.Invoke(this, EventArgs.Empty);
 
             Logger.SimpleLog("[MapEventService] ScreenshotTaken event invoked");
+        }
+    }
+
+    /// <summary>
+    /// 맵 변경 이벤트 인자
+    /// </summary>
+    public class MapChangedEventArgs : EventArgs
+    {
+        public string MapName { get; }
+
+        public MapChangedEventArgs(string mapName)
+        {
+            MapName = mapName;
         }
     }
 }

@@ -5,7 +5,7 @@ using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Models.Services
 {
-    public class PipService : IPipService
+    public class PipService
     {
         public async Task ApplyPipModeJavaScriptAsync(object webView, string mapName)
         {

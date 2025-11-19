@@ -32,8 +32,8 @@ namespace TanukiTarkovMap.Models.Services
                 if (_gameFolder == null)
                 {
                     RegistryKey key = Registry.LocalMachine.OpenSubKey(
-                        "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\EscapeFromTarkov"
-                    );
+                        name: "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\EscapeFromTarkov"
+                    )!;
                     var installPath = key?.GetValue("InstallLocation")?.ToString();
                     key?.Dispose();
 
