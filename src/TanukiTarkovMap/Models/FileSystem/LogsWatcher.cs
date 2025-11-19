@@ -216,13 +216,10 @@ namespace TanukiTarkovMap.Models.FileSystem
                                     // sending raw location name
                                     Server.SendMap(map);
 
-                                    // 1차 트리거: 맵 변경 시 PiP 활성화
-                                    if (
-                                        Env.GetSettings().PipEnabled
-                                        && PipController.Instance != null
-                                    )
+                                    // 1차 트리거: 맵 변경 이벤트 발생
+                                    if (Env.GetSettings().PipEnabled)
                                     {
-                                        PipController.Instance.OnMapChanged(map);
+                                        MapEventService.Instance.OnMapChanged(map);
                                     }
                                 }
                             }
@@ -235,13 +232,10 @@ namespace TanukiTarkovMap.Models.FileSystem
                                     // sending raw location name
                                     Server.SendMap(map);
 
-                                    // 1차 트리거: 맵 변경 시 PiP 활성화
-                                    if (
-                                        Env.GetSettings().PipEnabled
-                                        && PipController.Instance != null
-                                    )
+                                    // 1차 트리거: 맵 변경 이벤트 발생
+                                    if (Env.GetSettings().PipEnabled)
                                     {
-                                        PipController.Instance.OnMapChanged(map);
+                                        MapEventService.Instance.OnMapChanged(map);
                                     }
                                 }
                             }

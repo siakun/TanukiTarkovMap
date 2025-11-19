@@ -32,8 +32,10 @@ namespace TanukiTarkovMap.Views
         private int _tabCounter = 1;
         private readonly Dictionary<TabItem, WebView2> _tabWebViews = new();
         private MainWindowViewModel _viewModel;
-        private IPipService _pipService;
+        private PipService _pipService;
+        private WindowBoundsService _windowBoundsService;
         private HotkeyManager _hotkeyManager;
+        private bool _isClampingLocation = false; // 무한 루프 방지
 
         public MainWindow()
         {
@@ -41,14 +43,18 @@ namespace TanukiTarkovMap.Views
             {
                 InitializeComponent();
 
-                // ViewModel 초기화
+                // 서비스 초기화
                 _pipService = new PipService();
-                _viewModel = new MainWindowViewModel(_pipService);
+                _windowBoundsService = new WindowBoundsService();
+
+                // ViewModel 초기화 (서비스 주입)
+                _viewModel = new MainWindowViewModel(_pipService, _windowBoundsService);
                 DataContext = _viewModel;
 
                 // 윈도우 로드 완료 후 초기화
                 Loaded += MainWindow_Loaded;
                 Closed += MainWindow_Closed;
+                LocationChanged += MainWindow_LocationChanged;
 
                 // 키보드 이벤트 핸들러 추가 (디버그 모드용)
                 this.PreviewKeyDown += MainWindow_PreviewKeyDown;
@@ -139,6 +145,25 @@ namespace TanukiTarkovMap.Views
         {
             if (_viewModel.IsPipMode)
             {
+                // PIP 모드 시작 시 현재 화면 저장
+                var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+                _windowBoundsService.SavePipModeScreen(windowHandle);
+
+                // 창 위치가 화면 밖이면 화면 안으로 이동
+                var dpiScale = VisualTreeHelper.GetDpi(this);
+                var newPosition = _windowBoundsService.EnsureWindowWithinScreen(
+                    this.Left,
+                    this.Top,
+                    this.ActualWidth,
+                    this.ActualHeight,
+                    dpiScale.DpiScaleX,
+                    dpiScale.DpiScaleY
+                );
+
+                // 위치 조정
+                this.Left = newPosition.X;
+                this.Top = newPosition.Y;
+
                 // PIP 모드 진입 시 JavaScript 적용
                 var activeWebView = GetActiveWebView();
                 if (activeWebView != null)
@@ -151,6 +176,9 @@ namespace TanukiTarkovMap.Views
             }
             else
             {
+                // PIP 모드 종료 시 화면 정보 초기화
+                _windowBoundsService.ClearPipModeScreen();
+
                 // 일반 모드 복원 시 JavaScript 복원
                 var activeWebView = GetActiveWebView();
                 if (activeWebView != null)
@@ -483,6 +511,77 @@ namespace TanukiTarkovMap.Views
                 }
             }
             return null;
+        }
+
+        /// <summary>
+        /// PIP 모드에서 창 위치 변경 시 화면 경계 체크 (4개 코너 모두 체크)
+        /// </summary>
+        private void MainWindow_LocationChanged(object sender, EventArgs e)
+        {
+            
+            if (!_viewModel.IsPipMode) return;      // PIP 모드일 때만 경계 체크
+            if (_isClampingLocation) return;        // 무한 루프 방지
+
+            try
+            {
+                _isClampingLocation = true;
+
+                // DPI 스케일 가져오기
+                var dpiScale = VisualTreeHelper.GetDpi(this);
+
+                // WindowBoundsService를 사용하여 창 위치 체크 및 조정
+                var newPosition = _windowBoundsService.ClampWindowPosition(
+                    this.Left,
+                    this.Top,
+                    this.ActualWidth,
+                    this.ActualHeight,
+                    dpiScale.DpiScaleX,
+                    dpiScale.DpiScaleY
+                );
+
+                // 조정이 필요한 경우에만 위치 업데이트
+                if (newPosition.HasValue)
+                {
+                    this.Left = newPosition.Value.X;
+                    this.Top = newPosition.Value.Y;
+                }
+            }
+            finally
+            {
+                _isClampingLocation = false;
+            }
+        }
+
+        // PIP 모드에서 창 드래그 이동 처리
+        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            // PIP 모드일 때만 드래그 가능
+            if (_viewModel.IsPipMode && e.ButtonState == MouseButtonState.Pressed)
+            {
+                // WebView2 영역 외부를 클릭한 경우만 드래그
+                // (WebView2 내부에서는 맵 상호작용을 위해 드래그 비활성화)
+                var position = e.GetPosition(this);
+                var hitElement = this.InputHitTest(position) as DependencyObject;
+
+                // WebView2가 아닌 경우에만 드래그 허용
+                bool isWebView2 = false;
+                while (hitElement != null)
+                {
+                    if (hitElement is WebView2)
+                    {
+                        isWebView2 = true;
+                        break;
+                    }
+                    hitElement = System.Windows.Media.VisualTreeHelper.GetParent(hitElement);
+                }
+
+                if (!isWebView2)
+                {
+                    ReleaseCapture();
+                    SendMessage(new System.Windows.Interop.WindowInteropHelper(this).Handle,
+                               WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                }
+            }
         }
 
         // 창 닫기 시 정리

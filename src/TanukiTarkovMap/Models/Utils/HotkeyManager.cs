@@ -154,8 +154,8 @@ namespace TanukiTarkovMap.Models.Utils
                         // 키보드 입력 정보 구조체에서 가상 키 코드 추출
                         int vkCode = Marshal.ReadInt32(lParam);
 
-                        // 로깅: 모든 키 입력
-                        Logger.SimpleLog($"Key pressed: 0x{vkCode:X2} (registered: 0x{_instance._registeredVirtualKey:X2})");
+                        // 로깅: 모든 키 입력 (테스트용 - 평소에는 주석 처리)
+                        // Logger.SimpleLog($"Key pressed: 0x{vkCode:X2} (registered: 0x{_instance._registeredVirtualKey:X2})");
 
                         if (_instance.IsRegisteredHotkey((uint)vkCode))
                         {

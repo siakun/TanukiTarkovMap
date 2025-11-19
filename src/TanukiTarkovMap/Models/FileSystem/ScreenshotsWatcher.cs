@@ -45,10 +45,10 @@ namespace TanukiTarkovMap.Models.FileSystem
                 {
                     Server.SendFilename(filename);
 
-                    // 2차 트리거: 스크린샷 생성 시 PiP 활성화
-                    if (Env.GetSettings().PipEnabled && PipController.Instance != null)
+                    // 2차 트리거: 스크린샷 생성 이벤트 발생
+                    if (Env.GetSettings().PipEnabled)
                     {
-                        PipController.Instance.OnScreenshotTaken();
+                        MapEventService.Instance.OnScreenshotTaken();
                     }
                 }
             }

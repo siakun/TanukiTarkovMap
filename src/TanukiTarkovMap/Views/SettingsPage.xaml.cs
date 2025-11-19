@@ -9,16 +9,13 @@ namespace TanukiTarkovMap.Views
     /// <summary>
     /// SettingsPage.xaml에 대한 상호 작용 논리
     /// </summary>
-    public partial class SettingsPage : System.Windows.Controls.UserControl
+    public partial class SettingsPage : UserControl
     {
         // 핫키 입력 모드 플래그
         private bool _isHotkeyInputMode = false;
 
         // 한국 명칭(영어) -> 게임 내부 이름 매핑 (실제 테스트 결과 기반)
-        private readonly Dictionary<string, string> _mapDisplayToInternal = new Dictionary<
-            string,
-            string
-        >
+        private readonly Dictionary<string, string> _mapDisplayToInternal = new()
         {
             ["그라운드 제로(Ground Zero)"] = "sandbox_high_preset",
             ["팩토리/공장(Factory)"] = "factory_day_preset",

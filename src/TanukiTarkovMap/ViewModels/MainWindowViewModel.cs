@@ -9,7 +9,8 @@ namespace TanukiTarkovMap.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject
     {
-        private readonly IPipService _pipService;
+        private readonly PipService _pipService;
+        private readonly WindowBoundsService _windowBoundsService;
         private AppSettings _settings;
 
         #region Properties for Normal Mode
@@ -49,13 +50,62 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] private int _tabContainerColumnSpan = 1;
         #endregion
 
-        public MainWindowViewModel() : this(new PipService()) { }
+        public MainWindowViewModel() : this(new PipService(), new WindowBoundsService()) { }
 
-        public MainWindowViewModel(IPipService pipService)
+        public MainWindowViewModel(PipService pipService, WindowBoundsService windowBoundsService)
         {
             _pipService = pipService;
+            _windowBoundsService = windowBoundsService;
             LoadSettings();
             InitializeCommands();
+            SubscribeToMapEvents();
+        }
+
+        /// <summary>
+        /// MapEventService 이벤트 구독
+        /// </summary>
+        private void SubscribeToMapEvents()
+        {
+            Logger.SimpleLog("[MainWindowViewModel] Subscribing to MapEventService events");
+
+            MapEventService.Instance.MapChanged += OnMapEventReceived;
+            MapEventService.Instance.ScreenshotTaken += OnScreenshotEventReceived;
+
+            Logger.SimpleLog("[MainWindowViewModel] Successfully subscribed to MapEventService events");
+        }
+
+        /// <summary>
+        /// 맵 변경 이벤트 처리
+        /// </summary>
+        private void OnMapEventReceived(object sender, MapChangedEventArgs e)
+        {
+            Logger.SimpleLog($"[MainWindowViewModel] MapEvent received: {e.MapName}");
+            Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
+
+            // CurrentMap 업데이트 (ChangeMapCommand 사용)
+            ChangeMapCommand.Execute(e.MapName);
+
+            Logger.SimpleLog($"[MainWindowViewModel] ChangeMapCommand executed for: {e.MapName}");
+        }
+
+        /// <summary>
+        /// 스크린샷 이벤트 처리
+        /// </summary>
+        private void OnScreenshotEventReceived(object sender, EventArgs e)
+        {
+            Logger.SimpleLog("[MainWindowViewModel] Screenshot event received");
+            Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
+
+            // PIP 모드가 아닐 때만 활성화
+            if (!IsPipMode)
+            {
+                Logger.SimpleLog("[MainWindowViewModel] Executing TogglePipModeCommand (PIP mode OFF -> ON)");
+                TogglePipModeCommand.Execute(null);
+            }
+            else
+            {
+                Logger.SimpleLog("[MainWindowViewModel] PIP mode already active, skipping toggle");
+            }
         }
 
         public void LoadSettings()
@@ -93,7 +143,13 @@ namespace TanukiTarkovMap.ViewModels
                         OnMapChanged();
                         break;
                     case nameof(WindowLeft):
+                        Logger.SimpleLog($"[PropertyChanged] WindowLeft changed to: {WindowLeft}, IsPipMode={IsPipMode}");
+                        ScheduleSaveSettings();
+                        break;
                     case nameof(WindowTop):
+                        Logger.SimpleLog($"[PropertyChanged] WindowTop changed to: {WindowTop}, IsPipMode={IsPipMode}");
+                        ScheduleSaveSettings();
+                        break;
                     case nameof(WindowWidth):
                     case nameof(WindowHeight):
                         ScheduleSaveSettings();
@@ -273,20 +329,23 @@ namespace TanukiTarkovMap.ViewModels
 
         private void SavePipSettings()
         {
-            if (!IsPipMode || string.IsNullOrEmpty(CurrentMap))
+            if (!IsPipMode)
                 return;
+
+            // CurrentMap이 없으면 기본 키로 저장
+            string mapKey = string.IsNullOrEmpty(CurrentMap) ? "default" : CurrentMap;
 
             if (_settings.MapSettings == null)
             {
                 _settings.MapSettings = new System.Collections.Generic.Dictionary<string, MapSetting>();
             }
 
-            if (!_settings.MapSettings.ContainsKey(CurrentMap))
+            if (!_settings.MapSettings.ContainsKey(mapKey))
             {
-                _settings.MapSettings[CurrentMap] = new MapSetting();
+                _settings.MapSettings[mapKey] = new MapSetting();
             }
 
-            var mapSetting = _settings.MapSettings[CurrentMap];
+            var mapSetting = _settings.MapSettings[mapKey];
             mapSetting.Width = WindowWidth;
             mapSetting.Height = WindowHeight;
             mapSetting.Left = WindowLeft;
@@ -295,10 +354,11 @@ namespace TanukiTarkovMap.ViewModels
             Env.SetSettings(_settings);
             Settings.Save();
 
-            Logger.SimpleLog($"Saved PIP settings for {CurrentMap}: {WindowWidth}x{WindowHeight} at ({WindowLeft}, {WindowTop})");
+            Logger.SimpleLog($"Saved PIP settings for {mapKey}: {WindowWidth}x{WindowHeight} at ({WindowLeft}, {WindowTop})");
         }
 
         private System.Windows.Threading.DispatcherTimer _saveTimer;
+
         private void ScheduleSaveSettings()
         {
             // Debounce save operations
@@ -317,6 +377,7 @@ namespace TanukiTarkovMap.ViewModels
 
             _saveTimer.Start();
         }
+
         #endregion
     }
 }

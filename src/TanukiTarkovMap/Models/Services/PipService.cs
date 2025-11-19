@@ -9,18 +9,26 @@ namespace TanukiTarkovMap.Models.Services
     {
         public async Task ApplyPipModeJavaScriptAsync(object webView, string mapName)
         {
+            Logger.SimpleLog($"[PipService] ApplyPipModeJavaScriptAsync called for map: {mapName}");
+
             if (webView is not WebView2 webView2 || webView2.CoreWebView2 == null)
+            {
+                Logger.SimpleLog("[PipService] WebView2 is null or not initialized, aborting");
                 return;
+            }
 
             try
             {
+                Logger.SimpleLog("[PipService] Step 1: Removing existing PIP overlay");
                 // 1. Remove existing PIP overlay
                 await webView2.CoreWebView2.ExecuteScriptAsync(
                     JavaScriptConstants.REMOVE_PIP_OVERLAY_SCRIPT
                 );
 
+                Logger.SimpleLog("[PipService] Step 2: Applying map scaling");
                 // 2. Apply map scaling
                 var transformMatrix = GetMapTransform(mapName);
+                Logger.SimpleLog($"[PipService] Transform matrix: {transformMatrix}");
                 await webView2.CoreWebView2.ExecuteScriptAsync(
                     $@"
                     try {{
@@ -34,6 +42,7 @@ namespace TanukiTarkovMap.Models.Services
                     "
                 );
 
+                Logger.SimpleLog("[PipService] Step 3: Removing UI elements");
                 // 3. Remove UI elements for PIP mode
                 await webView2.CoreWebView2.ExecuteScriptAsync(
                     JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_RIGHT
@@ -55,36 +64,49 @@ namespace TanukiTarkovMap.Models.Services
                     JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_FOOTER
                 );
 
-                Logger.SimpleLog($"Applied PIP mode JavaScript for map: {mapName}");
+                Logger.SimpleLog($"[PipService] Successfully applied PIP mode JavaScript for map: {mapName}");
             }
             catch (System.Exception ex)
             {
-                Logger.Error("ApplyPipModeJavaScriptAsync error", ex);
+                Logger.Error("[PipService] ApplyPipModeJavaScriptAsync error", ex);
             }
         }
 
         public async Task RestoreNormalModeJavaScriptAsync(object webView)
         {
+            Logger.SimpleLog("[PipService] RestoreNormalModeJavaScriptAsync called");
+
             if (webView is not WebView2 webView2 || webView2.CoreWebView2 == null)
+            {
+                Logger.SimpleLog("[PipService] WebView2 is null or not initialized, aborting");
                 return;
+            }
 
             try
             {
+                Logger.SimpleLog("[PipService] Restoring removed UI elements");
                 // Restore removed elements
                 await webView2.CoreWebView2.ExecuteScriptAsync(
                     JavaScriptConstants.TARKOV_MARGET_ELEMENT_RESTORE
                 );
 
-                Logger.SimpleLog("Restored normal mode JavaScript");
+                Logger.SimpleLog("[PipService] Successfully restored normal mode JavaScript");
             }
             catch (System.Exception ex)
             {
-                Logger.Error("RestoreNormalModeJavaScriptAsync error", ex);
+                Logger.Error("[PipService] RestoreNormalModeJavaScriptAsync error", ex);
             }
         }
 
         public string GetMapTransform(string mapName)
         {
+            // Null or empty 체크
+            if (string.IsNullOrEmpty(mapName))
+            {
+                Logger.SimpleLog("[PipService] GetMapTransform: mapName is null or empty, using default transform");
+                return "matrix(0.15, 0, 0, 0.15, -150, -150)";
+            }
+
             var settings = Env.GetSettings();
 
             if (settings.MapSettings != null &&
