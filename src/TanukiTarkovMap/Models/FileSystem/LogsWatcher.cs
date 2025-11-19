@@ -220,7 +220,7 @@ namespace TanukiTarkovMap.Models.FileSystem
 
                                     // 1차 트리거: 맵 변경 시 PiP 활성화
                                     if (
-                                        Env.GetSettings().pipEnabled
+                                        Env.GetSettings().PipEnabled
                                         && PipController.Instance != null
                                     )
                                     {
@@ -239,7 +239,7 @@ namespace TanukiTarkovMap.Models.FileSystem
 
                                     // 1차 트리거: 맵 변경 시 PiP 활성화
                                     if (
-                                        Env.GetSettings().pipEnabled
+                                        Env.GetSettings().PipEnabled
                                         && PipController.Instance != null
                                     )
                                     {

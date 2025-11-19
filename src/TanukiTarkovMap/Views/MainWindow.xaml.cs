@@ -388,9 +388,9 @@ public partial class MainWindow : Window
                             if (!string.IsNullOrEmpty(currentMap))
                             {
                                 // 맵별 설정 초기화 (필요시)
-                                if (settings.mapSettings == null)
+                                if (settings.MapSettings == null)
                                 {
-                                    settings.mapSettings =
+                                    settings.MapSettings =
                                         new System.Collections.Generic.Dictionary<
                                             string,
                                             MapSetting
@@ -398,18 +398,18 @@ public partial class MainWindow : Window
                                 }
 
                                 // 해당 맵 설정이 없으면 기본값으로 생성
-                                if (!settings.mapSettings.ContainsKey(currentMap))
+                                if (!settings.MapSettings.ContainsKey(currentMap))
                                 {
-                                    settings.mapSettings[currentMap] = new MapSetting();
+                                    settings.MapSettings[currentMap] = new MapSetting();
                                 }
 
                                 // transform 값과 현재 창 크기/위치 저장
-                                var mapSetting = settings.mapSettings[currentMap];
-                                mapSetting.transform = transform;
-                                mapSetting.width = this.Width;
-                                mapSetting.height = this.Height;
-                                mapSetting.left = this.Left;
-                                mapSetting.top = this.Top;
+                                var mapSetting = settings.MapSettings[currentMap];
+                                mapSetting.Transform = transform;
+                                mapSetting.Width = this.Width;
+                                mapSetting.Height = this.Height;
+                                mapSetting.Left = this.Left;
+                                mapSetting.Top = this.Top;
 
                                 // 설정 저장
                                 Env.SetSettings(settings);
@@ -493,26 +493,26 @@ public partial class MainWindow : Window
             }
 
             // 맵별 설정 초기화 (필요시)
-            if (settings.mapSettings == null)
+            if (settings.MapSettings == null)
             {
-                settings.mapSettings = new System.Collections.Generic.Dictionary<
+                settings.MapSettings = new System.Collections.Generic.Dictionary<
                     string,
                     MapSetting
                 >();
             }
 
             // 해당 맵 설정이 없으면 기본값으로 생성
-            if (!settings.mapSettings.ContainsKey(currentMap))
+            if (!settings.MapSettings.ContainsKey(currentMap))
             {
-                settings.mapSettings[currentMap] = new MapSetting();
+                settings.MapSettings[currentMap] = new MapSetting();
             }
 
             // 현재 창 크기/위치를 맵별 설정에 저장 (transform은 JavaScript에서 처리)
-            var mapSetting = settings.mapSettings[currentMap];
-            mapSetting.width = this.Width;
-            mapSetting.height = this.Height;
-            mapSetting.left = this.Left;
-            mapSetting.top = this.Top;
+            var mapSetting = settings.MapSettings[currentMap];
+            mapSetting.Width = this.Width;
+            mapSetting.Height = this.Height;
+            mapSetting.Left = this.Left;
+            mapSetting.Top = this.Top;
 
             // 설정 저장
             Env.SetSettings(settings);
@@ -531,10 +531,10 @@ public partial class MainWindow : Window
             // 현재 일반 모드일 때만 저장
             if (_pipController == null || !_pipController.IsActive)
             {
-                settings.normalLeft = this.Left;
-                settings.normalTop = this.Top;
-                settings.normalWidth = this.Width;
-                settings.normalHeight = this.Height;
+                settings.NormalLeft = this.Left;
+                settings.NormalTop = this.Top;
+                settings.NormalWidth = this.Width;
+                settings.NormalHeight = this.Height;
 
                 // 화면 비율 계산
                 double aspectRatio = this.Width / this.Height;
@@ -734,7 +734,7 @@ public partial class MainWindow : Window
             var settings = Env.GetSettings();
 
             // 핫키 기능이 비활성화되어 있으면 종료
-            if (!settings.pipHotkeyEnabled)
+            if (!settings.PipHotkeyEnabled)
             {
                 return;
             }
@@ -747,7 +747,7 @@ public partial class MainWindow : Window
 
             // 핫키 등록 (새 HotkeyManager가 UI 스레드에서 액션 실행)
             bool success = _hotkeyManager.RegisterHotkey(
-                settings.pipHotkeyKey,
+                settings.PipHotkeyKey,
                 () =>
                 {
                     _pipController?.TogglePipWindowPosition();

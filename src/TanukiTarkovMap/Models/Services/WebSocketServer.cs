@@ -143,8 +143,8 @@ namespace TanukiTarkovMap.Models.Services
         {
             MapChangeData data = new MapChangeData()
             {
-                messageType = WsMessageType.MAP_CHANGE,
-                map = map,
+                MssageType = WsMessageType.MAP_CHANGE,
+                Map = map,
             };
 
             // Show in logs parsed map name on Website
@@ -155,10 +155,10 @@ namespace TanukiTarkovMap.Models.Services
         {
             UpdatePositionData posData = new UpdatePositionData()
             {
-                messageType = WsMessageType.POSITION_UPDATE,
-                x = pos.X,
-                y = pos.Y,
-                z = pos.Z,
+                MssageType = WsMessageType.POSITION_UPDATE,
+                X = pos.X,
+                Y = pos.Y,
+                Z = pos.Z,
             };
             SendData(posData);
         }
@@ -167,8 +167,8 @@ namespace TanukiTarkovMap.Models.Services
         {
             SendFilenameData data = new SendFilenameData()
             {
-                messageType = WsMessageType.SEND_FILENAME,
-                filename = filename,
+                MssageType = WsMessageType.SEND_FILENAME,
+                Filename = filename,
             };
 
             SendData(data);
@@ -178,10 +178,10 @@ namespace TanukiTarkovMap.Models.Services
         {
             ConfigurationData data = new ConfigurationData()
             {
-                messageType = WsMessageType.CONFIGURATION,
-                version = Env.Version,
-                gameFolder = Env.GameFolder,
-                screenshotsFolder = Env.ScreenshotsFolder,
+                MssageType = WsMessageType.CONFIGURATION,
+                Version = Env.Version,
+                GameFolder = Env.GameFolder,
+                ScreenshotsFolder = Env.ScreenshotsFolder,
             };
 
             SendData(data);
@@ -191,9 +191,9 @@ namespace TanukiTarkovMap.Models.Services
         {
             QuestUpdateData data = new QuestUpdateData()
             {
-                messageType = WsMessageType.QUEST_UPDATE,
-                questId = questId,
-                status = status,
+                MssageType = WsMessageType.QUEST_UPDATE,
+                QuestId = questId,
+                Status = status,
             };
 
             SendData(data);
@@ -215,7 +215,7 @@ namespace TanukiTarkovMap.Models.Services
         {
             WsMessage msg = ParseJson<WsMessage>(json);
 
-            if (msg != null && msg.messageType == WsMessageType.SETTINGS_UPDATE)
+            if (msg != null && msg.MssageType == WsMessageType.SETTINGS_UPDATE)
             {
                 var settings = ParseJson<UpdateSettingsData>(json);
 
@@ -226,7 +226,7 @@ namespace TanukiTarkovMap.Models.Services
                 Watcher.Restart();
                 //Env.RestartApp();
             }
-            else if (msg != null && msg.messageType == WsMessageType.SETTINGS_RESET)
+            else if (msg != null && msg.MssageType == WsMessageType.SETTINGS_RESET)
             {
                 Settings.Delete();
                 Env.ResetSettings();

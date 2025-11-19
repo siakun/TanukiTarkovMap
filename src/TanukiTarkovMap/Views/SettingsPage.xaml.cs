@@ -69,14 +69,14 @@ namespace TanukiTarkovMap.Views
                 var settings = Env.GetSettings();
 
                 // 전역 PiP 설정
-                GlobalPipEnabledCheckBox.IsChecked = settings.pipEnabled;
+                GlobalPipEnabledCheckBox.IsChecked = settings.PipEnabled;
 
                 // PiP 위치 기억 설정
-                PipRememberPositionCheckBox.IsChecked = settings.pipRememberPosition;
+                PipRememberPositionCheckBox.IsChecked = settings.PipRememberPosition;
 
                 // PiP 핫키 설정
-                PipHotkeyEnabledCheckBox.IsChecked = settings.pipHotkeyEnabled;
-                PipHotkeyButton.Content = settings.pipHotkeyKey;
+                PipHotkeyEnabledCheckBox.IsChecked = settings.PipHotkeyEnabled;
+                PipHotkeyButton.Content = settings.PipHotkeyKey;
 
                 // 파일 자동 정리 설정
                 AutoDeleteLogsCheckBox.IsChecked = settings.autoDeleteLogs;
@@ -117,11 +117,11 @@ namespace TanukiTarkovMap.Views
                     // 현재 설정 값 적용 (내부 이름으로 검색)
                     string mapInternalName = _mapDisplayToInternal[mapDisplayName];
                     if (
-                        settings.mapSettings != null
-                        && settings.mapSettings.ContainsKey(mapInternalName)
+                        settings.MapSettings != null
+                        && settings.MapSettings.ContainsKey(mapInternalName)
                     )
                     {
-                        enabledCheckBox.IsChecked = settings.mapSettings[mapInternalName].enabled;
+                        enabledCheckBox.IsChecked = settings.MapSettings[mapInternalName].Enabled;
                     }
                     else
                     {
@@ -224,15 +224,15 @@ namespace TanukiTarkovMap.Views
                 var settings = Env.GetSettings();
 
                 // 전역 PiP 설정 저장
-                settings.pipEnabled = GlobalPipEnabledCheckBox.IsChecked ?? true;
-                settings.pipRememberPosition = PipRememberPositionCheckBox.IsChecked ?? true;
-                settings.pipHotkeyEnabled = PipHotkeyEnabledCheckBox.IsChecked ?? false;
-                settings.pipHotkeyKey = PipHotkeyButton.Content?.ToString()?.Trim() ?? "F11";
+                settings.PipEnabled = GlobalPipEnabledCheckBox.IsChecked ?? true;
+                settings.PipRememberPosition = PipRememberPositionCheckBox.IsChecked ?? true;
+                settings.PipHotkeyEnabled = PipHotkeyEnabledCheckBox.IsChecked ?? false;
+                settings.PipHotkeyKey = PipHotkeyButton.Content?.ToString()?.Trim() ?? "F11";
 
                 // 맵별 설정 저장
-                if (settings.mapSettings == null)
+                if (settings.MapSettings == null)
                 {
-                    settings.mapSettings = new Dictionary<string, MapSetting>();
+                    settings.MapSettings = new Dictionary<string, MapSetting>();
                 }
 
                 // 각 맵별 설정 저장
@@ -253,13 +253,13 @@ namespace TanukiTarkovMap.Views
                             // 디스플레이 이름을 내부 이름으로 변환
                             string mapInternalName = _mapDisplayToInternal[mapDisplayName];
 
-                            if (!settings.mapSettings.ContainsKey(mapInternalName))
+                            if (!settings.MapSettings.ContainsKey(mapInternalName))
                             {
-                                settings.mapSettings[mapInternalName] = new MapSetting();
+                                settings.MapSettings[mapInternalName] = new MapSetting();
                             }
 
-                            var mapSetting = settings.mapSettings[mapInternalName];
-                            mapSetting.enabled = checkBox.IsChecked ?? true;
+                            var mapSetting = settings.MapSettings[mapInternalName];
+                            mapSetting.Enabled = checkBox.IsChecked ?? true;
                         }
                     }
                 }

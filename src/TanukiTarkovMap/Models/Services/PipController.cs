@@ -17,8 +17,8 @@ namespace TanukiTarkovMap.Models.Services
         private string _currentMap = null;
 
         // 최상단 유지를 위한 타이머
-        private DispatcherTimer _topmostTimer;
-        private readonly object _timerLock = new object();
+        // private DispatcherTimer _topmostTimer;
+        //private readonly object _timerLock = new object();
 
         // 자동 복원 기능을 위한 상태 추적
         private bool _elementsHidden = false;
@@ -27,6 +27,12 @@ namespace TanukiTarkovMap.Models.Services
 
         // PiP 상태 추적을 위한 public 속성
         public bool IsActive => _isActive;
+
+        public PipController(MainWindow mainWindow)
+        {
+            _instance = this;
+            _mainWindow = mainWindow;
+        }
 
         // 현재 맵 정보를 외부에서 접근할 수 있도록 하는 메서드
         public string GetCurrentMap() => _currentMap;
@@ -76,11 +82,7 @@ namespace TanukiTarkovMap.Models.Services
             catch { }
         }
 
-        public PipController(MainWindow mainWindow)
-        {
-            _mainWindow = mainWindow;
-            _instance = this;
-        }
+       
 
         // 맵 변경 시 호출 (1차 트리거)
         public void OnMapChanged(string mapName)
@@ -89,10 +91,10 @@ namespace TanukiTarkovMap.Models.Services
 
             // PiP 기능이 활성화되어 있을 때만 ShowPip 호출
             var settings = Env.GetSettings();
-            if (settings.pipEnabled)
+            if (settings.PipEnabled)
             {
                 var mapSetting = GetMapSetting(settings, _currentMap);
-                if (mapSetting.enabled)
+                if (mapSetting.Enabled)
                 {
                     ShowPip();
                 }
@@ -193,13 +195,13 @@ namespace TanukiTarkovMap.Models.Services
                 {
                     // 1. 일반 모드 크기 및 위치 복원
                     var settings = Env.GetSettings();
-                    _mainWindow.Width = settings.normalWidth;
-                    _mainWindow.Height = settings.normalHeight;
+                    _mainWindow.Width = settings.NormalWidth;
+                    _mainWindow.Height = settings.NormalHeight;
 
-                    if (settings.normalLeft >= 0 && settings.normalTop >= 0)
+                    if (settings.NormalLeft >= 0 && settings.NormalTop >= 0)
                     {
-                        _mainWindow.Left = settings.normalLeft;
-                        _mainWindow.Top = settings.normalTop;
+                        _mainWindow.Left = settings.NormalLeft;
+                        _mainWindow.Top = settings.NormalTop;
                     }
                     else
                     {
@@ -434,22 +436,22 @@ namespace TanukiTarkovMap.Models.Services
 
                     // 3. PiP 크기 및 위치 설정 - 맵별 설정 적용
                     var mapSetting = GetMapSetting(settings, _currentMap);
-                    _mainWindow.Width = mapSetting.width;
-                    _mainWindow.Height = mapSetting.height;
+                    _mainWindow.Width = mapSetting.Width;
+                    _mainWindow.Height = mapSetting.Height;
 
                     // 4. 위치 설정 - 맵별 설정 적용
-                    if (mapSetting.left >= 0 && mapSetting.top >= 0)
+                    if (mapSetting.Left >= 0 && mapSetting.Top >= 0)
                     {
-                        _mainWindow.Left = mapSetting.left;
-                        _mainWindow.Top = mapSetting.top;
+                        _mainWindow.Left = mapSetting.Left;
+                        _mainWindow.Top = mapSetting.Top;
                     }
                     else
                     {
                         // 기본 위치: 화면 우하단
                         _mainWindow.Left =
-                            SystemParameters.PrimaryScreenWidth - mapSetting.width - 0;
+                            SystemParameters.PrimaryScreenWidth - mapSetting.Width - 0;
                         _mainWindow.Top =
-                            SystemParameters.PrimaryScreenHeight - mapSetting.height - 80;
+                            SystemParameters.PrimaryScreenHeight - mapSetting.Height - 80;
                     }
 
                     // 5. 최상단 설정 적용 (핫키와 동일한 방식으로 통일)
@@ -534,10 +536,10 @@ namespace TanukiTarkovMap.Models.Services
 
                 System.Windows.Application.Current.Dispatcher.Invoke(() =>
                 {
-                    settings.normalLeft = _mainWindow.Left;
-                    settings.normalTop = _mainWindow.Top;
-                    settings.normalWidth = _mainWindow.Width;
-                    settings.normalHeight = _mainWindow.Height;
+                    settings.NormalLeft = _mainWindow.Left;
+                    settings.NormalTop = _mainWindow.Top;
+                    settings.NormalWidth = _mainWindow.Width;
+                    settings.NormalHeight = _mainWindow.Height;
 
                     Env.SetSettings(settings);
                     Settings.Save();
@@ -599,12 +601,12 @@ namespace TanukiTarkovMap.Models.Services
             }
 
             // 맵별 설정에서 transform 값 확인
-            if (settings.mapSettings != null && settings.mapSettings.ContainsKey(mapName))
+            if (settings.MapSettings != null && settings.MapSettings.ContainsKey(mapName))
             {
-                var mapSetting = settings.mapSettings[mapName];
-                if (!string.IsNullOrEmpty(mapSetting.transform))
+                var mapSetting = settings.MapSettings[mapName];
+                if (!string.IsNullOrEmpty(mapSetting.Transform))
                 {
-                    return mapSetting.transform;
+                    return mapSetting.Transform;
                 }
             }
 
@@ -621,21 +623,21 @@ namespace TanukiTarkovMap.Models.Services
             }
 
             // 맵별 설정 확인
-            if (settings.mapSettings != null && settings.mapSettings.ContainsKey(mapName))
+            if (settings.MapSettings != null && settings.MapSettings.ContainsKey(mapName))
             {
-                return settings.mapSettings[mapName];
+                return settings.MapSettings[mapName];
             }
 
             // 저장된 설정이 없으면 기본값으로 새로 생성하고 저장
             var defaultSetting = new MapSetting();
-            if (settings.mapSettings == null)
+            if (settings.MapSettings == null)
             {
-                settings.mapSettings = new System.Collections.Generic.Dictionary<
+                settings.MapSettings = new System.Collections.Generic.Dictionary<
                     string,
                     MapSetting
                 >();
             }
-            settings.mapSettings[mapName] = defaultSetting;
+            settings.MapSettings[mapName] = defaultSetting;
             Env.SetSettings(settings);
             Settings.Save();
 
