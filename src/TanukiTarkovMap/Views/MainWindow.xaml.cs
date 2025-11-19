@@ -10,805 +10,499 @@ using TanukiTarkovMap.Models.Constants;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
+using TanukiTarkovMap.ViewModels;
 
-namespace TanukiTarkovMap.Views;
-
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
-public partial class MainWindow : Window
+namespace TanukiTarkovMap.Views
 {
-    // Win32 API 선언 (윈도우 드래그용)
-    [DllImport("user32.dll")]
-    private static extern bool ReleaseCapture();
-
-    [DllImport("user32.dll")]
-    private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-
-    private const int WM_NCLBUTTONDOWN = 0xA1;
-    private const int HT_CAPTION = 0x2;
-
-    private int _tabCounter = 1;
-    private readonly Dictionary<TabItem, WebView2> _tabWebViews = new();
-    private PipController _pipController;
-    private System.Windows.Threading.DispatcherTimer _settingsSaveTimer;
-    private HotkeyManager _hotkeyManager;
-
-    public MainWindow()
-    {
-        try
-        {
-            InitializeComponent();
-
-            // 윈도우 로드 완료 후 초기화
-            Loaded += MainWindow_Loaded;
-            Closed += MainWindow_Closed;
-
-            // 키보드 이벤트 핸들러 추가 (디버그 모드용)
-            this.PreviewKeyDown += MainWindow_PreviewKeyDown;
-        }
-        catch (Exception)
-        {
-            throw;
-        }
-    }
-
-    // 탭 제목 업데이트
-    private static void UpdateTabTitle(TabItem tabItem, string title)
-    {
-        if (!string.IsNullOrEmpty(title))
-        {
-            // "Tarkov Pilot"를 "Tarkov Client"로 변경
-            string displayTitle = title.Replace("Tarkov Pilot", "Tarkov Client");
-            tabItem.Header =
-                displayTitle.Length > 20 ? displayTitle.Substring(0, 20) + "..." : displayTitle;
-        }
-    }
-
-    // Tarkov Market Map 방향 표시기 추가 (탭별)
-    private static async Task AddDirectionIndicators(WebView2 webView)
-    {
-        try
-        {
-            await Task.Delay(2000); // 페이지 로딩 완료 대기
-            await webView.CoreWebView2.ExecuteScriptAsync(
-                JavaScriptConstants.ADD_DIRECTION_INDICATORS_SCRIPT
-            );
-        }
-        catch (Exception)
-        {
-            // 에러 처리
-        }
-    }
-
-    // 불필요한 UI 요소 제거 (탭별)
-    private static async Task RemoveUnwantedElements(WebView2 webView)
-    {
-        try
-        {
-            await webView.CoreWebView2.ExecuteScriptAsync(
-                JavaScriptConstants.REMOVE_UNWANTED_ELEMENTS_SCRIPT
-            );
-        }
-        catch (Exception)
-        {
-            // 에러 처리
-        }
-    }
-
-    private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
-    {
-        // 로딩 패널 강제 숨김 (디버그용)
-        LoadingPanel.Visibility = Visibility.Collapsed;
-
-        await InitializeTabs();
-
-        // PiP 컨트롤러 초기화
-        _pipController = new PipController(this);
-
-        // 창 크기/위치 변경 시 설정 저장을 위한 이벤트 핸들러 등록
-        this.SizeChanged += MainWindow_SizeChanged;
-        this.LocationChanged += MainWindow_LocationChanged;
-
-        // 핫키 매니저 초기화 (전역 단축키용)
-        // 디버그 모드에서는 작동하지 않을 수 있음
-        InitializeHotkeyManager();
-    }
-
     /// <summary>
-    /// MainWindow 내에서의 키 입력 처리 (디버그 모드용)
+    /// Interaction logic for MainWindow.xaml
     /// </summary>
-    private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+    public partial class MainWindow : Window
     {
-        try
+        // Win32 API 선언 (윈도우 드래그용)
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+
+        private const int WM_NCLBUTTONDOWN = 0xA1;
+        private const int HT_CAPTION = 0x2;
+
+        private int _tabCounter = 1;
+        private readonly Dictionary<TabItem, WebView2> _tabWebViews = new();
+        private MainWindowViewModel _viewModel;
+        private IPipService _pipService;
+        private HotkeyManager _hotkeyManager;
+
+        public MainWindow()
         {
-            var settings = Env.GetSettings();
-
-            // 설정에서 핫키가 활성화되어 있고, 해당 키가 눌렸을 때
-            if (settings.PipHotkeyEnabled)
+            try
             {
-                // F11 또는 설정된 키 확인
-                if ((settings.PipHotkeyKey == "F11" && e.Key == Key.F11) ||
-                    (settings.PipHotkeyKey == "Home" && e.Key == Key.Home) ||
-                    (settings.PipHotkeyKey == "F12" && e.Key == Key.F12) ||
-                    (settings.PipHotkeyKey == "F10" && e.Key == Key.F10) ||
-                    (settings.PipHotkeyKey == "F9" && e.Key == Key.F9))
-                {
-                    Logger.SimpleLog($"MainWindow KeyDown detected: {e.Key}");
+                InitializeComponent();
 
-                    // PIP 모드 토글
-                    _pipController?.TogglePipWindowPosition();
+                // ViewModel 초기화
+                _pipService = new PipService();
+                _viewModel = new MainWindowViewModel(_pipService);
+                DataContext = _viewModel;
 
-                    // 이벤트 처리 완료 표시
-                    e.Handled = true;
-                }
+                // 윈도우 로드 완료 후 초기화
+                Loaded += MainWindow_Loaded;
+                Closed += MainWindow_Closed;
+
+                // 키보드 이벤트 핸들러 추가 (디버그 모드용)
+                this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+            }
+            catch (Exception)
+            {
+                throw;
             }
         }
-        catch (Exception ex)
+
+        // 탭 제목 업데이트
+        private static void UpdateTabTitle(TabItem tabItem, string title)
         {
-            Logger.Error("MainWindow_PreviewKeyDown error", ex);
+            if (!string.IsNullOrEmpty(title))
+            {
+                // "Tarkov Pilot"를 "Tarkov Client"로 변경
+                string displayTitle = title.Replace("Tarkov Pilot", "Tarkov Client");
+                tabItem.Header =
+                    displayTitle.Length > 20 ? displayTitle.Substring(0, 20) + "..." : displayTitle;
+            }
         }
-    }
 
-    // 탭 시스템 초기화 및 첫 번째 탭 생성
-    private async Task InitializeTabs()
-    {
-        try
+        // Tarkov Market Map 방향 표시기 추가 (탭별)
+        private static async Task AddDirectionIndicators(WebView2 webView)
         {
-            // 첫 번째 탭 생성
-            await CreateNewTab();
+            try
+            {
+                await Task.Delay(2000); // 페이지 로딩 완료 대기
+                await webView.CoreWebView2.ExecuteScriptAsync(
+                    JavaScriptConstants.ADD_DIRECTION_INDICATORS_SCRIPT
+                );
+            }
+            catch (Exception)
+            {
+                // 에러 처리
+            }
+        }
 
-            // 전체 로딩 패널 숨김
+        // 불필요한 UI 요소 제거 (탭별)
+        private static async Task RemoveUnwantedElements(WebView2 webView)
+        {
+            try
+            {
+                await webView.CoreWebView2.ExecuteScriptAsync(
+                    JavaScriptConstants.REMOVE_UNWANTED_ELEMENTS_SCRIPT
+                );
+            }
+            catch (Exception)
+            {
+                // 에러 처리
+            }
+        }
+
+        private async void MainWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            // 로딩 패널 강제 숨김 (디버그용)
             LoadingPanel.Visibility = Visibility.Collapsed;
+
+            await InitializeTabs();
+
+            // ViewModel이 PIP 모드 변경을 처리하도록 PropertyChanged 구독
+            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+
+            // 핫키 매니저 초기화 (전역 단축키용)
+            InitializeHotkeyManager();
         }
-        catch (Exception)
+
+        /// <summary>
+        /// ViewModel 프로퍼티 변경 처리
+        /// </summary>
+        private async void ViewModel_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
         {
-            // 로딩 패널에 에러 메시지 표시
-            LoadingPanel.Visibility = Visibility.Visible;
-
-            var stackPanel = LoadingPanel.Child as System.Windows.Controls.StackPanel;
-
-            if (stackPanel?.Children.Count > 1)
+            switch (e.PropertyName)
             {
-                var errorText = stackPanel.Children[1] as System.Windows.Controls.TextBlock;
-                if (errorText != null)
-                {
-                    errorText.Text = "탭 시스템 초기화 실패";
-                }
-            }
-        }
-    }
-
-    // 새 탭 생성
-    private async Task CreateNewTab()
-    {
-        try
-        {
-            // 새 TabItem 생성
-            var newTab = new TabItem
-            {
-                Header = $"Tarkov Client {_tabCounter}",
-                Background = System.Windows.Media.Brushes.Transparent,
-            };
-
-            // 새 WebView2 생성
-            var webView = new WebView2
-            {
-                DefaultBackgroundColor = System.Drawing.Color.Transparent, // 투명 배경으로 설정
-            };
-
-            // 탭에 WebView2 추가
-            newTab.Content = webView;
-
-            // TabControl에 새 탭 추가
-            TabContainer.Items.Add(newTab);
-            _tabWebViews[newTab] = webView;
-
-            // 새 탭 선택
-            TabContainer.SelectedItem = newTab;
-
-            // WebView2 초기화
-            await InitializeWebView(webView, newTab);
-
-            _tabCounter++;
-        }
-        catch (Exception)
-        {
-            // 에러 처리는 상위에서
-        }
-    }
-
-    // WebView2 초기화
-    private async Task InitializeWebView(WebView2 webView, TabItem tabItem)
-    {
-        try
-        {
-            // WebView2 데이터 폴더를 사용자 앱데이터 폴더로 설정
-            var userDataFolder = Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                "TanukiTarkovMap",
-                "WebView2"
-            );
-
-            var webView2Environment = await CoreWebView2Environment.CreateAsync(
-                null,
-                userDataFolder
-            );
-            await webView.EnsureCoreWebView2Async(webView2Environment);
-
-            // WebView2 설정
-            webView.CoreWebView2.Settings.AreDevToolsEnabled = true;
-            webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = true;
-            webView.CoreWebView2.Settings.IsWebMessageEnabled = true;
-
-            // CSP 우회 설정 추가
-            webView.CoreWebView2.Settings.AreHostObjectsAllowed = true;
-            webView.CoreWebView2.Settings.IsScriptEnabled = true;
-
-            // 이벤트 핸들러 등록
-            webView.NavigationCompleted += (sender, e) =>
-                WebView_NavigationCompleted(sender, e, tabItem);
-            webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
-            webView.CoreWebView2.DocumentTitleChanged += (sender, e) =>
-                UpdateTabTitle(tabItem, webView.CoreWebView2.DocumentTitle);
-
-            // 타르코프 마켓 파일럿 페이지 로드
-            string pilotUrl = Env.WebsiteUrl;
-            webView.Source = new Uri(pilotUrl);
-        }
-        catch (Exception)
-        {
-            // 에러 처리
-        }
-    }
-
-    // TC 버튼 클릭 - 새 탭 생성
-    private void NewTab_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            // 새로운 탭 생성
-            _ = CreateNewTab();
-        }
-        catch (Exception) { }
-    }
-
-    // 설정 버튼 클릭
-    private void Settings_Click(object sender, RoutedEventArgs e)
-    {
-        try
-        {
-            // 이미 설정 탭이 있는지 확인
-            TabItem existingSettingsTab = null;
-            foreach (TabItem tab in TabContainer.Items)
-            {
-                if (tab.Header?.ToString() == "설정")
-                {
-                    existingSettingsTab = tab;
+                case nameof(MainWindowViewModel.IsPipMode):
+                    await HandlePipModeChanged();
                     break;
-                }
+                case nameof(MainWindowViewModel.CurrentMap):
+                    await HandleMapChanged();
+                    break;
             }
+        }
 
-            if (existingSettingsTab != null)
+        /// <summary>
+        /// PIP 모드 변경 처리
+        /// </summary>
+        private async Task HandlePipModeChanged()
+        {
+            if (_viewModel.IsPipMode)
             {
-                // 이미 설정 탭이 있으면 해당 탭으로 이동
-                TabContainer.SelectedItem = existingSettingsTab;
+                // PIP 모드 진입 시 JavaScript 적용
+                var activeWebView = GetActiveWebView();
+                if (activeWebView != null)
+                {
+                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap);
+                }
+
+                // Topmost 설정 (Win32 API)
+                WindowTopmost.SetTopmost(this);
             }
             else
             {
-                // 새 설정 탭 생성
-                CreateSettingsTab();
-            }
-        }
-        catch (Exception) { }
-    }
-
-
-    // 탭별 WebView2 네비게이션 완료 이벤트
-    private void WebView_NavigationCompleted(
-        object sender,
-        CoreWebView2NavigationCompletedEventArgs e,
-        TabItem tabItem
-    )
-    {
-        var webView = sender as WebView2;
-
-        if (e.IsSuccess)
-        {
-            /* WebSocket 서버에 WebView 준비 완료 알림 (첫 번째 탭에서만) */
-            if (TabContainer.Items.IndexOf(tabItem) == 0 && Server.CanSend)
-            {
-                Server.SendConfiguration();
-            }
-
-            // 불필요한 UI 요소 제거 및 방향 표시기 추가
-            _ = RemoveUnwantedElements(webView);
-            _ = AddDirectionIndicators(webView);
-        }
-    }
-
-    // 탭 닫기 버튼 클릭
-    private void CloseTab_Click(object sender, RoutedEventArgs e)
-    {
-        var button = sender as System.Windows.Controls.Button;
-        var tabItem = button?.Tag as TabItem;
-
-        /* 최소 1개 탭은 유지 */
-        if (tabItem != null && TabContainer.Items.Count > 1)
-        {
-            CloseTab(tabItem);
-        }
-    }
-
-    // 탭 닫기
-    private void CloseTab(TabItem tabItem)
-    {
-        if (_tabWebViews.TryGetValue(tabItem, out var webView))
-        {
-            // WebView2 정리
-            webView?.Dispose();
-            _tabWebViews.Remove(tabItem);
-        }
-
-        // TabControl에서 탭 제거
-        TabContainer.Items.Remove(tabItem);
-    }
-
-    // JavaScript에서 C#로 메시지 수신
-    private void CoreWebView2_WebMessageReceived(
-        object sender,
-        CoreWebView2WebMessageReceivedEventArgs e
-    )
-    {
-        try
-        {
-            string message = e.TryGetWebMessageAsString();
-
-            // 빈 메시지 체크
-            if (string.IsNullOrEmpty(message))
-            {
-                return;
-            }
-
-            // JSON 파싱을 위해 Newtonsoft.Json 사용
-            var messageObj = Newtonsoft.Json.JsonConvert.DeserializeObject<dynamic>(message);
-
-            string messageType = messageObj?.type?.ToString();
-
-            switch (messageType)
-            {
-                case "pip-drag-start":
-                    // Win32 API를 사용한 윈도우 드래그 (DragMove 대안)
-                    try
-                    {
-                        // Win32 API를 사용하여 윈도우를 드래그 가능 상태로 만듦
-                        var hwnd = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-                        ReleaseCapture();
-                        SendMessage(hwnd, WM_NCLBUTTONDOWN, HT_CAPTION, 0);
-                    }
-                    catch (Exception) { }
-                    break;
-
-                case "pip-exit":
-                    // JavaScript에서 PiP 종료 요청
-                    if (_pipController != null)
-                    {
-                        _pipController.HidePip();
-                    }
-                    else { }
-                    break;
-
-                case "pip-overlay-ready":
-                    break;
-
-                case "pip-toggle":
-                    // JavaScript에서 PiP 토글 요청
-                    if (_pipController != null)
-                    {
-                        _pipController.TogglePip();
-                    }
-
-                    break;
-
-                case "save-map-settings":
-                    // JavaScript에서 맵별 설정 저장 요청
-                    try
-                    {
-                        string transform = messageObj?.transform?.ToString();
-
-                        if (_pipController != null && !string.IsNullOrEmpty(transform))
-                        {
-                            var settings = Env.GetSettings();
-                            string currentMap = _pipController.GetCurrentMap();
-
-                            if (!string.IsNullOrEmpty(currentMap))
-                            {
-                                // 맵별 설정 초기화 (필요시)
-                                if (settings.MapSettings == null)
-                                {
-                                    settings.MapSettings =
-                                        new System.Collections.Generic.Dictionary<
-                                            string,
-                                            MapSetting
-                                        >();
-                                }
-
-                                // 해당 맵 설정이 없으면 기본값으로 생성
-                                if (!settings.MapSettings.ContainsKey(currentMap))
-                                {
-                                    settings.MapSettings[currentMap] = new MapSetting();
-                                }
-
-                                // transform 값과 현재 창 크기/위치 저장
-                                var mapSetting = settings.MapSettings[currentMap];
-                                mapSetting.Transform = transform;
-                                mapSetting.Width = this.Width;
-                                mapSetting.Height = this.Height;
-                                mapSetting.Left = this.Left;
-                                mapSetting.Top = this.Top;
-
-                                // 설정 저장
-                                Env.SetSettings(settings);
-                                Settings.Save();
-                            }
-                        }
-                    }
-                    catch (Exception) { }
-                    break;
-
-                default:
-                    break;
-            }
-        }
-        catch (Exception) { }
-    }
-
-    // 창 크기 변경 이벤트
-    private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
-    {
-        // 기존 타이머가 있으면 재시작
-        ScheduleSettingsSave();
-    }
-
-    // 창 위치 변경 이벤트
-    private void MainWindow_LocationChanged(object sender, EventArgs e)
-    {
-        // 기존 타이머가 있으면 재시작
-        ScheduleSettingsSave();
-    }
-
-    // 설정 저장 스케줄링 (중복 방지)
-    private void ScheduleSettingsSave()
-    {
-        // 기존 타이머 중지
-        _settingsSaveTimer?.Stop();
-
-        // 새 타이머 생성 또는 재사용
-        if (_settingsSaveTimer == null)
-        {
-            _settingsSaveTimer = new System.Windows.Threading.DispatcherTimer();
-            _settingsSaveTimer.Interval = TimeSpan.FromMilliseconds(500);
-            _settingsSaveTimer.Tick += (s, args) =>
-            {
-                _settingsSaveTimer.Stop();
-
-                // 모드별 설정 저장
-                if (_pipController != null && _pipController.IsActive)
+                // 일반 모드 복원 시 JavaScript 복원
+                var activeWebView = GetActiveWebView();
+                if (activeWebView != null)
                 {
-                    // PiP 모드: 맵별 설정 저장 (창 크기/위치만, transform은 JavaScript에서 처리)
-                    SavePipModeSettings();
+                    await _pipService.RestoreNormalModeJavaScriptAsync(activeWebView);
                 }
-                else
+
+                // Topmost 해제 (Win32 API)
+                WindowTopmost.RemoveTopmost(this);
+            }
+        }
+
+        /// <summary>
+        /// 맵 변경 처리
+        /// </summary>
+        private async Task HandleMapChanged()
+        {
+            if (_viewModel.IsPipMode && !string.IsNullOrEmpty(_viewModel.CurrentMap))
+            {
+                var activeWebView = GetActiveWebView();
+                if (activeWebView != null)
                 {
-                    // 일반 모드: 일반 모드 설정 저장
-                    SaveNormalModeSettings();
+                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap);
                 }
+            }
+        }
+
+        /// <summary>
+        /// MainWindow 내에서의 키 입력 처리 (디버그 모드용)
+        /// </summary>
+        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            try
+            {
+                // 설정에서 핫키가 활성화되어 있고, 해당 키가 눌렸을 때
+                if (_viewModel.PipHotkeyEnabled)
+                {
+                    // F11 또는 설정된 키 확인
+                    if ((_viewModel.PipHotkeyKey == "F11" && e.Key == Key.F11) ||
+                        (_viewModel.PipHotkeyKey == "Home" && e.Key == Key.Home) ||
+                        (_viewModel.PipHotkeyKey == "F12" && e.Key == Key.F12) ||
+                        (_viewModel.PipHotkeyKey == "F10" && e.Key == Key.F10) ||
+                        (_viewModel.PipHotkeyKey == "F9" && e.Key == Key.F9))
+                    {
+                        Logger.SimpleLog($"MainWindow KeyDown detected: {e.Key}");
+
+                        // PIP 모드 토글 Command 실행
+                        _viewModel.TogglePipModeCommand.Execute(null);
+
+                        // 이벤트 처리 완료 표시
+                        e.Handled = true;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("MainWindow_PreviewKeyDown error", ex);
+            }
+        }
+
+        // 탭 시스템 초기화 및 첫 번째 탭 생성
+        private async Task InitializeTabs()
+        {
+            // 첫 번째 탭 추가 (URL은 Env.WebsiteUrl 사용)
+            await AddNewTab(Env.WebsiteUrl);
+        }
+
+        private async Task AddNewTab(string url = null)
+        {
+            url ??= Env.WebsiteUrl;
+
+            // 새 탭 생성
+            var tabItem = new TabItem
+            {
+                Header = $"Tarkov Client {_tabCounter++}",
+                Foreground = new SolidColorBrush(Colors.White)
             };
+
+            // WebView2 생성
+            var webView = new WebView2
+            {
+                DefaultBackgroundColor = System.Drawing.Color.FromArgb(26, 26, 26)
+            };
+
+            // 탭 컨텐츠 설정 (Visual Tree에 먼저 추가)
+            tabItem.Content = webView;
+
+            // 탭 추가 및 활성화 (WebView2가 렌더링될 수 있도록)
+            _tabWebViews[tabItem] = webView;
+            TabContainer.Items.Add(tabItem);
+            TabContainer.SelectedItem = tabItem;
+
+            // WebView2 초기화 (Visual Tree에 추가된 후)
+            await InitializeWebView2(webView, tabItem);
+
+            // URL 로드
+            webView.Source = new Uri(url);
         }
 
-        // 타이머 시작
-        _settingsSaveTimer.Start();
-    }
-
-    // PiP 모드 설정 저장 (맵별)
-    private void SavePipModeSettings()
-    {
-        try
+        private async Task InitializeWebView2(WebView2 webView, TabItem tabItem)
         {
-            if (_pipController == null)
+            try
             {
+                Logger.SimpleLog("InitializeWebView2: Start");
+
+                // UserDataFolder 설정 (각 WebView2 인스턴스가 동일한 폴더 공유)
+                var userDataFolder = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "TarkovClient",
+                    "WebView2"
+                );
+                Logger.SimpleLog($"InitializeWebView2: UserDataFolder = {userDataFolder}");
+
+                // CoreWebView2 환경 생성
+                Logger.SimpleLog("InitializeWebView2: Creating CoreWebView2Environment");
+                var environment = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
+                Logger.SimpleLog("InitializeWebView2: Environment created");
+
+                // CoreWebView2 초기화
+                Logger.SimpleLog("InitializeWebView2: Calling EnsureCoreWebView2Async");
+                await webView.EnsureCoreWebView2Async(environment);
+                Logger.SimpleLog("InitializeWebView2: CoreWebView2 initialized");
+
+                // WebView2 설정
+                ConfigureWebView2Settings(webView);
+                Logger.SimpleLog("InitializeWebView2: Settings configured");
+
+                // 이벤트 핸들러 등록
+                webView.NavigationCompleted += (s, e) => WebView_NavigationCompleted(s, e, tabItem);
+                Logger.SimpleLog("InitializeWebView2: Event handlers registered");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("InitializeWebView2 failed", ex);
+                throw;
+            }
+        }
+
+        // WebView2 설정 구성
+        private static void ConfigureWebView2Settings(WebView2 webView)
+        {
+            var settings = webView.CoreWebView2.Settings;
+
+            settings.IsScriptEnabled = true;
+            settings.AreDefaultScriptDialogsEnabled = false;
+            settings.IsWebMessageEnabled = true;
+            settings.AreDevToolsEnabled = false;
+            settings.AreDefaultContextMenusEnabled = false;
+
+            settings.IsZoomControlEnabled = true;
+            settings.IsPasswordAutosaveEnabled = false;
+            settings.IsGeneralAutofillEnabled = false;
+        }
+
+        // 페이지 로딩 완료 시 처리 (탭별)
+        private async void WebView_NavigationCompleted(
+            object sender,
+            CoreWebView2NavigationCompletedEventArgs e,
+            TabItem tabItem
+        )
+        {
+            if (!e.IsSuccess)
                 return;
-            }
 
-            var settings = Env.GetSettings();
-            string currentMap = _pipController.GetCurrentMap();
-
-            if (string.IsNullOrEmpty(currentMap))
-            {
+            var webView = sender as WebView2;
+            if (webView == null)
                 return;
-            }
 
-            // 맵별 설정 초기화 (필요시)
-            if (settings.MapSettings == null)
+            // 페이지 제목 가져오기 및 업데이트
+            var title = await webView.CoreWebView2.ExecuteScriptAsync("document.title");
+            UpdateTabTitle(tabItem, title?.Trim('"'));
+
+            // WebSocket 통신을 위한 메시지 핸들러 등록
+            webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+
+            // 기본 작업들
+            await RemoveUnwantedElements(webView);
+
+            // Tarkov Market 전용 처리
+            if (webView.Source?.ToString().Contains("tarkov-market.com") == true)
             {
-                settings.MapSettings = new System.Collections.Generic.Dictionary<
-                    string,
-                    MapSetting
-                >();
-            }
+                // 방향 표시기 추가
+                await AddDirectionIndicators(webView);
 
-            // 해당 맵 설정이 없으면 기본값으로 생성
-            if (!settings.MapSettings.ContainsKey(currentMap))
+                // PIP 모드 상태면 JavaScript 적용
+                if (_viewModel.IsPipMode)
+                {
+                    await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap);
+                }
+            }
+        }
+
+        // WebSocket 메시지 수신 처리 (맵 정보 수신)
+        private void CoreWebView2_WebMessageReceived(
+            object sender,
+            CoreWebView2WebMessageReceivedEventArgs e
+        )
+        {
+            try
             {
-                settings.MapSettings[currentMap] = new MapSetting();
+                var message = e.TryGetWebMessageAsString();
+                if (!string.IsNullOrEmpty(message))
+                {
+                    // 맵 정보 파싱 (예: "map:customs_preset")
+                    if (message.StartsWith("map:"))
+                    {
+                        var mapName = message.Substring(4);
+                        Logger.SimpleLog($"Map received from WebSocket: {mapName}");
+
+                        // ViewModel의 CurrentMap 업데이트
+                        Dispatcher.Invoke(() =>
+                        {
+                            _viewModel.CurrentMap = mapName;
+                        });
+                    }
+                }
             }
-
-            // 현재 창 크기/위치를 맵별 설정에 저장 (transform은 JavaScript에서 처리)
-            var mapSetting = settings.MapSettings[currentMap];
-            mapSetting.Width = this.Width;
-            mapSetting.Height = this.Height;
-            mapSetting.Left = this.Left;
-            mapSetting.Top = this.Top;
-
-            // 설정 저장
-            Env.SetSettings(settings);
-            Settings.Save();
-        }
-        catch (Exception) { }
-    }
-
-    // 일반 모드 설정 저장
-    private void SaveNormalModeSettings()
-    {
-        try
-        {
-            var settings = Env.GetSettings();
-
-            // 현재 일반 모드일 때만 저장
-            if (_pipController == null || !_pipController.IsActive)
+            catch (Exception)
             {
-                settings.NormalLeft = this.Left;
-                settings.NormalTop = this.Top;
-                settings.NormalWidth = this.Width;
-                settings.NormalHeight = this.Height;
-
-                // 화면 비율 계산
-                double aspectRatio = this.Width / this.Height;
-                string aspectRatioFormatted = $"{aspectRatio:F3}";
-
-                // 일반적인 비율 판별
-                string aspectRatioName = GetAspectRatioName(aspectRatio);
-
-                Env.SetSettings(settings);
-                Settings.Save();
+                // 에러 처리
             }
         }
-        catch (Exception) { }
-    }
 
-    // 화면 비율 이름 판별
-    private string GetAspectRatioName(double aspectRatio)
-    {
-        // 허용 오차 범위
-        const double tolerance = 0.05;
-
-        // 일반적인 화면 비율들
-        if (Math.Abs(aspectRatio - (16.0 / 9.0)) < tolerance)
-            return "16:9";
-        if (Math.Abs(aspectRatio - (16.0 / 10.0)) < tolerance)
-            return "16:10";
-        if (Math.Abs(aspectRatio - (4.0 / 3.0)) < tolerance)
-            return "4:3";
-        if (Math.Abs(aspectRatio - (21.0 / 9.0)) < tolerance)
-            return "21:9 (Ultra-wide)";
-        if (Math.Abs(aspectRatio - (32.0 / 9.0)) < tolerance)
-            return "32:9 (Super Ultra-wide)";
-        if (Math.Abs(aspectRatio - (3.0 / 2.0)) < tolerance)
-            return "3:2";
-        if (Math.Abs(aspectRatio - (5.0 / 4.0)) < tolerance)
-            return "5:4";
-        if (Math.Abs(aspectRatio - 1.0) < tolerance)
-            return "1:1 (Square)";
-
-        // 일반적이지 않은 비율
-        return "Custom";
-    }
-
-    // PiP 드래그 관련 변수
-    private bool _isDragging = false;
-    private System.Windows.Point _lastMousePosition;
-
-    // PiP 상단 드래그 영역 - 마우스 다운
-    private void PipDragArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        try
+        // 새 탭 추가 버튼 클릭
+        private async void NewTab_Click(object sender, RoutedEventArgs e)
         {
-            _isDragging = true;
-            _lastMousePosition = e.GetPosition(this);
-
-            // 마우스 캡처
-            ((Border)sender).CaptureMouse();
+            await AddNewTab();
         }
-        catch (Exception) { }
-    }
 
-    // PiP 상단 드래그 영역 - 마우스 이동
-    private void PipDragArea_MouseMove(object sender, System.Windows.Input.MouseEventArgs e)
-    {
-        try
+        // 탭 닫기 버튼 클릭
+        private void CloseTab_Click(object sender, RoutedEventArgs e)
         {
-            if (_isDragging && e.LeftButton == MouseButtonState.Pressed)
+            if (sender is not Button button)
+                return;
+
+            if (button.Tag is not TabItem tabItem)
+                return;
+
+            // 마지막 탭이면 닫지 않음
+            if (TabContainer.Items.Count <= 1)
+                return;
+
+            // WebView2 정리
+            if (_tabWebViews.TryGetValue(tabItem, out var webView))
             {
-                System.Windows.Point currentPosition = e.GetPosition(this);
-
-                // 이동 거리 계산
-                double deltaX = currentPosition.X - _lastMousePosition.X;
-                double deltaY = currentPosition.Y - _lastMousePosition.Y;
-
-                // 창 위치 업데이트
-                this.Left += deltaX;
-                this.Top += deltaY;
+                webView?.Dispose();
+                _tabWebViews.Remove(tabItem);
             }
+
+            // 탭 제거
+            TabContainer.Items.Remove(tabItem);
         }
-        catch (Exception) { }
-    }
 
-    // PiP 상단 드래그 영역 - 마우스 업
-    private void PipDragArea_MouseLeftButtonUp(object sender, MouseButtonEventArgs e)
-    {
-        try
+        // 설정 버튼 클릭
+        private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            _isDragging = false;
-
-            // 마우스 캡처 해제
-            ((Border)sender).ReleaseMouseCapture();
-
-            // 위치 저장은 JavaScript에서 호버 해제 시 자동으로 처리됨
-        }
-        catch (Exception) { }
-    }
-
-    // PiP 하단 종료 영역 - 클릭
-    private void PipExitArea_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-    {
-        try
-        {
-            // PiP 해제 실행
-            if (_pipController != null)
+            // 설정 페이지를 모달로 표시
+            var settingsWindow = new Window
             {
-                _pipController.HidePip();
+                Title = "설정",
+                Width = 800,
+                Height = 600,
+                Owner = this,
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
+            };
+
+            var settingsPage = new SettingsPage();
+            settingsWindow.Content = settingsPage;
+            settingsWindow.ShowDialog();
+        }
+
+        // 핫키 매니저 초기화 (전역 단축키용)
+        private void InitializeHotkeyManager()
+        {
+            try
+            {
+                _hotkeyManager = new HotkeyManager(this);
+
+                // PIP 핫키 등록
+                if (_viewModel.PipHotkeyEnabled && !string.IsNullOrEmpty(_viewModel.PipHotkeyKey))
+                {
+                    _hotkeyManager.RegisterHotkey(_viewModel.PipHotkeyKey, () =>
+                    {
+                        Logger.SimpleLog("Global hotkey triggered");
+                        Dispatcher.Invoke(() =>
+                        {
+                            _viewModel.TogglePipModeCommand.Execute(null);
+                        });
+                    });
+
+                    Logger.SimpleLog($"Hotkey registered: {_viewModel.PipHotkeyKey}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to initialize HotkeyManager", ex);
             }
         }
-        catch (Exception) { }
-    }
 
-    // 윈도우 종료 이벤트
-    private void MainWindow_Closed(object sender, EventArgs e)
-    {
-        try
+        // 핫키 설정 업데이트 (SettingsPage에서 호출)
+        public void UpdateHotkeySettings()
         {
-            // PiP 창 정리
-            _pipController?.HidePip();
+            try
+            {
+                // 기존 핫키 매니저 정리
+                _hotkeyManager?.Dispose();
+
+                // ViewModel의 설정 다시 로드
+                _viewModel.LoadSettings();
+
+                // 핫키 매니저 재초기화
+                InitializeHotkeyManager();
+
+                Logger.SimpleLog("Hotkey settings updated");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("Failed to update hotkey settings", ex);
+            }
+        }
+
+        // 현재 활성 WebView2 가져오기
+        private WebView2 GetActiveWebView()
+        {
+            if (TabContainer.SelectedItem is TabItem selectedTab)
+            {
+                if (_tabWebViews.TryGetValue(selectedTab, out var webView))
+                {
+                    return webView;
+                }
+            }
+            return null;
+        }
+
+        // 창 닫기 시 정리
+        private void MainWindow_Closed(object sender, EventArgs e)
+        {
+            // ViewModel 이벤트 구독 해제
+            if (_viewModel != null)
+            {
+                _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+            }
 
             // 핫키 매니저 정리
             _hotkeyManager?.Dispose();
 
-            // 모든 탭의 WebView2 정리
-            foreach (var kvp in _tabWebViews)
+            // WebView2 정리
+            foreach (var webView in _tabWebViews.Values)
             {
-                var webView = kvp.Value;
-                if (webView?.CoreWebView2 != null)
-                {
-                    webView.CoreWebView2.WebMessageReceived -= CoreWebView2_WebMessageReceived;
-                }
                 webView?.Dispose();
             }
             _tabWebViews.Clear();
-
-            // 시스템 트레이에서 종료하지 않는 한 애플리케이션은 계속 실행
-            // System.Windows.Application.Current.Shutdown();
         }
-        catch (Exception)
-        {
-            // 에러 처리
-        }
-    }
-
-    // 현재 활성 WebView2 반환
-    private WebView2 GetActiveWebView()
-    {
-        try
-        {
-            var selectedTabItem = this.TabContainer.SelectedItem as System.Windows.Controls.TabItem;
-            if (selectedTabItem != null && _tabWebViews.ContainsKey(selectedTabItem))
-            {
-                return _tabWebViews[selectedTabItem];
-            }
-
-            // 첫 번째 WebView2 반환 (fallback)
-            return _tabWebViews.Values.FirstOrDefault();
-        }
-        catch (Exception)
-        {
-            return null;
-        }
-    }
-
-    // 설정 탭 생성
-    private void CreateSettingsTab()
-    {
-        try
-        {
-            // 새 TabItem 생성
-            var settingsTab = new TabItem
-            {
-                Header = "설정",
-                Background = new SolidColorBrush(
-                    System.Windows.Media.Color.FromArgb(255, 26, 26, 26)
-                ),
-                Foreground = new SolidColorBrush(Colors.White),
-            };
-
-            // 설정 페이지 UserControl 생성 (나중에 구현)
-            var settingsPage = new SettingsPage();
-            settingsTab.Content = settingsPage;
-
-            // TabContainer에 추가
-            TabContainer.Items.Add(settingsTab);
-            TabContainer.SelectedItem = settingsTab;
-        }
-        catch (Exception) { }
-    }
-
-    /// <summary>
-    /// 핫키 매니저를 초기화합니다.
-    /// </summary>
-    private void InitializeHotkeyManager()
-    {
-        try
-        {
-            var settings = Env.GetSettings();
-
-            // 로깅: 설정 상태 확인
-            Logger.SimpleLog($"PipHotkeyEnabled: {settings.PipHotkeyEnabled}");
-            Logger.SimpleLog($"PipHotkeyKey: {settings.PipHotkeyKey}");
-
-            // 핫키 기능이 비활성화되어 있으면 종료
-            if (!settings.PipHotkeyEnabled)
-            {
-                Logger.SimpleLog("Hotkey is disabled in settings");
-                return;
-            }
-
-            // 기존 핫키 매니저가 있으면 정리
-            _hotkeyManager?.Dispose();
-
-            // 새 핫키 매니저 생성
-            _hotkeyManager = new HotkeyManager(this);
-
-            // 핫키 등록 (새 HotkeyManager가 UI 스레드에서 액션 실행)
-            bool success = _hotkeyManager.RegisterHotkey(
-                settings.PipHotkeyKey,
-                () =>
-                {
-                    Logger.SimpleLog("Hotkey pressed! Toggling PIP mode");
-                    _pipController?.TogglePipWindowPosition();
-                }
-            );
-
-            Logger.SimpleLog($"Hotkey registration success: {success}");
-        }
-        catch (Exception ex)
-        {
-            Logger.Error("InitializeHotkeyManager error", ex);
-        }
-    }
-
-    /// <summary>
-    /// 핫키 설정을 업데이트합니다 (설정 변경 시 호출)
-    /// </summary>
-    public void UpdateHotkeySettings()
-    {
-        InitializeHotkeyManager();
     }
 }

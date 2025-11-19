@@ -1,15 +1,26 @@
 ﻿<Window x:Class="TanukiTarkovMap.Views.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
+        mc:Ignorable="d"
         Title="Tanuki Tarkov Map"
         Icon="pack://application:,,,/Resources/korea.ico"
-        Width="1400" Height="900"
-        MinWidth="1000" MinHeight="700"
+        Width="{Binding WindowWidth, Mode=TwoWay}"
+        Height="{Binding WindowHeight, Mode=TwoWay}"
+        Left="{Binding WindowLeft, Mode=TwoWay}"
+        Top="{Binding WindowTop, Mode=TwoWay}"
+        d:DesignWidth="1200"
+        d:DesignHeight="800"
+        MinWidth="{Binding MinWidth}"
+        MinHeight="{Binding MinHeight}"
         WindowStartupLocation="CenterScreen"
         Background="#FF1A1A1A"
-        WindowStyle="SingleBorderWindow"
-        ResizeMode="CanResize">
+        WindowStyle="{Binding WindowStyle}"
+        ResizeMode="{Binding ResizeMode}"
+        Topmost="{Binding IsTopmost}">
     
     <Grid>
         <!-- 탭 기반 UI -->
@@ -20,9 +31,10 @@
             </Grid.ColumnDefinitions>
             
             <!-- 사이드바 (탭 관련 버튼들) -->
-            <Border x:Name="TabSidebar" 
-                    Grid.Column="0" 
-                    Background="#FF1A1A1A">
+            <Border x:Name="TabSidebar"
+                    Grid.Column="0"
+                    Background="#FF1A1A1A"
+                    Visibility="{Binding TabSidebarVisibility}">
                 <StackPanel Margin="0,8,0,0">
                     <!-- 새 탭 추가 버튼 -->
                     <Button x:Name="NewTabButton"
@@ -102,7 +114,7 @@
             </Border>
             
             <!-- 메인 탭 영역 -->
-            <TabControl x:Name="TabContainer" 
+            <TabControl x:Name="TabContainer"
                         Grid.Column="1"
                         Panel.ZIndex="100"
                         Background="#FF212121"

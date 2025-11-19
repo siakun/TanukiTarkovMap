@@ -14,7 +14,7 @@ namespace TanukiTarkovMap.Models.Services
 
         private MainWindow _mainWindow;
         private bool _isActive = false;
-        private string _currentMap = null;
+        private string _currentMap = "";
 
         // 최상단 유지를 위한 타이머
         // private DispatcherTimer _topmostTimer;
@@ -156,6 +156,8 @@ namespace TanukiTarkovMap.Models.Services
 
                 await ApplyPipModeSettings();
 
+                // PIP 창 설정 적용을 약간 지연시켜 UI 변환이 완료된 후 적용
+                await Task.Delay(100);
                 ApplyPipWindowSettings();
             }
             catch (Exception)
