@@ -1,0 +1,84 @@
+<Window x:Class="TarkovClient.PipWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="Tarkov Client - PiP"
+        Width="300" Height="250"
+        MinWidth="200" MinHeight="150"
+        MaxWidth="800" MaxHeight="600"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Topmost="True"
+        ResizeMode="CanResize"
+        ShowInTaskbar="False"
+        MouseEnter="Window_MouseEnter"
+        MouseLeave="Window_MouseLeave">
+
+    <!-- Window Resources -->
+    <Window.Resources>
+        <!-- 투명 버튼 스타일 -->
+        <Style x:Key="TransparentButtonStyle" TargetType="Button">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="20"
+                                BorderThickness="0">
+                            <ContentPresenter HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#EE000000"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <!-- WebView2 컨텐츠 (항상 표시) -->
+        <wv2:WebView2 x:Name="PipWebView"
+                     DefaultBackgroundColor="Transparent"/>
+
+        <!-- 호버 시 제어 패널 (기본 숨김) -->
+        <Border x:Name="ControlOverlay"
+                Background="#80000000"
+                Opacity="0"
+                CornerRadius="8">
+            <Grid>
+                <!-- 드래그 영역 (상단) -->
+                <Rectangle Fill="Transparent"
+                          Height="30"
+                          VerticalAlignment="Top"
+                          MouseLeftButtonDown="DragArea_MouseDown"
+                          Cursor="SizeAll"/>
+
+                <!-- 중앙 종료 버튼 -->
+                <Button x:Name="CloseButton"
+                        Width="40" Height="40"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Background="#CC000000"
+                        Foreground="White"
+                        Content="✕"
+                        FontSize="18"
+                        BorderThickness="0"
+                        Click="CloseButton_Click"
+                        Style="{StaticResource TransparentButtonStyle}"/>
+
+                <!-- 크기 조절 핸들 (우하단) -->
+                <Rectangle x:Name="ResizeHandle"
+                          Fill="Transparent"
+                          Width="15" Height="15"
+                          HorizontalAlignment="Right"
+                          VerticalAlignment="Bottom"
+                          MouseLeftButtonDown="ResizeHandle_MouseDown"
+                          Cursor="SizeNWSE"/>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

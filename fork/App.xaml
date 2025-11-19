@@ -1,0 +1,9 @@
+﻿<Application x:Class="TarkovClient.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="clr-namespace:TarkovClient"
+             StartupUri="src/UI/MainWindow.xaml">
+    <Application.Resources>
+         
+    </Application.Resources>
+</Application>

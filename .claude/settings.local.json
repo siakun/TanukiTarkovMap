@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(dotnet publish:*)",
+      "Bash(dir:*)",
+      "Bash(powershell -Command \"Get-ChildItem ''bin\\Release\\Publish\\SingleFile\\'' | Select-Object Name, @{Name=''Size(MB)'';Expression={[math]::Round($_Length/1MB,2)}}\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
