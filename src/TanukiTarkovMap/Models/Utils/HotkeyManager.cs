@@ -10,48 +10,9 @@ namespace TanukiTarkovMap.Models.Utils
     /// </summary>
     public class HotkeyManager : IDisposable
     {
-        // Low-Level Keyboard Hook 상수
-        private const int WH_KEYBOARD_LL = 13;
-        private const int WM_KEYDOWN = 0x0100;
-        private const int WM_SYSKEYDOWN = 0x0104;
-
-        // Win32 API
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr SetWindowsHookEx(
-            int idHook,
-            LowLevelKeyboardProc lpfn,
-            IntPtr hMod,
-            uint dwThreadId
-        );
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        [return: MarshalAs(UnmanagedType.Bool)]
-        private static extern bool UnhookWindowsHookEx(IntPtr hhk);
-
-        [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr CallNextHookEx(
-            IntPtr hhk,
-            int nCode,
-            IntPtr wParam,
-            IntPtr lParam
-        );
-
-        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
-        private static extern IntPtr GetModuleHandle(string lpModuleName);
-
-        // Keyboard Hook 델리게이트
-        private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
-
-        // Modifier keys
-        private const int VK_CONTROL = 0x11;
-        private const int VK_MENU = 0x12; // Alt key
-        private const int VK_SHIFT = 0x10;
-        private const int VK_LWIN = 0x5B;
-        private const int VK_RWIN = 0x5C;
-
         private readonly Window _window;
         private IntPtr _hookID = IntPtr.Zero;
-        private readonly LowLevelKeyboardProc _proc = HookCallback;
+        private readonly PInvoke.LowLevelKeyboardProc _proc = HookCallback;
 
         // 등록된 핫키 정보
         private string _registeredKeyString;
@@ -119,10 +80,10 @@ namespace TanukiTarkovMap.Models.Utils
                 using (var curProcess = Process.GetCurrentProcess())
                 using (var curModule = curProcess.MainModule)
                 {
-                    _hookID = SetWindowsHookEx(
-                        WH_KEYBOARD_LL,
+                    _hookID = PInvoke.SetWindowsHookEx(
+                        PInvoke.WH_KEYBOARD_LL,
                         _proc,
-                        GetModuleHandle(curModule.ModuleName),
+                        PInvoke.GetModuleHandle(curModule.ModuleName),
                         0
                     );
                 }
@@ -149,7 +110,7 @@ namespace TanukiTarkovMap.Models.Utils
                 if (nCode >= 0 && _instance != null)
                 {
                     // 키 다운 이벤트만 처리
-                    if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
+                    if (wParam == (IntPtr)PInvoke.WM_KEYDOWN || wParam == (IntPtr)PInvoke.WM_SYSKEYDOWN)
                     {
                         // 키보드 입력 정보 구조체에서 가상 키 코드 추출
                         int vkCode = Marshal.ReadInt32(lParam);
@@ -176,7 +137,7 @@ namespace TanukiTarkovMap.Models.Utils
             }
 
             // 등록된 핫키가 아니면 다음 Hook에 전달
-            return CallNextHookEx(_instance?._hookID ?? IntPtr.Zero, nCode, wParam, lParam);
+            return PInvoke.CallNextHookEx(_instance?._hookID ?? IntPtr.Zero, nCode, wParam, lParam);
         }
 
         /// <summary>
@@ -188,29 +149,29 @@ namespace TanukiTarkovMap.Models.Utils
                 return false;
 
             // Modifier 키 상태 확인
-            if (_requiresControl && !IsKeyPressed(VK_CONTROL))
+            if (_requiresControl && !IsKeyPressed(PInvoke.VK_CONTROL))
                 return false;
 
-            if (_requiresAlt && !IsKeyPressed(VK_MENU))
+            if (_requiresAlt && !IsKeyPressed(PInvoke.VK_MENU))
                 return false;
 
-            if (_requiresShift && !IsKeyPressed(VK_SHIFT))
+            if (_requiresShift && !IsKeyPressed(PInvoke.VK_SHIFT))
                 return false;
 
-            if (_requiresWin && !IsKeyPressed(VK_LWIN) && !IsKeyPressed(VK_RWIN))
+            if (_requiresWin && !IsKeyPressed(PInvoke.VK_LWIN) && !IsKeyPressed(PInvoke.VK_RWIN))
                 return false;
 
             // 필요하지 않은 modifier가 눌려있으면 false
-            if (!_requiresControl && IsKeyPressed(VK_CONTROL))
+            if (!_requiresControl && IsKeyPressed(PInvoke.VK_CONTROL))
                 return false;
 
-            if (!_requiresAlt && IsKeyPressed(VK_MENU))
+            if (!_requiresAlt && IsKeyPressed(PInvoke.VK_MENU))
                 return false;
 
-            if (!_requiresShift && IsKeyPressed(VK_SHIFT))
+            if (!_requiresShift && IsKeyPressed(PInvoke.VK_SHIFT))
                 return false;
 
-            if (!_requiresWin && (IsKeyPressed(VK_LWIN) || IsKeyPressed(VK_RWIN)))
+            if (!_requiresWin && (IsKeyPressed(PInvoke.VK_LWIN) || IsKeyPressed(PInvoke.VK_RWIN)))
                 return false;
 
             return true;
@@ -219,12 +180,9 @@ namespace TanukiTarkovMap.Models.Utils
         /// <summary>
         /// 특정 키가 현재 눌려있는지 확인합니다.
         /// </summary>
-        [DllImport("user32.dll")]
-        private static extern short GetKeyState(int nVirtKey);
-
         private static bool IsKeyPressed(int vkCode)
         {
-            return (GetKeyState(vkCode) & 0x8000) != 0;
+            return (PInvoke.GetKeyState(vkCode) & 0x8000) != 0;
         }
 
         /// <summary>
@@ -323,7 +281,7 @@ namespace TanukiTarkovMap.Models.Utils
             {
                 if (_hookID != IntPtr.Zero)
                 {
-                    UnhookWindowsHookEx(_hookID);
+                    PInvoke.UnhookWindowsHookEx(_hookID);
                     _hookID = IntPtr.Zero;
                 }
 

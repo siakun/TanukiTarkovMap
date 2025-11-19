@@ -10,25 +10,6 @@ namespace TanukiTarkovMap.Models.Utils
     /// </summary>
     public static class WindowTransparency
     {
-        // Windows API 상수
-        private const int GWL_EXSTYLE = -20;
-        private const int WS_EX_LAYERED = 0x80000;
-        private const int LWA_ALPHA = 0x2;
-
-        // Windows API 함수들
-        [DllImport("user32.dll")]
-        private static extern int GetWindowLong(IntPtr hwnd, int index);
-
-        [DllImport("user32.dll")]
-        private static extern int SetWindowLong(IntPtr hwnd, int index, int newStyle);
-
-        [DllImport("user32.dll")]
-        private static extern bool SetLayeredWindowAttributes(
-            IntPtr hwnd,
-            uint colorKey,
-            byte alpha,
-            uint flags
-        );
 
         /// <summary>
         /// 창을 투명 모드로 활성화
@@ -53,19 +34,19 @@ namespace TanukiTarkovMap.Models.Utils
                 }
 
                 // 현재 창 스타일 가져오기
-                var extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+                var extendedStyle = PInvoke.GetWindowLong(hwnd, PInvoke.GWL_EXSTYLE);
 
                 // Layered Window 스타일 추가
-                var newStyle = extendedStyle | WS_EX_LAYERED;
-                var setResult = SetWindowLong(hwnd, GWL_EXSTYLE, newStyle);
+                var newStyle = extendedStyle | PInvoke.WS_EX_LAYERED;
+                var setResult = PInvoke.SetWindowLong(hwnd, PInvoke.GWL_EXSTYLE, newStyle);
 
                 // 투명도 설정 (0-255 범위로 변환)
                 byte alpha = (byte)(opacity * 255);
-                var transparencyResult = SetLayeredWindowAttributes(hwnd, 0, alpha, LWA_ALPHA);
+                var transparencyResult = PInvoke.SetLayeredWindowAttributes(hwnd, 0, alpha, PInvoke.LWA_ALPHA);
 
                 // 설정 후 스타일 재확인
-                var finalStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-                var isLayered = (finalStyle & WS_EX_LAYERED) != 0;
+                var finalStyle = PInvoke.GetWindowLong(hwnd, PInvoke.GWL_EXSTYLE);
+                var isLayered = (finalStyle & PInvoke.WS_EX_LAYERED) != 0;
 
                 return transparencyResult;
             }
@@ -91,7 +72,7 @@ namespace TanukiTarkovMap.Models.Utils
 
                 // 투명도만 업데이트 (0-255 범위로 변환)
                 byte alpha = (byte)(Math.Max(0.0, Math.Min(1.0, opacity)) * 255);
-                return SetLayeredWindowAttributes(hwnd, 0, alpha, LWA_ALPHA);
+                return PInvoke.SetLayeredWindowAttributes(hwnd, 0, alpha, PInvoke.LWA_ALPHA);
             }
             catch (Exception)
             {
@@ -113,10 +94,10 @@ namespace TanukiTarkovMap.Models.Utils
                     return false;
 
                 // 현재 창 스타일 가져오기
-                var extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
+                var extendedStyle = PInvoke.GetWindowLong(hwnd, PInvoke.GWL_EXSTYLE);
 
                 // Layered Window 스타일 제거
-                SetWindowLong(hwnd, GWL_EXSTYLE, extendedStyle & ~WS_EX_LAYERED);
+                PInvoke.SetWindowLong(hwnd, PInvoke.GWL_EXSTYLE, extendedStyle & ~PInvoke.WS_EX_LAYERED);
 
                 return true;
             }
@@ -139,8 +120,8 @@ namespace TanukiTarkovMap.Models.Utils
                 if (hwnd == IntPtr.Zero)
                     return false;
 
-                var extendedStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-                return (extendedStyle & WS_EX_LAYERED) != 0;
+                var extendedStyle = PInvoke.GetWindowLong(hwnd, PInvoke.GWL_EXSTYLE);
+                return (extendedStyle & PInvoke.WS_EX_LAYERED) != 0;
             }
             catch
             {

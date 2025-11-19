@@ -19,15 +19,6 @@ namespace TanukiTarkovMap.Views
     /// </summary>
     public partial class MainWindow : Window
     {
-        // Win32 API 선언 (윈도우 드래그용)
-        [DllImport("user32.dll")]
-        private static extern bool ReleaseCapture();
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
-
-        private const int WM_NCLBUTTONDOWN = 0xA1;
-        private const int HT_CAPTION = 0x2;
 
         private int _tabCounter = 1;
         private readonly Dictionary<TabItem, WebView2> _tabWebViews = new();
@@ -577,9 +568,9 @@ namespace TanukiTarkovMap.Views
 
                 if (!isWebView2)
                 {
-                    ReleaseCapture();
-                    SendMessage(new System.Windows.Interop.WindowInteropHelper(this).Handle,
-                               WM_NCLBUTTONDOWN, HT_CAPTION, 0);
+                    PInvoke.ReleaseCapture();
+                    PInvoke.SendMessage(new System.Windows.Interop.WindowInteropHelper(this).Handle,
+                               PInvoke.WM_NCLBUTTONDOWN, PInvoke.HT_CAPTION, 0);
                 }
             }
         }

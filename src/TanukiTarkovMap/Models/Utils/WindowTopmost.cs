@@ -10,44 +10,6 @@ namespace TanukiTarkovMap.Models.Utils
     /// </summary>
     public static class WindowTopmost
     {
-        // Windows API 상수
-        private const int HWND_TOPMOST = -1;
-        private const int HWND_NOTOPMOST = -2;
-        private const uint SWP_NOMOVE = 0x0002;
-        private const uint SWP_NOSIZE = 0x0001;
-        private const uint SWP_SHOWWINDOW = 0x0040;
-        private const uint SWP_NOACTIVATE = 0x0010;
-
-        private const int SW_SHOW = 5;
-        private const int SW_RESTORE = 9;
-        private const int SW_SHOWNOACTIVATE = 4;
-
-        // Windows API 함수들
-        [DllImport("user32.dll", SetLastError = true)]
-        private static extern bool SetWindowPos(
-            IntPtr hWnd,
-            int hWndInsertAfter,
-            int X,
-            int Y,
-            int cx,
-            int cy,
-            uint uFlags
-        );
-
-        [DllImport("user32.dll")]
-        private static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
-
-        [DllImport("user32.dll")]
-        private static extern IntPtr GetForegroundWindow();
-
-        [DllImport("user32.dll")]
-        private static extern bool BringWindowToTop(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern bool IsWindow(IntPtr hWnd);
-
-        [DllImport("user32.dll")]
-        private static extern bool IsWindowVisible(IntPtr hWnd);
 
         /// <summary>
         /// 창을 시스템 레벨에서 최상단으로 강제 고정
@@ -67,10 +29,10 @@ namespace TanukiTarkovMap.Models.Utils
                     return false;
                 }
 
-                ShowWindow(hwnd, SW_SHOWNOACTIVATE);
+                PInvoke.ShowWindow(hwnd, PInvoke.SW_SHOWNOACTIVATE);
 
-                uint flags = SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE;
-                bool result = SetWindowPos(hwnd, HWND_TOPMOST, 0, 0, 0, 0, flags);
+                uint flags = PInvoke.SWP_NOMOVE | PInvoke.SWP_NOSIZE | PInvoke.SWP_NOACTIVATE;
+                bool result = PInvoke.SetWindowPos(hwnd, PInvoke.HWND_TOPMOST, 0, 0, 0, 0, flags);
 
                 return result;
             }
@@ -93,14 +55,14 @@ namespace TanukiTarkovMap.Models.Utils
                 if (hwnd == IntPtr.Zero)
                     return false;
 
-                bool result = SetWindowPos(
+                bool result = PInvoke.SetWindowPos(
                     hwnd,
-                    HWND_NOTOPMOST,
+                    PInvoke.HWND_NOTOPMOST,
                     0,
                     0,
                     0,
                     0,
-                    SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE
+                    PInvoke.SWP_NOMOVE | PInvoke.SWP_NOSIZE | PInvoke.SWP_NOACTIVATE
                 );
 
                 return result;
