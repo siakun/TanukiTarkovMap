@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace TanukiTarkovMap.Models.Utils
+﻿namespace TanukiTarkovMap.Models.Utils
 {
     public class FileChangedEventArgs : EventArgs
     {

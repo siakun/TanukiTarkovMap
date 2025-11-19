@@ -1,5 +1,3 @@
-using System;
-
 namespace TanukiTarkovMap.Models.Utils
 {
     /// <summary>
@@ -34,7 +32,7 @@ namespace TanukiTarkovMap.Models.Utils
             // 2. Scale 값 계산 (면적 기반)
             double sizeRatio = Math.Sqrt((width * height) / (baseWidth * baseHeight));
             double newScale;
-            
+
             // 극단 비율에서는 Scale 감소 적용
             if (aspectDifference >= 0.5)
             {
@@ -62,7 +60,7 @@ namespace TanukiTarkovMap.Models.Utils
             {
                 // 극단 비율에서는 긴 축은 적게, 짧은 축은 많이 이동
                 // 1000x500: X=-23.665, Y=-262.629 패턴 적용
-                
+
                 if (width > height) // 가로가 긴 경우
                 {
                     // X는 적게 이동 (긴 축), Y는 많이 이동 (짧은 축)

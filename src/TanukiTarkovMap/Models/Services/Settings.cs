@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Text;
+﻿using System.IO;
 using System.Text.Json;
-using System.Threading.Tasks;
 using TanukiTarkovMap.Models.Data;
 
 namespace TanukiTarkovMap.Models.Services
 {
-    class Settings
+    public class Settings
     {
         const string SETTINGS_FILE_PATH = "settings.json";
 

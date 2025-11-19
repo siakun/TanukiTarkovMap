@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace TanukiTarkovMap.Models.Data
+﻿namespace TanukiTarkovMap.Models.Data
 {
     public class MapSetting
     {

@@ -1,11 +1,8 @@
-using System;
-using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using Microsoft.Web.WebView2.Core;
 using TanukiTarkovMap.Models.Constants;
-using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.Views;
 
 namespace TanukiTarkovMap.Models.Services
