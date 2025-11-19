@@ -1,105 +1,98 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
-using System.Windows.Input;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using Microsoft.Win32;
 
 namespace TanukiTarkovMap.ViewModels
 {
-    public class SettingsViewModel : INotifyPropertyChanged
+    public partial class SettingsViewModel : ObservableObject
     {
+        [ObservableProperty]
         private string _gameFolder;
+
+        [ObservableProperty]
         private string _screenshotsFolder;
+
+        [ObservableProperty]
         private bool _pipEnabled;
+
+        [ObservableProperty]
         private bool _pipRememberPosition;
+
+        [ObservableProperty]
         private bool _pipHotkeyEnabled;
+
+        [ObservableProperty]
         private string _pipHotkeyKey;
+
+        [ObservableProperty]
         private bool _autoDeleteLogs;
+
+        [ObservableProperty]
         private bool _autoDeleteScreenshots;
 
-        public string GameFolder
+        // Commands
+        [RelayCommand]
+        private void Save()
         {
-            get => _gameFolder;
-            set
+            // Save settings logic will be implemented here
+            // For now, just save to Env
+            Models.Services.Env.GameFolder = GameFolder;
+            Models.Services.Env.ScreenshotsFolder = ScreenshotsFolder;
+
+            var settings = Models.Services.Env.GetSettings();
+            settings.PipEnabled = PipEnabled;
+            settings.PipRememberPosition = PipRememberPosition;
+
+            Models.Services.Env.SetSettings(settings);
+            Models.Services.Settings.Save();
+        }
+
+        [RelayCommand]
+        private void Cancel()
+        {
+            // Cancel logic - reload from current settings
+            LoadCurrentSettings();
+        }
+
+        [RelayCommand]
+        private void BrowseGameFolder()
+        {
+            var dialog = new OpenFolderDialog
             {
-                _gameFolder = value;
-                OnPropertyChanged();
+                Title = "Select Escape From Tarkov game folder",
+                InitialDirectory = !string.IsNullOrEmpty(GameFolder) ? GameFolder : null,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                GameFolder = dialog.FolderName;
             }
         }
 
-        public string ScreenshotsFolder
+        [RelayCommand]
+        private void BrowseScreenshotsFolder()
         {
-            get => _screenshotsFolder;
-            set
+            var dialog = new OpenFolderDialog
             {
-                _screenshotsFolder = value;
-                OnPropertyChanged();
+                Title = "Select Screenshots folder",
+                InitialDirectory = !string.IsNullOrEmpty(ScreenshotsFolder) ? ScreenshotsFolder : null,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                ScreenshotsFolder = dialog.FolderName;
             }
         }
 
-        public bool PipEnabled
+        [RelayCommand]
+        private void ResetSettings()
         {
-            get => _pipEnabled;
-            set
-            {
-                _pipEnabled = value;
-                OnPropertyChanged();
-            }
+            // Reset to default settings
+            Models.Services.Env.ResetSettings();
+            LoadCurrentSettings();
         }
-
-        public bool PipRememberPosition
-        {
-            get => _pipRememberPosition;
-            set
-            {
-                _pipRememberPosition = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool PipHotkeyEnabled
-        {
-            get => _pipHotkeyEnabled;
-            set
-            {
-                _pipHotkeyEnabled = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public string PipHotkeyKey
-        {
-            get => _pipHotkeyKey;
-            set
-            {
-                _pipHotkeyKey = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AutoDeleteLogs
-        {
-            get => _autoDeleteLogs;
-            set
-            {
-                _autoDeleteLogs = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool AutoDeleteScreenshots
-        {
-            get => _autoDeleteScreenshots;
-            set
-            {
-                _autoDeleteScreenshots = value;
-                OnPropertyChanged();
-            }
-        }
-
-        // Commands for Save, Cancel, Browse folders etc.
-        public ICommand SaveCommand { get; set; }
-        public ICommand CancelCommand { get; set; }
-        public ICommand BrowseGameFolderCommand { get; set; }
-        public ICommand BrowseScreenshotsFolderCommand { get; set; }
 
         public SettingsViewModel()
         {
@@ -110,13 +103,19 @@ namespace TanukiTarkovMap.ViewModels
             PipHotkeyKey = "F11";
             AutoDeleteLogs = false;
             AutoDeleteScreenshots = false;
+
+            // Load current settings
+            LoadCurrentSettings();
         }
 
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
+        private void LoadCurrentSettings()
         {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+            GameFolder = Models.Services.Env.GameFolder;
+            ScreenshotsFolder = Models.Services.Env.ScreenshotsFolder;
+
+            var settings = Models.Services.Env.GetSettings();
+            PipEnabled = settings.PipEnabled;
+            PipRememberPosition = settings.PipRememberPosition;
         }
     }
 }

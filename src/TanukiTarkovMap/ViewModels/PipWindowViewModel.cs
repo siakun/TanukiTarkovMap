@@ -1,64 +1,44 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace TanukiTarkovMap.ViewModels
 {
-    public class PipWindowViewModel : INotifyPropertyChanged
+    public partial class PipWindowViewModel : ObservableObject
     {
+        [ObservableProperty]
         private double _pipWidth;
+
+        [ObservableProperty]
         private double _pipHeight;
+
+        [ObservableProperty]
         private double _pipLeft;
+
+        [ObservableProperty]
         private double _pipTop;
+
+        [ObservableProperty]
         private bool _isTopmost;
 
-        public double PipWidth
+        // Commands
+        [RelayCommand]
+        private void ToggleTopmost()
         {
-            get => _pipWidth;
-            set
-            {
-                _pipWidth = value;
-                OnPropertyChanged();
-            }
+            IsTopmost = !IsTopmost;
         }
 
-        public double PipHeight
+        [RelayCommand]
+        private void ResetPosition()
         {
-            get => _pipHeight;
-            set
-            {
-                _pipHeight = value;
-                OnPropertyChanged();
-            }
+            PipLeft = 0;
+            PipTop = 0;
         }
 
-        public double PipLeft
+        [RelayCommand]
+        private void ResetSize()
         {
-            get => _pipLeft;
-            set
-            {
-                _pipLeft = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public double PipTop
-        {
-            get => _pipTop;
-            set
-            {
-                _pipTop = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public bool IsTopmost
-        {
-            get => _isTopmost;
-            set
-            {
-                _isTopmost = value;
-                OnPropertyChanged();
-            }
+            PipWidth = 300;
+            PipHeight = 250;
         }
 
         public PipWindowViewModel()
@@ -67,13 +47,6 @@ namespace TanukiTarkovMap.ViewModels
             PipWidth = 300;
             PipHeight = 250;
             IsTopmost = true;
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

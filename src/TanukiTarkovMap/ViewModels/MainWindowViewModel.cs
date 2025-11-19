@@ -1,56 +1,34 @@
-using System.ComponentModel;
-using System.Runtime.CompilerServices;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 
 namespace TanukiTarkovMap.ViewModels
 {
-    public class MainWindowViewModel : INotifyPropertyChanged
+    public partial class MainWindowViewModel : ObservableObject
     {
+        [ObservableProperty]
         private string _currentMap;
+
+        [ObservableProperty]
         private bool _isPipMode;
+
+        [ObservableProperty]
         private double _windowWidth;
+
+        [ObservableProperty]
         private double _windowHeight;
 
-        public string CurrentMap
+        // Commands
+        [RelayCommand]
+        private void TogglePipMode()
         {
-            get => _currentMap;
-            set
-            {
-                _currentMap = value;
-                OnPropertyChanged();
-            }
+            IsPipMode = !IsPipMode;
         }
 
-        public bool IsPipMode
+        [RelayCommand]
+        private void ChangeMap(string mapName)
         {
-            get => _isPipMode;
-            set
-            {
-                _isPipMode = value;
-                OnPropertyChanged();
-            }
+            CurrentMap = mapName;
         }
-
-        public double WindowWidth
-        {
-            get => _windowWidth;
-            set
-            {
-                _windowWidth = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public double WindowHeight
-        {
-            get => _windowHeight;
-            set
-            {
-                _windowHeight = value;
-                OnPropertyChanged();
-            }
-        }
-
-        // Commands will be added here as needed
 
         public MainWindowViewModel()
         {
@@ -58,13 +36,6 @@ namespace TanukiTarkovMap.ViewModels
             WindowWidth = 800;
             WindowHeight = 600;
             IsPipMode = false;
-        }
-
-        public event PropertyChangedEventHandler? PropertyChanged;
-
-        protected virtual void OnPropertyChanged([CallerMemberName] string? propertyName = null)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 }

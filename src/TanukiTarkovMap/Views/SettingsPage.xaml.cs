@@ -1,12 +1,8 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
-using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.Services;
 
 namespace TanukiTarkovMap.Views
 {

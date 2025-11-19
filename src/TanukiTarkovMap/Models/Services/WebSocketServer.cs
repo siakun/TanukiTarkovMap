@@ -13,8 +13,7 @@ namespace TanukiTarkovMap.Models.Services
 
         static volatile bool isClosing = false;
         static WebSocketServer _server = null;
-        static readonly ConcurrentDictionary<IWebSocketConnection, bool> _sockets =
-            new ConcurrentDictionary<IWebSocketConnection, bool>();
+        static readonly ConcurrentDictionary<IWebSocketConnection, bool> _sockets = new();
 
         static Server()
         {
