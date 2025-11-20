@@ -631,29 +631,6 @@ namespace TanukiTarkovMap.Views
             Logger.SimpleLog("[ApplyTopmostSettings] TopMost state managed by ViewModel binding");
         }
 
-        // 트레이 아이콘 더블클릭 - 창 복원
-        private void TrayIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
-        {
-            ShowWindowFromTray();
-        }
-
-        // 컨텍스트 메뉴 - 열기
-        private void ShowWindow_Click(object sender, RoutedEventArgs e)
-        {
-            ShowWindowFromTray();
-        }
-
-        // 컨텍스트 메뉴 - 종료
-        private void ExitApp_Click(object sender, RoutedEventArgs e)
-        {
-            // 트레이 아이콘 정리
-            if (TrayIcon != null)
-            {
-                TrayIcon.Dispose();
-            }
-            Application.Current.Shutdown();
-        }
-
         // 트레이에서 창 복원 (포커스를 가져가지 않음 - 게임 플레이 끊김 방지)
         private void ShowWindowFromTray()
         {

@@ -170,20 +170,6 @@
     </WindowChrome.WindowChrome>
 
     <Grid x:Name="MainGrid" MouseLeftButtonDown="Window_MouseLeftButtonDown">
-        <!-- 트레이 아이콘 -->
-        <tb:TaskbarIcon x:Name="TrayIcon"
-                        IconSource="pack://application:,,,/Resources/korea.ico"
-                        ToolTipText="Tanuki Tarkov Map"
-                        TrayMouseDoubleClick="TrayIcon_TrayMouseDoubleClick">
-            <tb:TaskbarIcon.ContextMenu>
-                <ContextMenu>
-                    <MenuItem Header="열기" Click="ShowWindow_Click"/>
-                    <Separator/>
-                    <MenuItem Header="종료" Click="ExitApp_Click"/>
-                </ContextMenu>
-            </tb:TaskbarIcon.ContextMenu>
-        </tb:TaskbarIcon>
-
         <!-- Border로 감싸서 리사이즈 시 부드러운 효과 + 둥근 모서리 -->
         <Border x:Name="ContentBorder"
                 Background="#FF1A1A1A"
