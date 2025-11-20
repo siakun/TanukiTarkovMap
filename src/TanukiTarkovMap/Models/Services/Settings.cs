@@ -33,6 +33,20 @@ namespace TanukiTarkovMap.Models.Services
                 var json = File.ReadAllText(SETTINGS_FILE_PATH);
                 var settings = JsonSerializer.Deserialize<AppSettings>(json);
 
+                // 경로에 {0} 플레이스홀더가 있으면 현재 사용자 이름으로 치환
+                if (settings != null)
+                {
+                    if (!string.IsNullOrEmpty(settings.GameFolder) && settings.GameFolder.Contains("{0}"))
+                    {
+                        settings.GameFolder = string.Format(settings.GameFolder, Environment.UserName);
+                    }
+
+                    if (!string.IsNullOrEmpty(settings.ScreenshotsFolder) && settings.ScreenshotsFolder.Contains("{0}"))
+                    {
+                        settings.ScreenshotsFolder = string.Format(settings.ScreenshotsFolder, Environment.UserName);
+                    }
+                }
+
                 App.SetSettings(settings);
             }
             catch (Exception)

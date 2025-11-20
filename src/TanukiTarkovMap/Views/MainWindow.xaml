@@ -480,30 +480,33 @@
             </Grid>
         </Border>
 
-        <!-- 설정 패널 오버레이 (플로팅 윈도우 스타일) -->
-        <Grid x:Name="SettingsOverlay"
-              Panel.ZIndex="1000"
-              Visibility="Collapsed"
-              Background="#AA000000">
-            <!-- 반투명 배경 클릭 시 닫기 -->
-            <Grid.InputBindings>
-                <MouseBinding MouseAction="LeftClick" Command="{Binding CloseSettingsCommand}"/>
-            </Grid.InputBindings>
+        <!-- 설정 패널 오버레이 (미니멀 스타일) -->
+        <Border x:Name="SettingsOverlay"
+                Panel.ZIndex="1000"
+                Visibility="Collapsed"
+                Background="#AA000000"
+                CornerRadius="8"
+                Margin="8">
+            <Grid>
+                <!-- 반투명 배경 클릭 시 닫기 -->
+                <Grid.InputBindings>
+                    <MouseBinding MouseAction="LeftClick" Command="{Binding CloseSettingsCommand}"/>
+                </Grid.InputBindings>
 
-            <!-- 플로팅 설정 패널 -->
-            <Border Width="800" Height="600"
+                <!-- 플로팅 설정 패널 -->
+            <Border Width="600" Height="450"
                     Background="#FF1A1A1A"
-                    CornerRadius="10"
+                    CornerRadius="6"
                     BorderThickness="1"
-                    BorderBrush="#FF555555"
+                    BorderBrush="#FF3A3A3A"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
                 <Border.Effect>
                     <DropShadowEffect Color="Black"
                                       Direction="270"
-                                      ShadowDepth="4"
-                                      BlurRadius="20"
-                                      Opacity="0.8"/>
+                                      ShadowDepth="2"
+                                      BlurRadius="12"
+                                      Opacity="0.5"/>
                 </Border.Effect>
 
                 <!-- 설정 패널 내용 영역에서 클릭 시 이벤트 전파 차단 -->
@@ -520,35 +523,41 @@
                     <!-- 타이틀 바 -->
                     <Border Grid.Row="0"
                             Background="#FF2A2A2A"
-                            CornerRadius="10,10,0,0"
-                            Padding="15,10">
-                        <Grid>
+                            CornerRadius="6,6,0,0"
+                            BorderThickness="0,0,0,1"
+                            BorderBrush="#FF3A3A3A"
+                            Height="32">
+                        <Grid Margin="12,0">
                             <TextBlock Text="설정"
-                                       FontSize="18"
-                                       FontWeight="Bold"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
                                        Foreground="White"
                                        VerticalAlignment="Center"/>
                             <Button Content="✕"
-                                    Width="30" Height="30"
+                                    Width="24" Height="24"
                                     HorizontalAlignment="Right"
                                     Background="Transparent"
                                     BorderThickness="0"
                                     Foreground="White"
-                                    FontSize="16"
+                                    FontSize="12"
                                     Click="CloseSettings_Click">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Template">
                                             <Setter.Value>
                                                 <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
+                                                    <Border x:Name="BorderBackground"
+                                                            Background="Transparent"
                                                             CornerRadius="3">
                                                         <ContentPresenter HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"/>
                                                     </Border>
                                                     <ControlTemplate.Triggers>
                                                         <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#FF5A5A5A"/>
+                                                            <Setter TargetName="BorderBackground" Property="Background" Value="#FFE81123"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter TargetName="BorderBackground" Property="Background" Value="#FFC50F1F"/>
                                                         </Trigger>
                                                     </ControlTemplate.Triggers>
                                                 </ControlTemplate>
@@ -569,8 +578,9 @@
                     </Border>
                 </Grid>
             </Border>
-        </Grid>
-        
+            </Grid>
+        </Border>
+
         <!-- 전체 로딩 상태 표시 -->
         <Border x:Name="LoadingPanel"
                 Background="#DD1A1A1A"

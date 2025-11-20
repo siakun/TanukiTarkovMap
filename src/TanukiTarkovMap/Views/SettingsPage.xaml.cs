@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using Microsoft.Win32;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 
@@ -60,6 +61,10 @@ namespace TanukiTarkovMap.Views
             try
             {
                 var settings = App.GetSettings();
+
+                // 타르코프 경로 설정
+                GameFolderTextBox.Text = App.GameFolder ?? string.Empty;
+                ScreenshotsFolderTextBox.Text = App.ScreenshotsFolder ?? string.Empty;
 
                 // 전역 PiP 설정
                 GlobalPipEnabledCheckBox.IsChecked = settings.PipEnabled;
@@ -215,6 +220,22 @@ namespace TanukiTarkovMap.Views
             try
             {
                 var settings = App.GetSettings();
+
+                // 타르코프 경로 설정 저장
+                string gameFolderPath = GameFolderTextBox.Text?.Trim();
+                string screenshotsFolderPath = ScreenshotsFolderTextBox.Text?.Trim();
+
+                if (!string.IsNullOrEmpty(gameFolderPath))
+                {
+                    App.GameFolder = gameFolderPath;
+                    settings.GameFolder = gameFolderPath;
+                }
+
+                if (!string.IsNullOrEmpty(screenshotsFolderPath))
+                {
+                    App.ScreenshotsFolder = screenshotsFolderPath;
+                    settings.ScreenshotsFolder = screenshotsFolderPath;
+                }
 
                 // 전역 PiP 설정 저장
                 settings.PipEnabled = GlobalPipEnabledCheckBox.IsChecked ?? true;
@@ -541,6 +562,70 @@ namespace TanukiTarkovMap.Views
                     return "Insert";
                 default:
                     return string.Empty;
+            }
+        }
+
+        /// <summary>
+        /// 게임 폴더 찾아보기 버튼 클릭
+        /// </summary>
+        private void BrowseGameFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new OpenFolderDialog
+                {
+                    Title = "Escape From Tarkov 게임 폴더 선택",
+                    InitialDirectory = !string.IsNullOrEmpty(GameFolderTextBox.Text)
+                        ? GameFolderTextBox.Text
+                        : Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
+                    Multiselect = false
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    GameFolderTextBox.Text = dialog.FolderName;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"폴더 선택 중 오류가 발생했습니다: {ex.Message}",
+                    "오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
+            }
+        }
+
+        /// <summary>
+        /// 스크린샷 폴더 찾아보기 버튼 클릭
+        /// </summary>
+        private void BrowseScreenshotsFolder_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var dialog = new OpenFolderDialog
+                {
+                    Title = "스크린샷 폴더 선택",
+                    InitialDirectory = !string.IsNullOrEmpty(ScreenshotsFolderTextBox.Text)
+                        ? ScreenshotsFolderTextBox.Text
+                        : Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                    Multiselect = false
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    ScreenshotsFolderTextBox.Text = dialog.FolderName;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Windows.MessageBox.Show(
+                    $"폴더 선택 중 오류가 발생했습니다: {ex.Message}",
+                    "오류",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Error
+                );
             }
         }
     }

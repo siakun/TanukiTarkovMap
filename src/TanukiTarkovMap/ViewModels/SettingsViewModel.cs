@@ -6,27 +6,38 @@ namespace TanukiTarkovMap.ViewModels
 {
     public partial class SettingsViewModel : ObservableObject
     {
-        [ObservableProperty] public partial string GameFolder { get; set; }
-        [ObservableProperty] public partial string ScreenshotsFolder { get; set; }
-        [ObservableProperty] public partial bool PipEnabled { get; set; }
-        [ObservableProperty] public partial bool PipRememberPosition { get; set; }
-        [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; }
-        [ObservableProperty] public partial string PipHotkeyKey { get; set; }
-        [ObservableProperty] public partial bool AutoDeleteLogs { get; set; }
-        [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; }
+        [ObservableProperty] public partial string GameFolder { get; set; } = string.Empty;
+        [ObservableProperty] public partial string ScreenshotsFolder { get; set; } = string.Empty;
+        [ObservableProperty] public partial bool PipEnabled { get; set; } = false;
+        [ObservableProperty] public partial bool PipRememberPosition { get; set; } = true;
+        [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; } = false;
+        [ObservableProperty] public partial string PipHotkeyKey { get; set; } = "F11";
+        [ObservableProperty] public partial bool AutoDeleteLogs { get; set; } = false;
+        [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
+
+        public SettingsViewModel()
+        {
+            // Load current settings
+            LoadCurrentSettings();
+        }
 
         // Commands
         [RelayCommand]
         private void Save()
         {
-            // Save settings logic will be implemented here
-            // For now, just save to App
+            // 경로 설정 저장
             App.GameFolder = GameFolder;
             App.ScreenshotsFolder = ScreenshotsFolder;
 
             var settings = App.GetSettings();
+            settings.GameFolder = GameFolder;
+            settings.ScreenshotsFolder = ScreenshotsFolder;
             settings.PipEnabled = PipEnabled;
             settings.PipRememberPosition = PipRememberPosition;
+            settings.PipHotkeyEnabled = PipHotkeyEnabled;
+            settings.PipHotkeyKey = PipHotkeyKey;
+            settings.autoDeleteLogs = AutoDeleteLogs;
+            settings.autoDeleteScreenshots = AutoDeleteScreenshots;
 
             App.SetSettings(settings);
             Models.Services.Settings.Save();
@@ -79,28 +90,18 @@ namespace TanukiTarkovMap.ViewModels
             LoadCurrentSettings();
         }
 
-        public SettingsViewModel()
-        {
-            // Initialize default values
-            PipEnabled = false;
-            PipRememberPosition = true;
-            PipHotkeyEnabled = false;
-            PipHotkeyKey = "F11";
-            AutoDeleteLogs = false;
-            AutoDeleteScreenshots = false;
-
-            // Load current settings
-            LoadCurrentSettings();
-        }
-
         private void LoadCurrentSettings()
         {
-            GameFolder = App.GameFolder;
-            ScreenshotsFolder = App.ScreenshotsFolder;
+            GameFolder = App.GameFolder ?? string.Empty;
+            ScreenshotsFolder = App.ScreenshotsFolder ?? string.Empty;
 
             var settings = App.GetSettings();
             PipEnabled = settings.PipEnabled;
             PipRememberPosition = settings.PipRememberPosition;
+            PipHotkeyEnabled = settings.PipHotkeyEnabled;
+            PipHotkeyKey = settings.PipHotkeyKey ?? "F11";
+            AutoDeleteLogs = settings.autoDeleteLogs;
+            AutoDeleteScreenshots = settings.autoDeleteScreenshots;
         }
     }
 }
