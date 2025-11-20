@@ -216,7 +216,10 @@ namespace TanukiTarkovMap.Models.Services
             try
             {
                 if (_sockets.Count == 0)
+                {
+                    Utils.Logger.SimpleLog("[WS] No connected clients - skipping send");
                     return;
+                }
 
                 var json = JsonSerializer.Serialize(data);
                 var bytes = Encoding.UTF8.GetBytes(json);
@@ -224,18 +227,25 @@ namespace TanukiTarkovMap.Models.Services
 
                 // 모든 연결된 클라이언트에게 메시지 전송
                 var tasks = new List<Task>();
+                int openSocketCount = 0;
                 foreach (var socket in _sockets.Values.ToList())
                 {
                     if (socket.State == WebSocketState.Open)
                     {
+                        openSocketCount++;
                         tasks.Add(socket.SendAsync(buffer, WebSocketMessageType.Text,
                             endOfMessage: true, CancellationToken.None));
                     }
                 }
 
                 Task.WaitAll(tasks.ToArray(), 1000);
+
+                Utils.Logger.SimpleLog($"[WS] Sent to {openSocketCount} client(s) | Data: {json}");
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                Utils.Logger.SimpleLog($"[WS Error] SendData: {ex.Message}");
+            }
         }
 
         static void SendRandomPosition()
@@ -307,6 +317,8 @@ namespace TanukiTarkovMap.Models.Services
 
         public static void SendFilename(string filename)
         {
+            Utils.Logger.SimpleLog($"[WS] SendFilename: {filename} | Clients: {_sockets.Count}");
+
             SendFilenameData data = new SendFilenameData()
             {
                 MessageType = WsMessageType.SEND_FILENAME,

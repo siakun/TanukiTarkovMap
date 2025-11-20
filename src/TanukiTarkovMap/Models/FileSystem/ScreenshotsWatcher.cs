@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using TanukiTarkovMap.Models.Services;
+using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Models.FileSystem
 {
@@ -40,9 +41,25 @@ namespace TanukiTarkovMap.Models.FileSystem
             try
             {
                 string filename = e.Name ?? "";
+                string fullPath = e.FullPath ?? "";
 
                 if (!string.IsNullOrEmpty(filename))
                 {
+                    // 파일 정보 수집
+                    string fileInfo = "";
+                    if (File.Exists(fullPath))
+                    {
+                        try
+                        {
+                            System.Threading.Thread.Sleep(100);
+                            var info = new FileInfo(fullPath);
+                            fileInfo = $", Size: {info.Length / 1024.0:F2} KB, Created: {info.CreationTime:yyyy-MM-dd HH:mm:ss}";
+                        }
+                        catch { }
+                    }
+
+                    Logger.SimpleLog($"[Screenshot] {filename} | Path: {fullPath}{fileInfo}");
+
                     Server.SendFilename(filename);
 
                     // 2차 트리거: 스크린샷 생성 이벤트 발생
@@ -52,7 +69,10 @@ namespace TanukiTarkovMap.Models.FileSystem
                     }
                 }
             }
-            catch (Exception) { }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[Screenshot Error] {ex.Message}");
+            }
         }
     }
 }

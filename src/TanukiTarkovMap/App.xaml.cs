@@ -57,18 +57,25 @@ namespace TanukiTarkovMap
         };
 
         private static string? _gameFolder = null;
+        private static bool _gameFolderInitialized = false;
+
         public static string? GameFolder
         {
             get
             {
-                if (_gameFolder == null)
+                if (!_gameFolderInitialized)
                 {
                     _gameFolder = TarkovPathFinder.FindGameFolder();
+                    _gameFolderInitialized = true;
                 }
 
                 return _gameFolder;
             }
-            set { _gameFolder = value; }
+            set
+            {
+                _gameFolder = value;
+                _gameFolderInitialized = true;
+            }
         }
 
         public static string? LogsFolder
@@ -80,11 +87,13 @@ namespace TanukiTarkovMap
         }
 
         private static string? _screenshotsFolder;
+        private static bool _screenshotsFolderInitialized = false;
+
         public static string ScreenshotsFolder
         {
             get
             {
-                if (_screenshotsFolder == null)
+                if (!_screenshotsFolderInitialized)
                 {
                     // 자동 탐지 시도
                     _screenshotsFolder = TarkovPathFinder.FindScreenshotsFolder();
@@ -94,10 +103,16 @@ namespace TanukiTarkovMap
                     {
                         _screenshotsFolder = TarkovPathFinder.GetDefaultScreenshotsFolder();
                     }
+
+                    _screenshotsFolderInitialized = true;
                 }
                 return _screenshotsFolder;
             }
-            set { _screenshotsFolder = value; }
+            set
+            {
+                _screenshotsFolder = value;
+                _screenshotsFolderInitialized = true;
+            }
         }
 
         // AppSettings 관리

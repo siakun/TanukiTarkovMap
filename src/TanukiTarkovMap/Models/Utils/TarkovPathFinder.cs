@@ -8,12 +8,17 @@ namespace TanukiTarkovMap.Models.Utils
     /// </summary>
     public static class TarkovPathFinder
     {
+        private static bool _gameFolderLoggedOnce = false;
+        private static bool _screenshotsFolderLoggedOnce = false;
+
         /// <summary>
         /// Windows 레지스트리에서 Escape from Tarkov 게임 설치 경로를 찾습니다.
+        /// 공식 버전(레지스트리) -> 스팀 버전(스팀 경로) 순으로 탐지합니다.
         /// </summary>
         /// <returns>게임 설치 경로, 찾지 못한 경우 null</returns>
         public static string? FindGameFolder()
         {
+            // 1. 공식 홈페이지 버전 탐지 (레지스트리)
             try
             {
                 using RegistryKey? key = Registry.LocalMachine.OpenSubKey(
@@ -24,16 +29,59 @@ namespace TanukiTarkovMap.Models.Utils
 
                 if (!string.IsNullOrEmpty(installPath))
                 {
-                    Logger.SimpleLog($"Found game folder: {installPath}");
+                    if (!_gameFolderLoggedOnce)
+                    {
+                        Logger.SimpleLog($"[TarkovPath] Game folder found (Official): {installPath}");
+                        _gameFolderLoggedOnce = true;
+                    }
                     return installPath;
                 }
             }
             catch (Exception ex)
             {
-                Logger.SimpleLog($"Error finding game folder: {ex.Message}");
+                if (!_gameFolderLoggedOnce)
+                {
+                    Logger.SimpleLog($"[TarkovPath] Error finding official game folder: {ex.Message}");
+                }
             }
 
-            Logger.SimpleLog("Game folder not found in registry");
+            // 2. 스팀 버전 탐지 (스팀 설치 경로)
+            try
+            {
+                using RegistryKey? steamKey = Registry.LocalMachine.OpenSubKey(
+                    "SOFTWARE\\WOW6432Node\\Valve\\Steam"
+                );
+
+                var steamPath = steamKey?.GetValue("InstallPath")?.ToString();
+
+                if (!string.IsNullOrEmpty(steamPath))
+                {
+                    var tarkovPath = Path.Combine(steamPath, "steamapps", "common", "Escape from Tarkov");
+
+                    if (Directory.Exists(tarkovPath))
+                    {
+                        if (!_gameFolderLoggedOnce)
+                        {
+                            Logger.SimpleLog($"[TarkovPath] Game folder found (Steam): {tarkovPath}");
+                            _gameFolderLoggedOnce = true;
+                        }
+                        return tarkovPath;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if (!_gameFolderLoggedOnce)
+                {
+                    Logger.SimpleLog($"[TarkovPath] Error finding Steam game folder: {ex.Message}");
+                }
+            }
+
+            if (!_gameFolderLoggedOnce)
+            {
+                Logger.SimpleLog("[TarkovPath] Game folder not found (checked both Official and Steam)");
+                _gameFolderLoggedOnce = true;
+            }
             return null;
         }
 
@@ -97,7 +145,10 @@ namespace TanukiTarkovMap.Models.Utils
                 }
                 catch (Exception ex)
                 {
-                    Logger.SimpleLog($"OneDrive path detection error: {ex.Message}");
+                    if (!_screenshotsFolderLoggedOnce)
+                    {
+                        Logger.SimpleLog($"[TarkovPath] OneDrive path detection error: {ex.Message}");
+                    }
                 }
             }
 
@@ -108,17 +159,28 @@ namespace TanukiTarkovMap.Models.Utils
                 {
                     if (Directory.Exists(path))
                     {
-                        Logger.SimpleLog($"Found screenshots folder: {path}");
+                        if (!_screenshotsFolderLoggedOnce)
+                        {
+                            Logger.SimpleLog($"[TarkovPath] Screenshots folder found: {path}");
+                            _screenshotsFolderLoggedOnce = true;
+                        }
                         return path;
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.SimpleLog($"Error checking path {path}: {ex.Message}");
+                    if (!_screenshotsFolderLoggedOnce)
+                    {
+                        Logger.SimpleLog($"[TarkovPath] Error checking path {path}: {ex.Message}");
+                    }
                 }
             }
 
-            Logger.SimpleLog("Screenshots folder not found in any known location");
+            if (!_screenshotsFolderLoggedOnce)
+            {
+                Logger.SimpleLog("[TarkovPath] Screenshots folder not found in any known location");
+                _screenshotsFolderLoggedOnce = true;
+            }
             return null;
         }
 
