@@ -27,14 +27,20 @@ namespace TanukiTarkovMap
 
         static App()
         {
-            // 버전 정보 초기화
-            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(
-                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TanukiTarkovMap.exe")
-            );
-            Version = versionInfo.FileVersion ?? "0.0";
+            // exe 파일 생성일을 버전으로 사용
+            var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TanukiTarkovMap.exe");
+            if (File.Exists(exePath))
+            {
+                var fileInfo = new FileInfo(exePath);
+                Version = $"Built: {fileInfo.CreationTime:yyyy-MM-dd HH:mm:ss}";
+            }
+            else
+            {
+                Version = "Unknown";
+            }
         }
 
-        public static string Version { get; private set; } = "0.0";
+        public static string Version { get; private set; } = "Unknown";
 
         public static string WebsiteUrl { get; } = "https://tarkov-market.com/pilot";
 

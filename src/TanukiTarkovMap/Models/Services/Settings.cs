@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text.Json;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Models.Services
 {
@@ -58,10 +59,20 @@ namespace TanukiTarkovMap.Models.Services
 
         private static void CreateDefaultSettings()
         {
+            // 첫 실행 시 자동 탐지 실행
+            string? detectedGameFolder = TarkovPathFinder.FindGameFolder();
+            string? detectedScreenshotsFolder = TarkovPathFinder.FindScreenshotsFolder();
+
+            // 스크린샷 폴더를 찾지 못한 경우 기본 경로 사용
+            if (detectedScreenshotsFolder == null)
+            {
+                detectedScreenshotsFolder = TarkovPathFinder.GetDefaultScreenshotsFolder();
+            }
+
             var defaultSettings = new AppSettings()
             {
-                GameFolder = null,
-                ScreenshotsFolder = null,
+                GameFolder = detectedGameFolder,
+                ScreenshotsFolder = detectedScreenshotsFolder,
                 PipEnabled = false,
                 PipRememberPosition = true,
                 PipHotkeyEnabled = true,  // PIP 단축키 기본적으로 활성화
