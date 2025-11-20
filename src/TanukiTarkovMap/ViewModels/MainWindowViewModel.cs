@@ -54,8 +54,8 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> Normal 모드의 Rect (WindowStateManager에서 관리) </summary>
         public Rect NormalModeBounds => _windowStateManager.NormalModeRect;
 
-        /// <summary> 특정 맵의 PIP 모드 Rect 가져오기 </summary>
-        public Rect GetPipModeBounds(string mapName) => _windowStateManager.GetPipModeRect(mapName);
+        /// <summary> PIP 모드 Rect 가져오기 (모든 맵에서 동일) </summary>
+        public Rect GetPipModeBounds() => _windowStateManager.GetPipModeRect();
         #endregion
 
         public MainWindowViewModel() : this(new PipService(), new WindowBoundsService()) { }
@@ -217,11 +217,8 @@ namespace TanukiTarkovMap.ViewModels
             // Save current window state to WindowStateManager
             if (IsPipMode)
             {
-                if (!string.IsNullOrEmpty(CurrentMap))
-                {
-                    _windowStateManager.UpdatePipModeRect(CurrentMap, CurrentWindowBounds);
-                    Logger.SimpleLog($"[SaveSettings] Saved PIP mode for {CurrentMap}: {CurrentWindowBounds}");
-                }
+                _windowStateManager.UpdatePipModeRect(CurrentWindowBounds);
+                Logger.SimpleLog($"[SaveSettings] Saved PIP mode: {CurrentWindowBounds}");
             }
             else
             {
@@ -260,17 +257,14 @@ namespace TanukiTarkovMap.ViewModels
             else
             {
                 // PIP 모드 위치를 WindowStateManager에 즉시 저장
-                if (!string.IsNullOrEmpty(CurrentMap))
-                {
-                    _windowStateManager.UpdatePipModeRect(CurrentMap, CurrentWindowBounds);
+                _windowStateManager.UpdatePipModeRect(CurrentWindowBounds);
 
-                    var settings = App.GetSettings();
-                    _windowStateManager.SaveToSettings(settings);
-                    App.SetSettings(settings);
-                    Settings.Save();
+                var settings = App.GetSettings();
+                _windowStateManager.SaveToSettings(settings);
+                App.SetSettings(settings);
+                Settings.Save();
 
-                    Logger.SimpleLog($"[OnPipModeChanged] Saved PIP mode for {CurrentMap}: {CurrentWindowBounds}");
-                }
+                Logger.SimpleLog($"[OnPipModeChanged] Saved PIP mode: {CurrentWindowBounds}");
 
                 ExitPipMode();
             }
@@ -319,12 +313,10 @@ namespace TanukiTarkovMap.ViewModels
 
         private void EnterPipMode()
         {
-            // Load PIP settings from WindowStateManager
-            // GetPipModeRect()는 CurrentMap이 null이면 "default" 키를 사용
-            Rect pipRect = _windowStateManager.GetPipModeRect(CurrentMap);
+            // Load PIP settings from WindowStateManager (모든 맵에서 동일한 PIP 사용)
+            Rect pipRect = _windowStateManager.GetPipModeRect();
 
-            string mapKey = string.IsNullOrEmpty(CurrentMap) ? "default" : CurrentMap;
-            Logger.SimpleLog($"[EnterPipMode] Loaded PIP rect for {mapKey}: {pipRect}");
+            Logger.SimpleLog($"[EnterPipMode] Loaded PIP rect: {pipRect}");
 
             // Apply PIP size
             CurrentWindowWidth = pipRect.Width;
@@ -384,7 +376,7 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public void OnWindowBoundsChanged(object? sender, TanukiTarkovMap.Views.WindowBoundsChangedEventArgs e)
         {
-            Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}, CurrentMap={CurrentMap}");
+            Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}");
 
             // ViewModel 속성 업데이트 (바인딩용)
             CurrentWindowLeft = e.Bounds.Left;
@@ -393,7 +385,7 @@ namespace TanukiTarkovMap.ViewModels
             CurrentWindowHeight = e.Bounds.Height;
 
             // WindowStateManager를 통해 즉시 저장 (타이머 없음)
-            _windowStateManager.UpdateAndSave(e.Bounds, e.IsPipMode, CurrentMap);
+            _windowStateManager.UpdateAndSave(e.Bounds, e.IsPipMode);
         }
 
         #endregion

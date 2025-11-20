@@ -11,7 +11,7 @@ namespace TanukiTarkovMap.Models.Services
     public class WindowStateManager
     {
         private Rect _normalModeRect;
-        private Dictionary<string, Rect> _pipModeRects = new(); // 맵별 PIP Rect
+        private Rect _pipModeRect; // 모든 맵에서 동일한 PIP Rect 사용
 
         /// <summary>
         /// Normal 모드 창 상태
@@ -23,20 +23,18 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// 현재 맵의 PIP 모드 창 상태 가져오기
+        /// PIP 모드 창 상태 가져오기 (모든 맵에서 동일)
         /// </summary>
-        public Rect GetPipModeRect(string mapName)
+        public Rect GetPipModeRect()
         {
-            // mapName이 null이면 "default" 사용
-            string mapKey = string.IsNullOrEmpty(mapName) ? "default" : mapName;
-
-            if (!_pipModeRects.ContainsKey(mapKey))
+            // PIP Rect가 설정되지 않았으면 기본값 반환
+            if (_pipModeRect.Width <= 0 || _pipModeRect.Height <= 0)
             {
                 // 기본값: 300x250 크기, 위치는 -1 (미설정)
                 return new Rect(-1, -1, 300, 250);
             }
 
-            return _pipModeRects[mapKey];
+            return _pipModeRect;
         }
 
         /// <summary>
@@ -49,15 +47,12 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// PIP 모드 창 상태 업데이트 (맵별)
+        /// PIP 모드 창 상태 업데이트 (모든 맵에서 동일)
         /// </summary>
-        public void UpdatePipModeRect(string mapName, Rect rect)
+        public void UpdatePipModeRect(Rect rect)
         {
-            // mapName이 null이면 "default" 사용
-            string mapKey = string.IsNullOrEmpty(mapName) ? "default" : mapName;
-
-            _pipModeRects[mapKey] = rect;
-            Logger.SimpleLog($"[WindowStateManager] PIP mode updated for {mapKey}: {rect}");
+            _pipModeRect = rect;
+            Logger.SimpleLog($"[WindowStateManager] PIP mode updated: {rect}");
         }
 
         /// <summary>
@@ -73,23 +68,25 @@ namespace TanukiTarkovMap.Models.Services
                 settings.NormalHeight > 0 ? settings.NormalHeight : 700
             );
 
-            // PIP 모드 로드 (맵별)
-            _pipModeRects.Clear();
-            if (settings.MapSettings != null)
+            // PIP 모드 로드 (단일 Rect)
+            // "default" 키의 설정이 있으면 사용, 없으면 기본값
+            if (settings.MapSettings != null && settings.MapSettings.ContainsKey("default"))
             {
-                foreach (var kvp in settings.MapSettings)
-                {
-                    var mapSetting = kvp.Value;
-                    _pipModeRects[kvp.Key] = new Rect(
-                        mapSetting.Left,
-                        mapSetting.Top,
-                        mapSetting.Width > 0 ? mapSetting.Width : 300,
-                        mapSetting.Height > 0 ? mapSetting.Height : 250
-                    );
-                }
+                var pipSetting = settings.MapSettings["default"];
+                _pipModeRect = new Rect(
+                    pipSetting.Left,
+                    pipSetting.Top,
+                    pipSetting.Width > 0 ? pipSetting.Width : 300,
+                    pipSetting.Height > 0 ? pipSetting.Height : 250
+                );
+            }
+            else
+            {
+                // 기본값
+                _pipModeRect = new Rect(-1, -1, 300, 250);
             }
 
-            Logger.SimpleLog($"[WindowStateManager] Loaded from settings: Normal={_normalModeRect}, PIP maps={_pipModeRects.Count}");
+            Logger.SimpleLog($"[WindowStateManager] Loaded from settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
         }
 
         /// <summary>
@@ -103,40 +100,35 @@ namespace TanukiTarkovMap.Models.Services
             settings.NormalWidth = _normalModeRect.Width;
             settings.NormalHeight = _normalModeRect.Height;
 
-            // PIP 모드 저장 (맵별)
+            // PIP 모드 저장 (단일 Rect, "default" 키 사용)
             if (settings.MapSettings == null)
             {
                 settings.MapSettings = new Dictionary<string, MapSetting>();
             }
 
-            foreach (var kvp in _pipModeRects)
+            if (!settings.MapSettings.ContainsKey("default"))
             {
-                if (!settings.MapSettings.ContainsKey(kvp.Key))
-                {
-                    settings.MapSettings[kvp.Key] = new MapSetting();
-                }
-
-                var mapSetting = settings.MapSettings[kvp.Key];
-                mapSetting.Left = kvp.Value.Left;
-                mapSetting.Top = kvp.Value.Top;
-                mapSetting.Width = kvp.Value.Width;
-                mapSetting.Height = kvp.Value.Height;
+                settings.MapSettings["default"] = new MapSetting();
             }
 
-            Logger.SimpleLog($"[WindowStateManager] Saved to settings: Normal={_normalModeRect}, PIP maps={_pipModeRects.Count}");
+            var pipSetting = settings.MapSettings["default"];
+            pipSetting.Left = _pipModeRect.Left;
+            pipSetting.Top = _pipModeRect.Top;
+            pipSetting.Width = _pipModeRect.Width;
+            pipSetting.Height = _pipModeRect.Height;
+
+            Logger.SimpleLog($"[WindowStateManager] Saved to settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
         }
 
         /// <summary>
         /// Normal 모드 또는 PIP 모드 Rect 업데이트 및 저장
         /// </summary>
-        public void UpdateAndSave(Rect rect, bool isPipMode, string? currentMap = null)
+        public void UpdateAndSave(Rect rect, bool isPipMode)
         {
             if (isPipMode)
             {
-                // currentMap이 null이면 "default" 사용
-                string mapKey = string.IsNullOrEmpty(currentMap) ? "default" : currentMap;
-                UpdatePipModeRect(mapKey, rect);
-                Logger.SimpleLog($"[UpdateAndSave] PIP mode saved for map: {mapKey}");
+                UpdatePipModeRect(rect);
+                Logger.SimpleLog($"[UpdateAndSave] PIP mode saved");
             }
             else
             {
