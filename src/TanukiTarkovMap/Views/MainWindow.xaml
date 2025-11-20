@@ -39,7 +39,9 @@
                     Background="#FF2A2A2A"
                     BorderThickness="0,0,0,1"
                     BorderBrush="#FF3A3A3A"
-                    Padding="8,4">
+                    Padding="8,4"
+                    Panel.ZIndex="200"
+                    Visibility="{Binding TopBarVisibility}">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock Text="Map:"
                                Foreground="#FF888888"
@@ -173,7 +175,9 @@
             <!-- 메인 탭 영역 -->
             <TabControl x:Name="TabContainer"
                         Grid.Row="1"
-                        Grid.Column="1"
+                        Grid.Column="{Binding TabContainerColumn}"
+                        Grid.ColumnSpan="{Binding TabContainerColumnSpan}"
+                        Margin="{Binding TabContainerMargin}"
                         Panel.ZIndex="100"
                         Background="#FF212121"
                         BorderThickness="0">
@@ -189,11 +193,12 @@
                             <Setter.Value>
                                 <ControlTemplate TargetType="TabItem">
                                     <Grid>
-                                        <Border x:Name="Border" 
+                                        <Border x:Name="Border"
                                                 Background="{TemplateBinding Background}"
                                                 BorderThickness="0"
                                                 CornerRadius="3,3,0,0"
-                                                Padding="{TemplateBinding Padding}">
+                                                Padding="{TemplateBinding Padding}"
+                                                Visibility="{Binding DataContext.TabItemHeaderVisibility, RelativeSource={RelativeSource AncestorType=Window}}">
                                             <Grid>
                                                 <Grid.ColumnDefinitions>
                                                     <ColumnDefinition Width="*"/>
