@@ -360,6 +360,12 @@ namespace TanukiTarkovMap.Views
                 // WebViewContainer에 추가
                 WebViewContainer.Child = _webView;
 
+                // WebViewContainer SizeChanged 이벤트 핸들러 등록 (둥근 모서리 클리핑용)
+                WebViewContainer.SizeChanged += WebViewContainer_SizeChanged;
+
+                // 초기 클리핑 영역 설정
+                ApplyWebViewClipping();
+
                 // UserDataFolder 설정
                 var userDataFolder = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -381,6 +387,10 @@ namespace TanukiTarkovMap.Views
                 // WebView2 설정
                 ConfigureWebView2Settings(_webView);
                 Logger.SimpleLog("InitializeWebView: Settings configured");
+
+                // CoreWebView2 초기화 완료 후 클리핑 재적용
+                ApplyWebViewClipping();
+                Logger.SimpleLog("InitializeWebView: Clipping applied after CoreWebView2 init");
 
                 // 이벤트 핸들러 등록
                 _webView.NavigationCompleted += WebView_NavigationCompleted;
@@ -404,7 +414,7 @@ namespace TanukiTarkovMap.Views
             settings.IsScriptEnabled = true;
             settings.AreDefaultScriptDialogsEnabled = false;
             settings.IsWebMessageEnabled = true;
-            settings.AreDevToolsEnabled = false;
+            settings.AreDevToolsEnabled = true;
             settings.AreDefaultContextMenusEnabled = false;
 
             settings.IsZoomControlEnabled = true;
@@ -436,6 +446,11 @@ namespace TanukiTarkovMap.Views
 
                 // 기본 작업들
                 await RemoveUnwantedElements(webView);
+
+                // 웹 페이지 마진/패딩 제거
+                await webView.CoreWebView2.ExecuteScriptAsync(
+                    JavaScriptConstants.REMOVE_PAGE_MARGINS_SCRIPT
+                );
 
                 // Tarkov Market 전용 처리
                 if (webView.Source?.ToString().Contains("tarkov-market.com") == true)
@@ -526,6 +541,26 @@ namespace TanukiTarkovMap.Views
                                             _webView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
                                         }
                                     }
+                                });
+                            }
+                            else if (messageType == "margins-removed")
+                            {
+                                Logger.SimpleLog("[CoreWebView2_WebMessageReceived] Margins removed, triggering WebView resize");
+
+                                Dispatcher.Invoke(() =>
+                                {
+                                    // WebView를 임시로 리사이즈하여 맵 재렌더링 강제
+                                    TriggerWebViewResize();
+                                });
+                            }
+                            else if (messageType == "ui-elements-removed")
+                            {
+                                Logger.SimpleLog("[CoreWebView2_WebMessageReceived] UI elements removed, triggering WebView resize");
+
+                                Dispatcher.Invoke(() =>
+                                {
+                                    // WebView를 임시로 리사이즈하여 맵 재렌더링 강제
+                                    TriggerWebViewResize();
                                 });
                             }
                         }
@@ -757,6 +792,104 @@ namespace TanukiTarkovMap.Views
                 Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight),
                 IsPipMode = _viewModel.IsPipMode
             });
+        }
+
+        /// <summary>
+        /// WebViewContainer 크기 변경 시 클리핑 영역 업데이트
+        /// </summary>
+        private void WebViewContainer_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            ApplyWebViewClipping();
+        }
+
+        /// <summary>
+        /// WebView2에 둥근 모서리 클리핑 적용 (Airspace 문제 해결)
+        /// </summary>
+        private void ApplyWebViewClipping()
+        {
+            if (_webView == null || WebViewContainer.ActualWidth <= 0 || WebViewContainer.ActualHeight <= 0)
+                return;
+
+            try
+            {
+                // 8px 둥근 모서리를 가진 RectangleGeometry 생성
+                var clipGeometry = new RectangleGeometry
+                {
+                    Rect = new Rect(0, 0, WebViewContainer.ActualWidth, WebViewContainer.ActualHeight),
+                    RadiusX = 8,
+                    RadiusY = 8
+                };
+
+                // WebView2에 클리핑 적용
+                _webView.Clip = clipGeometry;
+
+                Logger.SimpleLog($"[ApplyWebViewClipping] Applied clipping: {WebViewContainer.ActualWidth}x{WebViewContainer.ActualHeight}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[ApplyWebViewClipping] Failed to apply clipping", ex);
+            }
+        }
+
+        /// <summary>
+        /// WebView를 임시로 리사이즈하여 맵 재렌더링 강제
+        /// 마진 제거 후 맵이 새로운 공간을 채우도록 함
+        /// </summary>
+        private void TriggerWebViewResize()
+        {
+            try
+            {
+                if (_webView == null) return;
+
+                Logger.SimpleLog("[TriggerWebViewResize] Starting temporary resize");
+
+                // 현재 크기 저장
+                var originalHeight = _webView.Height;
+
+                // Height를 1px 증가 (NaN인 경우 ActualHeight 사용)
+                if (double.IsNaN(originalHeight))
+                {
+                    _webView.Height = _webView.ActualHeight + 1;
+                }
+                else
+                {
+                    _webView.Height = originalHeight + 1;
+                }
+
+                // 레이아웃 업데이트 강제
+                _webView.UpdateLayout();
+
+                Logger.SimpleLog($"[TriggerWebViewResize] Increased height to {_webView.Height}");
+
+                // 100ms 후 원래 크기로 복원
+                Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        if (double.IsNaN(originalHeight))
+                        {
+                            // 원래 NaN이었던 경우 다시 NaN으로 설정 (자동 크기 조정)
+                            _webView.Height = double.NaN;
+                            Logger.SimpleLog("[TriggerWebViewResize] Restored height to Auto (NaN)");
+                        }
+                        else
+                        {
+                            _webView.Height = originalHeight;
+                            Logger.SimpleLog($"[TriggerWebViewResize] Restored height to {originalHeight}");
+                        }
+
+                        _webView.UpdateLayout();
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Error("[TriggerWebViewResize] Failed to restore size", ex);
+                    }
+                }), System.Windows.Threading.DispatcherPriority.Background, null);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[TriggerWebViewResize] Failed to trigger resize", ex);
+            }
         }
 
         // PIP 모드에서 창 드래그 이동 처리

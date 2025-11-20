@@ -17,37 +17,57 @@
         MinWidth="{Binding MinWidth}"
         MinHeight="{Binding MinHeight}"
         WindowStartupLocation="Manual"
-        Background="#FF1A1A1A"
+        Background="Transparent"
         WindowStyle="None"
+        AllowsTransparency="True"
         ResizeMode="{Binding ResizeMode}"
-        Topmost="{Binding IsTopmost}">
+        Topmost="{Binding IsTopmost}"
+        UseLayoutRounding="True"
+        SnapsToDevicePixels="True">
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="32"
-                      ResizeBorderThickness="5"
-                      CornerRadius="0"
+        <WindowChrome CaptionHeight="25"
+                      ResizeBorderThickness="8"
+                      CornerRadius="8"
                       GlassFrameThickness="0"
                       UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
     <Grid x:Name="MainGrid" MouseLeftButtonDown="Window_MouseLeftButtonDown">
-        <!-- 메인 컨텐츠 -->
-        <Grid x:Name="MainContentGrid" Panel.ZIndex="1">
-            <Grid.RowDefinitions>
-                <RowDefinition Height="Auto"/>
-                <RowDefinition Height="*"/>
-            </Grid.RowDefinitions>
+        <!-- Border로 감싸서 리사이즈 시 부드러운 효과 + 둥근 모서리 -->
+        <Border x:Name="ContentBorder"
+                Background="#FF1A1A1A"
+                CornerRadius="8"
+                Margin="8"
+                SnapsToDevicePixels="True"
+                UseLayoutRounding="True">
+            <Border.Effect>
+                <DropShadowEffect Color="Black"
+                                  Direction="270"
+                                  ShadowDepth="0"
+                                  BlurRadius="15"
+                                  Opacity="0.4"/>
+            </Border.Effect>
+            <!-- 메인 컨텐츠 -->
+            <Grid x:Name="MainContentGrid" Panel.ZIndex="1">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
 
             <!-- 상단 바 (맵 선택 + UI 요소 숨기기 + 설정 버튼 + 윈도우 컨트롤) -->
             <Border Grid.Row="0"
                     Background="#FF2A2A2A"
+                    CornerRadius="8,8,0,0"
                     BorderThickness="0,0,0,1"
                     BorderBrush="#FF3A3A3A"
                     Padding="8,0"
                     Panel.ZIndex="200"
-                    Height="32"
+                    Height="25"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
-                    Visibility="{Binding TopBarVisibility}">
+                    Visibility="{Binding TopBarVisibility}"
+                    SnapsToDevicePixels="True"
+                    UseLayoutRounding="True">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -108,12 +128,12 @@
                     <!-- 중간: 설정 버튼 -->
                     <Button x:Name="SettingsButton"
                             Grid.Column="1"
-                            Width="32" Height="32"
+                            Width="25" Height="25"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="White"
                             Content="⚙"
-                            FontSize="14"
+                            FontSize="12"
                             Click="Settings_Click"
                             WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button.Style>
@@ -144,12 +164,12 @@
                     <StackPanel Grid.Column="2" Orientation="Horizontal">
                         <!-- 최소화 버튼 -->
                         <Button x:Name="MinimizeButton"
-                                Width="46" Height="32"
+                                Width="40" Height="25"
                                 Background="Transparent"
                                 BorderThickness="0"
                                 Foreground="White"
                                 Content="─"
-                                FontSize="12"
+                                FontSize="10"
                                 Click="Minimize_Click"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <Button.Style>
@@ -176,12 +196,12 @@
 
                         <!-- 최대화/복원 버튼 -->
                         <Button x:Name="MaximizeRestoreButton"
-                                Width="46" Height="32"
+                                Width="40" Height="25"
                                 Background="Transparent"
                                 BorderThickness="0"
                                 Foreground="White"
                                 Content="□"
-                                FontSize="14"
+                                FontSize="12"
                                 Click="MaximizeRestore_Click"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <Button.Style>
@@ -207,12 +227,12 @@
 
                         <!-- 닫기 버튼 -->
                         <Button x:Name="CloseButton"
-                                Width="46" Height="32"
+                                Width="40" Height="25"
                                 Background="Transparent"
                                 BorderThickness="0"
                                 Foreground="White"
                                 Content="✕"
-                                FontSize="14"
+                                FontSize="12"
                                 Click="Close_Click"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <Button.Style>
@@ -242,10 +262,13 @@
             <!-- WebView2 영역 (단일) -->
             <Border x:Name="WebViewContainer"
                     Grid.Row="1"
-                    Background="#FF212121">
+                    Background="#FF212121"
+                    CornerRadius="0,0,8,8"
+                    ClipToBounds="True">
                 <!-- WebView2는 코드에서 추가됩니다 -->
             </Border>
-        </Grid>
+            </Grid>
+        </Border>
 
         <!-- 설정 패널 오버레이 (플로팅 윈도우 스타일) -->
         <Grid x:Name="SettingsOverlay"
