@@ -364,7 +364,11 @@ namespace TanukiTarkovMap.Views
                 // WebView2 생성
                 _webView = new WebView2
                 {
-                    DefaultBackgroundColor = System.Drawing.Color.FromArgb(26, 26, 26)
+                    DefaultBackgroundColor = System.Drawing.Color.FromArgb(26, 26, 26),
+                    HorizontalAlignment = HorizontalAlignment.Stretch,
+                    VerticalAlignment = VerticalAlignment.Stretch,
+                    Width = double.NaN,  // 자동 크기 조정
+                    Height = double.NaN  // 자동 크기 조정
                 };
 
                 // WebViewContainer에 추가
@@ -877,6 +881,8 @@ namespace TanukiTarkovMap.Views
             {
                 _isClampingLocation = true;
 
+                // ⚠️ 임시로 비활성화: 화면 경계 체크 버그로 인해 주석 처리
+                /*
                 // 화면 경계 체크 수행 (모니터가 없는 영역으로 나가면 되돌림)
                 var dpiScale = VisualTreeHelper.GetDpi(this);
 
@@ -896,6 +902,7 @@ namespace TanukiTarkovMap.Views
                     this.Left = newPosition.Value.X;
                     this.Top = newPosition.Value.Y;
                 }
+                */
 
                 // 창 위치/크기 변경 이벤트 발생 (ViewModel에서 즉시 저장)
                 WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
@@ -927,10 +934,18 @@ namespace TanukiTarkovMap.Views
         }
 
         /// <summary>
-        /// WebViewContainer 크기 변경 시 클리핑 영역 업데이트
+        /// WebViewContainer 크기 변경 시 WebView 크기 업데이트 및 클리핑 영역 업데이트
         /// </summary>
         private void WebViewContainer_SizeChanged(object sender, SizeChangedEventArgs e)
         {
+            // WebView2 크기를 컨테이너 크기에 맞춤
+            if (_webView != null && WebViewContainer.ActualWidth > 0 && WebViewContainer.ActualHeight > 0)
+            {
+                _webView.Width = WebViewContainer.ActualWidth;
+                _webView.Height = WebViewContainer.ActualHeight;
+                Logger.SimpleLog($"[WebViewContainer_SizeChanged] Updated WebView size to {_webView.Width}x{_webView.Height}");
+            }
+
             ApplyWebViewClipping();
         }
 
@@ -971,46 +986,31 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                if (_webView == null) return;
+                if (_webView == null || WebViewContainer.ActualHeight <= 0) return;
 
                 Logger.SimpleLog("[TriggerWebViewResize] Starting temporary resize");
 
-                // 현재 크기 저장
-                var originalHeight = _webView.Height;
+                // 현재 컨테이너 높이 저장
+                var containerHeight = WebViewContainer.ActualHeight;
 
-                // Height를 1px 증가 (NaN인 경우 ActualHeight 사용)
-                if (double.IsNaN(originalHeight))
-                {
-                    _webView.Height = _webView.ActualHeight + 1;
-                }
-                else
-                {
-                    _webView.Height = originalHeight + 1;
-                }
+                // Height를 1px 증가
+                _webView.Height = containerHeight + 1;
 
                 // 레이아웃 업데이트 강제
                 _webView.UpdateLayout();
 
                 Logger.SimpleLog($"[TriggerWebViewResize] Increased height to {_webView.Height}");
 
-                // 100ms 후 원래 크기로 복원
+                // 100ms 후 컨테이너 크기로 복원
                 Dispatcher.BeginInvoke(new Action(() =>
                 {
                     try
                     {
-                        if (double.IsNaN(originalHeight))
-                        {
-                            // 원래 NaN이었던 경우 다시 NaN으로 설정 (자동 크기 조정)
-                            _webView.Height = double.NaN;
-                            Logger.SimpleLog("[TriggerWebViewResize] Restored height to Auto (NaN)");
-                        }
-                        else
-                        {
-                            _webView.Height = originalHeight;
-                            Logger.SimpleLog($"[TriggerWebViewResize] Restored height to {originalHeight}");
-                        }
-
+                        // 컨테이너의 현재 크기로 복원 (변경되었을 수 있음)
+                        _webView.Width = WebViewContainer.ActualWidth;
+                        _webView.Height = WebViewContainer.ActualHeight;
                         _webView.UpdateLayout();
+                        Logger.SimpleLog($"[TriggerWebViewResize] Restored to container size: {_webView.Width}x{_webView.Height}");
                     }
                     catch (Exception ex)
                     {
