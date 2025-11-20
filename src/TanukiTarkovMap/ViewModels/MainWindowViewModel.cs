@@ -75,6 +75,31 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial MapInfo SelectedMapInfo { get; set; }
         #endregion
 
+        #region WebView Zoom Properties
+        /// <summary> 사용 가능한 WebView 배율 목록 </summary>
+        public List<int> AvailableZoomLevels { get; } = new List<int> { 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200 };
+
+        private int _selectedZoomLevel = 67;
+        /// <summary> 선택된 WebView 배율 (%) </summary>
+        public int SelectedZoomLevel
+        {
+            get => _selectedZoomLevel;
+            set
+            {
+                if (SetProperty(ref _selectedZoomLevel, value))
+                {
+                    // Settings에 저장
+                    var settings = App.GetSettings();
+                    settings.WebViewZoomLevel = value;
+                    App.SetSettings(settings);
+                    Settings.Save();
+
+                    Logger.SimpleLog($"[SelectedZoomLevel] Changed to: {value}%");
+                }
+            }
+        }
+        #endregion
+
         #region Computed Bounds Properties (Read-only)
         /// <summary> 현재 창의 Rect (현재 모드의 위치/크기) </summary>
         public Rect CurrentWindowBounds => new Rect(CurrentWindowLeft, CurrentWindowTop, CurrentWindowWidth, CurrentWindowHeight);
@@ -168,6 +193,10 @@ namespace TanukiTarkovMap.ViewModels
             _isAlwaysOnTop = _settings.IsAlwaysOnTop;
             IsTopmost = _settings.IsAlwaysOnTop; // 초기 TopMost 상태 설정
             OnPropertyChanged(nameof(IsAlwaysOnTop));
+
+            // Load WebView zoom level
+            _selectedZoomLevel = _settings.WebViewZoomLevel > 0 ? _settings.WebViewZoomLevel : 67;
+            OnPropertyChanged(nameof(SelectedZoomLevel));
 
             // Load last selected map
             if (!string.IsNullOrEmpty(_settings.SelectedMapId))

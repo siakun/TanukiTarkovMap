@@ -39,6 +39,9 @@ namespace TanukiTarkovMap.Models.Data
         // 창 고정 설정
         public bool IsAlwaysOnTop { get; set; } = false;            // 항상 위 (Topmost) 설정
 
+        // WebView 배율 설정
+        public int WebViewZoomLevel { get; set; } = 67;             // WebView 배율 (%)
+
         public override string ToString()
         {
             return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}'";

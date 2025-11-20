@@ -29,136 +29,6 @@
 
     <Window.Resources>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
-
-        <!-- ComboBox 다크 테마 스타일 -->
-        <Style x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ToggleButton">
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                                <ColumnDefinition Width="20"/>
-                            </Grid.ColumnDefinitions>
-                            <Border x:Name="Border"
-                                    Grid.ColumnSpan="2"
-                                    CornerRadius="3"
-                                    Background="#FF2A2A2A"
-                                    BorderBrush="#FF3A3A3A"
-                                    BorderThickness="1"/>
-                            <Path x:Name="Arrow"
-                                  Grid.Column="1"
-                                  Fill="White"
-                                  HorizontalAlignment="Center"
-                                  VerticalAlignment="Center"
-                                  Data="M 0 0 L 4 4 L 8 0 Z"/>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#FF3A3A3A"/>
-                            </Trigger>
-                            <Trigger Property="IsPressed" Value="True">
-                                <Setter TargetName="Border" Property="Background" Value="#FF4A4A4A"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter TargetName="Border" Property="Background" Value="#FF1A1A1A"/>
-                                <Setter TargetName="Border" Property="BorderBrush" Value="#FF2A2A2A"/>
-                                <Setter TargetName="Arrow" Property="Fill" Value="#FF888888"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-
-        <Style x:Key="DarkComboBox" TargetType="ComboBox">
-            <Setter Property="SnapsToDevicePixels" Value="True"/>
-            <Setter Property="OverridesDefaultStyle" Value="True"/>
-            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="ComboBox">
-                        <Grid>
-                            <ToggleButton Name="ToggleButton"
-                                          Grid.Column="2"
-                                          Focusable="False"
-                                          IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
-                                          ClickMode="Press"
-                                          Style="{StaticResource ComboBoxToggleButton}"/>
-                            <ContentPresenter Name="ContentSite"
-                                              IsHitTestVisible="False"
-                                              Content="{TemplateBinding SelectionBoxItem}"
-                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
-                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
-                                              Margin="5,1,18,1"
-                                              VerticalAlignment="Center"
-                                              HorizontalAlignment="Left"/>
-                            <TextBox x:Name="PART_EditableTextBox"
-                                     Style="{x:Null}"
-                                     HorizontalAlignment="Left"
-                                     VerticalAlignment="Center"
-                                     Margin="5,1,18,1"
-                                     Focusable="True"
-                                     Background="Transparent"
-                                     Foreground="White"
-                                     Visibility="Hidden"
-                                     IsReadOnly="{TemplateBinding IsReadOnly}"/>
-                            <Popup Name="Popup"
-                                   Placement="Bottom"
-                                   IsOpen="{TemplateBinding IsDropDownOpen}"
-                                   AllowsTransparency="True"
-                                   Focusable="False"
-                                   PopupAnimation="Slide">
-                                <Grid Name="DropDown"
-                                      SnapsToDevicePixels="True"
-                                      MinWidth="{TemplateBinding ActualWidth}"
-                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
-                                    <Border x:Name="DropDownBorder"
-                                            Background="#FF2A2A2A"
-                                            BorderThickness="1"
-                                            BorderBrush="#FF3A3A3A"
-                                            CornerRadius="3"
-                                            Margin="0,1,0,0">
-                                        <Border.Effect>
-                                            <DropShadowEffect Color="Black"
-                                                              ShadowDepth="2"
-                                                              BlurRadius="8"
-                                                              Opacity="0.5"/>
-                                        </Border.Effect>
-                                        <ScrollViewer Margin="2"
-                                                      SnapsToDevicePixels="True">
-                                            <StackPanel IsItemsHost="True"
-                                                        KeyboardNavigation.DirectionalNavigation="Contained"/>
-                                        </ScrollViewer>
-                                    </Border>
-                                </Grid>
-                            </Popup>
-                        </Grid>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="HasItems" Value="False">
-                                <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Foreground" Value="#FF888888"/>
-                            </Trigger>
-                            <Trigger Property="IsGrouping" Value="True">
-                                <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
-                            </Trigger>
-                            <Trigger SourceName="Popup" Property="Popup.AllowsTransparency" Value="True">
-                                <Setter TargetName="DropDownBorder" Property="Margin" Value="0,2,0,0"/>
-                            </Trigger>
-                            <Trigger Property="IsEditable" Value="True">
-                                <Setter Property="IsTabStop" Value="False"/>
-                                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
-                                <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
@@ -225,7 +95,7 @@
                         <ColumnDefinition Width="30"/>
                     </Grid.ColumnDefinitions>
 
-                    <!-- 왼쪽: 맵 드롭다운 + UI 요소 숨기기 체크박스 -->
+                    <!-- 왼쪽: 맵 드롭다운 + 배율 드롭다운 + UI 요소 숨기기 체크박스 -->
                     <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Map:"
                                    Foreground="#FF888888"
@@ -238,37 +108,39 @@
                                   SelectedItem="{Binding SelectedMapInfo, Mode=TwoWay}"
                                   DisplayMemberPath="DisplayName"
                                   Style="{StaticResource DarkComboBox}"
-                                  Width="135"
+                                  Width="105"
                                   Height="18"
                                   FontSize="10"
                                   Foreground="White"
                                   WindowChrome.IsHitTestVisibleInChrome="True">
                             <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem">
-                                    <Setter Property="Background" Value="#FF2A2A2A"/>
-                                    <Setter Property="Foreground" Value="White"/>
-                                    <Setter Property="FontSize" Value="10"/>
-                                    <Setter Property="Padding" Value="5,2"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="ComboBoxItem">
-                                                <Border Name="Border"
-                                                        Background="{TemplateBinding Background}"
-                                                        Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="Border" Property="Background" Value="#FF3A3A3A"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsSelected" Value="True">
-                                                        <Setter TargetName="Border" Property="Background" Value="#FF4A4A4A"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <!-- 배율 조정 -->
+                        <TextBlock Text="🔍"
+                                   Foreground="#FF888888"
+                                   VerticalAlignment="Center"
+                                   Margin="16,0,4,0"
+                                   FontSize="12"
+                                   WindowChrome.IsHitTestVisibleInChrome="True"/>
+                        <ComboBox x:Name="ZoomSelector"
+                                  ItemsSource="{Binding AvailableZoomLevels}"
+                                  SelectedItem="{Binding SelectedZoomLevel, Mode=TwoWay}"
+                                  Style="{StaticResource DarkComboBox}"
+                                  Width="60"
+                                  Height="18"
+                                  FontSize="10"
+                                  Foreground="White"
+                                  WindowChrome.IsHitTestVisibleInChrome="True">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding StringFormat={}{0}%}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
                             </ComboBox.ItemContainerStyle>
                         </ComboBox>
 

@@ -185,6 +185,9 @@ namespace TanukiTarkovMap.Views
                 case nameof(MainWindowViewModel.PipHideWebElements):
                     await HandlePipHideWebElementsChanged();
                     break;
+                case nameof(MainWindowViewModel.SelectedZoomLevel):
+                    HandleZoomLevelChanged();
+                    break;
             }
         }
 
@@ -283,6 +286,31 @@ namespace TanukiTarkovMap.Views
             else
             {
                 Logger.SimpleLog("[HandlePipHideWebElementsChanged] WebView2 not ready, skipping");
+            }
+        }
+
+        /// <summary>
+        /// WebView 배율 변경 처리
+        /// </summary>
+        private void HandleZoomLevelChanged()
+        {
+            if (_webView?.CoreWebView2 != null)
+            {
+                try
+                {
+                    // ZoomFactor는 백분율을 소수로 변환 (100% = 1.0)
+                    double zoomFactor = _viewModel.SelectedZoomLevel / 100.0;
+                    _webView.ZoomFactor = zoomFactor;
+                    Logger.SimpleLog($"[HandleZoomLevelChanged] Zoom level changed to: {_viewModel.SelectedZoomLevel}% (ZoomFactor: {zoomFactor})");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("[HandleZoomLevelChanged] Error applying zoom level", ex);
+                }
+            }
+            else
+            {
+                Logger.SimpleLog("[HandleZoomLevelChanged] WebView2 not ready, will apply zoom when initialized");
             }
         }
 
@@ -461,6 +489,11 @@ namespace TanukiTarkovMap.Views
 
                 // WebSocket 통신을 위한 메시지 핸들러 등록
                 webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
+
+                // 저장된 배율 적용
+                double zoomFactor = _viewModel.SelectedZoomLevel / 100.0;
+                webView.ZoomFactor = zoomFactor;
+                Logger.SimpleLog($"[WebView_NavigationCompleted] Applied initial zoom: {_viewModel.SelectedZoomLevel}% (ZoomFactor: {zoomFactor})");
 
                 // 기본 작업들
                 await RemoveUnwantedElements(webView);
