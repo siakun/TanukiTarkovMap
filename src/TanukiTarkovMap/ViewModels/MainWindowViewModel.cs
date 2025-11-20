@@ -1,5 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using System.Collections.Generic;
 using System.Windows;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
@@ -38,6 +39,14 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool IsPipMode { get; set; }
         [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; } = true;
         [ObservableProperty] public partial string PipHotkeyKey { get; set; } = "F11";
+        #endregion
+
+        #region Map Selection Properties
+        /// <summary> 사용 가능한 맵 목록 </summary>
+        public List<MapInfo> AvailableMaps => App.AvailableMaps;
+
+        /// <summary> 선택된 맵 정보 </summary>
+        [ObservableProperty] public partial MapInfo SelectedMapInfo { get; set; }
         #endregion
 
         #region Computed Bounds Properties (Read-only)

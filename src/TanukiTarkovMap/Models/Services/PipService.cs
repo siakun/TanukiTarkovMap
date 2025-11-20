@@ -7,9 +7,9 @@ namespace TanukiTarkovMap.Models.Services
 {
     public class PipService
     {
-        public async Task ApplyPipModeJavaScriptAsync(object webView, string mapName)
+        public async Task ApplyPipModeJavaScriptAsync(object webView, string mapId)
         {
-            Logger.SimpleLog($"[PipService] ApplyPipModeJavaScriptAsync called for map: {mapName}");
+            Logger.SimpleLog($"[PipService] ApplyPipModeJavaScriptAsync called for map ID: {mapId}");
 
             if (webView is not WebView2 webView2 || webView2.CoreWebView2 == null)
             {
@@ -27,7 +27,7 @@ namespace TanukiTarkovMap.Models.Services
 
                 Logger.SimpleLog("[PipService] Step 2: Applying map scaling");
                 // 2. Apply map scaling
-                var transformMatrix = GetMapTransform(mapName);
+                var transformMatrix = GetMapTransform(mapId);
                 Logger.SimpleLog($"[PipService] Transform matrix: {transformMatrix}");
                 await webView2.CoreWebView2.ExecuteScriptAsync(
                     $@"
@@ -64,7 +64,7 @@ namespace TanukiTarkovMap.Models.Services
                     JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_FOOTER
                 );
 
-                Logger.SimpleLog($"[PipService] Successfully applied PIP mode JavaScript for map: {mapName}");
+                Logger.SimpleLog($"[PipService] Successfully applied PIP mode JavaScript for map ID: {mapId}");
             }
             catch (System.Exception ex)
             {
@@ -98,26 +98,27 @@ namespace TanukiTarkovMap.Models.Services
             }
         }
 
-        public string GetMapTransform(string mapName)
+        public string GetMapTransform(string mapId)
         {
             // Null or empty 체크
-            if (string.IsNullOrEmpty(mapName))
+            if (string.IsNullOrEmpty(mapId))
             {
-                Logger.SimpleLog("[PipService] GetMapTransform: mapName is null or empty, using default transform");
+                Logger.SimpleLog("[PipService] GetMapTransform: mapId is null or empty, using default transform");
                 return "matrix(0.15, 0, 0, 0.15, -150, -150)";
             }
 
             var settings = App.GetSettings();
 
+            // 설정에서 맵 ID로 조회
             if (settings.MapSettings != null &&
-                settings.MapSettings.ContainsKey(mapName) &&
-                !string.IsNullOrEmpty(settings.MapSettings[mapName].Transform))
+                settings.MapSettings.ContainsKey(mapId) &&
+                !string.IsNullOrEmpty(settings.MapSettings[mapId].Transform))
             {
-                return settings.MapSettings[mapName].Transform;
+                return settings.MapSettings[mapId].Transform;
             }
 
-            // Default transform based on map name
-            return mapName switch
+            // 맵 ID 기반 기본 transform
+            return mapId switch
             {
                 "factory_day_preset" => "matrix(0.166113, 0, 0, 0.166113, -165.258, -154.371)",
                 "woods_preset" => "matrix(0.111237, 0, 0, 0.111237, -101.331, -113.302)",

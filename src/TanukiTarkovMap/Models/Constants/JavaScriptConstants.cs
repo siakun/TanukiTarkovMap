@@ -701,6 +701,77 @@ namespace TanukiTarkovMap.Models.Constants
                 ";
 
         /// <summary>
+        /// "Status⬤ Connected" 상태를 감지하는 스크립트
+        /// </summary>
+        public const string DETECT_CONNECTION_STATUS =
+            @"
+                (function() {
+                    'use strict';
+
+                    let connectionDetected = false;
+
+                    function checkConnectionStatus() {
+                        try {
+                            // Find all elements containing 'Status'
+                            const statusElements = document.querySelectorAll('.pilot-status, [class*=""status""], [class*=""pilot""]');
+
+                            for (const element of statusElements) {
+                                const text = element.textContent || '';
+
+                                // Check if the element contains 'Connected' and the status circle
+                                if ((text.includes('Status') && text.includes('Connected')) ||
+                                    (element.classList.contains('connected'))) {
+
+                                    if (!connectionDetected) {
+                                        connectionDetected = true;
+
+                                        // Send message to C#
+                                        try {
+                                            window.chrome.webview.postMessage(JSON.stringify({
+                                                type: 'pilot-connected'
+                                            }));
+
+                                            console.log('[Connection Detection] Pilot connected!');
+                                        } catch (e) {
+                                            console.error('[Connection Detection] Failed to send message:', e);
+                                        }
+                                    }
+
+                                    return true;
+                                }
+                            }
+
+                            return false;
+                        } catch (e) {
+                            console.error('[Connection Detection] Error:', e);
+                            return false;
+                        }
+                    }
+
+                    // Initial check
+                    setTimeout(function() {
+                        checkConnectionStatus();
+                    }, 1000);
+
+                    // Watch for DOM changes
+                    const observer = new MutationObserver(function(mutations) {
+                        if (!connectionDetected) {
+                            checkConnectionStatus();
+                        }
+                    });
+
+                    // Start observing
+                    observer.observe(document.body, {
+                        childList: true,
+                        subtree: true,
+                        characterData: true
+                    });
+
+                    console.log('[Connection Detection] Monitoring started');
+                })();
+            ";
+
+        /// <summary>
         /// 스크린샷 폴더 경로를 자동으로 입력하는 스크립트
         /// {0} 자리에 스크린샷 폴더 경로가 들어갑니다.
         /// Console 테스트를 통해 검증된 DOM 구조:

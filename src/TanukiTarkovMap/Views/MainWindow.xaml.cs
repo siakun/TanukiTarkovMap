@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
@@ -141,6 +142,9 @@ namespace TanukiTarkovMap.Views
                 case nameof(MainWindowViewModel.CurrentMap):
                     await HandleMapChanged();
                     break;
+                case nameof(MainWindowViewModel.SelectedMapInfo):
+                    await HandleSelectedMapChanged();
+                    break;
             }
         }
 
@@ -212,6 +216,28 @@ namespace TanukiTarkovMap.Views
                     await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap);
                 }
             }
+        }
+
+        /// <summary>
+        /// 맵 선택 드롭다운 변경 처리
+        /// </summary>
+        private async Task HandleSelectedMapChanged()
+        {
+            if (_viewModel.SelectedMapInfo != null)
+            {
+                // CurrentMap을 MapId로 업데이트 (PIP 모드 JavaScript가 올바른 transform을 사용하도록)
+                _viewModel.CurrentMap = _viewModel.SelectedMapInfo.MapId;
+                Logger.SimpleLog($"[HandleSelectedMapChanged] CurrentMap set to: {_viewModel.CurrentMap}");
+
+                var activeWebView = GetActiveWebView();
+                if (activeWebView?.CoreWebView2 != null)
+                {
+                    Logger.SimpleLog($"[HandleSelectedMapChanged] Navigating to: {_viewModel.SelectedMapInfo.Url}");
+                    activeWebView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
+                }
+            }
+
+            await Task.CompletedTask;
         }
 
         /// <summary>
@@ -376,6 +402,15 @@ namespace TanukiTarkovMap.Views
                 {
                     await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap);
                 }
+
+                // "/pilot" 페이지에서 Connected 상태 감지 시작
+                if (webView.Source?.ToString().Contains("/pilot") == true)
+                {
+                    await webView.CoreWebView2.ExecuteScriptAsync(
+                        JavaScriptConstants.DETECT_CONNECTION_STATUS
+                    );
+                    Logger.SimpleLog("[Navigation] Connection detection script injected");
+                }
             }
         }
 
@@ -402,11 +437,40 @@ namespace TanukiTarkovMap.Views
                             _viewModel.CurrentMap = mapName;
                         });
                     }
+                    // JSON 메시지 처리 (JavaScript에서 보낸 메시지)
+                    else if (message.StartsWith("{"))
+                    {
+                        try
+                        {
+                            var json = System.Text.Json.JsonDocument.Parse(message);
+                            var messageType = json.RootElement.GetProperty("type").GetString();
+
+                            if (messageType == "pilot-connected")
+                            {
+                                Logger.SimpleLog("[CoreWebView2_WebMessageReceived] Pilot connected detected!");
+
+                                // 기본 맵 (Ground Zero)으로 이동
+                                Dispatcher.Invoke(() =>
+                                {
+                                    var defaultMap = App.AvailableMaps.FirstOrDefault();
+                                    if (defaultMap != null)
+                                    {
+                                        _viewModel.SelectedMapInfo = defaultMap;
+                                        Logger.SimpleLog($"[CoreWebView2_WebMessageReceived] Auto-navigating to: {defaultMap.DisplayName}");
+                                    }
+                                });
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Logger.Error("[CoreWebView2_WebMessageReceived] JSON parsing error", ex);
+                        }
+                    }
                 }
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                // 에러 처리
+                Logger.Error("[CoreWebView2_WebMessageReceived] Error", ex);
             }
         }
 

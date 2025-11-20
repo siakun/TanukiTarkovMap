@@ -25,13 +25,57 @@
     <Grid MouseLeftButtonDown="Window_MouseLeftButtonDown">
         <!-- 탭 기반 UI -->
         <Grid x:Name="MainContentGrid" Panel.ZIndex="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="39"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+
+            <!-- 맵 선택 드롭다운 (상단) -->
+            <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+                    Background="#FF2A2A2A"
+                    BorderThickness="0,0,0,1"
+                    BorderBrush="#FF3A3A3A"
+                    Padding="8,4">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="Map:"
+                               Foreground="#FF888888"
+                               VerticalAlignment="Center"
+                               Margin="0,0,8,0"
+                               FontSize="12"/>
+                    <ComboBox x:Name="MapSelector"
+                              ItemsSource="{Binding AvailableMaps}"
+                              SelectedItem="{Binding SelectedMapInfo, Mode=TwoWay}"
+                              DisplayMemberPath="DisplayName"
+                              Width="180"
+                              Background="#FF1A1A1A"
+                              Foreground="White"
+                              BorderBrush="#FF3A3A3A">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem">
+                                <Setter Property="Background" Value="#FF2A2A2A"/>
+                                <Setter Property="Foreground" Value="White"/>
+                                <Setter Property="Padding" Value="8,4"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Background" Value="#FF3A3A3A"/>
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#FF4A4A4A"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+                </StackPanel>
+            </Border>
             
             <!-- 사이드바 (탭 관련 버튼들) -->
             <Border x:Name="TabSidebar"
+                    Grid.Row="1"
                     Grid.Column="0"
                     Background="#FF1A1A1A"
                     Visibility="{Binding TabSidebarVisibility}">
@@ -115,6 +159,7 @@
             
             <!-- 메인 탭 영역 -->
             <TabControl x:Name="TabContainer"
+                        Grid.Row="1"
                         Grid.Column="1"
                         Panel.ZIndex="100"
                         Background="#FF212121"
