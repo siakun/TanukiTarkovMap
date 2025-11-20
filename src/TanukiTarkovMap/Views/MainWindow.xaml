@@ -173,6 +173,8 @@
         <!-- Border로 감싸서 리사이즈 시 부드러운 효과 + 둥근 모서리 -->
         <Border x:Name="ContentBorder"
                 Background="#FF1A1A1A"
+                BorderBrush="#FF3A3A3A"
+                BorderThickness="1"
                 CornerRadius="8"
                 Margin="8"
                 SnapsToDevicePixels="True"
