@@ -210,7 +210,7 @@ namespace TanukiTarkovMap.Views
                 _viewModel.CurrentWindowLeft = validatedPosition.X;
                 _viewModel.CurrentWindowTop = validatedPosition.Y;
 
-                Logger.SimpleLog($"[PIP Entry] Position validated: ({validatedPosition.X}, {validatedPosition.Y})");
+                // Logger.SimpleLog($"[PIP Entry] Position validated: ({validatedPosition.X}, {validatedPosition.Y})");
 
                 // PIP 모드 진입 시 JavaScript 적용
                 if (_webView != null)
@@ -219,7 +219,7 @@ namespace TanukiTarkovMap.Views
                 }
 
                 // Topmost는 ViewModel의 IsTopmost 바인딩으로 자동 처리됨
-                Logger.SimpleLog("[PIP Entry] TopMost managed by ViewModel binding");
+                // Logger.SimpleLog("[PIP Entry] TopMost managed by ViewModel binding");
             }
             else
             {
@@ -913,7 +913,7 @@ namespace TanukiTarkovMap.Views
             {
                 _webView.Width = WebViewContainer.ActualWidth;
                 _webView.Height = WebViewContainer.ActualHeight;
-                Logger.SimpleLog($"[WebViewContainer_SizeChanged] Updated WebView size to {_webView.Width}x{_webView.Height}");
+                // Logger.SimpleLog($"[WebViewContainer_SizeChanged] Updated WebView size to {_webView.Width}x{_webView.Height}");
             }
 
             ApplyWebViewClipping();
@@ -940,7 +940,7 @@ namespace TanukiTarkovMap.Views
                 // WebView2에 클리핑 적용
                 _webView.Clip = clipGeometry;
 
-                Logger.SimpleLog($"[ApplyWebViewClipping] Applied clipping: {WebViewContainer.ActualWidth}x{WebViewContainer.ActualHeight}");
+                // Logger.SimpleLog($"[ApplyWebViewClipping] Applied clipping: {WebViewContainer.ActualWidth}x{WebViewContainer.ActualHeight}");
             }
             catch (Exception ex)
             {
@@ -958,7 +958,7 @@ namespace TanukiTarkovMap.Views
             {
                 if (_webView == null || WebViewContainer.ActualHeight <= 0) return;
 
-                Logger.SimpleLog("[TriggerWebViewResize] Starting temporary resize");
+                // Logger.SimpleLog("[TriggerWebViewResize] Starting temporary resize");
 
                 // 현재 컨테이너 높이 저장
                 var containerHeight = WebViewContainer.ActualHeight;
@@ -969,7 +969,7 @@ namespace TanukiTarkovMap.Views
                 // 레이아웃 업데이트 강제
                 _webView.UpdateLayout();
 
-                Logger.SimpleLog($"[TriggerWebViewResize] Increased height to {_webView.Height}");
+                // Logger.SimpleLog($"[TriggerWebViewResize] Increased height to {_webView.Height}");
 
                 // 100ms 후 컨테이너 크기로 복원
                 Dispatcher.BeginInvoke(new Action(() =>
@@ -980,7 +980,7 @@ namespace TanukiTarkovMap.Views
                         _webView.Width = WebViewContainer.ActualWidth;
                         _webView.Height = WebViewContainer.ActualHeight;
                         _webView.UpdateLayout();
-                        Logger.SimpleLog($"[TriggerWebViewResize] Restored to container size: {_webView.Width}x{_webView.Height}");
+                        // Logger.SimpleLog($"[TriggerWebViewResize] Restored to container size: {_webView.Width}x{_webView.Height}");
                     }
                     catch (Exception ex)
                     {

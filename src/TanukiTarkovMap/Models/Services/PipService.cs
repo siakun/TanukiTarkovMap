@@ -19,7 +19,7 @@ namespace TanukiTarkovMap.Models.Services
 
             try
             {
-                Logger.SimpleLog("[PipService] Step 1: Removing existing PIP overlay");
+                // Logger.SimpleLog("[PipService] Step 1: Removing existing PIP overlay");
                 // 1. Remove existing PIP overlay
                 await webView2.CoreWebView2.ExecuteScriptAsync(
                     JavaScriptConstants.REMOVE_PIP_OVERLAY_SCRIPT
@@ -31,7 +31,7 @@ namespace TanukiTarkovMap.Models.Services
                 // 2. UI 요소 제거 또는 복원 (조건부)
                 if (hideWebElements)
                 {
-                    Logger.SimpleLog("[PipService] Step 2: Removing UI elements");
+                    // Logger.SimpleLog("[PipService] Step 2: Removing UI elements");
 
                     await webView2.CoreWebView2.ExecuteScriptAsync(
                         JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_RIGHT
@@ -55,7 +55,7 @@ namespace TanukiTarkovMap.Models.Services
                 }
                 else
                 {
-                    Logger.SimpleLog("[PipService] Step 2: Restoring UI elements");
+                    // Logger.SimpleLog("[PipService] Step 2: Restoring UI elements");
 
                     // UI 요소만 복원 (PIP 모드에서는 맵 transform을 적용하지 않으므로)
                     await webView2.CoreWebView2.ExecuteScriptAsync(
@@ -102,7 +102,7 @@ namespace TanukiTarkovMap.Models.Services
             // Null or empty 체크
             if (string.IsNullOrEmpty(mapId))
             {
-                Logger.SimpleLog("[PipService] GetMapTransform: mapId is null or empty, using default transform");
+                // Logger.SimpleLog("[PipService] GetMapTransform: mapId is null or empty, using default transform");
                 return "matrix(0.15, 0, 0, 0.15, -150, -150)";
             }
 

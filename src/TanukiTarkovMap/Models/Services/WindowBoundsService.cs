@@ -52,7 +52,7 @@ namespace TanukiTarkovMap.Models.Services
         public void SavePipModeScreen(IntPtr windowHandle)
         {
             _pipModeScreen = Screen.FromHandle(windowHandle);
-            Logger.SimpleLog($"[WindowBoundsService] SavePipModeScreen: {_pipModeScreen.DeviceName}, Bounds={_pipModeScreen.Bounds}");
+            // Logger.SimpleLog($"[WindowBoundsService] SavePipModeScreen: {_pipModeScreen.DeviceName}, Bounds={_pipModeScreen.Bounds}");
         }
 
         /// <summary>

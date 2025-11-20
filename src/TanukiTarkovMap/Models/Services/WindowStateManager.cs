@@ -43,7 +43,7 @@ namespace TanukiTarkovMap.Models.Services
         public void UpdateNormalModeRect(Rect rect)
         {
             _normalModeRect = rect;
-            Logger.SimpleLog($"[WindowStateManager] Normal mode updated: {rect}");
+            // Logger.SimpleLog($"[WindowStateManager] Normal mode updated: {rect}");
         }
 
         /// <summary>
@@ -52,7 +52,7 @@ namespace TanukiTarkovMap.Models.Services
         public void UpdatePipModeRect(Rect rect)
         {
             _pipModeRect = rect;
-            Logger.SimpleLog($"[WindowStateManager] PIP mode updated: {rect}");
+            // Logger.SimpleLog($"[WindowStateManager] PIP mode updated: {rect}");
         }
 
         /// <summary>
@@ -86,7 +86,7 @@ namespace TanukiTarkovMap.Models.Services
                 _pipModeRect = new Rect(-1, -1, 300, 250);
             }
 
-            Logger.SimpleLog($"[WindowStateManager] Loaded from settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
+            // Logger.SimpleLog($"[WindowStateManager] Loaded from settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
         }
 
         /// <summary>
@@ -117,7 +117,7 @@ namespace TanukiTarkovMap.Models.Services
             pipSetting.Width = _pipModeRect.Width;
             pipSetting.Height = _pipModeRect.Height;
 
-            Logger.SimpleLog($"[WindowStateManager] Saved to settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
+            // Logger.SimpleLog($"[WindowStateManager] Saved to settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
         }
 
         /// <summary>
@@ -128,7 +128,7 @@ namespace TanukiTarkovMap.Models.Services
             if (isPipMode)
             {
                 UpdatePipModeRect(rect);
-                Logger.SimpleLog($"[UpdateAndSave] PIP mode saved");
+                // Logger.SimpleLog($"[UpdateAndSave] PIP mode saved");
             }
             else
             {

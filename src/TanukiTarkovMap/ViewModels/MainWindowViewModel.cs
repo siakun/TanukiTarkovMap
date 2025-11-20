@@ -224,10 +224,10 @@ namespace TanukiTarkovMap.ViewModels
                         OnPipHideWebElementsChanged();
                         break;
                     case nameof(CurrentWindowLeft):
-                        Logger.SimpleLog($"[PropertyChanged] CurrentWindowLeft changed to: {CurrentWindowLeft}, IsPipMode={IsPipMode}");
+                        // Logger.SimpleLog($"[PropertyChanged] CurrentWindowLeft changed to: {CurrentWindowLeft}, IsPipMode={IsPipMode}");
                         break;
                     case nameof(CurrentWindowTop):
-                        Logger.SimpleLog($"[PropertyChanged] CurrentWindowTop changed to: {CurrentWindowTop}, IsPipMode={IsPipMode}");
+                        // Logger.SimpleLog($"[PropertyChanged] CurrentWindowTop changed to: {CurrentWindowTop}, IsPipMode={IsPipMode}");
                         break;
                     case nameof(CurrentWindowWidth):
                     case nameof(CurrentWindowHeight):
@@ -286,7 +286,7 @@ namespace TanukiTarkovMap.ViewModels
         #region Private Methods
         private void OnPipModeChanged()
         {
-            Logger.SimpleLog($"PIP Mode changed to: {IsPipMode}");
+            // Logger.SimpleLog($"PIP Mode changed to: {IsPipMode}");
 
             if (IsPipMode)
             {
@@ -298,7 +298,7 @@ namespace TanukiTarkovMap.ViewModels
                 App.SetSettings(settings);
                 Settings.Save();
 
-                Logger.SimpleLog($"[OnPipModeChanged] Saved Normal mode: {CurrentWindowBounds}");
+                // Logger.SimpleLog($"[OnPipModeChanged] Saved Normal mode: {CurrentWindowBounds}");
 
                 EnterPipMode();
             }
@@ -312,7 +312,7 @@ namespace TanukiTarkovMap.ViewModels
                 App.SetSettings(settings);
                 Settings.Save();
 
-                Logger.SimpleLog($"[OnPipModeChanged] Saved PIP mode: {CurrentWindowBounds}");
+                // Logger.SimpleLog($"[OnPipModeChanged] Saved PIP mode: {CurrentWindowBounds}");
 
                 ExitPipMode();
             }
@@ -364,7 +364,7 @@ namespace TanukiTarkovMap.ViewModels
             // Load PIP settings from WindowStateManager (모든 맵에서 동일한 PIP 사용)
             Rect pipRect = _windowStateManager.GetPipModeRect();
 
-            Logger.SimpleLog($"[EnterPipMode] Loaded PIP rect: {pipRect}");
+            // Logger.SimpleLog($"[EnterPipMode] Loaded PIP rect: {pipRect}");
 
             // Apply PIP size
             CurrentWindowWidth = pipRect.Width;
@@ -423,7 +423,7 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public void OnWindowBoundsChanged(object? sender, TanukiTarkovMap.Views.WindowBoundsChangedEventArgs e)
         {
-            Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}");
+            // Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}");
 
             // ViewModel 속성 업데이트 (바인딩용)
             CurrentWindowLeft = e.Bounds.Left;
