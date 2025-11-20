@@ -6,6 +6,7 @@
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
         xmlns:tb="http://www.hardcodet.net/taskbar"
+        xmlns:converters="clr-namespace:TanukiTarkovMap.Converters"
         mc:Ignorable="d"
         Title="Tanuki Tarkov Map"
         Icon="pack://application:,,,/Resources/korea.ico"
@@ -25,6 +26,10 @@
         Topmost="{Binding IsTopmost}"
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
+
+    <Window.Resources>
+        <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+    </Window.Resources>
 
     <WindowChrome.WindowChrome>
         <WindowChrome CaptionHeight="25"
@@ -182,7 +187,7 @@
                             Width="25" Height="25"
                             Background="Transparent"
                             BorderThickness="0"
-                            Foreground="White"
+                            Foreground="{Binding IsAlwaysOnTop, Converter={StaticResource BoolToColorConverter}}"
                             Content="📌"
                             FontSize="12"
                             Click="PinToggle_Click"

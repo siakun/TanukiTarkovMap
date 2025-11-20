@@ -24,6 +24,32 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool IsTopmost { get; set; }
         [ObservableProperty] public partial double MinWidth { get; set; } = 300;
         [ObservableProperty] public partial double MinHeight { get; set; } = 200;
+
+        /// <summary> 핀 모드 (항상 위) 활성화 여부 </summary>
+        private bool _isAlwaysOnTop;
+        public bool IsAlwaysOnTop
+        {
+            get => _isAlwaysOnTop;
+            set
+            {
+                if (SetProperty(ref _isAlwaysOnTop, value))
+                {
+                    // IsAlwaysOnTop이 변경되면 IsTopmost도 PIP 모드가 아닐 때만 업데이트
+                    if (!IsPipMode)
+                    {
+                        IsTopmost = value;
+                    }
+
+                    // Settings에 저장
+                    var settings = App.GetSettings();
+                    settings.IsAlwaysOnTop = value;
+                    App.SetSettings(settings);
+                    Settings.Save();
+
+                    Logger.SimpleLog($"[IsAlwaysOnTop] Changed to: {value}, IsTopmost updated to: {IsTopmost}");
+                }
+            }
+        }
         #endregion
 
         #region UI Visibility Properties
@@ -139,6 +165,11 @@ namespace TanukiTarkovMap.ViewModels
             PipHotkeyKey = _settings.PipHotkeyKey;
             PipHideWebElements = _settings.PipHideWebElements;
 
+            // Load pin mode (IsAlwaysOnTop) - 직접 필드 설정하여 Settings 재저장 방지
+            _isAlwaysOnTop = _settings.IsAlwaysOnTop;
+            IsTopmost = _settings.IsAlwaysOnTop; // 초기 TopMost 상태 설정
+            OnPropertyChanged(nameof(IsAlwaysOnTop));
+
             // Load last selected map
             if (!string.IsNullOrEmpty(_settings.SelectedMapId))
             {
@@ -212,6 +243,13 @@ namespace TanukiTarkovMap.ViewModels
         {
             Logger.SimpleLog($"TogglePipMode called. Current state: {IsPipMode}");
             IsPipMode = !IsPipMode;
+        }
+
+        [RelayCommand]
+        private void TogglePinMode()
+        {
+            Logger.SimpleLog($"TogglePinMode called. Current state: {IsAlwaysOnTop}");
+            IsAlwaysOnTop = !IsAlwaysOnTop;
         }
 
         [RelayCommand]
@@ -371,7 +409,8 @@ namespace TanukiTarkovMap.ViewModels
             ResizeMode = ResizeMode.CanResize;
             MinWidth = 1000;
             MinHeight = 700;
-            IsTopmost = false;
+            // PIP 모드 종료 시 핀 설정에 따라 TopMost 유지
+            IsTopmost = IsAlwaysOnTop;
 
             // Restore UI visibility
             TopBarVisibility = Visibility.Visible;

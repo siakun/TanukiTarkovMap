@@ -218,8 +218,8 @@ namespace TanukiTarkovMap.Views
                     await _pipService.ApplyPipModeJavaScriptAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
 
-                // Topmost 설정 (Win32 API)
-                WindowTopmost.SetTopmost(this);
+                // Topmost는 ViewModel의 IsTopmost 바인딩으로 자동 처리됨
+                Logger.SimpleLog("[PIP Entry] TopMost managed by ViewModel binding");
             }
             else
             {
@@ -234,8 +234,8 @@ namespace TanukiTarkovMap.Views
                     Logger.SimpleLog($"[ExitPipMode] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.PipHideWebElements}");
                 }
 
-                // Topmost 해제 (Win32 API)
-                WindowTopmost.RemoveTopmost(this);
+                // Topmost는 ViewModel의 IsTopmost 바인딩으로 자동 처리됨 (핀 설정에 따라)
+                Logger.SimpleLog("[PIP Exit] TopMost managed by ViewModel binding");
             }
         }
 
@@ -617,69 +617,18 @@ namespace TanukiTarkovMap.Views
             WebViewContainer.Visibility = Visibility.Visible;
         }
 
-        // 핀 버튼 클릭 - Topmost 토글
+        // 핀 버튼 클릭 - ViewModel 커맨드 호출
         private void PinToggle_Click(object sender, RoutedEventArgs e)
         {
-            try
-            {
-                // 현재 설정 가져오기
-                var settings = App.GetSettings();
-
-                // IsAlwaysOnTop 상태 토글
-                settings.IsAlwaysOnTop = !settings.IsAlwaysOnTop;
-
-                // Topmost 적용/해제
-                if (settings.IsAlwaysOnTop)
-                {
-                    WindowTopmost.SetTopmost(this);
-                    // 핀 아이콘을 빨간색으로 변경
-                    PinButton.Foreground = System.Windows.Media.Brushes.Red;
-                    Logger.SimpleLog("[PinToggle] Window set to always on top");
-                }
-                else
-                {
-                    WindowTopmost.RemoveTopmost(this);
-                    this.Topmost = false;
-                    // 핀 아이콘을 흰색으로 변경
-                    PinButton.Foreground = System.Windows.Media.Brushes.White;
-                    Logger.SimpleLog("[PinToggle] Window removed from always on top");
-                }
-
-                // 설정 저장
-                Models.Services.Settings.Save();
-                Logger.SimpleLog($"[PinToggle] IsAlwaysOnTop saved: {settings.IsAlwaysOnTop}");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("[PinToggle] Failed to toggle topmost", ex);
-            }
+            // ViewModel의 TogglePinModeCommand 실행
+            _viewModel.TogglePinModeCommand.Execute(null);
         }
 
-        // 시작 시 IsAlwaysOnTop 설정 적용
+        // 시작 시 IsAlwaysOnTop 설정 적용 (더 이상 필요 없음 - ViewModel 바인딩으로 처리)
         private void ApplyTopmostSettings()
         {
-            try
-            {
-                var settings = App.GetSettings();
-
-                if (settings.IsAlwaysOnTop)
-                {
-                    WindowTopmost.SetTopmost(this);
-                    // 핀 아이콘을 빨간색으로 변경
-                    PinButton.Foreground = System.Windows.Media.Brushes.Red;
-                    Logger.SimpleLog("[ApplyTopmostSettings] Window set to always on top");
-                }
-                else
-                {
-                    // 핀 아이콘을 기본 흰색으로 유지
-                    PinButton.Foreground = System.Windows.Media.Brushes.White;
-                    Logger.SimpleLog("[ApplyTopmostSettings] Window topmost disabled");
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("[ApplyTopmostSettings] Failed to apply topmost settings", ex);
-            }
+            // ViewModel의 IsAlwaysOnTop과 IsTopmost 바인딩으로 자동 처리됨
+            Logger.SimpleLog("[ApplyTopmostSettings] TopMost state managed by ViewModel binding");
         }
 
         // 트레이 아이콘 더블클릭 - 창 복원
@@ -713,6 +662,15 @@ namespace TanukiTarkovMap.Views
                 this.Show();
                 this.WindowState = WindowState.Normal;
                 this.Activate();
+
+                // TopMost 상태 재적용 (Activate()가 TopMost를 리셋할 수 있음)
+                if (_viewModel.IsAlwaysOnTop)
+                {
+                    // IsTopmost를 강제로 다시 설정하여 바인딩 재적용
+                    _viewModel.IsTopmost = true;
+                    Logger.SimpleLog("[ShowWindowFromTray] TopMost state re-applied");
+                }
+
                 Logger.SimpleLog("[ShowWindowFromTray] Window restored from tray");
             }
             catch (Exception ex)
