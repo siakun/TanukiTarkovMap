@@ -70,6 +70,8 @@ namespace TanukiTarkovMap.Views
                 LocationChanged += MainWindow_LocationChanged;
                 SizeChanged += MainWindow_SizeChanged;
                 StateChanged += MainWindow_StateChanged;
+                Activated += MainWindow_Activated;
+                Deactivated += MainWindow_Deactivated;
 
                 // ViewModel에 창 위치/크기 변경 이벤트 연결
                 this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
@@ -1004,6 +1006,79 @@ namespace TanukiTarkovMap.Views
         }
 
         // 창 닫기 시 정리
+        /// <summary>
+        /// 창 활성화 이벤트 핸들러 (포커스 획득)
+        /// </summary>
+        private void MainWindow_Activated(object? sender, EventArgs e)
+        {
+            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
+            if (_viewModel?.IsAlwaysOnTop == true)
+            {
+                AnimateTopBar(0); // TopBar 보이기 (Y = 0)
+            }
+        }
+
+        /// <summary>
+        /// 창 비활성화 이벤트 핸들러 (포커스 잃음)
+        /// </summary>
+        private void MainWindow_Deactivated(object? sender, EventArgs e)
+        {
+            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
+            if (_viewModel?.IsAlwaysOnTop == true)
+            {
+                AnimateTopBar(-20); // TopBar 숨기기 (Y = -20, TopBar 높이만큼 위로)
+            }
+        }
+
+        /// <summary>
+        /// TopBar 애니메이션
+        /// </summary>
+        /// <param name="targetY">목표 Y 위치 (0: 보이기, -20: 숨기기)</param>
+        private void AnimateTopBar(double targetY)
+        {
+            try
+            {
+                // TopBar 애니메이션
+                var transform = TopBarTransform;
+                if (transform != null)
+                {
+                    var topBarAnimation = new System.Windows.Media.Animation.DoubleAnimation
+                    {
+                        To = targetY,
+                        Duration = TimeSpan.FromMilliseconds(200),
+                        EasingFunction = new System.Windows.Media.Animation.CubicEase
+                        {
+                            EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut
+                        }
+                    };
+                    transform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, topBarAnimation);
+                }
+
+                // WebViewContainer Margin.Top 애니메이션
+                // targetY = 0 (보이기) -> Margin.Top = 20
+                // targetY = -20 (숨기기) -> Margin.Top = 0
+                var targetMarginTop = targetY == 0 ? 20.0 : 0.0;
+                var webViewContainer = WebViewContainer;
+                if (webViewContainer != null)
+                {
+                    var marginAnimation = new System.Windows.Media.Animation.ThicknessAnimation
+                    {
+                        To = new Thickness(0, targetMarginTop, 0, 0),
+                        Duration = TimeSpan.FromMilliseconds(200),
+                        EasingFunction = new System.Windows.Media.Animation.CubicEase
+                        {
+                            EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut
+                        }
+                    };
+                    webViewContainer.BeginAnimation(System.Windows.Controls.Border.MarginProperty, marginAnimation);
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[AnimateTopBar] Error: {ex.Message}");
+            }
+        }
+
         private void MainWindow_Closed(object sender, EventArgs e)
         {
             // ViewModel 이벤트 구독 해제

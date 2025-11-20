@@ -187,25 +187,36 @@
                                   Opacity="0.4"/>
             </Border.Effect>
             <!-- 메인 컨텐츠 -->
-            <Grid x:Name="MainContentGrid" Panel.ZIndex="1">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto"/>
-                    <RowDefinition Height="*"/>
-                </Grid.RowDefinitions>
+            <Grid x:Name="MainContentGrid" Panel.ZIndex="1" ClipToBounds="True">
+                <!-- WebView가 전체 영역을 차지하고, TopBar는 위에 오버레이 -->
 
-            <!-- 상단 바 (맵 선택 + UI 요소 숨기기 + 설정 버튼 + 윈도우 컨트롤) -->
-            <Border Grid.Row="0"
-                    Background="#FF2A2A2A"
-                    CornerRadius="8,8,0,0"
-                    BorderThickness="0,0,0,1"
-                    BorderBrush="#FF3A3A3A"
-                    Padding="8,0"
-                    Panel.ZIndex="200"
-                    Height="20"
-                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
-                    Visibility="{Binding TopBarVisibility}"
-                    SnapsToDevicePixels="True"
-                    UseLayoutRounding="True">
+                <!-- WebView2 영역 (전체) -->
+                <Border x:Name="WebViewContainer"
+                        Background="#FF212121"
+                        CornerRadius="0,0,8,8"
+                        Margin="0,20,0,0"
+                        ClipToBounds="True">
+                    <!-- WebView2는 코드에서 추가됩니다 -->
+                </Border>
+
+                <!-- 상단 바 (맵 선택 + UI 요소 숨기기 + 설정 버튼 + 윈도우 컨트롤) - WebView 위에 오버레이 -->
+                <Border x:Name="TopBar"
+                        VerticalAlignment="Top"
+                        Background="#FF2A2A2A"
+                        CornerRadius="8,8,0,0"
+                        BorderThickness="0,0,0,1"
+                        BorderBrush="#FF3A3A3A"
+                        Padding="8,0"
+                        Panel.ZIndex="200"
+                        Height="20"
+                        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                        Visibility="{Binding TopBarVisibility}"
+                        SnapsToDevicePixels="True"
+                        UseLayoutRounding="True"
+                        RenderTransformOrigin="0.5,0.5">
+                    <Border.RenderTransform>
+                        <TranslateTransform x:Name="TopBarTransform" Y="0"/>
+                    </Border.RenderTransform>
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
@@ -455,15 +466,6 @@
                         </Button>
                     </StackPanel>
                 </Grid>
-            </Border>
-
-            <!-- WebView2 영역 (단일) -->
-            <Border x:Name="WebViewContainer"
-                    Grid.Row="1"
-                    Background="#FF212121"
-                    CornerRadius="0,0,8,8"
-                    ClipToBounds="True">
-                <!-- WebView2는 코드에서 추가됩니다 -->
             </Border>
             </Grid>
         </Border>
