@@ -237,16 +237,15 @@ namespace TanukiTarkovMap.ViewModels
 
         private void OnMapChanged()
         {
-            if (string.IsNullOrEmpty(CurrentMap))
-                return;
-
-            Logger.SimpleLog($"Map changed to: {CurrentMap}");
+            // CurrentMap이 null이어도 "default" 키로 처리되므로 early return 하지 않음
+            string mapKey = string.IsNullOrEmpty(CurrentMap) ? "default" : CurrentMap;
+            Logger.SimpleLog($"Map changed to: {mapKey}");
 
             if (IsPipMode)
             {
                 // Load PIP settings for new map from WindowStateManager
                 var pipRect = _windowStateManager.GetPipModeRect(CurrentMap);
-                Logger.SimpleLog($"[OnMapChanged] Loaded PIP rect for {CurrentMap}: {pipRect}");
+                Logger.SimpleLog($"[OnMapChanged] Loaded PIP rect for {mapKey}: {pipRect}");
 
                 // Apply new map's PIP settings
                 CurrentWindowWidth = pipRect.Width;
@@ -269,18 +268,11 @@ namespace TanukiTarkovMap.ViewModels
         private void EnterPipMode()
         {
             // Load PIP settings from WindowStateManager
-            Rect pipRect;
-            if (!string.IsNullOrEmpty(CurrentMap))
-            {
-                pipRect = _windowStateManager.GetPipModeRect(CurrentMap);
-                Logger.SimpleLog($"[EnterPipMode] Loaded PIP rect for {CurrentMap}: {pipRect}");
-            }
-            else
-            {
-                // Use default PIP settings
-                pipRect = new Rect(-1, -1, 300, 250);
-                Logger.SimpleLog($"[EnterPipMode] Using default PIP rect: {pipRect}");
-            }
+            // GetPipModeRect()는 CurrentMap이 null이면 "default" 키를 사용
+            Rect pipRect = _windowStateManager.GetPipModeRect(CurrentMap);
+
+            string mapKey = string.IsNullOrEmpty(CurrentMap) ? "default" : CurrentMap;
+            Logger.SimpleLog($"[EnterPipMode] Loaded PIP rect for {mapKey}: {pipRect}");
 
             // Apply PIP size
             CurrentWindowWidth = pipRect.Width;

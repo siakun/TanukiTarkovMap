@@ -27,13 +27,16 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         public Rect GetPipModeRect(string mapName)
         {
-            if (string.IsNullOrEmpty(mapName) || !_pipModeRects.ContainsKey(mapName))
+            // mapName이 null이면 "default" 사용
+            string mapKey = string.IsNullOrEmpty(mapName) ? "default" : mapName;
+
+            if (!_pipModeRects.ContainsKey(mapKey))
             {
                 // 기본값: 300x250 크기, 위치는 -1 (미설정)
                 return new Rect(-1, -1, 300, 250);
             }
 
-            return _pipModeRects[mapName];
+            return _pipModeRects[mapKey];
         }
 
         /// <summary>
@@ -50,14 +53,11 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         public void UpdatePipModeRect(string mapName, Rect rect)
         {
-            if (string.IsNullOrEmpty(mapName))
-            {
-                Logger.SimpleLog("[WindowStateManager] Cannot update PIP rect: mapName is empty");
-                return;
-            }
+            // mapName이 null이면 "default" 사용
+            string mapKey = string.IsNullOrEmpty(mapName) ? "default" : mapName;
 
-            _pipModeRects[mapName] = rect;
-            Logger.SimpleLog($"[WindowStateManager] PIP mode updated for {mapName}: {rect}");
+            _pipModeRects[mapKey] = rect;
+            Logger.SimpleLog($"[WindowStateManager] PIP mode updated for {mapKey}: {rect}");
         }
 
         /// <summary>
@@ -133,10 +133,10 @@ namespace TanukiTarkovMap.Models.Services
         {
             if (isPipMode)
             {
-                if (!string.IsNullOrEmpty(currentMap))
-                {
-                    UpdatePipModeRect(currentMap, rect);
-                }
+                // currentMap이 null이면 "default" 사용
+                string mapKey = string.IsNullOrEmpty(currentMap) ? "default" : currentMap;
+                UpdatePipModeRect(mapKey, rect);
+                Logger.SimpleLog($"[UpdateAndSave] PIP mode saved for map: {mapKey}");
             }
             else
             {
@@ -147,6 +147,7 @@ namespace TanukiTarkovMap.Models.Services
             var settings = App.GetSettings();
             SaveToSettings(settings);
             App.SetSettings(settings);
+            Settings.Save();
         }
     }
 }
