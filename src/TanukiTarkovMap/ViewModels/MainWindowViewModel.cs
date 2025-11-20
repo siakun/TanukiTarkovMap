@@ -90,13 +90,17 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnMapEventReceived(object sender, MapChangedEventArgs e)
         {
-            Logger.SimpleLog($"[MainWindowViewModel] MapEvent received: {e.MapName}");
-            Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
+            // UI 스레드로 마샬링
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                Logger.SimpleLog($"[MainWindowViewModel] MapEvent received: {e.MapName}");
+                Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
 
-            // CurrentMap 업데이트 (ChangeMapCommand 사용)
-            ChangeMapCommand.Execute(e.MapName);
+                // CurrentMap 업데이트 (ChangeMapCommand 사용)
+                ChangeMapCommand.Execute(e.MapName);
 
-            Logger.SimpleLog($"[MainWindowViewModel] ChangeMapCommand executed for: {e.MapName}");
+                Logger.SimpleLog($"[MainWindowViewModel] ChangeMapCommand executed for: {e.MapName}");
+            });
         }
 
         /// <summary>
@@ -104,19 +108,23 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnScreenshotEventReceived(object sender, EventArgs e)
         {
-            Logger.SimpleLog("[MainWindowViewModel] Screenshot event received");
-            Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
+            // UI 스레드로 마샬링
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                Logger.SimpleLog("[MainWindowViewModel] Screenshot event received");
+                Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
 
-            // PIP 모드가 아닐 때만 활성화
-            if (!IsPipMode)
-            {
-                Logger.SimpleLog("[MainWindowViewModel] Executing TogglePipModeCommand (PIP mode OFF -> ON)");
-                TogglePipModeCommand.Execute(null);
-            }
-            else
-            {
-                Logger.SimpleLog("[MainWindowViewModel] PIP mode already active, skipping toggle");
-            }
+                // PIP 모드가 아닐 때만 활성화
+                if (!IsPipMode)
+                {
+                    Logger.SimpleLog("[MainWindowViewModel] Executing TogglePipModeCommand (PIP mode OFF -> ON)");
+                    TogglePipModeCommand.Execute(null);
+                }
+                else
+                {
+                    Logger.SimpleLog("[MainWindowViewModel] PIP mode already active, skipping toggle");
+                }
+            });
         }
 
         public void LoadSettings()

@@ -207,6 +207,10 @@ namespace TanukiTarkovMap
             Logger.SimpleLog("Starting WebSocket server...");
             Server.Start();
 
+            // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
+            Logger.SimpleLog("Starting file watchers...");
+            Watcher.Start();
+
             // 메인 창 표시 (항상 시작 시 메인 창을 표시)
             Logger.SimpleLog("Showing main window...");
             ShowMainWindow();
@@ -329,6 +333,7 @@ namespace TanukiTarkovMap
             // 정리 작업
             _mainWindow?.Close();
             _trayIcon?.Dispose();
+            Watcher.Stop();
             Server.Stop();
 
             // 뮤텍스 해제
