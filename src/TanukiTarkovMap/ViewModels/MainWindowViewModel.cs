@@ -258,27 +258,11 @@ namespace TanukiTarkovMap.ViewModels
             string mapKey = string.IsNullOrEmpty(CurrentMap) ? "default" : CurrentMap;
             Logger.SimpleLog($"Map changed to: {mapKey}");
 
+            // PIP 모드일 때는 창 크기/위치를 변경하지 않음 (맵별로 크기가 달라지지 않도록)
             if (IsPipMode)
             {
-                // Load PIP settings for new map from WindowStateManager
-                var pipRect = _windowStateManager.GetPipModeRect(CurrentMap);
-                Logger.SimpleLog($"[OnMapChanged] Loaded PIP rect for {mapKey}: {pipRect}");
-
-                // Apply new map's PIP settings
-                CurrentWindowWidth = pipRect.Width;
-                CurrentWindowHeight = pipRect.Height;
-
-                if (pipRect.Left >= 0 && pipRect.Top >= 0)
-                {
-                    CurrentWindowLeft = pipRect.Left;
-                    CurrentWindowTop = pipRect.Top;
-                }
-                else
-                {
-                    // Default position: bottom right
-                    CurrentWindowLeft = SystemParameters.PrimaryScreenWidth - pipRect.Width - 20;
-                    CurrentWindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
-                }
+                Logger.SimpleLog($"[OnMapChanged] PIP mode active - maintaining current window size and position");
+                return;
             }
         }
 

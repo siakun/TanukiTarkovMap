@@ -228,15 +228,12 @@ namespace TanukiTarkovMap.Views
         {
             Logger.SimpleLog($"[HandlePipHideWebElementsChanged] PipHideWebElements changed to: {_viewModel.PipHideWebElements}");
 
-            // PIP 모드가 활성화되어 있을 때만 JavaScript 재적용
-            if (_viewModel.IsPipMode && !string.IsNullOrEmpty(_viewModel.CurrentMap))
+            // PIP 모드 여부와 관계없이 UI 요소 숨김/복원 JavaScript 적용
+            var activeWebView = GetActiveWebView();
+            if (activeWebView != null && !string.IsNullOrEmpty(_viewModel.CurrentMap))
             {
-                var activeWebView = GetActiveWebView();
-                if (activeWebView != null)
-                {
-                    Logger.SimpleLog("[HandlePipHideWebElementsChanged] Reapplying PIP mode JavaScript");
-                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
-                }
+                Logger.SimpleLog("[HandlePipHideWebElementsChanged] Applying UI elements visibility change");
+                await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
             }
         }
 
@@ -251,11 +248,22 @@ namespace TanukiTarkovMap.Views
                 _viewModel.CurrentMap = _viewModel.SelectedMapInfo.MapId;
                 Logger.SimpleLog($"[HandleSelectedMapChanged] CurrentMap set to: {_viewModel.CurrentMap}");
 
-                var activeWebView = GetActiveWebView();
-                if (activeWebView?.CoreWebView2 != null)
+                try
                 {
-                    Logger.SimpleLog($"[HandleSelectedMapChanged] Navigating to: {_viewModel.SelectedMapInfo.Url}");
-                    activeWebView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
+                    var activeWebView = GetActiveWebView();
+                    if (activeWebView?.CoreWebView2 != null)
+                    {
+                        Logger.SimpleLog($"[HandleSelectedMapChanged] Navigating to: {_viewModel.SelectedMapInfo.Url}");
+                        activeWebView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
+                    }
+                }
+                catch (ObjectDisposedException)
+                {
+                    Logger.SimpleLog("[HandleSelectedMapChanged] WebView2 already disposed, skipping navigation");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("[HandleSelectedMapChanged] Navigation error", ex);
                 }
             }
 
@@ -400,39 +408,51 @@ namespace TanukiTarkovMap.Views
                 return;
 
             var webView = sender as WebView2;
-            if (webView == null)
+            if (webView?.CoreWebView2 == null)
                 return;
 
-            // 페이지 제목 가져오기 및 업데이트
-            var title = await webView.CoreWebView2.ExecuteScriptAsync("document.title");
-            UpdateTabTitle(tabItem, title?.Trim('"'));
-
-            // WebSocket 통신을 위한 메시지 핸들러 등록
-            webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
-
-            // 기본 작업들
-            await RemoveUnwantedElements(webView);
-
-            // Tarkov Market 전용 처리
-            if (webView.Source?.ToString().Contains("tarkov-market.com") == true)
+            try
             {
-                // 방향 표시기 추가
-                await AddDirectionIndicators(webView);
+                // 페이지 제목 가져오기 및 업데이트
+                var title = await webView.CoreWebView2.ExecuteScriptAsync("document.title");
+                UpdateTabTitle(tabItem, title?.Trim('"'));
 
-                // PIP 모드 상태면 JavaScript 적용
-                if (_viewModel.IsPipMode)
-                {
-                    await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
-                }
+                // WebSocket 통신을 위한 메시지 핸들러 등록
+                webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
 
-                // "/pilot" 페이지에서 Connected 상태 감지 시작
-                if (webView.Source?.ToString().Contains("/pilot") == true)
+                // 기본 작업들
+                await RemoveUnwantedElements(webView);
+
+                // Tarkov Market 전용 처리
+                if (webView.Source?.ToString().Contains("tarkov-market.com") == true)
                 {
-                    await webView.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.DETECT_CONNECTION_STATUS
-                    );
-                    Logger.SimpleLog("[Navigation] Connection detection script injected");
+                    // 방향 표시기 추가
+                    await AddDirectionIndicators(webView);
+
+                    // UI 요소 숨김 설정 적용 (PIP 모드 여부와 관계없이)
+                    if (!string.IsNullOrEmpty(_viewModel.CurrentMap))
+                    {
+                        await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                    }
+
+                    // "/pilot" 페이지에서 Connected 상태 감지 시작
+                    if (webView.Source?.ToString().Contains("/pilot") == true)
+                    {
+                        await webView.CoreWebView2.ExecuteScriptAsync(
+                            JavaScriptConstants.DETECT_CONNECTION_STATUS
+                        );
+                        Logger.SimpleLog("[Navigation] Connection detection script injected");
+                    }
                 }
+            }
+            catch (ObjectDisposedException)
+            {
+                // WebView2가 이미 dispose된 경우 무시
+                Logger.SimpleLog("[WebView_NavigationCompleted] WebView2 already disposed, skipping");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[WebView_NavigationCompleted] Unexpected error", ex);
             }
         }
 
