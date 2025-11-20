@@ -222,10 +222,12 @@ namespace TanukiTarkovMap.Views
                 // PIP 모드 종료 시 화면 정보 초기화
                 _windowBoundsService.ClearPipModeScreen();
 
-                // 일반 모드 복원 시 JavaScript 복원
+                // 일반 모드 복원 시 UI 요소 숨김 설정 반영
                 if (_webView != null)
                 {
-                    await _pipService.RestoreNormalModeJavaScriptAsync(_webView);
+                    string mapId = _viewModel.CurrentMap ?? "default";
+                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, mapId, _viewModel.PipHideWebElements);
+                    Logger.SimpleLog($"[ExitPipMode] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.PipHideWebElements}");
                 }
 
                 // Topmost 해제 (Win32 API)
@@ -440,15 +442,10 @@ namespace TanukiTarkovMap.Views
                     // 방향 표시기 추가
                     await AddDirectionIndicators(webView);
 
-                    // UI 요소 숨김 설정 적용
-                    // PIP 모드이거나, 일반 모드에서 CurrentMap이 설정되어 있을 때만 적용
-                    if (_viewModel.IsPipMode || !string.IsNullOrEmpty(_viewModel.CurrentMap))
-                    {
-                        if (!string.IsNullOrEmpty(_viewModel.CurrentMap))
-                        {
-                            await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
-                        }
-                    }
+                    // UI 요소 숨김 설정 적용 (항상 적용)
+                    string mapId = _viewModel.CurrentMap ?? "default";
+                    await _pipService.ApplyPipModeJavaScriptAsync(webView, mapId, _viewModel.PipHideWebElements);
+                    Logger.SimpleLog($"[WebView_NavigationCompleted] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.PipHideWebElements}");
 
                     // "/pilot" 페이지에서 Connected 상태 감지 시작
                     if (webView.Source?.ToString().Contains("/pilot") == true)
