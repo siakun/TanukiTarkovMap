@@ -28,6 +28,9 @@ namespace TanukiTarkovMap.ViewModels
 
         #region UI Visibility Properties
         [ObservableProperty] public partial Visibility TopBarVisibility { get; set; } = Visibility.Visible;
+
+        /// <summary> PIP 모드일 때 최소화/최대화 버튼 숨김 (닫기만 표시) </summary>
+        public Visibility WindowControlButtonsVisibility => IsPipMode ? Visibility.Collapsed : Visibility.Visible;
         #endregion
 
         #region PIP Mode Properties
@@ -383,6 +386,14 @@ namespace TanukiTarkovMap.ViewModels
 
             // WindowStateManager를 통해 즉시 저장 (타이머 없음)
             _windowStateManager.UpdateAndSave(e.Bounds, e.IsPipMode);
+        }
+
+        /// <summary>
+        /// IsPipMode 변경 시 WindowControlButtonsVisibility 업데이트
+        /// </summary>
+        partial void OnIsPipModeChanged(bool value)
+        {
+            OnPropertyChanged(nameof(WindowControlButtonsVisibility));
         }
 
         #endregion

@@ -63,6 +63,7 @@ namespace TanukiTarkovMap.Models.Services
                 restoreThresholdHeight = 600,
                 autoDeleteLogs = false,
                 autoDeleteScreenshots = false,
+                IsAlwaysOnTop = false,  // 기본적으로 항상 위 비활성화
             };
 
             App.SetSettings(defaultSettings, true);

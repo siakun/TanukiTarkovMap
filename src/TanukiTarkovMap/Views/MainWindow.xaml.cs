@@ -138,6 +138,9 @@ namespace TanukiTarkovMap.Views
             // 초기화 완료 - 이제부터 OnWindowBoundsChanged가 정상 동작
             _isInitializing = false;
 
+            // IsAlwaysOnTop 설정 적용
+            ApplyTopmostSettings();
+
             await InitializeWebView();
 
             // ViewModel이 PIP 모드 변경을 처리하도록 PropertyChanged 구독
@@ -330,8 +333,15 @@ namespace TanukiTarkovMap.Views
                     {
                         Logger.SimpleLog($"MainWindow KeyDown detected: {e.Key}");
 
-                        // PIP 모드 토글 Command 실행
-                        _viewModel.TogglePipModeCommand.Execute(null);
+                        // 트레이로 숨기기/열기 토글
+                        if (this.IsVisible)
+                        {
+                            HideWindowToTray();
+                        }
+                        else
+                        {
+                            ShowWindowFromTray();
+                        }
 
                         // 이벤트 처리 완료 표시
                         e.Handled = true;
@@ -603,6 +613,124 @@ namespace TanukiTarkovMap.Views
             WebViewContainer.Visibility = Visibility.Visible;
         }
 
+        // 핀 버튼 클릭 - Topmost 토글
+        private void PinToggle_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 현재 설정 가져오기
+                var settings = App.GetSettings();
+
+                // IsAlwaysOnTop 상태 토글
+                settings.IsAlwaysOnTop = !settings.IsAlwaysOnTop;
+
+                // Topmost 적용/해제
+                if (settings.IsAlwaysOnTop)
+                {
+                    WindowTopmost.SetTopmost(this);
+                    // 핀 아이콘을 빨간색으로 변경
+                    PinButton.Foreground = System.Windows.Media.Brushes.Red;
+                    Logger.SimpleLog("[PinToggle] Window set to always on top");
+                }
+                else
+                {
+                    WindowTopmost.RemoveTopmost(this);
+                    this.Topmost = false;
+                    // 핀 아이콘을 흰색으로 변경
+                    PinButton.Foreground = System.Windows.Media.Brushes.White;
+                    Logger.SimpleLog("[PinToggle] Window removed from always on top");
+                }
+
+                // 설정 저장
+                Models.Services.Settings.Save();
+                Logger.SimpleLog($"[PinToggle] IsAlwaysOnTop saved: {settings.IsAlwaysOnTop}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[PinToggle] Failed to toggle topmost", ex);
+            }
+        }
+
+        // 시작 시 IsAlwaysOnTop 설정 적용
+        private void ApplyTopmostSettings()
+        {
+            try
+            {
+                var settings = App.GetSettings();
+
+                if (settings.IsAlwaysOnTop)
+                {
+                    WindowTopmost.SetTopmost(this);
+                    // 핀 아이콘을 빨간색으로 변경
+                    PinButton.Foreground = System.Windows.Media.Brushes.Red;
+                    Logger.SimpleLog("[ApplyTopmostSettings] Window set to always on top");
+                }
+                else
+                {
+                    // 핀 아이콘을 기본 흰색으로 유지
+                    PinButton.Foreground = System.Windows.Media.Brushes.White;
+                    Logger.SimpleLog("[ApplyTopmostSettings] Window topmost disabled");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[ApplyTopmostSettings] Failed to apply topmost settings", ex);
+            }
+        }
+
+        // 트레이 아이콘 더블클릭 - 창 복원
+        private void TrayIcon_TrayMouseDoubleClick(object sender, RoutedEventArgs e)
+        {
+            ShowWindowFromTray();
+        }
+
+        // 컨텍스트 메뉴 - 열기
+        private void ShowWindow_Click(object sender, RoutedEventArgs e)
+        {
+            ShowWindowFromTray();
+        }
+
+        // 컨텍스트 메뉴 - 종료
+        private void ExitApp_Click(object sender, RoutedEventArgs e)
+        {
+            // 트레이 아이콘 정리
+            if (TrayIcon != null)
+            {
+                TrayIcon.Dispose();
+            }
+            Application.Current.Shutdown();
+        }
+
+        // 트레이에서 창 복원
+        private void ShowWindowFromTray()
+        {
+            try
+            {
+                this.Show();
+                this.WindowState = WindowState.Normal;
+                this.Activate();
+                Logger.SimpleLog("[ShowWindowFromTray] Window restored from tray");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[ShowWindowFromTray] Failed to restore window", ex);
+            }
+        }
+
+        // 창을 트레이로 숨김
+        private void HideWindowToTray()
+        {
+            try
+            {
+                this.Hide();
+                Logger.SimpleLog("[HideWindowToTray] Window hidden to tray");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[HideWindowToTray] Failed to hide window", ex);
+            }
+        }
+
         // 타이틀바 드래그로 창 이동
         private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
@@ -691,10 +819,17 @@ namespace TanukiTarkovMap.Views
                 {
                     _hotkeyManager.RegisterHotkey(_viewModel.PipHotkeyKey, () =>
                     {
-                        Logger.SimpleLog("Global hotkey triggered");
+                        Logger.SimpleLog("Global hotkey triggered - Toggle tray visibility");
                         Dispatcher.Invoke(() =>
                         {
-                            _viewModel.TogglePipModeCommand.Execute(null);
+                            if (this.IsVisible)
+                            {
+                                HideWindowToTray();
+                            }
+                            else
+                            {
+                                ShowWindowFromTray();
+                            }
                         });
                     });
 
@@ -731,7 +866,7 @@ namespace TanukiTarkovMap.Views
 
 
         /// <summary>
-        /// 창 위치 변경 시 ViewModel 즉시 업데이트 및 PIP 모드에서 화면 경계 체크
+        /// 창 위치 변경 시 ViewModel 즉시 업데이트 및 화면 경계 체크 (모니터 없는 영역 방지)
         /// </summary>
         private void MainWindow_LocationChanged(object sender, EventArgs e)
         {
@@ -742,27 +877,24 @@ namespace TanukiTarkovMap.Views
             {
                 _isClampingLocation = true;
 
-                // PIP 모드에서는 화면 경계 체크 수행
-                if (_viewModel.IsPipMode)
+                // 화면 경계 체크 수행 (모니터가 없는 영역으로 나가면 되돌림)
+                var dpiScale = VisualTreeHelper.GetDpi(this);
+
+                // WindowBoundsService를 사용하여 창 위치 체크 및 조정
+                var newPosition = _windowBoundsService.ClampWindowPosition(
+                    this.Left,
+                    this.Top,
+                    this.ActualWidth,
+                    this.ActualHeight,
+                    dpiScale.DpiScaleX,
+                    dpiScale.DpiScaleY
+                );
+
+                // 조정이 필요한 경우 위치 업데이트
+                if (newPosition.HasValue)
                 {
-                    var dpiScale = VisualTreeHelper.GetDpi(this);
-
-                    // WindowBoundsService를 사용하여 창 위치 체크 및 조정
-                    var newPosition = _windowBoundsService.ClampWindowPosition(
-                        this.Left,
-                        this.Top,
-                        this.ActualWidth,
-                        this.ActualHeight,
-                        dpiScale.DpiScaleX,
-                        dpiScale.DpiScaleY
-                    );
-
-                    // 조정이 필요한 경우 위치 업데이트
-                    if (newPosition.HasValue)
-                    {
-                        this.Left = newPosition.Value.X;
-                        this.Top = newPosition.Value.Y;
-                    }
+                    this.Left = newPosition.Value.X;
+                    this.Top = newPosition.Value.Y;
                 }
 
                 // 창 위치/크기 변경 이벤트 발생 (ViewModel에서 즉시 저장)

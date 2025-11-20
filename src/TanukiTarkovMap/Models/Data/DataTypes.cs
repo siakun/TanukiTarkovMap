@@ -45,6 +45,9 @@ namespace TanukiTarkovMap.Models.Data
         public bool autoDeleteLogs { get; set; } = false;           // 로그 폴더 자동 정리
         public bool autoDeleteScreenshots { get; set; } = false;    // 스크린샷 자동 정리
 
+        // 창 고정 설정
+        public bool IsAlwaysOnTop { get; set; } = false;            // 항상 위 (Topmost) 설정
+
         public override string ToString()
         {
             return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}' \npipEnabled: {PipEnabled}";

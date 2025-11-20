@@ -5,6 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
+        xmlns:tb="http://www.hardcodet.net/taskbar"
         mc:Ignorable="d"
         Title="Tanuki Tarkov Map"
         Icon="pack://application:,,,/Resources/korea.ico"
@@ -34,6 +35,20 @@
     </WindowChrome.WindowChrome>
 
     <Grid x:Name="MainGrid" MouseLeftButtonDown="Window_MouseLeftButtonDown">
+        <!-- 트레이 아이콘 -->
+        <tb:TaskbarIcon x:Name="TrayIcon"
+                        IconSource="pack://application:,,,/Resources/korea.ico"
+                        ToolTipText="Tanuki Tarkov Map"
+                        TrayMouseDoubleClick="TrayIcon_TrayMouseDoubleClick">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="열기" Click="ShowWindow_Click"/>
+                    <Separator/>
+                    <MenuItem Header="종료" Click="ExitApp_Click"/>
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+
         <!-- Border로 감싸서 리사이즈 시 부드러운 효과 + 둥근 모서리 -->
         <Border x:Name="ContentBorder"
                 Background="#FF1A1A1A"
@@ -71,6 +86,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
@@ -160,9 +176,44 @@
                         </Button.Style>
                     </Button>
 
+                    <!-- 고정 핀 버튼 -->
+                    <Button x:Name="PinButton"
+                            Grid.Column="2"
+                            Width="25" Height="25"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            Foreground="White"
+                            Content="📌"
+                            FontSize="12"
+                            Click="PinToggle_Click"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FF3A3A3A"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter Property="Background" Value="#FF1A1A1A"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
                     <!-- 오른쪽: 윈도우 컨트롤 버튼 -->
-                    <StackPanel Grid.Column="2" Orientation="Horizontal">
-                        <!-- 최소화 버튼 -->
+                    <StackPanel Grid.Column="3" Orientation="Horizontal">
+                        <!-- 최소화 버튼 (제거됨) -->
                         <Button x:Name="MinimizeButton"
                                 Width="40" Height="25"
                                 Background="Transparent"
@@ -171,6 +222,7 @@
                                 Content="─"
                                 FontSize="10"
                                 Click="Minimize_Click"
+                                Visibility="Collapsed"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <Button.Style>
                                 <Style TargetType="Button">
@@ -194,7 +246,7 @@
                             </Button.Style>
                         </Button>
 
-                        <!-- 최대화/복원 버튼 -->
+                        <!-- 최대화/복원 버튼 (제거됨) -->
                         <Button x:Name="MaximizeRestoreButton"
                                 Width="40" Height="25"
                                 Background="Transparent"
@@ -203,6 +255,7 @@
                                 Content="□"
                                 FontSize="12"
                                 Click="MaximizeRestore_Click"
+                                Visibility="Collapsed"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <Button.Style>
                                 <Style TargetType="Button">
