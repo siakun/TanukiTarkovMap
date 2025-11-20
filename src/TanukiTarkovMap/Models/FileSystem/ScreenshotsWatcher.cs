@@ -9,12 +9,12 @@ namespace TanukiTarkovMap.Models.FileSystem
 
         public static void Start()
         {
-            if (!Directory.Exists(Env.ScreenshotsFolder))
+            if (!Directory.Exists(App.ScreenshotsFolder))
             {
                 return;
             }
 
-            screenshotsWatcher = new FileSystemWatcher(Env.ScreenshotsFolder);
+            screenshotsWatcher = new FileSystemWatcher(App.ScreenshotsFolder);
             screenshotsWatcher.Created += OnScreenshot;
             screenshotsWatcher.EnableRaisingEvents = true;
         }
@@ -46,7 +46,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                     Server.SendFilename(filename);
 
                     // 2차 트리거: 스크린샷 생성 이벤트 발생
-                    if (Env.GetSettings().PipEnabled)
+                    if (App.GetSettings().PipEnabled)
                     {
                         MapEventService.Instance.OnScreenshotTaken();
                     }

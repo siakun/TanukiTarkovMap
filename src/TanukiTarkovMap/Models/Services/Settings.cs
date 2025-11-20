@@ -10,7 +10,7 @@ namespace TanukiTarkovMap.Models.Services
 
         public static void Save()
         {
-            AppSettings settings = Env.GetSettings();
+            AppSettings settings = App.GetSettings();
 
             var json = JsonSerializer.Serialize(
                 settings,
@@ -33,7 +33,7 @@ namespace TanukiTarkovMap.Models.Services
                 var json = File.ReadAllText(SETTINGS_FILE_PATH);
                 var settings = JsonSerializer.Deserialize<AppSettings>(json);
 
-                Env.SetSettings(settings);
+                App.SetSettings(settings);
             }
             catch (Exception)
             {
@@ -64,7 +64,7 @@ namespace TanukiTarkovMap.Models.Services
                 autoDeleteScreenshots = false,
             };
 
-            Env.SetSettings(defaultSettings, true);
+            App.SetSettings(defaultSettings, true);
             Save(); // 기본 설정을 파일로 저장
         }
 

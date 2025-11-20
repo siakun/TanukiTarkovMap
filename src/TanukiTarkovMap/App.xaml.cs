@@ -7,6 +7,8 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using Hardcodet.Wpf.TaskbarNotification;
+using Microsoft.Win32;
+using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.Views;
@@ -20,6 +22,138 @@ namespace TanukiTarkovMap
         private MainWindow? _mainWindow;
         private Mutex? _mutex;
         private bool _isExiting = false; // 중복 종료 방지 플래그
+
+        //===================== Application Global State (from Env.cs) ============================
+
+        static App()
+        {
+            // 버전 정보 초기화
+            FileVersionInfo versionInfo = FileVersionInfo.GetVersionInfo(
+                Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TanukiTarkovMap.exe")
+            );
+            Version = versionInfo.FileVersion ?? "0.0";
+        }
+
+        public static string Version { get; private set; } = "0.0";
+
+        public static string WebsiteUrl { get; } = "https://tarkov-market.com/pilot";
+
+        private static string? _gameFolder = null;
+        public static string? GameFolder
+        {
+            get
+            {
+                if (_gameFolder == null)
+                {
+                    RegistryKey? key = Registry.LocalMachine.OpenSubKey(
+                        name: "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\EscapeFromTarkov"
+                    );
+                    var installPath = key?.GetValue("InstallLocation")?.ToString();
+                    key?.Dispose();
+
+                    if (!string.IsNullOrEmpty(installPath))
+                    {
+                        _gameFolder = installPath;
+                    }
+                }
+
+                return _gameFolder;
+            }
+            set { _gameFolder = value; }
+        }
+
+        public static string? LogsFolder
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(GameFolder))
+                    return null;
+
+                return Path.Combine(GameFolder, "Logs");
+            }
+        }
+
+        private static string? _screenshotsFolder;
+        public static string ScreenshotsFolder
+        {
+            get
+            {
+                if (_screenshotsFolder == null)
+                {
+                    _screenshotsFolder = Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
+                        "Escape From Tarkov",
+                        "Screenshots"
+                    );
+                }
+                return _screenshotsFolder;
+            }
+            set { _screenshotsFolder = value; }
+        }
+
+        // AppSettings 관리
+        private static AppSettings? _appSettings = null;
+
+        public static void SetSettings(AppSettings settings, bool force = false)
+        {
+            if (force || !string.IsNullOrEmpty(settings.GameFolder))
+            {
+                GameFolder = settings.GameFolder ?? null;
+            }
+            if (force || !string.IsNullOrEmpty(settings.ScreenshotsFolder))
+            {
+                ScreenshotsFolder = settings.ScreenshotsFolder ?? null;
+            }
+
+            // AppSettings 객체를 내부적으로 저장
+            _appSettings = settings;
+        }
+
+        public static AppSettings GetSettings()
+        {
+            // 저장된 설정이 있으면 반환, 없으면 기본값으로 새로 생성
+            if (_appSettings != null)
+            {
+                // 경로 정보는 현재 값으로 업데이트
+                _appSettings.GameFolder = GameFolder;
+                _appSettings.ScreenshotsFolder = ScreenshotsFolder;
+                return _appSettings;
+            }
+
+            // 설정이 없으면 경고 - 이는 Settings.Load()가 호출되지 않은 경우
+            return new AppSettings()
+            {
+                GameFolder = GameFolder,
+                ScreenshotsFolder = ScreenshotsFolder,
+            };
+        }
+
+        public static void ResetSettings()
+        {
+            AppSettings settings = new AppSettings()
+            {
+                GameFolder = null,
+                ScreenshotsFolder = null,
+                // PiP 설정은 기본값으로 리셋
+                PipEnabled = true,
+                PipRememberPosition = true,
+                NormalWidth = 1400,
+                NormalHeight = 900,
+                NormalLeft = -1,
+                NormalTop = -1,
+            };
+            SetSettings(settings, true);
+        }
+
+        public static void RestartApp()
+        {
+            // WPF 애플리케이션 재시작
+            string appPath = Process.GetCurrentProcess().MainModule!.FileName;
+            Process.Start(appPath);
+            Current.Shutdown();
+        }
+
+        //===================== End of Application Global State ============================
 
         private void Application_Startup(object sender, StartupEventArgs e)
         {
@@ -93,7 +227,7 @@ namespace TanukiTarkovMap
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = Env.WebsiteUrl,
+                    FileName = App.WebsiteUrl,
                     UseShellExecute = true
                 });
             };

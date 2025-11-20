@@ -54,13 +54,13 @@ namespace TanukiTarkovMap.Models.FileSystem
             ResetInitialLogsReadDone();
 
             // Check if LogsFolder is null or empty first
-            if (string.IsNullOrEmpty(Env.LogsFolder))
+            if (string.IsNullOrEmpty(App.LogsFolder))
             {
                 // Game installation not found, cannot monitor logs
                 return;
             }
 
-            if (!Directory.Exists(Env.LogsFolder))
+            if (!Directory.Exists(App.LogsFolder))
             {
                 return;
             }
@@ -73,7 +73,7 @@ namespace TanukiTarkovMap.Models.FileSystem
             }
 
             // lookig for new folders creation
-            logsFoldersWatcher = new FileSystemWatcher(Env.LogsFolder);
+            logsFoldersWatcher = new FileSystemWatcher(App.LogsFolder);
             logsFoldersWatcher.Created += OnNewFolderCreated;
             logsFoldersWatcher.EnableRaisingEvents = true;
         }
@@ -155,10 +155,10 @@ namespace TanukiTarkovMap.Models.FileSystem
 
         static string GetLatestLogFolder()
         {
-            if (string.IsNullOrEmpty(Env.LogsFolder))
+            if (string.IsNullOrEmpty(App.LogsFolder))
                 return null;
 
-            var directories = Directory.GetDirectories(Env.LogsFolder);
+            var directories = Directory.GetDirectories(App.LogsFolder);
             if (directories.Length == 0)
                 return null;
 
@@ -217,7 +217,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                                     Server.SendMap(map);
 
                                     // 1차 트리거: 맵 변경 이벤트 발생
-                                    if (Env.GetSettings().PipEnabled)
+                                    if (App.GetSettings().PipEnabled)
                                     {
                                         MapEventService.Instance.OnMapChanged(map);
                                     }
@@ -233,7 +233,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                                     Server.SendMap(map);
 
                                     // 1차 트리거: 맵 변경 이벤트 발생
-                                    if (Env.GetSettings().PipEnabled)
+                                    if (App.GetSettings().PipEnabled)
                                     {
                                         MapEventService.Instance.OnMapChanged(map);
                                     }

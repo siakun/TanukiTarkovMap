@@ -107,7 +107,7 @@ namespace TanukiTarkovMap.Models.Services
                 return "matrix(0.15, 0, 0, 0.15, -150, -150)";
             }
 
-            var settings = Env.GetSettings();
+            var settings = App.GetSettings();
 
             if (settings.MapSettings != null &&
                 settings.MapSettings.ContainsKey(mapName) &&

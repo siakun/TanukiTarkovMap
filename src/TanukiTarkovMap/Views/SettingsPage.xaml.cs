@@ -59,7 +59,7 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                var settings = Env.GetSettings();
+                var settings = App.GetSettings();
 
                 // 전역 PiP 설정
                 GlobalPipEnabledCheckBox.IsChecked = settings.PipEnabled;
@@ -85,7 +85,7 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                var settings = Env.GetSettings();
+                var settings = App.GetSettings();
                 MapSettingsPanel.Children.Clear();
 
                 foreach (string mapDisplayName in _mapDisplayNames)
@@ -214,7 +214,7 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                var settings = Env.GetSettings();
+                var settings = App.GetSettings();
 
                 // 전역 PiP 설정 저장
                 settings.PipEnabled = GlobalPipEnabledCheckBox.IsChecked ?? true;
@@ -262,7 +262,7 @@ namespace TanukiTarkovMap.Views
                 settings.autoDeleteScreenshots = AutoDeleteScreenshotsCheckBox.IsChecked ?? false;
 
                 // 설정 저장
-                Env.SetSettings(settings);
+                App.SetSettings(settings);
                 Settings.Save();
 
                 // 핫키 설정이 변경된 경우 MainWindow에서 핫키 재등록

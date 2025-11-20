@@ -186,9 +186,9 @@ namespace TanukiTarkovMap.Models.Services
             ConfigurationData data = new ConfigurationData()
             {
                 MessageType = WsMessageType.CONFIGURATION,
-                Version = Env.Version,
-                GameFolder = Env.GameFolder,
-                ScreenshotsFolder = Env.ScreenshotsFolder,
+                Version = App.Version,
+                GameFolder = App.GameFolder,
+                ScreenshotsFolder = App.ScreenshotsFolder,
             };
 
             await SendDataToSocket(socket, data);
@@ -321,9 +321,9 @@ namespace TanukiTarkovMap.Models.Services
             ConfigurationData data = new ConfigurationData()
             {
                 MessageType = WsMessageType.CONFIGURATION,
-                Version = Env.Version,
-                GameFolder = Env.GameFolder,
-                ScreenshotsFolder = Env.ScreenshotsFolder,
+                Version = App.Version,
+                GameFolder = App.GameFolder,
+                ScreenshotsFolder = App.ScreenshotsFolder,
             };
 
             SendData(data);
@@ -362,17 +362,17 @@ namespace TanukiTarkovMap.Models.Services
             {
                 var settings = ParseJson<UpdateSettingsData>(json);
 
-                Env.SetSettings(settings, true);
+                App.SetSettings(settings, true);
                 Settings.Save();
                 SendConfiguration();
 
                 Watcher.Restart();
-                //Env.RestartApp();
+                //App.RestartApp();
             }
             else if (msg != null && msg.MessageType == WsMessageType.SETTINGS_RESET)
             {
                 Settings.Delete();
-                Env.ResetSettings();
+                App.ResetSettings();
                 SendConfiguration();
 
                 Watcher.Restart();

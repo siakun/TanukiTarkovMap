@@ -218,13 +218,13 @@ namespace TanukiTarkovMap.Views
         // 탭 시스템 초기화 및 첫 번째 탭 생성
         private async Task InitializeTabs()
         {
-            // 첫 번째 탭 추가 (URL은 Env.WebsiteUrl 사용)
-            await AddNewTab(Env.WebsiteUrl);
+            // 첫 번째 탭 추가 (URL은 App.WebsiteUrl 사용)
+            await AddNewTab(App.WebsiteUrl);
         }
 
         private async Task AddNewTab(string url = null)
         {
-            url ??= Env.WebsiteUrl;
+            url ??= App.WebsiteUrl;
 
             // 새 탭 생성
             var tabItem = new TabItem

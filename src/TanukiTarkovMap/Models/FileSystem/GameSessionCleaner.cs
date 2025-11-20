@@ -14,19 +14,19 @@ namespace TanukiTarkovMap.Models.FileSystem
             try
             {
                 // 설정 확인 - 자동 삭제가 비활성화되어 있으면 종료
-                if (!Env.GetSettings().autoDeleteLogs)
+                if (!App.GetSettings().autoDeleteLogs)
                 {
                     return;
                 }
 
-                if (!Directory.Exists(Env.LogsFolder))
+                if (!Directory.Exists(App.LogsFolder))
                 {
                     return;
                 }
 
                 // 모든 로그 폴더 가져오기
                 var logDirectories = Directory
-                    .GetDirectories(Env.LogsFolder)
+                    .GetDirectories(App.LogsFolder)
                     .OrderByDescending(dir => Directory.GetCreationTime(dir))
                     .ToArray();
 
@@ -86,18 +86,18 @@ namespace TanukiTarkovMap.Models.FileSystem
             try
             {
                 // 설정 확인 - 자동 삭제가 비활성화되어 있으면 종료
-                if (!Env.GetSettings().autoDeleteScreenshots)
+                if (!App.GetSettings().autoDeleteScreenshots)
                 {
                     return;
                 }
 
-                if (!Directory.Exists(Env.ScreenshotsFolder))
+                if (!Directory.Exists(App.ScreenshotsFolder))
                 {
                     return;
                 }
 
                 var screenshotFiles = Directory
-                    .GetFiles(Env.ScreenshotsFolder, "*.*")
+                    .GetFiles(App.ScreenshotsFolder, "*.*")
                     .Where(file =>
                     {
                         var ext = Path.GetExtension(file).ToLower();

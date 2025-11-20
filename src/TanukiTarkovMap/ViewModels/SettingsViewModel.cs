@@ -20,15 +20,15 @@ namespace TanukiTarkovMap.ViewModels
         private void Save()
         {
             // Save settings logic will be implemented here
-            // For now, just save to Env
-            Models.Services.Env.GameFolder = GameFolder;
-            Models.Services.Env.ScreenshotsFolder = ScreenshotsFolder;
+            // For now, just save to App
+            App.GameFolder = GameFolder;
+            App.ScreenshotsFolder = ScreenshotsFolder;
 
-            var settings = Models.Services.Env.GetSettings();
+            var settings = App.GetSettings();
             settings.PipEnabled = PipEnabled;
             settings.PipRememberPosition = PipRememberPosition;
 
-            Models.Services.Env.SetSettings(settings);
+            App.SetSettings(settings);
             Models.Services.Settings.Save();
         }
 
@@ -75,7 +75,7 @@ namespace TanukiTarkovMap.ViewModels
         private void ResetSettings()
         {
             // Reset to default settings
-            Models.Services.Env.ResetSettings();
+            App.ResetSettings();
             LoadCurrentSettings();
         }
 
@@ -95,10 +95,10 @@ namespace TanukiTarkovMap.ViewModels
 
         private void LoadCurrentSettings()
         {
-            GameFolder = Models.Services.Env.GameFolder;
-            ScreenshotsFolder = Models.Services.Env.ScreenshotsFolder;
+            GameFolder = App.GameFolder;
+            ScreenshotsFolder = App.ScreenshotsFolder;
 
-            var settings = Models.Services.Env.GetSettings();
+            var settings = App.GetSettings();
             PipEnabled = settings.PipEnabled;
             PipRememberPosition = settings.PipRememberPosition;
         }

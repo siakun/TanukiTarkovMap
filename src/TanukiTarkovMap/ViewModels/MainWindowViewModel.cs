@@ -110,7 +110,7 @@ namespace TanukiTarkovMap.ViewModels
 
         public void LoadSettings()
         {
-            _settings = Env.GetSettings();
+            _settings = App.GetSettings();
 
             // Load normal mode settings
             NormalWidth = _settings.NormalWidth;
@@ -321,7 +321,7 @@ namespace TanukiTarkovMap.ViewModels
             NormalLeft = WindowLeft;
             NormalTop = WindowTop;
 
-            Env.SetSettings(_settings);
+            App.SetSettings(_settings);
             Settings.Save();
 
             Logger.SimpleLog($"Saved normal settings: {NormalWidth}x{NormalHeight} at ({NormalLeft}, {NormalTop})");
@@ -351,7 +351,7 @@ namespace TanukiTarkovMap.ViewModels
             mapSetting.Left = WindowLeft;
             mapSetting.Top = WindowTop;
 
-            Env.SetSettings(_settings);
+            App.SetSettings(_settings);
             Settings.Save();
 
             Logger.SimpleLog($"Saved PIP settings for {mapKey}: {WindowWidth}x{WindowHeight} at ({WindowLeft}, {WindowTop})");
