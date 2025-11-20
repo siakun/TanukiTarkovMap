@@ -10,6 +10,47 @@
 
 ---
 
+### Phase 4: WindowStateManager 모듈화 (완료)
+
+#### 4.1 WindowStateManager.cs 생성
+**파일:** `Models\Services\WindowStateManager.cs`
+
+- [x] **WindowStateManager 서비스 생성**
+  - Normal 모드 Rect 저장: `_normalModeRect`
+  - PIP 모드 Rect 저장: `Dictionary<string, Rect> _pipModeRects` (맵별)
+  - `LoadFromSettings()` 메서드
+  - `SaveToSettings()` 메서드
+  - `UpdateAndSave()` 메서드
+  - `GetPipModeRect()` 메서드
+  - `UpdateNormalModeRect()` 메서드
+  - `UpdatePipModeRect()` 메서드
+
+#### 4.2 MainWindowViewModel.cs - WindowStateManager 통합
+**파일:** `ViewModels\MainWindowViewModel.cs`
+
+- [x] **_windowStateManager 필드 추가**
+- [x] **생성자에서 WindowStateManager 초기화**
+- [x] **LoadSettings()에서 WindowStateManager 사용**
+- [x] **OnWindowBoundsChanged()에서 WindowStateManager.UpdateAndSave() 사용**
+- [x] **OnPipModeChanged() 리팩토링** - WindowStateManager로 저장
+- [x] **EnterPipMode() 리팩토링** - WindowStateManager에서 로드
+- [x] **ExitPipMode() 리팩토링** - WindowStateManager에서 로드
+- [x] **OnMapChanged() 리팩토링** - WindowStateManager 사용
+- [x] **SaveSettings() 커맨드 리팩토링** - WindowStateManager 사용
+
+#### 4.3 레거시 메서드 정리
+**파일:** `ViewModels\MainWindowViewModel.cs`
+
+- [x] **LoadMapSettings() 제거** (더 이상 사용되지 않음)
+- [x] **SaveNormalSettings() 제거** (WindowStateManager로 대체)
+- [x] **SavePipSettings() 제거** (WindowStateManager로 대체)
+
+#### 4.4 빌드 검증
+- [x] 프로젝트 빌드 성공 확인
+- [x] 기존 nullable 경고만 존재 (새로운 에러 없음)
+
+---
+
 ## 🔄 진행 예정 작업
 
 ### Phase 1: 창 위치 이벤트 기반 저장 시스템 구축
