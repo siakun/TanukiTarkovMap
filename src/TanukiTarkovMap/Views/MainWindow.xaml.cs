@@ -72,6 +72,8 @@ namespace TanukiTarkovMap.Views
                 StateChanged += MainWindow_StateChanged;
                 Activated += MainWindow_Activated;
                 Deactivated += MainWindow_Deactivated;
+                MouseEnter += MainWindow_MouseEnter;
+                MouseLeave += MainWindow_MouseLeave;
 
                 // ViewModel에 창 위치/크기 변경 이벤트 연결
                 this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
@@ -659,6 +661,13 @@ namespace TanukiTarkovMap.Views
                     Logger.SimpleLog("[ShowWindowFromTray] TopMost set without stealing focus");
                 }
 
+                // 4. 핀 모드가 활성화된 경우 TopBar를 숨긴 상태로 시작
+                //    (창이 포커스 없이 표시되므로, 사용자가 클릭할 때 Activated 이벤트에서 TopBar가 나타남)
+                if (_viewModel.IsAlwaysOnTop)
+                {
+                    AnimateTopBar(-20);
+                }
+
                 Logger.SimpleLog("[ShowWindowFromTray] Window shown without stealing focus");
             }
             catch (Exception ex)
@@ -1027,6 +1036,38 @@ namespace TanukiTarkovMap.Views
             if (_viewModel?.IsAlwaysOnTop == true)
             {
                 AnimateTopBar(-20); // TopBar 숨기기 (Y = -20, TopBar 높이만큼 위로)
+            }
+        }
+
+        /// <summary>
+        /// 마우스가 창 위로 들어올 때 (Hover 시작)
+        /// </summary>
+        private void MainWindow_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
+            if (_viewModel?.IsAlwaysOnTop == true)
+            {
+                AnimateTopBar(0); // TopBar 보이기 (Y = 0)
+            }
+        }
+
+        /// <summary>
+        /// 마우스가 창 밖으로 나갈 때 (Hover 종료)
+        /// </summary>
+        private void MainWindow_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
+        {
+            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
+            if (_viewModel?.IsAlwaysOnTop == true)
+            {
+                // 마우스가 실제로 창 밖으로 나갔는지 확인
+                var position = e.GetPosition(this);
+                var isOutside = position.X < 0 || position.Y < 0 ||
+                                position.X > this.ActualWidth || position.Y > this.ActualHeight;
+
+                if (isOutside)
+                {
+                    AnimateTopBar(-20); // TopBar 숨기기 (Y = -20, TopBar 높이만큼 위로)
+                }
             }
         }
 
