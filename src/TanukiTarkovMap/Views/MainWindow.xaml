@@ -23,124 +23,82 @@
         Topmost="{Binding IsTopmost}">
     
     <Grid MouseLeftButtonDown="Window_MouseLeftButtonDown">
-        <!-- 탭 기반 UI -->
+        <!-- 메인 컨텐츠 -->
         <Grid x:Name="MainContentGrid" Panel.ZIndex="1">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="39"/>
-                <ColumnDefinition Width="*"/>
-            </Grid.ColumnDefinitions>
 
-            <!-- 맵 선택 드롭다운 (상단) -->
-            <Border Grid.Row="0" Grid.Column="0" Grid.ColumnSpan="2"
+            <!-- 상단 바 (맵 선택 + UI 요소 숨기기 + 설정 버튼) -->
+            <Border Grid.Row="0"
                     Background="#FF2A2A2A"
                     BorderThickness="0,0,0,1"
                     BorderBrush="#FF3A3A3A"
                     Padding="8,4"
                     Panel.ZIndex="200"
                     Visibility="{Binding TopBarVisibility}">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Map:"
-                               Foreground="#FF888888"
-                               VerticalAlignment="Center"
-                               Margin="0,0,8,0"
-                               FontSize="12"/>
-                    <ComboBox x:Name="MapSelector"
-                              ItemsSource="{Binding AvailableMaps}"
-                              SelectedItem="{Binding SelectedMapInfo, Mode=TwoWay}"
-                              DisplayMemberPath="DisplayName"
-                              Width="180"
-                              Background="#FF1A1A1A"
-                              Foreground="White"
-                              BorderBrush="#FF3A3A3A">
-                        <ComboBox.ItemContainerStyle>
-                            <Style TargetType="ComboBoxItem">
-                                <Setter Property="Background" Value="#FF2A2A2A"/>
-                                <Setter Property="Foreground" Value="White"/>
-                                <Setter Property="Padding" Value="8,4"/>
-                                <Style.Triggers>
-                                    <Trigger Property="IsMouseOver" Value="True">
-                                        <Setter Property="Background" Value="#FF3A3A3A"/>
-                                    </Trigger>
-                                    <Trigger Property="IsSelected" Value="True">
-                                        <Setter Property="Background" Value="#FF4A4A4A"/>
-                                    </Trigger>
-                                </Style.Triggers>
-                            </Style>
-                        </ComboBox.ItemContainerStyle>
-                    </ComboBox>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
 
-                    <!-- PIP 모드 UI 요소 숨기기 체크박스 -->
-                    <CheckBox x:Name="PipHideWebElementsCheckBox"
-                              IsChecked="{Binding PipHideWebElements, Mode=TwoWay}"
-                              Margin="16,0,0,0"
-                              VerticalAlignment="Center"
-                              Foreground="White">
-                        <CheckBox.Content>
-                            <TextBlock Text="UI 요소 숨기기"
-                                       Foreground="#FF888888"
-                                       FontSize="12"/>
-                        </CheckBox.Content>
-                    </CheckBox>
-                </StackPanel>
-            </Border>
-            
-            <!-- 사이드바 (탭 관련 버튼들) -->
-            <Border x:Name="TabSidebar"
-                    Grid.Row="1"
-                    Grid.Column="0"
-                    Background="#FF1A1A1A"
-                    Visibility="{Binding TabSidebarVisibility}">
-                <StackPanel Margin="0,8,0,0">
-                    <!-- 새 탭 추가 버튼 -->
-                    <Button x:Name="NewTabButton"
-                            Width="35" Height="35"
-                            Margin="2,2,0,2"
-                            Background="#FF2A2A2A"
-                            BorderThickness="0"
-                            Foreground="White"
-                            Content="TC"
-                            FontSize="11"
-                            FontWeight="Bold"
-                            Click="NewTab_Click">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="4,4,0,0"
-                                                    Padding="2">
-                                                <ContentPresenter HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center"/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                </Trigger>
-                                                <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#FF1A1A1A"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
-                    
-                    <!-- 설정 버튼 -->
+                    <!-- 왼쪽: 맵 드롭다운 + UI 요소 숨기기 체크박스 -->
+                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                        <TextBlock Text="Map:"
+                                   Foreground="#FF888888"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,8,0"
+                                   FontSize="12"/>
+                        <ComboBox x:Name="MapSelector"
+                                  ItemsSource="{Binding AvailableMaps}"
+                                  SelectedItem="{Binding SelectedMapInfo, Mode=TwoWay}"
+                                  DisplayMemberPath="DisplayName"
+                                  Width="180"
+                                  Background="#FF1A1A1A"
+                                  Foreground="White"
+                                  BorderBrush="#FF3A3A3A">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem">
+                                    <Setter Property="Background" Value="#FF2A2A2A"/>
+                                    <Setter Property="Foreground" Value="White"/>
+                                    <Setter Property="Padding" Value="8,4"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Background" Value="#FF3A3A3A"/>
+                                        </Trigger>
+                                        <Trigger Property="IsSelected" Value="True">
+                                            <Setter Property="Background" Value="#FF4A4A4A"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <!-- PIP 모드 UI 요소 숨기기 체크박스 -->
+                        <CheckBox x:Name="PipHideWebElementsCheckBox"
+                                  IsChecked="{Binding PipHideWebElements, Mode=TwoWay}"
+                                  Margin="16,0,0,0"
+                                  VerticalAlignment="Center"
+                                  Foreground="White">
+                            <CheckBox.Content>
+                                <TextBlock Text="UI 요소 숨기기"
+                                           Foreground="#FF888888"
+                                           FontSize="12"/>
+                            </CheckBox.Content>
+                        </CheckBox>
+                    </StackPanel>
+
+                    <!-- 오른쪽: 설정 버튼 -->
                     <Button x:Name="SettingsButton"
-                            Width="35" Height="35"
-                            Margin="2,2,0,2"
+                            Grid.Column="1"
+                            Width="32" Height="32"
                             Background="#FF2A2A2A"
                             BorderThickness="0"
                             Foreground="White"
                             Content="⚙"
-                            FontSize="14"
+                            FontSize="16"
                             FontWeight="Bold"
                             Click="Settings_Click">
                         <Button.Style>
@@ -149,8 +107,8 @@
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
                                             <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="4,4,0,0"
-                                                    Padding="2">
+                                                    CornerRadius="4"
+                                                    Padding="4">
                                                 <ContentPresenter HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"/>
                                             </Border>
@@ -168,77 +126,106 @@
                             </Style>
                         </Button.Style>
                     </Button>
-                    
-                </StackPanel>
+                </Grid>
             </Border>
-            
-            <!-- 메인 탭 영역 -->
-            <TabControl x:Name="TabContainer"
-                        Grid.Row="1"
-                        Grid.Column="{Binding TabContainerColumn}"
-                        Grid.ColumnSpan="{Binding TabContainerColumnSpan}"
-                        Margin="{Binding TabContainerMargin}"
-                        Panel.ZIndex="100"
-                        Background="#FF212121"
-                        BorderThickness="0">
-                <TabControl.Resources>
-                    <!-- 탭 헤더 스타일 -->
-                    <Style TargetType="TabItem">
-                        <Setter Property="Background" Value="#FF2A2A2A"/>
-                        <Setter Property="Foreground" Value="White"/>
-                        <Setter Property="BorderThickness" Value="0"/>
-                        <Setter Property="Padding" Value="12,6"/>
-                        <Setter Property="Margin" Value="2,0"/>
-                        <Setter Property="Template">
-                            <Setter.Value>
-                                <ControlTemplate TargetType="TabItem">
-                                    <Grid>
-                                        <Border x:Name="Border"
-                                                Background="{TemplateBinding Background}"
-                                                BorderThickness="0"
-                                                CornerRadius="3,3,0,0"
-                                                Padding="{TemplateBinding Padding}"
-                                                Visibility="{Binding DataContext.TabItemHeaderVisibility, RelativeSource={RelativeSource AncestorType=Window}}">
-                                            <Grid>
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="*"/>
-                                                    <ColumnDefinition Width="Auto"/>
-                                                </Grid.ColumnDefinitions>
-                                                <ContentPresenter x:Name="ContentSite"
-                                                                Grid.Column="0"
-                                                                VerticalAlignment="Center"
-                                                                HorizontalAlignment="Left"
-                                                                ContentSource="Header"
-                                                                RecognizesAccessKey="True"/>
-                                                <Button x:Name="CloseButton"
-                                                        Grid.Column="1"
-                                                        Width="16" Height="16"
-                                                        Margin="8,0,0,0"
-                                                        Background="Transparent"
-                                                        BorderThickness="0"
-                                                        Foreground="White"
-                                                        Content="✕"
-                                                        FontSize="10"
-                                                        Click="CloseTab_Click"
-                                                        Tag="{Binding RelativeSource={RelativeSource TemplatedParent}}"
-                                                        Visibility="Visible"/>
-                                            </Grid>
-                                        </Border>
-                                    </Grid>
-                                    <ControlTemplate.Triggers>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="#FF3A3A3A"/>
-                                        </Trigger>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter TargetName="Border" Property="Background" Value="#FF4A4A4A"/>
-                                        </Trigger>
-                                    </ControlTemplate.Triggers>
-                                </ControlTemplate>
-                            </Setter.Value>
-                        </Setter>
-                    </Style>
-                </TabControl.Resources>
-            </TabControl>
+
+            <!-- WebView2 영역 (단일) -->
+            <Border x:Name="WebViewContainer"
+                    Grid.Row="1"
+                    Background="#FF212121">
+                <!-- WebView2는 코드에서 추가됩니다 -->
+            </Border>
+        </Grid>
+
+        <!-- 설정 패널 오버레이 (플로팅 윈도우 스타일) -->
+        <Grid x:Name="SettingsOverlay"
+              Panel.ZIndex="1000"
+              Visibility="Collapsed"
+              Background="#AA000000">
+            <!-- 반투명 배경 클릭 시 닫기 -->
+            <Grid.InputBindings>
+                <MouseBinding MouseAction="LeftClick" Command="{Binding CloseSettingsCommand}"/>
+            </Grid.InputBindings>
+
+            <!-- 플로팅 설정 패널 -->
+            <Border Width="800" Height="600"
+                    Background="#FF1A1A1A"
+                    CornerRadius="10"
+                    BorderThickness="1"
+                    BorderBrush="#FF555555"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center">
+                <Border.Effect>
+                    <DropShadowEffect Color="Black"
+                                      Direction="270"
+                                      ShadowDepth="4"
+                                      BlurRadius="20"
+                                      Opacity="0.8"/>
+                </Border.Effect>
+
+                <!-- 설정 패널 내용 영역에서 클릭 시 이벤트 전파 차단 -->
+                <Grid>
+                    <Grid.InputBindings>
+                        <MouseBinding MouseAction="LeftClick" />
+                    </Grid.InputBindings>
+
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <!-- 타이틀 바 -->
+                    <Border Grid.Row="0"
+                            Background="#FF2A2A2A"
+                            CornerRadius="10,10,0,0"
+                            Padding="15,10">
+                        <Grid>
+                            <TextBlock Text="설정"
+                                       FontSize="18"
+                                       FontWeight="Bold"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"/>
+                            <Button Content="✕"
+                                    Width="30" Height="30"
+                                    HorizontalAlignment="Right"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Foreground="White"
+                                    FontSize="16"
+                                    Click="CloseSettings_Click">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            CornerRadius="3">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#FF5A5A5A"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </Grid>
+                    </Border>
+
+                    <!-- 설정 페이지 컨텐츠 -->
+                    <Border x:Name="SettingsContentContainer"
+                            Grid.Row="1"
+                            Background="Transparent"
+                            Padding="0">
+                        <!-- SettingsPage UserControl이 여기에 추가됩니다 -->
+                    </Border>
+                </Grid>
+            </Border>
         </Grid>
         
         <!-- 전체 로딩 상태 표시 -->

@@ -29,11 +29,6 @@ namespace TanukiTarkovMap.ViewModels
 
         #region UI Visibility Properties
         [ObservableProperty] public partial Visibility TopBarVisibility { get; set; } = Visibility.Visible;
-        [ObservableProperty] public partial Visibility TabSidebarVisibility { get; set; } = Visibility.Visible;
-        [ObservableProperty] public partial Thickness TabContainerMargin { get; set; } = new Thickness(0);
-        [ObservableProperty] public partial int TabContainerColumn { get; set; } = 1;
-        [ObservableProperty] public partial int TabContainerColumnSpan { get; set; } = 1;
-        [ObservableProperty] public partial Visibility TabItemHeaderVisibility { get; set; } = Visibility.Visible;
         #endregion
 
         #region PIP Mode Properties
@@ -355,13 +350,8 @@ namespace TanukiTarkovMap.ViewModels
             MinHeight = 150;
             IsTopmost = true;
 
-            // Update UI visibility - 사이드바만 숨김, 상단 바(드롭다운+체크박스)는 유지
-            TopBarVisibility = Visibility.Visible;  // 드롭다운과 체크박스는 보이게 유지
-            TabSidebarVisibility = Visibility.Collapsed;
-            TabItemHeaderVisibility = Visibility.Collapsed;  // 탭 헤더 숨김 (Margin 조정 불필요)
-            TabContainerColumn = 0;
-            TabContainerColumnSpan = 2;
-            TabContainerMargin = new Thickness(0);  // 탭 헤더는 Visibility로 숨기므로 Margin 조정 불필요
+            // Update UI visibility - 상단 바는 유지
+            TopBarVisibility = Visibility.Visible;
         }
 
         private void ExitPipMode()
@@ -383,13 +373,8 @@ namespace TanukiTarkovMap.ViewModels
             MinHeight = 700;
             IsTopmost = false;
 
-            // Restore UI visibility - 상단 바와 사이드바 복원
+            // Restore UI visibility
             TopBarVisibility = Visibility.Visible;
-            TabSidebarVisibility = Visibility.Visible;
-            TabItemHeaderVisibility = Visibility.Visible;  // 탭 헤더 복원
-            TabContainerColumn = 1;
-            TabContainerColumnSpan = 1;
-            TabContainerMargin = new Thickness(0);
         }
 
 

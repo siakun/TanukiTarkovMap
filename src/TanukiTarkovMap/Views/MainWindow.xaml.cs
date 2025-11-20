@@ -32,14 +32,14 @@ namespace TanukiTarkovMap.Views
         // 창 위치/크기 변경 이벤트
         public event EventHandler<WindowBoundsChangedEventArgs>? WindowBoundsChanged;
 
-        private int _tabCounter = 1;
-        private readonly Dictionary<TabItem, WebView2> _tabWebViews = new();
+        private WebView2 _webView;
         private MainWindowViewModel _viewModel;
         private PipService _pipService;
         private WindowBoundsService _windowBoundsService;
         private HotkeyManager _hotkeyManager;
         private bool _isClampingLocation = false; // 무한 루프 방지
         private bool _isInitializing = true; // 초기화 중 플래그
+        private SettingsPage _settingsPage; // 설정 페이지 재사용
 
         public MainWindow()
         {
@@ -82,15 +82,14 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // 탭 제목 업데이트
-        private static void UpdateTabTitle(TabItem tabItem, string title)
+        // 페이지 제목 업데이트
+        private static void UpdateWindowTitle(Window window, string title)
         {
             if (!string.IsNullOrEmpty(title))
             {
                 // "Tarkov Pilot"를 "Tarkov Client"로 변경
                 string displayTitle = title.Replace("Tarkov Pilot", "Tarkov Client");
-                tabItem.Header =
-                    displayTitle.Length > 20 ? displayTitle.Substring(0, 20) + "..." : displayTitle;
+                window.Title = displayTitle;
             }
         }
 
@@ -138,13 +137,25 @@ namespace TanukiTarkovMap.Views
             // 초기화 완료 - 이제부터 OnWindowBoundsChanged가 정상 동작
             _isInitializing = false;
 
-            await InitializeTabs();
+            await InitializeWebView();
 
             // ViewModel이 PIP 모드 변경을 처리하도록 PropertyChanged 구독
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
 
             // 핫키 매니저 초기화 (전역 단축키용)
             InitializeHotkeyManager();
+
+            // 설정 페이지 초기화
+            InitializeSettingsPage();
+        }
+
+        /// <summary>
+        /// 설정 페이지 초기화 (재사용을 위해 한 번만 생성)
+        /// </summary>
+        private void InitializeSettingsPage()
+        {
+            _settingsPage = new SettingsPage();
+            SettingsContentContainer.Child = _settingsPage;
         }
 
         /// <summary>
@@ -198,10 +209,9 @@ namespace TanukiTarkovMap.Views
                 Logger.SimpleLog($"[PIP Entry] Position validated: ({validatedPosition.X}, {validatedPosition.Y})");
 
                 // PIP 모드 진입 시 JavaScript 적용
-                var activeWebView = GetActiveWebView();
-                if (activeWebView != null)
+                if (_webView != null)
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
 
                 // Topmost 설정 (Win32 API)
@@ -213,10 +223,9 @@ namespace TanukiTarkovMap.Views
                 _windowBoundsService.ClearPipModeScreen();
 
                 // 일반 모드 복원 시 JavaScript 복원
-                var activeWebView = GetActiveWebView();
-                if (activeWebView != null)
+                if (_webView != null)
                 {
-                    await _pipService.RestoreNormalModeJavaScriptAsync(activeWebView);
+                    await _pipService.RestoreNormalModeJavaScriptAsync(_webView);
                 }
 
                 // Topmost 해제 (Win32 API)
@@ -231,10 +240,9 @@ namespace TanukiTarkovMap.Views
         {
             if (_viewModel.IsPipMode && !string.IsNullOrEmpty(_viewModel.CurrentMap))
             {
-                var activeWebView = GetActiveWebView();
-                if (activeWebView != null)
+                if (_webView != null)
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
             }
         }
@@ -247,8 +255,7 @@ namespace TanukiTarkovMap.Views
             Logger.SimpleLog($"[HandlePipHideWebElementsChanged] PipHideWebElements changed to: {_viewModel.PipHideWebElements}");
 
             // PIP 모드 여부와 관계없이 UI 요소 숨김/복원 JavaScript 적용
-            var activeWebView = GetActiveWebView();
-            if (activeWebView?.CoreWebView2 != null)
+            if (_webView?.CoreWebView2 != null)
             {
                 // CurrentMap이 null이어도 UI 요소 숨김/복원은 가능
                 string mapId = _viewModel.CurrentMap ?? "default";
@@ -256,7 +263,7 @@ namespace TanukiTarkovMap.Views
 
                 try
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, mapId, _viewModel.PipHideWebElements);
+                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, mapId, _viewModel.PipHideWebElements);
                 }
                 catch (Exception ex)
                 {
@@ -282,11 +289,10 @@ namespace TanukiTarkovMap.Views
 
                 try
                 {
-                    var activeWebView = GetActiveWebView();
-                    if (activeWebView?.CoreWebView2 != null)
+                    if (_webView?.CoreWebView2 != null)
                     {
                         Logger.SimpleLog($"[HandleSelectedMapChanged] Navigating to: {_viewModel.SelectedMapInfo.Url}");
-                        activeWebView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
+                        _webView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
                     }
                 }
                 catch (ObjectDisposedException)
@@ -335,80 +341,54 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // 탭 시스템 초기화 및 첫 번째 탭 생성
-        private async Task InitializeTabs()
-        {
-            // 첫 번째 탭 추가 (URL은 App.WebsiteUrl 사용)
-            await AddNewTab(App.WebsiteUrl);
-        }
-
-        private async Task AddNewTab(string url = null)
-        {
-            url ??= App.WebsiteUrl;
-
-            // 새 탭 생성
-            var tabItem = new TabItem
-            {
-                Header = $"Tarkov Client {_tabCounter++}",
-                Foreground = new SolidColorBrush(Colors.White)
-            };
-
-            // WebView2 생성
-            var webView = new WebView2
-            {
-                DefaultBackgroundColor = System.Drawing.Color.FromArgb(26, 26, 26)
-            };
-
-            // 탭 컨텐츠 설정 (Visual Tree에 먼저 추가)
-            tabItem.Content = webView;
-
-            // 탭 추가 및 활성화 (WebView2가 렌더링될 수 있도록)
-            _tabWebViews[tabItem] = webView;
-            TabContainer.Items.Add(tabItem);
-            TabContainer.SelectedItem = tabItem;
-
-            // WebView2 초기화 (Visual Tree에 추가된 후)
-            await InitializeWebView2(webView, tabItem);
-
-            // URL 로드
-            webView.Source = new Uri(url);
-        }
-
-        private async Task InitializeWebView2(WebView2 webView, TabItem tabItem)
+        // WebView2 초기화 (단일 WebView)
+        private async Task InitializeWebView()
         {
             try
             {
-                Logger.SimpleLog("InitializeWebView2: Start");
+                Logger.SimpleLog("InitializeWebView: Start");
 
-                // UserDataFolder 설정 (각 WebView2 인스턴스가 동일한 폴더 공유)
+                // WebView2 생성
+                _webView = new WebView2
+                {
+                    DefaultBackgroundColor = System.Drawing.Color.FromArgb(26, 26, 26)
+                };
+
+                // WebViewContainer에 추가
+                WebViewContainer.Child = _webView;
+
+                // UserDataFolder 설정
                 var userDataFolder = Path.Combine(
                     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
                     "TarkovClient",
                     "WebView2"
                 );
-                Logger.SimpleLog($"InitializeWebView2: UserDataFolder = {userDataFolder}");
+                Logger.SimpleLog($"InitializeWebView: UserDataFolder = {userDataFolder}");
 
                 // CoreWebView2 환경 생성
-                Logger.SimpleLog("InitializeWebView2: Creating CoreWebView2Environment");
+                Logger.SimpleLog("InitializeWebView: Creating CoreWebView2Environment");
                 var environment = await CoreWebView2Environment.CreateAsync(null, userDataFolder);
-                Logger.SimpleLog("InitializeWebView2: Environment created");
+                Logger.SimpleLog("InitializeWebView: Environment created");
 
                 // CoreWebView2 초기화
-                Logger.SimpleLog("InitializeWebView2: Calling EnsureCoreWebView2Async");
-                await webView.EnsureCoreWebView2Async(environment);
-                Logger.SimpleLog("InitializeWebView2: CoreWebView2 initialized");
+                Logger.SimpleLog("InitializeWebView: Calling EnsureCoreWebView2Async");
+                await _webView.EnsureCoreWebView2Async(environment);
+                Logger.SimpleLog("InitializeWebView: CoreWebView2 initialized");
 
                 // WebView2 설정
-                ConfigureWebView2Settings(webView);
-                Logger.SimpleLog("InitializeWebView2: Settings configured");
+                ConfigureWebView2Settings(_webView);
+                Logger.SimpleLog("InitializeWebView: Settings configured");
 
                 // 이벤트 핸들러 등록
-                webView.NavigationCompleted += (s, e) => WebView_NavigationCompleted(s, e, tabItem);
-                Logger.SimpleLog("InitializeWebView2: Event handlers registered");
+                _webView.NavigationCompleted += WebView_NavigationCompleted;
+                Logger.SimpleLog("InitializeWebView: Event handlers registered");
+
+                // URL 로드
+                _webView.Source = new Uri(App.WebsiteUrl);
             }
             catch (Exception ex)
             {
-                Logger.Error("InitializeWebView2 failed", ex);
+                Logger.Error("InitializeWebView failed", ex);
                 throw;
             }
         }
@@ -429,11 +409,10 @@ namespace TanukiTarkovMap.Views
             settings.IsGeneralAutofillEnabled = false;
         }
 
-        // 페이지 로딩 완료 시 처리 (탭별)
+        // 페이지 로딩 완료 시 처리
         private async void WebView_NavigationCompleted(
             object sender,
-            CoreWebView2NavigationCompletedEventArgs e,
-            TabItem tabItem
+            CoreWebView2NavigationCompletedEventArgs e
         )
         {
             if (!e.IsSuccess)
@@ -447,7 +426,7 @@ namespace TanukiTarkovMap.Views
             {
                 // 페이지 제목 가져오기 및 업데이트
                 var title = await webView.CoreWebView2.ExecuteScriptAsync("document.title");
-                UpdateTabTitle(tabItem, title?.Trim('"'));
+                UpdateWindowTitle(this, title?.Trim('"'));
 
                 // WebSocket 통신을 위한 메시지 핸들러 등록
                 webView.CoreWebView2.WebMessageReceived += CoreWebView2_WebMessageReceived;
@@ -544,10 +523,9 @@ namespace TanukiTarkovMap.Views
                                         // 맵이 이미 선택되어 있으면 해당 맵으로 네비게이션 수행
                                         Logger.SimpleLog($"[CoreWebView2_WebMessageReceived] Navigating to selected map: {_viewModel.SelectedMapInfo.DisplayName}");
 
-                                        var activeWebView = GetActiveWebView();
-                                        if (activeWebView?.CoreWebView2 != null)
+                                        if (_webView?.CoreWebView2 != null)
                                         {
-                                            activeWebView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
+                                            _webView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
                                         }
                                     }
                                 });
@@ -566,52 +544,30 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // 새 탭 추가 버튼 클릭
-        private async void NewTab_Click(object sender, RoutedEventArgs e)
-        {
-            await AddNewTab();
-        }
-
-        // 탭 닫기 버튼 클릭
-        private void CloseTab_Click(object sender, RoutedEventArgs e)
-        {
-            if (sender is not Button button)
-                return;
-
-            if (button.Tag is not TabItem tabItem)
-                return;
-
-            // 마지막 탭이면 닫지 않음
-            if (TabContainer.Items.Count <= 1)
-                return;
-
-            // WebView2 정리
-            if (_tabWebViews.TryGetValue(tabItem, out var webView))
-            {
-                webView?.Dispose();
-                _tabWebViews.Remove(tabItem);
-            }
-
-            // 탭 제거
-            TabContainer.Items.Remove(tabItem);
-        }
-
-        // 설정 버튼 클릭
+        // 설정 버튼 클릭 (토글)
         private void Settings_Click(object sender, RoutedEventArgs e)
         {
-            // 설정 페이지를 모달로 표시
-            var settingsWindow = new Window
+            // 설정 오버레이 토글
+            if (SettingsOverlay.Visibility == Visibility.Collapsed)
             {
-                Title = "설정",
-                Width = 800,
-                Height = 600,
-                Owner = this,
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
-            };
+                // 설정 열기 - WebView 숨김 (Airspace 문제 해결)
+                WebViewContainer.Visibility = Visibility.Collapsed;
+                SettingsOverlay.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                // 설정 닫기 - WebView 복원
+                SettingsOverlay.Visibility = Visibility.Collapsed;
+                WebViewContainer.Visibility = Visibility.Visible;
+            }
+        }
 
-            var settingsPage = new SettingsPage();
-            settingsWindow.Content = settingsPage;
-            settingsWindow.ShowDialog();
+        // 설정 닫기 버튼 클릭
+        private void CloseSettings_Click(object sender, RoutedEventArgs e)
+        {
+            // 설정 닫기 - WebView 복원
+            SettingsOverlay.Visibility = Visibility.Collapsed;
+            WebViewContainer.Visibility = Visibility.Visible;
         }
 
         // 핫키 매니저 초기화 (전역 단축키용)
@@ -664,18 +620,6 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // 현재 활성 WebView2 가져오기
-        private WebView2 GetActiveWebView()
-        {
-            if (TabContainer.SelectedItem is TabItem selectedTab)
-            {
-                if (_tabWebViews.TryGetValue(selectedTab, out var webView))
-                {
-                    return webView;
-                }
-            }
-            return null;
-        }
 
         /// <summary>
         /// 창 위치 변경 시 ViewModel 즉시 업데이트 및 PIP 모드에서 화면 경계 체크
@@ -786,11 +730,7 @@ namespace TanukiTarkovMap.Views
             _hotkeyManager?.Dispose();
 
             // WebView2 정리
-            foreach (var webView in _tabWebViews.Values)
-            {
-                webView?.Dispose();
-            }
-            _tabWebViews.Clear();
+            _webView?.Dispose();
         }
     }
 }
