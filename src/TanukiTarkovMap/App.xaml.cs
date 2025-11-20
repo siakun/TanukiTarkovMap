@@ -63,16 +63,7 @@ namespace TanukiTarkovMap
             {
                 if (_gameFolder == null)
                 {
-                    RegistryKey? key = Registry.LocalMachine.OpenSubKey(
-                        name: "SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\EscapeFromTarkov"
-                    );
-                    var installPath = key?.GetValue("InstallLocation")?.ToString();
-                    key?.Dispose();
-
-                    if (!string.IsNullOrEmpty(installPath))
-                    {
-                        _gameFolder = installPath;
-                    }
+                    _gameFolder = TarkovPathFinder.FindGameFolder();
                 }
 
                 return _gameFolder;
@@ -84,10 +75,7 @@ namespace TanukiTarkovMap
         {
             get
             {
-                if (string.IsNullOrEmpty(GameFolder))
-                    return null;
-
-                return Path.Combine(GameFolder, "Logs");
+                return TarkovPathFinder.GetLogsFolder(GameFolder);
             }
         }
 
@@ -98,11 +86,14 @@ namespace TanukiTarkovMap
             {
                 if (_screenshotsFolder == null)
                 {
-                    _screenshotsFolder = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments),
-                        "Escape From Tarkov",
-                        "Screenshots"
-                    );
+                    // 자동 탐지 시도
+                    _screenshotsFolder = TarkovPathFinder.FindScreenshotsFolder();
+
+                    // 찾지 못한 경우 기본 경로 사용
+                    if (_screenshotsFolder == null)
+                    {
+                        _screenshotsFolder = TarkovPathFinder.GetDefaultScreenshotsFolder();
+                    }
                 }
                 return _screenshotsFolder;
             }
