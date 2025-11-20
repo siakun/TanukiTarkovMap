@@ -29,10 +29,140 @@
 
     <Window.Resources>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+
+        <!-- ComboBox 다크 테마 스타일 -->
+        <Style x:Key="ComboBoxToggleButton" TargetType="ToggleButton">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ToggleButton">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition/>
+                                <ColumnDefinition Width="20"/>
+                            </Grid.ColumnDefinitions>
+                            <Border x:Name="Border"
+                                    Grid.ColumnSpan="2"
+                                    CornerRadius="3"
+                                    Background="#FF2A2A2A"
+                                    BorderBrush="#FF3A3A3A"
+                                    BorderThickness="1"/>
+                            <Path x:Name="Arrow"
+                                  Grid.Column="1"
+                                  Fill="White"
+                                  HorizontalAlignment="Center"
+                                  VerticalAlignment="Center"
+                                  Data="M 0 0 L 4 4 L 8 0 Z"/>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#FF3A3A3A"/>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Border" Property="Background" Value="#FF4A4A4A"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Border" Property="Background" Value="#FF1A1A1A"/>
+                                <Setter TargetName="Border" Property="BorderBrush" Value="#FF2A2A2A"/>
+                                <Setter TargetName="Arrow" Property="Fill" Value="#FF888888"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DarkComboBox" TargetType="ComboBox">
+            <Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="OverridesDefaultStyle" Value="True"/>
+            <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
+            <Setter Property="ScrollViewer.CanContentScroll" Value="True"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ComboBox">
+                        <Grid>
+                            <ToggleButton Name="ToggleButton"
+                                          Grid.Column="2"
+                                          Focusable="False"
+                                          IsChecked="{Binding Path=IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                          ClickMode="Press"
+                                          Style="{StaticResource ComboBoxToggleButton}"/>
+                            <ContentPresenter Name="ContentSite"
+                                              IsHitTestVisible="False"
+                                              Content="{TemplateBinding SelectionBoxItem}"
+                                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                              ContentTemplateSelector="{TemplateBinding ItemTemplateSelector}"
+                                              Margin="5,1,18,1"
+                                              VerticalAlignment="Center"
+                                              HorizontalAlignment="Left"/>
+                            <TextBox x:Name="PART_EditableTextBox"
+                                     Style="{x:Null}"
+                                     HorizontalAlignment="Left"
+                                     VerticalAlignment="Center"
+                                     Margin="5,1,18,1"
+                                     Focusable="True"
+                                     Background="Transparent"
+                                     Foreground="White"
+                                     Visibility="Hidden"
+                                     IsReadOnly="{TemplateBinding IsReadOnly}"/>
+                            <Popup Name="Popup"
+                                   Placement="Bottom"
+                                   IsOpen="{TemplateBinding IsDropDownOpen}"
+                                   AllowsTransparency="True"
+                                   Focusable="False"
+                                   PopupAnimation="Slide">
+                                <Grid Name="DropDown"
+                                      SnapsToDevicePixels="True"
+                                      MinWidth="{TemplateBinding ActualWidth}"
+                                      MaxHeight="{TemplateBinding MaxDropDownHeight}">
+                                    <Border x:Name="DropDownBorder"
+                                            Background="#FF2A2A2A"
+                                            BorderThickness="1"
+                                            BorderBrush="#FF3A3A3A"
+                                            CornerRadius="3"
+                                            Margin="0,1,0,0">
+                                        <Border.Effect>
+                                            <DropShadowEffect Color="Black"
+                                                              ShadowDepth="2"
+                                                              BlurRadius="8"
+                                                              Opacity="0.5"/>
+                                        </Border.Effect>
+                                        <ScrollViewer Margin="2"
+                                                      SnapsToDevicePixels="True">
+                                            <StackPanel IsItemsHost="True"
+                                                        KeyboardNavigation.DirectionalNavigation="Contained"/>
+                                        </ScrollViewer>
+                                    </Border>
+                                </Grid>
+                            </Popup>
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="HasItems" Value="False">
+                                <Setter TargetName="DropDownBorder" Property="MinHeight" Value="95"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Foreground" Value="#FF888888"/>
+                            </Trigger>
+                            <Trigger Property="IsGrouping" Value="True">
+                                <Setter Property="ScrollViewer.CanContentScroll" Value="False"/>
+                            </Trigger>
+                            <Trigger SourceName="Popup" Property="Popup.AllowsTransparency" Value="True">
+                                <Setter TargetName="DropDownBorder" Property="Margin" Value="0,2,0,0"/>
+                            </Trigger>
+                            <Trigger Property="IsEditable" Value="True">
+                                <Setter Property="IsTabStop" Value="False"/>
+                                <Setter TargetName="PART_EditableTextBox" Property="Visibility" Value="Visible"/>
+                                <Setter TargetName="ContentSite" Property="Visibility" Value="Hidden"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="25"
+        <WindowChrome CaptionHeight="20"
                       ResizeBorderThickness="8"
                       CornerRadius="8"
                       GlassFrameThickness="0"
@@ -83,7 +213,7 @@
                     BorderBrush="#FF3A3A3A"
                     Padding="8,0"
                     Panel.ZIndex="200"
-                    Height="25"
+                    Height="20"
                     MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
                     Visibility="{Binding TopBarVisibility}"
                     SnapsToDevicePixels="True"
@@ -91,9 +221,9 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="30"/>
+                        <ColumnDefinition Width="30"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- 왼쪽: 맵 드롭다운 + UI 요소 숨기기 체크박스 -->
@@ -108,25 +238,37 @@
                                   ItemsSource="{Binding AvailableMaps}"
                                   SelectedItem="{Binding SelectedMapInfo, Mode=TwoWay}"
                                   DisplayMemberPath="DisplayName"
-                                  Width="180"
-                                  Height="24"
-                                  Background="#FF1A1A1A"
+                                  Style="{StaticResource DarkComboBox}"
+                                  Width="135"
+                                  Height="18"
+                                  FontSize="10"
                                   Foreground="White"
-                                  BorderBrush="#FF3A3A3A"
                                   WindowChrome.IsHitTestVisibleInChrome="True">
                             <ComboBox.ItemContainerStyle>
                                 <Style TargetType="ComboBoxItem">
                                     <Setter Property="Background" Value="#FF2A2A2A"/>
                                     <Setter Property="Foreground" Value="White"/>
-                                    <Setter Property="Padding" Value="8,4"/>
-                                    <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="#FF3A3A3A"/>
-                                        </Trigger>
-                                        <Trigger Property="IsSelected" Value="True">
-                                            <Setter Property="Background" Value="#FF4A4A4A"/>
-                                        </Trigger>
-                                    </Style.Triggers>
+                                    <Setter Property="FontSize" Value="10"/>
+                                    <Setter Property="Padding" Value="5,2"/>
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="ComboBoxItem">
+                                                <Border Name="Border"
+                                                        Background="{TemplateBinding Background}"
+                                                        Padding="{TemplateBinding Padding}">
+                                                    <ContentPresenter/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Border" Property="Background" Value="#FF3A3A3A"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Border" Property="Background" Value="#FF4A4A4A"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
                                 </Style>
                             </ComboBox.ItemContainerStyle>
                         </ComboBox>
@@ -149,7 +291,7 @@
                     <!-- 중간: 설정 버튼 -->
                     <Button x:Name="SettingsButton"
                             Grid.Column="1"
-                            Width="25" Height="25"
+                            Width="30" Height="20"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="White"
@@ -162,16 +304,18 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}">
+                                            <Border x:Name="BorderBackground"
+                                                    Background="Transparent"
+                                                    CornerRadius="3">
                                                 <ContentPresenter HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#FF3A3A3A"/>
+                                                    <Setter TargetName="BorderBackground" Property="Background" Value="#FF3A3A3A"/>
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#FF1A1A1A"/>
+                                                    <Setter TargetName="BorderBackground" Property="Background" Value="#FF4A4A4A"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -184,7 +328,7 @@
                     <!-- 고정 핀 버튼 -->
                     <Button x:Name="PinButton"
                             Grid.Column="2"
-                            Width="25" Height="25"
+                            Width="30" Height="20"
                             Background="Transparent"
                             BorderThickness="0"
                             Foreground="{Binding IsAlwaysOnTop, Converter={StaticResource BoolToColorConverter}}"
@@ -197,16 +341,18 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}">
+                                            <Border x:Name="BorderBackground"
+                                                    Background="Transparent"
+                                                    CornerRadius="3">
                                                 <ContentPresenter HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#FF3A3A3A"/>
+                                                    <Setter TargetName="BorderBackground" Property="Background" Value="#FF3A3A3A"/>
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
-                                                    <Setter Property="Background" Value="#FF1A1A1A"/>
+                                                    <Setter TargetName="BorderBackground" Property="Background" Value="#FF4A4A4A"/>
                                                 </Trigger>
                                             </ControlTemplate.Triggers>
                                         </ControlTemplate>
@@ -285,7 +431,8 @@
 
                         <!-- 닫기 버튼 -->
                         <Button x:Name="CloseButton"
-                                Width="40" Height="25"
+                                Grid.Column="3"
+                                Width="30" Height="20"
                                 Background="Transparent"
                                 BorderThickness="0"
                                 Foreground="White"
@@ -298,13 +445,18 @@
                                     <Setter Property="Template">
                                         <Setter.Value>
                                             <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}">
+                                                <Border x:Name="BorderBackground"
+                                                        Background="Transparent"
+                                                        CornerRadius="0,3,0,0">
                                                     <ContentPresenter HorizontalAlignment="Center"
                                                                     VerticalAlignment="Center"/>
                                                 </Border>
                                                 <ControlTemplate.Triggers>
                                                     <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#FFE81123"/>
+                                                        <Setter TargetName="BorderBackground" Property="Background" Value="#FFE81123"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsPressed" Value="True">
+                                                        <Setter TargetName="BorderBackground" Property="Background" Value="#FFC50F1F"/>
                                                     </Trigger>
                                                 </ControlTemplate.Triggers>
                                             </ControlTemplate>
