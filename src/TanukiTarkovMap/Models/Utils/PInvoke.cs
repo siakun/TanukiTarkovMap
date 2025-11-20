@@ -42,11 +42,6 @@ namespace TanukiTarkovMap.Models.Utils
         [DllImport("user32.dll")]
         internal static extern bool ShowWindow(IntPtr hWnd, int nCmdShow);
 
-        /// <summary>
-        /// 현재 포그라운드 윈도우의 핸들을 가져옵니다.
-        /// </summary>
-        [DllImport("user32.dll")]
-        internal static extern IntPtr GetForegroundWindow();
 
         /// <summary>
         /// 지정된 윈도우를 최상단으로 가져옵니다.

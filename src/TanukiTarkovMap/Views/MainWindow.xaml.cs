@@ -654,28 +654,37 @@ namespace TanukiTarkovMap.Views
             Application.Current.Shutdown();
         }
 
-        // 트레이에서 창 복원
+        // 트레이에서 창 복원 (포커스를 가져가지 않음 - 게임 플레이 끊김 방지)
         private void ShowWindowFromTray()
         {
             try
             {
+                var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
+
+                // 1. WPF Show() 호출하여 레이아웃 활성화 (이것이 없으면 창이 표시되지 않음)
                 this.Show();
                 this.WindowState = WindowState.Normal;
-                this.Activate();
 
-                // TopMost 상태 재적용 (Activate()가 TopMost를 리셋할 수 있음)
-                if (_viewModel.IsAlwaysOnTop)
+                // 2. 즉시 ShowWindow를 SW_SHOWNOACTIVATE로 호출하여 포커스 제거
+                Models.Utils.PInvoke.ShowWindow(handle, Models.Utils.PInvoke.SW_SHOWNOACTIVATE);
+
+                // 3. SetWindowPos로 TopMost 설정 (SWP_NOACTIVATE 플래그로 포커스 가져가지 않음)
+                if (_viewModel.IsAlwaysOnTop || _viewModel.IsPipMode)
                 {
-                    // IsTopmost를 강제로 다시 설정하여 바인딩 재적용
-                    _viewModel.IsTopmost = true;
-                    Logger.SimpleLog("[ShowWindowFromTray] TopMost state re-applied");
+                    Models.Utils.PInvoke.SetWindowPos(
+                        handle,
+                        Models.Utils.PInvoke.HWND_TOPMOST,
+                        0, 0, 0, 0,
+                        Models.Utils.PInvoke.SWP_NOMOVE | Models.Utils.PInvoke.SWP_NOSIZE | Models.Utils.PInvoke.SWP_NOACTIVATE
+                    );
+                    Logger.SimpleLog("[ShowWindowFromTray] TopMost set without stealing focus");
                 }
 
-                Logger.SimpleLog("[ShowWindowFromTray] Window restored from tray");
+                Logger.SimpleLog("[ShowWindowFromTray] Window shown without stealing focus");
             }
             catch (Exception ex)
             {
-                Logger.Error("[ShowWindowFromTray] Failed to restore window", ex);
+                Logger.Error("[ShowWindowFromTray] Failed to show window", ex);
             }
         }
 
@@ -782,6 +791,7 @@ namespace TanukiTarkovMap.Views
                     _hotkeyManager.RegisterHotkey(_viewModel.PipHotkeyKey, () =>
                     {
                         Logger.SimpleLog("Global hotkey triggered - Toggle tray visibility");
+
                         Dispatcher.Invoke(() =>
                         {
                             if (this.IsVisible)
@@ -790,6 +800,8 @@ namespace TanukiTarkovMap.Views
                             }
                             else
                             {
+                                // SW_SHOWNOACTIVATE를 사용하여 포커스를 가져가지 않음
+                                // 게임 중 W키 등이 끊기지 않고, 프레임 드롭도 방지됨
                                 ShowWindowFromTray();
                             }
                         });
