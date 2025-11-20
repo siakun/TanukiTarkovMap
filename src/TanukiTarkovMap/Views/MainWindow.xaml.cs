@@ -145,6 +145,9 @@ namespace TanukiTarkovMap.Views
                 case nameof(MainWindowViewModel.SelectedMapInfo):
                     await HandleSelectedMapChanged();
                     break;
+                case nameof(MainWindowViewModel.PipHideWebElements):
+                    await HandlePipHideWebElementsChanged();
+                    break;
             }
         }
 
@@ -180,7 +183,7 @@ namespace TanukiTarkovMap.Views
                 var activeWebView = GetActiveWebView();
                 if (activeWebView != null)
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap);
+                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
 
                 // Topmost 설정 (Win32 API)
@@ -213,7 +216,26 @@ namespace TanukiTarkovMap.Views
                 var activeWebView = GetActiveWebView();
                 if (activeWebView != null)
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap);
+                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                }
+            }
+        }
+
+        /// <summary>
+        /// PIP 모드 UI 요소 숨김 설정 변경 처리
+        /// </summary>
+        private async Task HandlePipHideWebElementsChanged()
+        {
+            Logger.SimpleLog($"[HandlePipHideWebElementsChanged] PipHideWebElements changed to: {_viewModel.PipHideWebElements}");
+
+            // PIP 모드가 활성화되어 있을 때만 JavaScript 재적용
+            if (_viewModel.IsPipMode && !string.IsNullOrEmpty(_viewModel.CurrentMap))
+            {
+                var activeWebView = GetActiveWebView();
+                if (activeWebView != null)
+                {
+                    Logger.SimpleLog("[HandlePipHideWebElementsChanged] Reapplying PIP mode JavaScript");
+                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
             }
         }
@@ -400,7 +422,7 @@ namespace TanukiTarkovMap.Views
                 // PIP 모드 상태면 JavaScript 적용
                 if (_viewModel.IsPipMode)
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap);
+                    await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
 
                 // "/pilot" 페이지에서 Connected 상태 감지 시작

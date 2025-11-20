@@ -52,6 +52,7 @@ namespace TanukiTarkovMap.Models.Services
                 PipRememberPosition = true,
                 PipHotkeyEnabled = true,  // PIP 단축키 기본적으로 활성화
                 PipHotkeyKey = "F11",
+                PipHideWebElements = true,  // PIP 모드에서 웹 UI 요소 숨기기 기본 활성화
                 NormalWidth = 1400,
                 NormalHeight = 900,
                 NormalLeft = -1,

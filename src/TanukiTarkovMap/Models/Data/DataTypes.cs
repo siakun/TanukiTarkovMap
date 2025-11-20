@@ -22,6 +22,7 @@ namespace TanukiTarkovMap.Models.Data
         public bool PipRememberPosition { get; set; } = true;    // 위치 기억 여부
         public bool PipHotkeyEnabled { get; set; } = false;      // PiP 활성화 버튼 사용 여부
         public string PipHotkeyKey { get; set; } = "F11";        // 사용자 설정 핫키
+        public bool PipHideWebElements { get; set; } = true;     // PiP 모드에서 웹 UI 요소 숨기기
 
         // 일반 모드 설정 추가
         public double NormalWidth { get; set; } = 0f;            // 일반 모드 창 너비

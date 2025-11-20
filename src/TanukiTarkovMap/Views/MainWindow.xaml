@@ -70,6 +70,19 @@
                             </Style>
                         </ComboBox.ItemContainerStyle>
                     </ComboBox>
+
+                    <!-- PIP 모드 UI 요소 숨기기 체크박스 -->
+                    <CheckBox x:Name="PipHideWebElementsCheckBox"
+                              IsChecked="{Binding PipHideWebElements, Mode=TwoWay}"
+                              Margin="16,0,0,0"
+                              VerticalAlignment="Center"
+                              Foreground="White">
+                        <CheckBox.Content>
+                            <TextBlock Text="UI 요소 숨기기"
+                                       Foreground="#FF888888"
+                                       FontSize="12"/>
+                        </CheckBox.Content>
+                    </CheckBox>
                 </StackPanel>
             </Border>
             

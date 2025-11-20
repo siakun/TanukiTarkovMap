@@ -39,6 +39,7 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool IsPipMode { get; set; }
         [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; } = true;
         [ObservableProperty] public partial string PipHotkeyKey { get; set; } = "F11";
+        [ObservableProperty] public partial bool PipHideWebElements { get; set; } = true;
         #endregion
 
         #region Map Selection Properties
@@ -129,6 +130,7 @@ namespace TanukiTarkovMap.ViewModels
             // Load PIP settings
             PipHotkeyEnabled = _settings.PipHotkeyEnabled;
             PipHotkeyKey = _settings.PipHotkeyKey;
+            PipHideWebElements = _settings.PipHideWebElements;
 
             // Initialize window properties with normal mode
             var normalRect = _windowStateManager.NormalModeRect;
@@ -150,6 +152,9 @@ namespace TanukiTarkovMap.ViewModels
                         break;
                     case nameof(CurrentMap):
                         OnMapChanged();
+                        break;
+                    case nameof(PipHideWebElements):
+                        OnPipHideWebElementsChanged();
                         break;
                     case nameof(CurrentWindowLeft):
                         Logger.SimpleLog($"[PropertyChanged] CurrentWindowLeft changed to: {CurrentWindowLeft}, IsPipMode={IsPipMode}");
@@ -201,6 +206,7 @@ namespace TanukiTarkovMap.ViewModels
             // Persist to disk
             var settings = App.GetSettings();
             _windowStateManager.SaveToSettings(settings);
+            settings.PipHideWebElements = PipHideWebElements;
             App.SetSettings(settings);
             Settings.Save();
         }
@@ -272,6 +278,19 @@ namespace TanukiTarkovMap.ViewModels
                     CurrentWindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
                 }
             }
+        }
+
+        private void OnPipHideWebElementsChanged()
+        {
+            Logger.SimpleLog($"[OnPipHideWebElementsChanged] PipHideWebElements changed to: {PipHideWebElements}");
+
+            // 설정 저장
+            var settings = App.GetSettings();
+            settings.PipHideWebElements = PipHideWebElements;
+            App.SetSettings(settings);
+            Settings.Save();
+
+            // PIP 모드가 활성화되어 있으면 View에서 PropertyChanged 이벤트를 감지하여 재적용함
         }
 
         private void EnterPipMode()

@@ -7,9 +7,9 @@ namespace TanukiTarkovMap.Models.Services
 {
     public class PipService
     {
-        public async Task ApplyPipModeJavaScriptAsync(object webView, string mapId)
+        public async Task ApplyPipModeJavaScriptAsync(object webView, string mapId, bool hideWebElements = true)
         {
-            Logger.SimpleLog($"[PipService] ApplyPipModeJavaScriptAsync called for map ID: {mapId}");
+            Logger.SimpleLog($"[PipService] ApplyPipModeJavaScriptAsync called for map ID: {mapId}, hideWebElements: {hideWebElements}");
 
             if (webView is not WebView2 webView2 || webView2.CoreWebView2 == null)
             {
@@ -42,27 +42,40 @@ namespace TanukiTarkovMap.Models.Services
                     "
                 );
 
-                Logger.SimpleLog("[PipService] Step 3: Removing UI elements");
-                // 3. Remove UI elements for PIP mode
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_RIGHT
-                );
+                // 3. UI 요소 제거 또는 복원 (조건부)
+                if (hideWebElements)
+                {
+                    Logger.SimpleLog("[PipService] Step 3: Removing UI elements");
 
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_LEFT
-                );
+                    await webView2.CoreWebView2.ExecuteScriptAsync(
+                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_RIGHT
+                    );
 
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_TOP
-                );
+                    await webView2.CoreWebView2.ExecuteScriptAsync(
+                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_LEFT
+                    );
 
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_HEADER
-                );
+                    await webView2.CoreWebView2.ExecuteScriptAsync(
+                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_TOP
+                    );
 
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_FOOTER
-                );
+                    await webView2.CoreWebView2.ExecuteScriptAsync(
+                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_HEADER
+                    );
+
+                    await webView2.CoreWebView2.ExecuteScriptAsync(
+                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_FOOTER
+                    );
+                }
+                else
+                {
+                    Logger.SimpleLog("[PipService] Step 3: Restoring UI elements (hideWebElements is false)");
+
+                    // UI 요소 복원
+                    await webView2.CoreWebView2.ExecuteScriptAsync(
+                        JavaScriptConstants.TARKOV_MARGET_ELEMENT_RESTORE
+                    );
+                }
 
                 Logger.SimpleLog($"[PipService] Successfully applied PIP mode JavaScript for map ID: {mapId}");
             }
