@@ -15,10 +15,21 @@ using TanukiTarkovMap.ViewModels;
 namespace TanukiTarkovMap.Views
 {
     /// <summary>
+    /// 창 위치/크기 변경 이벤트 인자
+    /// </summary>
+    public class WindowBoundsChangedEventArgs : EventArgs
+    {
+        public Rect Bounds { get; set; }
+        public bool IsPipMode { get; set; }
+    }
+
+    /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow : Window
     {
+        // 창 위치/크기 변경 이벤트
+        public event EventHandler<WindowBoundsChangedEventArgs>? WindowBoundsChanged;
 
         private int _tabCounter = 1;
         private readonly Dictionary<TabItem, WebView2> _tabWebViews = new();
@@ -46,6 +57,10 @@ namespace TanukiTarkovMap.Views
                 Loaded += MainWindow_Loaded;
                 Closed += MainWindow_Closed;
                 LocationChanged += MainWindow_LocationChanged;
+                SizeChanged += MainWindow_SizeChanged;
+
+                // ViewModel에 창 위치/크기 변경 이벤트 연결
+                this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
 
                 // 키보드 이벤트 핸들러 추가 (디버그 모드용)
                 this.PreviewKeyDown += MainWindow_PreviewKeyDown;
@@ -139,6 +154,23 @@ namespace TanukiTarkovMap.Views
                 // PIP 모드 시작 시 현재 화면 저장 (LocationChanged에서 경계 체크에 사용)
                 var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
                 _windowBoundsService.SavePipModeScreen(windowHandle);
+
+                // 창 위치를 화면 내부로 보정
+                var dpiInfo = VisualTreeHelper.GetDpi(this);
+                var validatedPosition = _windowBoundsService.EnsureWindowWithinScreen(
+                    _viewModel.WindowLeft,
+                    _viewModel.WindowTop,
+                    _viewModel.WindowWidth,
+                    _viewModel.WindowHeight,
+                    dpiInfo.DpiScaleX,
+                    dpiInfo.DpiScaleY
+                );
+
+                // 검증된 위치 반영
+                _viewModel.WindowLeft = validatedPosition.X;
+                _viewModel.WindowTop = validatedPosition.Y;
+
+                Logger.SimpleLog($"[PIP Entry] Position validated: ({validatedPosition.X}, {validatedPosition.Y})");
 
                 // PIP 모드 진입 시 JavaScript 적용
                 var activeWebView = GetActiveWebView();
@@ -500,15 +532,9 @@ namespace TanukiTarkovMap.Views
             {
                 _isClampingLocation = true;
 
-                // ViewModel의 WindowLeft/WindowTop을 즉시 업데이트 (바인딩 지연 문제 해결)
-                if (!_viewModel.IsPipMode)
+                // PIP 모드에서는 화면 경계 체크 수행
+                if (_viewModel.IsPipMode)
                 {
-                    // 일반 모드: ViewModel 메서드를 통해 업데이트 (MVVM 패턴 준수)
-                    _viewModel.UpdateWindowPosition(this.Left, this.Top);
-                }
-                else
-                {
-                    // PIP 모드에서는 경계 체크도 수행
                     var dpiScale = VisualTreeHelper.GetDpi(this);
 
                     // WindowBoundsService를 사용하여 창 위치 체크 및 조정
@@ -521,24 +547,40 @@ namespace TanukiTarkovMap.Views
                         dpiScale.DpiScaleY
                     );
 
-                    // 조정이 필요한 경우에만 위치 업데이트
+                    // 조정이 필요한 경우 위치 업데이트
                     if (newPosition.HasValue)
                     {
                         this.Left = newPosition.Value.X;
                         this.Top = newPosition.Value.Y;
-                        _viewModel.UpdateWindowPosition(newPosition.Value.X, newPosition.Value.Y);
-                    }
-                    else
-                    {
-                        // 조정 불필요하면 ViewModel만 업데이트
-                        _viewModel.UpdateWindowPosition(this.Left, this.Top);
                     }
                 }
+
+                // 창 위치/크기 변경 이벤트 발생 (ViewModel에서 즉시 저장)
+                WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
+                {
+                    Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight),
+                    IsPipMode = _viewModel.IsPipMode
+                });
             }
             finally
             {
                 _isClampingLocation = false;
             }
+        }
+
+        /// <summary>
+        /// 창 크기 변경 시 이벤트 발생
+        /// </summary>
+        private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            if (_isClampingLocation) return;        // 무한 루프 방지
+
+            // 창 위치/크기 변경 이벤트 발생 (ViewModel에서 즉시 저장)
+            WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
+            {
+                Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight),
+                IsPipMode = _viewModel.IsPipMode
+            });
         }
 
         // PIP 모드에서 창 드래그 이동 처리

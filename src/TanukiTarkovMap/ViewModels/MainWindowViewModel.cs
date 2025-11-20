@@ -144,15 +144,13 @@ namespace TanukiTarkovMap.ViewModels
                         break;
                     case nameof(WindowLeft):
                         Logger.SimpleLog($"[PropertyChanged] WindowLeft changed to: {WindowLeft}, IsPipMode={IsPipMode}");
-                        ScheduleSaveSettings();
                         break;
                     case nameof(WindowTop):
                         Logger.SimpleLog($"[PropertyChanged] WindowTop changed to: {WindowTop}, IsPipMode={IsPipMode}");
-                        ScheduleSaveSettings();
                         break;
                     case nameof(WindowWidth):
                     case nameof(WindowHeight):
-                        ScheduleSaveSettings();
+                        // 크기 변경은 View의 SizeChanged 이벤트에서 처리
                         break;
                 }
             };
@@ -194,10 +192,14 @@ namespace TanukiTarkovMap.ViewModels
 
             if (IsPipMode)
             {
+                // 일반 모드 위치를 즉시 저장 (타이머 대기 안 함)
+                SaveNormalSettings();
                 EnterPipMode();
             }
             else
             {
+                // PIP 모드 위치를 즉시 저장
+                SavePipSettings();
                 ExitPipMode();
             }
         }
@@ -357,25 +359,29 @@ namespace TanukiTarkovMap.ViewModels
             Logger.SimpleLog($"Saved PIP settings for {mapKey}: {WindowWidth}x{WindowHeight} at ({WindowLeft}, {WindowTop})");
         }
 
-        private System.Windows.Threading.DispatcherTimer _saveTimer;
-
-        private void ScheduleSaveSettings()
+        /// <summary>
+        /// View에서 창 위치/크기 변경 이벤트를 받아 즉시 저장
+        /// (모듈화 고려: 나중에 별도 서비스로 분리 가능)
+        /// </summary>
+        public void OnWindowBoundsChanged(object? sender, TanukiTarkovMap.Views.WindowBoundsChangedEventArgs e)
         {
-            // Debounce save operations
-            _saveTimer?.Stop();
+            Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}");
 
-            if (_saveTimer == null)
+            // ViewModel 속성 업데이트
+            WindowLeft = e.Bounds.Left;
+            WindowTop = e.Bounds.Top;
+            WindowWidth = e.Bounds.Width;
+            WindowHeight = e.Bounds.Height;
+
+            // 즉시 저장 (타이머 없음)
+            if (e.IsPipMode)
             {
-                _saveTimer = new System.Windows.Threading.DispatcherTimer();
-                _saveTimer.Interval = System.TimeSpan.FromMilliseconds(500);
-                _saveTimer.Tick += (s, e) =>
-                {
-                    _saveTimer.Stop();
-                    SaveSettingsCommand.Execute(null);
-                };
+                SavePipSettings();
             }
-
-            _saveTimer.Start();
+            else
+            {
+                SaveNormalSettings();
+            }
         }
 
         #endregion
