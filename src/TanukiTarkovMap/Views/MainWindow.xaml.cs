@@ -158,17 +158,17 @@ namespace TanukiTarkovMap.Views
                 // 창 위치를 화면 내부로 보정
                 var dpiInfo = VisualTreeHelper.GetDpi(this);
                 var validatedPosition = _windowBoundsService.EnsureWindowWithinScreen(
-                    _viewModel.WindowLeft,
-                    _viewModel.WindowTop,
-                    _viewModel.WindowWidth,
-                    _viewModel.WindowHeight,
+                    _viewModel.CurrentWindowLeft,
+                    _viewModel.CurrentWindowTop,
+                    _viewModel.CurrentWindowWidth,
+                    _viewModel.CurrentWindowHeight,
                     dpiInfo.DpiScaleX,
                     dpiInfo.DpiScaleY
                 );
 
                 // 검증된 위치 반영
-                _viewModel.WindowLeft = validatedPosition.X;
-                _viewModel.WindowTop = validatedPosition.Y;
+                _viewModel.CurrentWindowLeft = validatedPosition.X;
+                _viewModel.CurrentWindowTop = validatedPosition.Y;
 
                 Logger.SimpleLog($"[PIP Entry] Position validated: ({validatedPosition.X}, {validatedPosition.Y})");
 

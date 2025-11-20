@@ -32,11 +32,11 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial string PipHotkeyKey { get; set; } = "F11";
         #endregion
 
-        #region Window Properties
-        [ObservableProperty] public partial double WindowWidth { get; set; }
-        [ObservableProperty] public partial double WindowHeight { get; set; }
-        [ObservableProperty] public partial double WindowLeft { get; set; }
-        [ObservableProperty] public partial double WindowTop { get; set; }
+        #region Current Window Properties
+        [ObservableProperty] public partial double CurrentWindowWidth { get; set; }
+        [ObservableProperty] public partial double CurrentWindowHeight { get; set; }
+        [ObservableProperty] public partial double CurrentWindowLeft { get; set; }
+        [ObservableProperty] public partial double CurrentWindowTop { get; set; }
         [ObservableProperty] public partial WindowStyle WindowStyle { get; set; } = WindowStyle.SingleBorderWindow;
         [ObservableProperty] public partial ResizeMode ResizeMode { get; set; } = ResizeMode.CanResize;
         [ObservableProperty] public partial bool IsTopmost { get; set; }
@@ -129,10 +129,10 @@ namespace TanukiTarkovMap.ViewModels
             PipHotkeyKey = _settings.PipHotkeyKey;
 
             // Initialize window properties with normal mode
-            WindowWidth = NormalWidth;
-            WindowHeight = NormalHeight;
-            WindowLeft = NormalLeft;
-            WindowTop = NormalTop;
+            CurrentWindowWidth = NormalWidth;
+            CurrentWindowHeight = NormalHeight;
+            CurrentWindowLeft = NormalLeft;
+            CurrentWindowTop = NormalTop;
         }
 
         private void InitializeCommands()
@@ -148,14 +148,14 @@ namespace TanukiTarkovMap.ViewModels
                     case nameof(CurrentMap):
                         OnMapChanged();
                         break;
-                    case nameof(WindowLeft):
-                        Logger.SimpleLog($"[PropertyChanged] WindowLeft changed to: {WindowLeft}, IsPipMode={IsPipMode}");
+                    case nameof(CurrentWindowLeft):
+                        Logger.SimpleLog($"[PropertyChanged] CurrentWindowLeft changed to: {CurrentWindowLeft}, IsPipMode={IsPipMode}");
                         break;
-                    case nameof(WindowTop):
-                        Logger.SimpleLog($"[PropertyChanged] WindowTop changed to: {WindowTop}, IsPipMode={IsPipMode}");
+                    case nameof(CurrentWindowTop):
+                        Logger.SimpleLog($"[PropertyChanged] CurrentWindowTop changed to: {CurrentWindowTop}, IsPipMode={IsPipMode}");
                         break;
-                    case nameof(WindowWidth):
-                    case nameof(WindowHeight):
+                    case nameof(CurrentWindowWidth):
+                    case nameof(CurrentWindowHeight):
                         // 크기 변경은 View의 SizeChanged 이벤트에서 처리
                         break;
                 }
@@ -181,7 +181,7 @@ namespace TanukiTarkovMap.ViewModels
         private void SaveSettings()
         {
             // Save current window state to WindowStateManager
-            var currentRect = new Rect(WindowLeft, WindowTop, WindowWidth, WindowHeight);
+            var currentRect = new Rect(CurrentWindowLeft, CurrentWindowTop, CurrentWindowWidth, CurrentWindowHeight);
 
             if (IsPipMode)
             {
@@ -196,10 +196,10 @@ namespace TanukiTarkovMap.ViewModels
                 _windowStateManager.UpdateNormalModeRect(currentRect);
 
                 // Update ViewModel properties for consistency
-                NormalWidth = WindowWidth;
-                NormalHeight = WindowHeight;
-                NormalLeft = WindowLeft;
-                NormalTop = WindowTop;
+                NormalWidth = CurrentWindowWidth;
+                NormalHeight = CurrentWindowHeight;
+                NormalLeft = CurrentWindowLeft;
+                NormalTop = CurrentWindowTop;
 
                 Logger.SimpleLog($"[SaveSettings] Saved Normal mode: {currentRect}");
             }
@@ -220,7 +220,7 @@ namespace TanukiTarkovMap.ViewModels
             if (IsPipMode)
             {
                 // 일반 모드 위치를 WindowStateManager에 즉시 저장 (이벤트 발생 전에 저장)
-                var currentRect = new Rect(WindowLeft, WindowTop, WindowWidth, WindowHeight);
+                var currentRect = new Rect(CurrentWindowLeft, CurrentWindowTop, CurrentWindowWidth, CurrentWindowHeight);
                 _windowStateManager.UpdateNormalModeRect(currentRect);
 
                 var settings = App.GetSettings();
@@ -237,7 +237,7 @@ namespace TanukiTarkovMap.ViewModels
                 // PIP 모드 위치를 WindowStateManager에 즉시 저장
                 if (!string.IsNullOrEmpty(CurrentMap))
                 {
-                    var currentRect = new Rect(WindowLeft, WindowTop, WindowWidth, WindowHeight);
+                    var currentRect = new Rect(CurrentWindowLeft, CurrentWindowTop, CurrentWindowWidth, CurrentWindowHeight);
                     _windowStateManager.UpdatePipModeRect(CurrentMap, currentRect);
 
                     var settings = App.GetSettings();
@@ -266,19 +266,19 @@ namespace TanukiTarkovMap.ViewModels
                 Logger.SimpleLog($"[OnMapChanged] Loaded PIP rect for {CurrentMap}: {pipRect}");
 
                 // Apply new map's PIP settings
-                WindowWidth = pipRect.Width;
-                WindowHeight = pipRect.Height;
+                CurrentWindowWidth = pipRect.Width;
+                CurrentWindowHeight = pipRect.Height;
 
                 if (pipRect.Left >= 0 && pipRect.Top >= 0)
                 {
-                    WindowLeft = pipRect.Left;
-                    WindowTop = pipRect.Top;
+                    CurrentWindowLeft = pipRect.Left;
+                    CurrentWindowTop = pipRect.Top;
                 }
                 else
                 {
                     // Default position: bottom right
-                    WindowLeft = SystemParameters.PrimaryScreenWidth - pipRect.Width - 20;
-                    WindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
+                    CurrentWindowLeft = SystemParameters.PrimaryScreenWidth - pipRect.Width - 20;
+                    CurrentWindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
                 }
             }
         }
@@ -300,20 +300,20 @@ namespace TanukiTarkovMap.ViewModels
             }
 
             // Apply PIP size
-            WindowWidth = pipRect.Width;
-            WindowHeight = pipRect.Height;
+            CurrentWindowWidth = pipRect.Width;
+            CurrentWindowHeight = pipRect.Height;
 
             // Apply PIP position (use default if not set)
             if (pipRect.Left >= 0 && pipRect.Top >= 0)
             {
-                WindowLeft = pipRect.Left;
-                WindowTop = pipRect.Top;
+                CurrentWindowLeft = pipRect.Left;
+                CurrentWindowTop = pipRect.Top;
             }
             else
             {
                 // Default position: bottom right
-                WindowLeft = SystemParameters.PrimaryScreenWidth - pipRect.Width - 20;
-                WindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
+                CurrentWindowLeft = SystemParameters.PrimaryScreenWidth - pipRect.Width - 20;
+                CurrentWindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
             }
 
             // Update window style for PIP
@@ -337,10 +337,10 @@ namespace TanukiTarkovMap.ViewModels
             Logger.SimpleLog($"[ExitPipMode] Loaded Normal rect: {normalRect}");
 
             // Restore normal mode settings
-            WindowWidth = normalRect.Width;
-            WindowHeight = normalRect.Height;
-            WindowLeft = normalRect.Left;
-            WindowTop = normalRect.Top;
+            CurrentWindowWidth = normalRect.Width;
+            CurrentWindowHeight = normalRect.Height;
+            CurrentWindowLeft = normalRect.Left;
+            CurrentWindowTop = normalRect.Top;
 
             // Update ViewModel properties for consistency
             NormalWidth = normalRect.Width;
@@ -372,10 +372,10 @@ namespace TanukiTarkovMap.ViewModels
             Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}, CurrentMap={CurrentMap}");
 
             // ViewModel 속성 업데이트 (바인딩용)
-            WindowLeft = e.Bounds.Left;
-            WindowTop = e.Bounds.Top;
-            WindowWidth = e.Bounds.Width;
-            WindowHeight = e.Bounds.Height;
+            CurrentWindowLeft = e.Bounds.Left;
+            CurrentWindowTop = e.Bounds.Top;
+            CurrentWindowWidth = e.Bounds.Width;
+            CurrentWindowHeight = e.Bounds.Height;
 
             // WindowStateManager를 통해 즉시 저장 (타이머 없음)
             _windowStateManager.UpdateAndSave(e.Bounds, e.IsPipMode, CurrentMap);
@@ -390,8 +390,8 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public void UpdateWindowPosition(double left, double top)
         {
-            WindowLeft = left;
-            WindowTop = top;
+            CurrentWindowLeft = left;
+            CurrentWindowTop = top;
         }
 
         #endregion
