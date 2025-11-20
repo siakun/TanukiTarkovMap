@@ -513,6 +513,49 @@ namespace TanukiTarkovMap.Models.Constants
                     }
                 })();";
 
+        /// <summary>
+        /// PIP 모드에서 웹 UI 요소만 복원 (맵 transform은 유지)
+        /// </summary>
+        public const string TARKOV_MARGET_ELEMENT_RESTORE_KEEP_TRANSFORM =
+            @"
+                    try {
+                        // panel_left 복원
+                        var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
+                        if (panelLeft) {
+                            panelLeft.style.display = '';
+                        }
+
+                        // panel_right 복원
+                        var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
+                        if (panelRight) {
+                            panelRight.style.display = '';
+                        }
+
+                        // panel_top 복원
+                        var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
+                        if (panelTop) {
+                            panelTop.style.display = '';
+                        }
+
+                        // header 복원
+                        var header = document.querySelector('#__nuxt > div > div > header');
+                        if (header) {
+                            header.style.display = '';
+                        }
+
+                        // footer-wrap 복원
+                        var footerWrap = document.querySelector('#__nuxt > div > div > div.footer-wrap');
+                        if (footerWrap) {
+                            footerWrap.style.display = '';
+                        }
+
+                        // 주의: 맵 transform은 유지 (PIP 모드이므로)
+                    } catch { }
+                ";
+
+        /// <summary>
+        /// 일반 모드로 완전히 복원 (PIP 모드에서 맵 transform을 사용하지 않으므로 초기화 불필요)
+        /// </summary>
         public const string TARKOV_MARGET_ELEMENT_RESTORE =
             @"
                     try {
@@ -527,31 +570,26 @@ namespace TanukiTarkovMap.Models.Constants
                         if (panelRight) {
                             panelRight.style.display = '';
                         }
-                        
+
                         // panel_top 복원
                         var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
                         if (panelTop) {
                             panelTop.style.display = '';
                         }
-                        
+
                         // header 복원
                         var header = document.querySelector('#__nuxt > div > div > header');
                         if (header) {
                             header.style.display = '';
                         }
-                        
+
                         // footer-wrap 복원
                         var footerWrap = document.querySelector('#__nuxt > div > div > div.footer-wrap');
                         if (footerWrap) {
                             footerWrap.style.display = '';
                         }
-                        
-                        // 지도 스케일링 초기화
-                        var mapElement = document.querySelector('#map');
-                        if (mapElement) {
-                            mapElement.style.transform = '';
-                            mapElement.style.transformOrigin = '';
-                        }
+
+                        // 맵 transform 초기화 제거: PIP 모드에서 transform을 적용하지 않으므로 초기화 불필요
                     } catch { }
                 ";
 

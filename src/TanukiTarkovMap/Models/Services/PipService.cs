@@ -25,27 +25,13 @@ namespace TanukiTarkovMap.Models.Services
                     JavaScriptConstants.REMOVE_PIP_OVERLAY_SCRIPT
                 );
 
-                Logger.SimpleLog("[PipService] Step 2: Applying map scaling");
-                // 2. Apply map scaling
-                var transformMatrix = GetMapTransform(mapId);
-                Logger.SimpleLog($"[PipService] Transform matrix: {transformMatrix}");
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    $@"
-                    try {{
-                        var mapElement = document.querySelector('#map');
-                        if (mapElement) {{
-                            mapElement.style.transformOrigin = '0px 0px 0px';
-                            mapElement.style.transform = '{transformMatrix}';
-                        }}
-                    }} catch {{
-                    }}
-                    "
-                );
+                // Step 2 제거: 맵 스케일링을 적용하지 않음 (창 크기만 조절)
+                // PIP 모드에서도 맵은 원본 크기를 유지하고, 창만 작아짐
 
-                // 3. UI 요소 제거 또는 복원 (조건부)
+                // 2. UI 요소 제거 또는 복원 (조건부)
                 if (hideWebElements)
                 {
-                    Logger.SimpleLog("[PipService] Step 3: Removing UI elements");
+                    Logger.SimpleLog("[PipService] Step 2: Removing UI elements");
 
                     await webView2.CoreWebView2.ExecuteScriptAsync(
                         JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_RIGHT
@@ -69,11 +55,11 @@ namespace TanukiTarkovMap.Models.Services
                 }
                 else
                 {
-                    Logger.SimpleLog("[PipService] Step 3: Restoring UI elements (hideWebElements is false)");
+                    Logger.SimpleLog("[PipService] Step 2: Restoring UI elements");
 
-                    // UI 요소 복원
+                    // UI 요소만 복원 (PIP 모드에서는 맵 transform을 적용하지 않으므로)
                     await webView2.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.TARKOV_MARGET_ELEMENT_RESTORE
+                        JavaScriptConstants.TARKOV_MARGET_ELEMENT_RESTORE_KEEP_TRANSFORM
                     );
                 }
 
@@ -133,15 +119,15 @@ namespace TanukiTarkovMap.Models.Services
             // 맵 ID 기반 기본 transform
             return mapId switch
             {
-                "factory_day_preset" => "matrix(0.166113, 0, 0, 0.166113, -165.258, -154.371)",
-                "woods_preset" => "matrix(0.111237, 0, 0, 0.111237, -101.331, -113.302)",
-                "customs_preset" => "matrix(0.177979, 0, 0, 0.177979, -215.026, -185.151)",
-                "rezerv_base_preset" => "matrix(0.222473, 0, 0, 0.222473, -227.365, -224.862)",
                 "sandbox_high_preset" => "matrix(0.347614, 0, 0, 0.347614, -346.781, -365.505)",
-                "city_preset" => "matrix(0.21875, 0, 0, 0.21875, -193.814, -223.336)",
-                "lighthouse_preset" => "matrix(0.241013, 0, 0, 0.241013, -258.081, -256.536)",
+                "factory_day_preset" => "matrix(0.166113, 0, 0, 0.166113, -165.258, -154.371)",
+                "customs_preset" => "matrix(0.177979, 0, 0, 0.177979, -215.026, -185.151)",
                 "shopping_mall" => "matrix(0.125141, 0, 0, 0.125141, -124.377, -127.995)",
+                "woods_preset" => "matrix(0.111237, 0, 0, 0.111237, -101.331, -113.302)",
                 "shoreline_preset" => "matrix(0.222473, 0, 0, 0.222473, -231.212, -228.746)",
+                "rezerv_base_preset" => "matrix(0.222473, 0, 0, 0.222473, -227.365, -224.862)",
+                "lighthouse_preset" => "matrix(0.241013, 0, 0, 0.241013, -258.081, -256.536)",
+                "city_preset" => "matrix(0.21875, 0, 0, 0.21875, -193.814, -223.336)",
                 "laboratory_preset" => "matrix(0.124512, 0, 0, 0.124512, -191.645, -129.873)",
                 _ => "matrix(0.15, 0, 0, 0.15, -150, -150)"
             };
