@@ -160,10 +160,9 @@ namespace TanukiTarkovMap.ViewModels
             // WindowStateManager에 설정 로드
             _windowStateManager.LoadFromSettings(_settings);
 
-            // Load PIP settings
-            PipHotkeyEnabled = _settings.PipHotkeyEnabled;
-            PipHotkeyKey = _settings.PipHotkeyKey;
-            PipHideWebElements = _settings.PipHideWebElements;
+            // Load hotkey settings
+            PipHotkeyEnabled = _settings.HotkeyEnabled;
+            PipHotkeyKey = _settings.HotkeyKey;
 
             // Load pin mode (IsAlwaysOnTop) - 직접 필드 설정하여 Settings 재저장 방지
             _isAlwaysOnTop = _settings.IsAlwaysOnTop;
@@ -277,7 +276,6 @@ namespace TanukiTarkovMap.ViewModels
             // Persist to disk
             var settings = App.GetSettings();
             _windowStateManager.SaveToSettings(settings);
-            settings.PipHideWebElements = PipHideWebElements;
             App.SetSettings(settings);
             Settings.Save();
         }
@@ -349,12 +347,6 @@ namespace TanukiTarkovMap.ViewModels
         private void OnPipHideWebElementsChanged()
         {
             Logger.SimpleLog($"[OnPipHideWebElementsChanged] PipHideWebElements changed to: {PipHideWebElements}");
-
-            // 설정 저장
-            var settings = App.GetSettings();
-            settings.PipHideWebElements = PipHideWebElements;
-            App.SetSettings(settings);
-            Settings.Save();
 
             // PIP 모드가 활성화되어 있으면 View에서 PropertyChanged 이벤트를 감지하여 재적용함
         }

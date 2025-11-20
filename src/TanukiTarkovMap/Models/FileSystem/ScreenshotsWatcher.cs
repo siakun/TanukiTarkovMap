@@ -63,10 +63,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                     Server.SendFilename(filename);
 
                     // 2차 트리거: 스크린샷 생성 이벤트 발생
-                    if (App.GetSettings().PipEnabled)
-                    {
-                        MapEventService.Instance.OnScreenshotTaken();
-                    }
+                    MapEventService.Instance.OnScreenshotTaken();
                 }
             }
             catch (Exception ex)

@@ -7,176 +7,27 @@
              d:DesignHeight="600" d:DesignWidth="800"
              Background="#FF000000">
     <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Margin="20">
-            <!-- 제목 -->
-            <TextBlock Text="설정 (Setting)" 
-                       FontSize="24" 
-                       FontWeight="Bold" 
-                       Foreground="White" 
-                       Margin="0,0,0,20"/>
-            
-            <!-- 통합 설정 섹션 (40:60 비율) -->
-            <Border Background="#FF1A1A1A" 
-                    CornerRadius="5" 
-                    Padding="15" 
-                    Margin="0,0,0,15">
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="2*"/>
-                        <ColumnDefinition Width="3*"/>
-                    </Grid.ColumnDefinitions>
-                    
-                    <!-- 왼쪽: 미니맵(PIP) 설정 (40%) -->
-                    <StackPanel Grid.Column="0" Margin="0,0,15,0">
-                        <TextBlock Text="미니맵(PIP) 설정" 
-                                   FontSize="18" 
-                                   FontWeight="Bold" 
-                                   Foreground="White" 
-                                   Margin="0,0,0,10"/>
-                        
-                        <!-- PiP 전역 활성화 -->
-                        <StackPanel Orientation="Vertical" Margin="0,5,0,10">
-                            <CheckBox x:Name="GlobalPipEnabledCheckBox"
-                                      Content="미니맵(PIP) 활성화" 
-                                      Foreground="White" 
-                                      FontSize="14"
-                                      HorizontalAlignment="Left"
-                                      Checked="GlobalPipEnabled_Changed"
-                                      Unchecked="GlobalPipEnabled_Changed"/>
-                            <TextBlock Text="Minimap(PIP) Activate"
-                                       Foreground="#FF888888"
-                                       FontSize="11"
-                                       Margin="20,2,0,0"/>
-                        </StackPanel>
-                        
-                        <!-- PiP 위치 기억 설정 -->
-                        <StackPanel Orientation="Vertical" Margin="0,5,0,10">
-                            <CheckBox x:Name="PipRememberPositionCheckBox"
-                                      Content="미니맵(PIP) 화면 크기/위치 저장" 
-                                      Foreground="White" 
-                                      FontSize="14"
-                                      HorizontalAlignment="Left"/>
-                            <TextBlock Text="Remember Minimap(PIP) Window Size/Position"
-                                       Foreground="#FF888888"
-                                       FontSize="11"
-                                       Margin="20,2,0,0"/>
-                        </StackPanel>
-                        
-                        <!-- PiP 핫키 설정 -->
-                        <StackPanel Orientation="Vertical" Margin="0,5,0,10">
-                            <CheckBox x:Name="PipHotkeyEnabledCheckBox"
-                                      Content="PiP 활성화 버튼 사용" 
-                                      Foreground="White" 
-                                      FontSize="14"
-                                      HorizontalAlignment="Left"
-                                      Checked="PipHotkeyEnabled_Changed"
-                                      Unchecked="PipHotkeyEnabled_Changed"/>
-                            <TextBlock Text="Use PiP Activation Button"
-                                       Foreground="#FF888888"
-                                       FontSize="11"
-                                       Margin="20,2,0,0"/>
-                        </StackPanel>
-                        
-                        <!-- 핫키 입력 설정 -->
-                        <StackPanel x:Name="HotkeyInputPanel" 
-                                    Orientation="Vertical" 
-                                    Margin="20,5,0,10">
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,5">
-                                <TextBlock Text="활성화 키:" 
-                                           Foreground="White" 
-                                           VerticalAlignment="Center" 
-                                           Margin="0,0,10,0"/>
-                                <Button x:Name="PipHotkeyButton" 
-                                        Width="120" 
-                                        Height="30" 
-                                        Background="#FF3A3A3A" 
-                                        Foreground="White" 
-                                        BorderThickness="1"
-                                        BorderBrush="#FF555555"
-                                        Content="F11"
-                                        FontSize="12"
-                                        Focusable="True"
-                                        IsTabStop="True"
-                                        KeyboardNavigation.AcceptsReturn="False"
-                                        Click="PipHotkeyButton_Click"
-                                        KeyDown="PipHotkeyButton_KeyDown"
-                                        PreviewKeyDown="PipHotkeyButton_PreviewKeyDown"
-                                        LostFocus="PipHotkeyButton_LostFocus">
-                                    <Button.Style>
-                                        <Style TargetType="Button">
-                                            <Setter Property="Template">
-                                                <Setter.Value>
-                                                    <ControlTemplate TargetType="Button">
-                                                        <Border Background="{TemplateBinding Background}"
-                                                                BorderBrush="{TemplateBinding BorderBrush}"
-                                                                BorderThickness="{TemplateBinding BorderThickness}"
-                                                                CornerRadius="3"
-                                                                Padding="8,4">
-                                                            <ContentPresenter HorizontalAlignment="Center"
-                                                                            VerticalAlignment="Center"/>
-                                                        </Border>
-                                                        <ControlTemplate.Triggers>
-                                                            <Trigger Property="IsMouseOver" Value="True">
-                                                                <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                                <Setter Property="BorderBrush" Value="#FF777777"/>
-                                                            </Trigger>
-                                                            <Trigger Property="IsPressed" Value="True">
-                                                                <Setter Property="Background" Value="#FF2A2A2A"/>
-                                                            </Trigger>
-                                                        </ControlTemplate.Triggers>
-                                                    </ControlTemplate>
-                                                </Setter.Value>
-                                            </Setter>
-                                        </Style>
-                                    </Button.Style>
-                                </Button>
-                            </StackPanel>
-                            <TextBlock Text="(클릭 후 키를 눌러 설정하세요)" 
-                                       Foreground="#FF888888" 
-                                       FontSize="11"
-                                       Margin="0,2,0,0"/>
-                        </StackPanel>
-                    </StackPanel>
-                    
-                    <!-- 오른쪽: 맵 별 미니맵(PIP) 활성화 설정 (60%) -->
-                    <StackPanel Grid.Column="1" Margin="15,0,0,0">
-                        <TextBlock Text="맵 별 미니맵(PIP) 활성화 설정" 
-                                   FontSize="18" 
-                                   FontWeight="Bold" 
-                                   Foreground="White" 
-                                   Margin="0,0,0,10"/>
-                        
-                        <!-- 맵별 설정 리스트 -->
-                        <StackPanel x:Name="MapSettingsPanel">
-                            <!-- 맵별 설정이 동적으로 추가됩니다 -->
-                        </StackPanel>
-                    </StackPanel>
-                </Grid>
-            </Border>
+        <StackPanel Margin="12,8">
 
             <!-- 타르코프 경로 설정 섹션 -->
             <Border Background="#FF1A1A1A"
-                    CornerRadius="5"
-                    Padding="15"
-                    Margin="0,0,0,15">
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
                 <StackPanel>
                     <TextBlock Text="타르코프 경로 설정"
-                               FontSize="18"
+                               FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
-                               Margin="0,0,0,10"/>
+                               Margin="0,0,0,6"/>
 
                     <!-- 게임 폴더 경로 -->
-                    <StackPanel Margin="0,5,0,15">
-                        <TextBlock Text="게임 폴더 경로"
-                                   FontSize="14"
+                    <StackPanel Margin="0,3,0,8">
+                        <TextBlock Text="게임 폴더 경로 / Game Folder Path"
+                                   FontSize="10"
                                    FontWeight="SemiBold"
                                    Foreground="White"
-                                   Margin="0,0,0,5"/>
-                        <TextBlock Text="Game Folder Path"
-                                   FontSize="11"
-                                   Foreground="#FF888888"
-                                   Margin="0,0,0,5"/>
+                                   Margin="0,0,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -184,23 +35,24 @@
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="GameFolderTextBox"
                                      Grid.Column="0"
-                                     Height="32"
-                                     Padding="8,6"
-                                     FontSize="12"
+                                     Height="24"
+                                     Padding="6,4"
+                                     FontSize="9"
                                      Background="#FF2A2A2A"
                                      Foreground="White"
                                      BorderBrush="#FF3A3A3A"
                                      BorderThickness="1"
-                                     VerticalContentAlignment="Center"/>
+                                     VerticalContentAlignment="Center"
+                                     LostFocus="GameFolder_LostFocus"/>
                             <Button Grid.Column="1"
                                     Content="찾아보기"
-                                    Width="80"
-                                    Height="32"
-                                    Margin="5,0,0,0"
+                                    Width="65"
+                                    Height="24"
+                                    Margin="4,0,0,0"
                                     Background="#FF3A3A3A"
                                     Foreground="White"
                                     BorderThickness="0"
-                                    FontSize="12"
+                                    FontSize="9"
                                     Click="BrowseGameFolder_Click">
                                 <Button.Style>
                                     <Style TargetType="Button">
@@ -209,7 +61,7 @@
                                                 <ControlTemplate TargetType="Button">
                                                     <Border Background="{TemplateBinding Background}"
                                                             CornerRadius="3"
-                                                            Padding="10,5">
+                                                            Padding="8,4">
                                                         <ContentPresenter HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"/>
                                                     </Border>
@@ -226,26 +78,18 @@
                             </Button>
                         </Grid>
                         <TextBlock Text="경로에 {0}을 사용하면 현재 사용자 이름으로 자동 치환됩니다"
-                                   FontSize="11"
-                                   Foreground="#FF666666"
-                                   Margin="0,3,0,0"/>
-                        <TextBlock Text="Use {0} in path to automatically replace with current username"
-                                   FontSize="11"
+                                   FontSize="8"
                                    Foreground="#FF666666"
                                    Margin="0,2,0,0"/>
                     </StackPanel>
 
                     <!-- 스크린샷 폴더 경로 -->
-                    <StackPanel Margin="0,5,0,10">
-                        <TextBlock Text="스크린샷 폴더 경로"
-                                   FontSize="14"
+                    <StackPanel Margin="0,3,0,4">
+                        <TextBlock Text="스크린샷 폴더 경로 / Screenshots Folder Path"
+                                   FontSize="10"
                                    FontWeight="SemiBold"
                                    Foreground="White"
-                                   Margin="0,0,0,5"/>
-                        <TextBlock Text="Screenshots Folder Path"
-                                   FontSize="11"
-                                   Foreground="#FF888888"
-                                   Margin="0,0,0,5"/>
+                                   Margin="0,0,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>
@@ -253,23 +97,24 @@
                             </Grid.ColumnDefinitions>
                             <TextBox x:Name="ScreenshotsFolderTextBox"
                                      Grid.Column="0"
-                                     Height="32"
-                                     Padding="8,6"
-                                     FontSize="12"
+                                     Height="24"
+                                     Padding="6,4"
+                                     FontSize="9"
                                      Background="#FF2A2A2A"
                                      Foreground="White"
                                      BorderBrush="#FF3A3A3A"
                                      BorderThickness="1"
-                                     VerticalContentAlignment="Center"/>
+                                     VerticalContentAlignment="Center"
+                                     LostFocus="ScreenshotsFolder_LostFocus"/>
                             <Button Grid.Column="1"
                                     Content="찾아보기"
-                                    Width="80"
-                                    Height="32"
-                                    Margin="5,0,0,0"
+                                    Width="65"
+                                    Height="24"
+                                    Margin="4,0,0,0"
                                     Background="#FF3A3A3A"
                                     Foreground="White"
                                     BorderThickness="0"
-                                    FontSize="12"
+                                    FontSize="9"
                                     Click="BrowseScreenshotsFolder_Click">
                                 <Button.Style>
                                     <Style TargetType="Button">
@@ -278,7 +123,7 @@
                                                 <ControlTemplate TargetType="Button">
                                                     <Border Background="{TemplateBinding Background}"
                                                             CornerRadius="3"
-                                                            Padding="10,5">
+                                                            Padding="8,4">
                                                         <ContentPresenter HorizontalAlignment="Center"
                                                                         VerticalAlignment="Center"/>
                                                     </Border>
@@ -295,11 +140,7 @@
                             </Button>
                         </Grid>
                         <TextBlock Text="경로에 {0}을 사용하면 현재 사용자 이름으로 자동 치환됩니다"
-                                   FontSize="11"
-                                   Foreground="#FF666666"
-                                   Margin="0,3,0,0"/>
-                        <TextBlock Text="Use {0} in path to automatically replace with current username"
-                                   FontSize="11"
+                                   FontSize="8"
                                    Foreground="#FF666666"
                                    Margin="0,2,0,0"/>
                     </StackPanel>
@@ -307,98 +148,138 @@
             </Border>
 
             <!-- 프로그램 설정 섹션 -->
-            <Border Background="#FF1A1A1A" 
-                    CornerRadius="5" 
-                    Padding="15" 
-                    Margin="0,0,0,15">
+            <Border Background="#FF1A1A1A"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="프로그램 설정" 
-                               FontSize="18" 
-                               FontWeight="Bold" 
-                               Foreground="White" 
-                               Margin="0,0,0,10"/>
-                    
+                    <TextBlock Text="프로그램 설정"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,6"/>
+
+                    <!-- 전역 단축키 설정 -->
+                    <TextBlock Text="전역 단축키"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               Margin="0,3,0,4"/>
+
+                    <!-- 단축키 활성화 -->
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,6">
+                        <CheckBox x:Name="HotkeyEnabledCheckBox"
+                                  Content="전역 단축키 사용"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"
+                                  Checked="HotkeyEnabled_Changed"
+                                  Unchecked="HotkeyEnabled_Changed"/>
+                        <TextBlock Text="단축키로 프로그램을 트레이로 숨기거나 표시합니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="18,2,0,0"/>
+                    </StackPanel>
+
+                    <!-- 단축키 입력 -->
+                    <StackPanel x:Name="HotkeyInputPanel"
+                                Orientation="Vertical"
+                                Margin="24,2,0,6">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
+                            <TextBlock Text="단축키:"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"
+                                       FontSize="9"
+                                       Margin="0,0,8,0"/>
+                            <Button x:Name="HotkeyButton"
+                                    Width="100"
+                                    Height="24"
+                                    Background="#FF3A3A3A"
+                                    Foreground="White"
+                                    BorderThickness="1"
+                                    BorderBrush="#FF555555"
+                                    Content="F11"
+                                    FontSize="9"
+                                    Focusable="True"
+                                    IsTabStop="True"
+                                    KeyboardNavigation.AcceptsReturn="False"
+                                    Click="HotkeyButton_Click"
+                                    KeyDown="HotkeyButton_KeyDown"
+                                    PreviewKeyDown="HotkeyButton_PreviewKeyDown"
+                                    LostFocus="HotkeyButton_LostFocus">
+                                <Button.Style>
+                                    <Style TargetType="Button">
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="Button">
+                                                    <Border Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            CornerRadius="3"
+                                                            Padding="6,3">
+                                                        <ContentPresenter HorizontalAlignment="Center"
+                                                                        VerticalAlignment="Center"/>
+                                                    </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter Property="Background" Value="#FF5A5A5A"/>
+                                                            <Setter Property="BorderBrush" Value="#FF777777"/>
+                                                        </Trigger>
+                                                        <Trigger Property="IsPressed" Value="True">
+                                                            <Setter Property="Background" Value="#FF2A2A2A"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </Button.Style>
+                            </Button>
+                        </StackPanel>
+                        <TextBlock Text="(클릭 후 키를 눌러 설정하세요)"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="0,1,0,0"/>
+                    </StackPanel>
+
                     <!-- 파일 자동 정리 설정 -->
-                    <TextBlock Text="파일 자동 정리" 
-                               FontSize="14" 
-                               FontWeight="SemiBold" 
-                               Foreground="White" 
-                               Margin="0,10,0,10"/>
-                    
+                    <TextBlock Text="파일 자동 정리"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               Margin="0,3,0,4"/>
+
                     <!-- 로그 폴더 자동 정리 -->
-                    <StackPanel Orientation="Vertical" Margin="20,5,0,10">
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox x:Name="AutoDeleteLogsCheckBox"
-                                  Content="로그 폴더 자동 정리" 
-                                  Foreground="White" 
-                                  FontSize="14"
-                                  HorizontalAlignment="Left"/>
+                                  Content="로그 폴더 자동 정리"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"
+                                  Checked="AutoDeleteLogs_Changed"
+                                  Unchecked="AutoDeleteLogs_Changed"/>
                         <TextBlock Text="프로그램 시작 시 이전 로그 폴더를 자동으로 삭제합니다"
                                    Foreground="#FF888888"
-                                   FontSize="11"
-                                   Margin="20,2,0,0"/>
-                        <TextBlock Text="Automatically delete old log folders on program start"
-                                   Foreground="#FF888888"
-                                   FontSize="11"
-                                   Margin="20,2,0,0"/>
+                                   FontSize="8"
+                                   Margin="18,2,0,0"/>
                     </StackPanel>
-                    
+
                     <!-- 스크린샷 자동 정리 -->
-                    <StackPanel Orientation="Vertical" Margin="20,5,0,10">
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox x:Name="AutoDeleteScreenshotsCheckBox"
-                                  Content="스크린샷 자동 정리" 
-                                  Foreground="White" 
-                                  FontSize="14"
-                                  HorizontalAlignment="Left"/>
+                                  Content="스크린샷 자동 정리"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"
+                                  Checked="AutoDeleteScreenshots_Changed"
+                                  Unchecked="AutoDeleteScreenshots_Changed"/>
                         <TextBlock Text="레이드 종료 시 스크린샷을 자동으로 삭제합니다"
                                    Foreground="#FF888888"
-                                   FontSize="11"
-                                   Margin="20,2,0,0"/>
-                        <TextBlock Text="Automatically delete screenshots on raid end"
-                                   Foreground="#FF888888"
-                                   FontSize="11"
-                                   Margin="20,2,0,0"/>
+                                   FontSize="8"
+                                   Margin="18,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
-            
-            <!-- 저장 버튼 -->
-            <StackPanel Orientation="Horizontal" 
-                        HorizontalAlignment="Right" 
-                        Margin="0,20,0,0">
-                <Button x:Name="SaveButton"
-                        Content="저장" 
-                        Width="100" 
-                        Height="35" 
-                        Background="#FF0066CC" 
-                        Foreground="White" 
-                        BorderThickness="0"
-                        FontSize="14"
-                        FontWeight="Bold"
-                        Click="Save_Click">
-                    <Button.Style>
-                        <Style TargetType="Button">
-                            <Setter Property="Template">
-                                <Setter.Value>
-                                    <ControlTemplate TargetType="Button">
-                                        <Border Background="{TemplateBinding Background}"
-                                                CornerRadius="5"
-                                                Padding="10,5">
-                                            <ContentPresenter HorizontalAlignment="Center"
-                                                            VerticalAlignment="Center"/>
-                                        </Border>
-                                        <ControlTemplate.Triggers>
-                                            <Trigger Property="IsMouseOver" Value="True">
-                                                <Setter Property="Background" Value="#FF0088FF"/>
-                                            </Trigger>
-                                        </ControlTemplate.Triggers>
-                                    </ControlTemplate>
-                                </Setter.Value>
-                            </Setter>
-                        </Style>
-                    </Button.Style>
-                </Button>
-                
-            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

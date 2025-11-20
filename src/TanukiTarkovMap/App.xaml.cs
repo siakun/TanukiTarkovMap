@@ -164,9 +164,6 @@ namespace TanukiTarkovMap
             {
                 GameFolder = null,
                 ScreenshotsFolder = null,
-                // PiP 설정은 기본값으로 리셋
-                PipEnabled = true,
-                PipRememberPosition = true,
                 NormalWidth = 1400,
                 NormalHeight = 900,
                 NormalLeft = -1,
@@ -222,6 +219,10 @@ namespace TanukiTarkovMap
             // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
             Logger.SimpleLog("Starting file watchers...");
             Watcher.Start();
+
+            // 프로그램 자동 정리 실행
+            Logger.SimpleLog("Cleaning old log folders...");
+            Models.FileSystem.GameSessionCleaner.CleanOldLogFolders();
 
             // 메인 창 표시 (항상 시작 시 메인 창을 표시)
             Logger.SimpleLog("Showing main window...");

@@ -8,10 +8,8 @@ namespace TanukiTarkovMap.ViewModels
     {
         [ObservableProperty] public partial string GameFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial string ScreenshotsFolder { get; set; } = string.Empty;
-        [ObservableProperty] public partial bool PipEnabled { get; set; } = false;
-        [ObservableProperty] public partial bool PipRememberPosition { get; set; } = true;
-        [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; } = false;
-        [ObservableProperty] public partial string PipHotkeyKey { get; set; } = "F11";
+        [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
+        [ObservableProperty] public partial string HotkeyKey { get; set; } = "F11";
         [ObservableProperty] public partial bool AutoDeleteLogs { get; set; } = false;
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
 
@@ -32,10 +30,8 @@ namespace TanukiTarkovMap.ViewModels
             var settings = App.GetSettings();
             settings.GameFolder = GameFolder;
             settings.ScreenshotsFolder = ScreenshotsFolder;
-            settings.PipEnabled = PipEnabled;
-            settings.PipRememberPosition = PipRememberPosition;
-            settings.PipHotkeyEnabled = PipHotkeyEnabled;
-            settings.PipHotkeyKey = PipHotkeyKey;
+            settings.HotkeyEnabled = HotkeyEnabled;
+            settings.HotkeyKey = HotkeyKey;
             settings.autoDeleteLogs = AutoDeleteLogs;
             settings.autoDeleteScreenshots = AutoDeleteScreenshots;
 
@@ -96,10 +92,8 @@ namespace TanukiTarkovMap.ViewModels
             ScreenshotsFolder = App.ScreenshotsFolder ?? string.Empty;
 
             var settings = App.GetSettings();
-            PipEnabled = settings.PipEnabled;
-            PipRememberPosition = settings.PipRememberPosition;
-            PipHotkeyEnabled = settings.PipHotkeyEnabled;
-            PipHotkeyKey = settings.PipHotkeyKey ?? "F11";
+            HotkeyEnabled = settings.HotkeyEnabled;
+            HotkeyKey = settings.HotkeyKey ?? "F11";
             AutoDeleteLogs = settings.autoDeleteLogs;
             AutoDeleteScreenshots = settings.autoDeleteScreenshots;
         }

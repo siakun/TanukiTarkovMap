@@ -4,7 +4,6 @@ namespace TanukiTarkovMap.Models.Data
 {
     public class MapSetting
     {
-        public bool Enabled { get; set; } = true;                // 해당 맵에서 PiP 기능 활성화 여부
         public string Transform { get; set; } = "";
         public double Width { get; set; } = 300;
         public double Height { get; set; } = 250;
@@ -16,13 +15,6 @@ namespace TanukiTarkovMap.Models.Data
     {
         public string GameFolder { get; set; } = "";
         public string ScreenshotsFolder { get; set; } = "";
-
-        // PiP 설정 추가
-        public bool PipEnabled { get; set; } = false;            // PiP 기능 활성화/비활성화
-        public bool PipRememberPosition { get; set; } = true;    // 위치 기억 여부
-        public bool PipHotkeyEnabled { get; set; } = false;      // PiP 활성화 버튼 사용 여부
-        public string PipHotkeyKey { get; set; } = "F11";        // 사용자 설정 핫키
-        public bool PipHideWebElements { get; set; } = true;     // PiP 모드에서 웹 UI 요소 숨기기
 
         // 마지막 선택한 맵 (앱 시작 시 복원용)
         public string SelectedMapId { get; set; } = "";          // 마지막으로 선택한 맵 ID
@@ -36,10 +28,9 @@ namespace TanukiTarkovMap.Models.Data
         // 맵별 개별 설정
         public Dictionary<string, MapSetting> MapSettings { get; set; } = new();
 
-        // PiP 자동 복원 설정
-        public bool enableAutoRestore { get; set; } = true;         // 자동 요소 복원 기능 활성화
-        public double restoreThresholdWidth { get; set; } = 800;    // 복원 임계 너비
-        public double restoreThresholdHeight { get; set; } = 600;   // 복원 임계 높이
+        // 전역 단축키 설정
+        public bool HotkeyEnabled { get; set; } = true;          // 전역 단축키 사용 여부
+        public string HotkeyKey { get; set; } = "F11";           // 단축키 (트레이 숨기기/열기)
 
         // 파일 자동 정리 설정
         public bool autoDeleteLogs { get; set; } = false;           // 로그 폴더 자동 정리
@@ -50,7 +41,7 @@ namespace TanukiTarkovMap.Models.Data
 
         public override string ToString()
         {
-            return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}' \npipEnabled: {PipEnabled}";
+            return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}'";
         }
     }
 
