@@ -39,20 +39,30 @@ namespace TanukiTarkovMap.Views
         private WindowBoundsService _windowBoundsService;
         private HotkeyManager _hotkeyManager;
         private bool _isClampingLocation = false; // 무한 루프 방지
+        private bool _isInitializing = true; // 초기화 중 플래그
 
         public MainWindow()
         {
             try
             {
-                InitializeComponent();
-
                 // 서비스 초기화
                 _pipService = new PipService();
                 _windowBoundsService = new WindowBoundsService();
 
                 // ViewModel 초기화 (서비스 주입)
                 _viewModel = new MainWindowViewModel(_pipService, _windowBoundsService);
+
+                // DataContext를 InitializeComponent 전에 설정하여 바인딩이 즉시 작동하도록 함
                 DataContext = _viewModel;
+
+                InitializeComponent();
+
+                // InitializeComponent 직후 창 크기/위치 명시적 설정 (바인딩보다 먼저 적용)
+                this.Width = _viewModel.CurrentWindowWidth;
+                this.Height = _viewModel.CurrentWindowHeight;
+                this.Left = _viewModel.CurrentWindowLeft;
+                this.Top = _viewModel.CurrentWindowTop;
+                Logger.SimpleLog($"[Constructor] Set window size explicitly: {this.Width}x{this.Height} at ({this.Left}, {this.Top})");
 
                 // 윈도우 로드 완료 후 초기화
                 Loaded += MainWindow_Loaded;
@@ -119,6 +129,14 @@ namespace TanukiTarkovMap.Views
         {
             // 로딩 패널 강제 숨김 (디버그용)
             LoadingPanel.Visibility = Visibility.Collapsed;
+
+            // 저장된 창 크기 다시 적용 (WPF가 자동으로 변경한 크기 복원)
+            this.Width = _viewModel.CurrentWindowWidth;
+            this.Height = _viewModel.CurrentWindowHeight;
+            Logger.SimpleLog($"[MainWindow_Loaded] Restored window size: {this.Width}x{this.Height}");
+
+            // 초기화 완료 - 이제부터 OnWindowBoundsChanged가 정상 동작
+            _isInitializing = false;
 
             await InitializeTabs();
 
@@ -230,10 +248,24 @@ namespace TanukiTarkovMap.Views
 
             // PIP 모드 여부와 관계없이 UI 요소 숨김/복원 JavaScript 적용
             var activeWebView = GetActiveWebView();
-            if (activeWebView != null && !string.IsNullOrEmpty(_viewModel.CurrentMap))
+            if (activeWebView?.CoreWebView2 != null)
             {
-                Logger.SimpleLog("[HandlePipHideWebElementsChanged] Applying UI elements visibility change");
-                await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                // CurrentMap이 null이어도 UI 요소 숨김/복원은 가능
+                string mapId = _viewModel.CurrentMap ?? "default";
+                Logger.SimpleLog($"[HandlePipHideWebElementsChanged] Applying UI elements visibility change (mapId: {mapId})");
+
+                try
+                {
+                    await _pipService.ApplyPipModeJavaScriptAsync(activeWebView, mapId, _viewModel.PipHideWebElements);
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("[HandlePipHideWebElementsChanged] Error applying UI visibility change", ex);
+                }
+            }
+            else
+            {
+                Logger.SimpleLog("[HandlePipHideWebElementsChanged] WebView2 not ready, skipping");
             }
         }
 
@@ -429,10 +461,14 @@ namespace TanukiTarkovMap.Views
                     // 방향 표시기 추가
                     await AddDirectionIndicators(webView);
 
-                    // UI 요소 숨김 설정 적용 (PIP 모드 여부와 관계없이)
-                    if (!string.IsNullOrEmpty(_viewModel.CurrentMap))
+                    // UI 요소 숨김 설정 적용
+                    // PIP 모드이거나, 일반 모드에서 CurrentMap이 설정되어 있을 때만 적용
+                    if (_viewModel.IsPipMode || !string.IsNullOrEmpty(_viewModel.CurrentMap))
                     {
-                        await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                        if (!string.IsNullOrEmpty(_viewModel.CurrentMap))
+                        {
+                            await _pipService.ApplyPipModeJavaScriptAsync(webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                        }
                     }
 
                     // "/pilot" 페이지에서 Connected 상태 감지 시작
@@ -491,14 +527,28 @@ namespace TanukiTarkovMap.Views
                             {
                                 Logger.SimpleLog("[CoreWebView2_WebMessageReceived] Pilot connected detected!");
 
-                                // 기본 맵 (Ground Zero)으로 이동
                                 Dispatcher.Invoke(() =>
                                 {
-                                    var defaultMap = App.AvailableMaps.FirstOrDefault();
-                                    if (defaultMap != null)
+                                    if (_viewModel.SelectedMapInfo == null)
                                     {
-                                        _viewModel.SelectedMapInfo = defaultMap;
-                                        Logger.SimpleLog($"[CoreWebView2_WebMessageReceived] Auto-navigating to: {defaultMap.DisplayName}");
+                                        // 맵이 선택되어 있지 않으면 기본 맵으로 이동
+                                        var defaultMap = App.AvailableMaps.FirstOrDefault();
+                                        if (defaultMap != null)
+                                        {
+                                            _viewModel.SelectedMapInfo = defaultMap;
+                                            Logger.SimpleLog($"[CoreWebView2_WebMessageReceived] Auto-navigating to default map: {defaultMap.DisplayName}");
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // 맵이 이미 선택되어 있으면 해당 맵으로 네비게이션 수행
+                                        Logger.SimpleLog($"[CoreWebView2_WebMessageReceived] Navigating to selected map: {_viewModel.SelectedMapInfo.DisplayName}");
+
+                                        var activeWebView = GetActiveWebView();
+                                        if (activeWebView?.CoreWebView2 != null)
+                                        {
+                                            activeWebView.CoreWebView2.Navigate(_viewModel.SelectedMapInfo.Url);
+                                        }
                                     }
                                 });
                             }
@@ -633,6 +683,7 @@ namespace TanukiTarkovMap.Views
         private void MainWindow_LocationChanged(object sender, EventArgs e)
         {
             if (_isClampingLocation) return;        // 무한 루프 방지
+            if (_isInitializing) return;            // 초기화 중에는 무시
 
             try
             {
@@ -680,6 +731,7 @@ namespace TanukiTarkovMap.Views
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (_isClampingLocation) return;        // 무한 루프 방지
+            if (_isInitializing) return;            // 초기화 중에는 무시
 
             // 창 위치/크기 변경 이벤트 발생 (ViewModel에서 즉시 저장)
             WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs

@@ -16,7 +16,7 @@
         d:DesignHeight="800"
         MinWidth="{Binding MinWidth}"
         MinHeight="{Binding MinHeight}"
-        WindowStartupLocation="CenterScreen"
+        WindowStartupLocation="Manual"
         Background="#FF1A1A1A"
         WindowStyle="{Binding WindowStyle}"
         ResizeMode="{Binding ResizeMode}"

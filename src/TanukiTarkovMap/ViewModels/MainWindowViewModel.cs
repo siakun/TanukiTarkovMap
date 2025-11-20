@@ -134,12 +134,38 @@ namespace TanukiTarkovMap.ViewModels
             PipHotkeyKey = _settings.PipHotkeyKey;
             PipHideWebElements = _settings.PipHideWebElements;
 
+            // Load last selected map
+            if (!string.IsNullOrEmpty(_settings.SelectedMapId))
+            {
+                var savedMap = AvailableMaps.FirstOrDefault(m => m.MapId == _settings.SelectedMapId);
+                if (savedMap != null)
+                {
+                    SelectedMapInfo = savedMap;
+                }
+            }
+
             // Initialize window properties with normal mode
             var normalRect = _windowStateManager.NormalModeRect;
             CurrentWindowWidth = normalRect.Width;
             CurrentWindowHeight = normalRect.Height;
-            CurrentWindowLeft = normalRect.Left;
-            CurrentWindowTop = normalRect.Top;
+
+            Logger.SimpleLog($"[LoadSettings] Loading window size: {normalRect.Width}x{normalRect.Height}");
+            Logger.SimpleLog($"[LoadSettings] CurrentWindowWidth={CurrentWindowWidth}, CurrentWindowHeight={CurrentWindowHeight}");
+
+            // 저장된 위치가 있으면 사용, 없으면 화면 중앙 계산
+            if (normalRect.Left >= 0 && normalRect.Top >= 0)
+            {
+                CurrentWindowLeft = normalRect.Left;
+                CurrentWindowTop = normalRect.Top;
+                Logger.SimpleLog($"[LoadSettings] Restored window position: ({normalRect.Left}, {normalRect.Top})");
+            }
+            else
+            {
+                // 화면 중앙 위치 계산
+                CurrentWindowLeft = (SystemParameters.PrimaryScreenWidth - normalRect.Width) / 2;
+                CurrentWindowTop = (SystemParameters.PrimaryScreenHeight - normalRect.Height) / 2;
+                Logger.SimpleLog($"[LoadSettings] Using center screen position: ({CurrentWindowLeft}, {CurrentWindowTop})");
+            }
         }
 
         private void InitializeCommands()
@@ -154,6 +180,9 @@ namespace TanukiTarkovMap.ViewModels
                         break;
                     case nameof(CurrentMap):
                         OnMapChanged();
+                        break;
+                    case nameof(SelectedMapInfo):
+                        OnSelectedMapInfoChanged();
                         break;
                     case nameof(PipHideWebElements):
                         OnPipHideWebElementsChanged();
@@ -263,6 +292,20 @@ namespace TanukiTarkovMap.ViewModels
             {
                 Logger.SimpleLog($"[OnMapChanged] PIP mode active - maintaining current window size and position");
                 return;
+            }
+        }
+
+        private void OnSelectedMapInfoChanged()
+        {
+            if (SelectedMapInfo != null)
+            {
+                Logger.SimpleLog($"[OnSelectedMapInfoChanged] SelectedMapInfo changed to: {SelectedMapInfo.MapId}");
+
+                // 설정 저장
+                var settings = App.GetSettings();
+                settings.SelectedMapId = SelectedMapInfo.MapId;
+                App.SetSettings(settings);
+                Settings.Save();
             }
         }
 

@@ -24,6 +24,9 @@ namespace TanukiTarkovMap.Models.Data
         public string PipHotkeyKey { get; set; } = "F11";        // 사용자 설정 핫키
         public bool PipHideWebElements { get; set; } = true;     // PiP 모드에서 웹 UI 요소 숨기기
 
+        // 마지막 선택한 맵 (앱 시작 시 복원용)
+        public string SelectedMapId { get; set; } = "";          // 마지막으로 선택한 맵 ID
+
         // 일반 모드 설정 추가
         public double NormalWidth { get; set; } = 0f;            // 일반 모드 창 너비
         public double NormalHeight { get; set; } = 0f;           // 일반 모드 창 높이
