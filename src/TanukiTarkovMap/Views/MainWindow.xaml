@@ -18,11 +18,19 @@
         MinHeight="{Binding MinHeight}"
         WindowStartupLocation="Manual"
         Background="#FF1A1A1A"
-        WindowStyle="{Binding WindowStyle}"
+        WindowStyle="None"
         ResizeMode="{Binding ResizeMode}"
         Topmost="{Binding IsTopmost}">
-    
-    <Grid MouseLeftButtonDown="Window_MouseLeftButtonDown">
+
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="32"
+                      ResizeBorderThickness="5"
+                      CornerRadius="0"
+                      GlassFrameThickness="0"
+                      UseAeroCaptionButtons="False"/>
+    </WindowChrome.WindowChrome>
+
+    <Grid x:Name="MainGrid" MouseLeftButtonDown="Window_MouseLeftButtonDown">
         <!-- 메인 컨텐츠 -->
         <Grid x:Name="MainContentGrid" Panel.ZIndex="1">
             <Grid.RowDefinitions>
@@ -30,35 +38,41 @@
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
 
-            <!-- 상단 바 (맵 선택 + UI 요소 숨기기 + 설정 버튼) -->
+            <!-- 상단 바 (맵 선택 + UI 요소 숨기기 + 설정 버튼 + 윈도우 컨트롤) -->
             <Border Grid.Row="0"
                     Background="#FF2A2A2A"
                     BorderThickness="0,0,0,1"
                     BorderBrush="#FF3A3A3A"
-                    Padding="8,4"
+                    Padding="8,0"
                     Panel.ZIndex="200"
+                    Height="32"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
                     Visibility="{Binding TopBarVisibility}">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
                     <!-- 왼쪽: 맵 드롭다운 + UI 요소 숨기기 체크박스 -->
-                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                         <TextBlock Text="Map:"
                                    Foreground="#FF888888"
                                    VerticalAlignment="Center"
                                    Margin="0,0,8,0"
-                                   FontSize="12"/>
+                                   FontSize="12"
+                                   WindowChrome.IsHitTestVisibleInChrome="True"/>
                         <ComboBox x:Name="MapSelector"
                                   ItemsSource="{Binding AvailableMaps}"
                                   SelectedItem="{Binding SelectedMapInfo, Mode=TwoWay}"
                                   DisplayMemberPath="DisplayName"
                                   Width="180"
+                                  Height="24"
                                   Background="#FF1A1A1A"
                                   Foreground="White"
-                                  BorderBrush="#FF3A3A3A">
+                                  BorderBrush="#FF3A3A3A"
+                                  WindowChrome.IsHitTestVisibleInChrome="True">
                             <ComboBox.ItemContainerStyle>
                                 <Style TargetType="ComboBoxItem">
                                     <Setter Property="Background" Value="#FF2A2A2A"/>
@@ -81,7 +95,8 @@
                                   IsChecked="{Binding PipHideWebElements, Mode=TwoWay}"
                                   Margin="16,0,0,0"
                                   VerticalAlignment="Center"
-                                  Foreground="White">
+                                  Foreground="White"
+                                  WindowChrome.IsHitTestVisibleInChrome="True">
                             <CheckBox.Content>
                                 <TextBlock Text="UI 요소 숨기기"
                                            Foreground="#FF888888"
@@ -90,31 +105,29 @@
                         </CheckBox>
                     </StackPanel>
 
-                    <!-- 오른쪽: 설정 버튼 -->
+                    <!-- 중간: 설정 버튼 -->
                     <Button x:Name="SettingsButton"
                             Grid.Column="1"
                             Width="32" Height="32"
-                            Background="#FF2A2A2A"
+                            Background="Transparent"
                             BorderThickness="0"
                             Foreground="White"
                             Content="⚙"
-                            FontSize="16"
-                            FontWeight="Bold"
-                            Click="Settings_Click">
+                            FontSize="14"
+                            Click="Settings_Click"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button.Style>
                             <Style TargetType="Button">
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="4"
-                                                    Padding="4">
+                                            <Border Background="{TemplateBinding Background}">
                                                 <ContentPresenter HorizontalAlignment="Center"
                                                                 VerticalAlignment="Center"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#FF5A5A5A"/>
+                                                    <Setter Property="Background" Value="#FF3A3A3A"/>
                                                 </Trigger>
                                                 <Trigger Property="IsPressed" Value="True">
                                                     <Setter Property="Background" Value="#FF1A1A1A"/>
@@ -126,6 +139,103 @@
                             </Style>
                         </Button.Style>
                     </Button>
+
+                    <!-- 오른쪽: 윈도우 컨트롤 버튼 -->
+                    <StackPanel Grid.Column="2" Orientation="Horizontal">
+                        <!-- 최소화 버튼 -->
+                        <Button x:Name="MinimizeButton"
+                                Width="46" Height="32"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Foreground="White"
+                                Content="─"
+                                FontSize="12"
+                                Click="Minimize_Click"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"
+                                                                    Margin="0,-8,0,0"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FF3A3A3A"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- 최대화/복원 버튼 -->
+                        <Button x:Name="MaximizeRestoreButton"
+                                Width="46" Height="32"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Foreground="White"
+                                Content="□"
+                                FontSize="14"
+                                Click="MaximizeRestore_Click"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FF3A3A3A"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
+                        <!-- 닫기 버튼 -->
+                        <Button x:Name="CloseButton"
+                                Width="46" Height="32"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Foreground="White"
+                                Content="✕"
+                                FontSize="14"
+                                Click="Close_Click"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FFE81123"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </StackPanel>
                 </Grid>
             </Border>
 

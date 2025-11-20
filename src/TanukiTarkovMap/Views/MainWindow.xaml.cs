@@ -69,6 +69,7 @@ namespace TanukiTarkovMap.Views
                 Closed += MainWindow_Closed;
                 LocationChanged += MainWindow_LocationChanged;
                 SizeChanged += MainWindow_SizeChanged;
+                StateChanged += MainWindow_StateChanged;
 
                 // ViewModel에 창 위치/크기 변경 이벤트 연결
                 this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
@@ -565,6 +566,82 @@ namespace TanukiTarkovMap.Views
             // 설정 닫기 - WebView 복원
             SettingsOverlay.Visibility = Visibility.Collapsed;
             WebViewContainer.Visibility = Visibility.Visible;
+        }
+
+        // 타이틀바 드래그로 창 이동
+        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                // 더블클릭 시 최대화/복원
+                if (e.ClickCount == 2)
+                {
+                    MaximizeRestore_Click(sender, e);
+                }
+                // 단일 클릭 시 드래그 이동
+                else
+                {
+                    PInvoke.ReleaseCapture();
+                    PInvoke.SendMessage(
+                        new System.Windows.Interop.WindowInteropHelper(this).Handle,
+                        PInvoke.WM_NCLBUTTONDOWN,
+                        PInvoke.HT_CAPTION,
+                        0
+                    );
+                }
+            }
+        }
+
+        // 최소화 버튼
+        private void Minimize_Click(object sender, RoutedEventArgs e)
+        {
+            WindowState = WindowState.Minimized;
+        }
+
+        // 최대화/복원 버튼
+        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+            {
+                WindowState = WindowState.Normal;
+            }
+            else
+            {
+                WindowState = WindowState.Maximized;
+            }
+        }
+
+        // WindowState 변경 시 처리 (최대화/복원 시 여백 조정)
+        private void MainWindow_StateChanged(object? sender, EventArgs e)
+        {
+            if (WindowState == WindowState.Maximized)
+            {
+                // 최대화 시 화면 경계를 넘지 않도록 여백 추가
+                var thickness = SystemParameters.WindowResizeBorderThickness;
+                MainGrid.Margin = new Thickness(
+                    thickness.Left,
+                    thickness.Top,
+                    thickness.Right,
+                    thickness.Bottom
+                );
+
+                // 최대화 버튼 아이콘 변경
+                MaximizeRestoreButton.Content = "❐";
+            }
+            else
+            {
+                // 일반 상태로 복원 시 여백 제거
+                MainGrid.Margin = new Thickness(0);
+
+                // 복원 버튼 아이콘 변경
+                MaximizeRestoreButton.Content = "□";
+            }
+        }
+
+        // 닫기 버튼
+        private void Close_Click(object sender, RoutedEventArgs e)
+        {
+            Close();
         }
 
         // 핫키 매니저 초기화 (전역 단축키용)

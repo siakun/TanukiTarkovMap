@@ -20,11 +20,10 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial double CurrentWindowHeight { get; set; }
         [ObservableProperty] public partial double CurrentWindowLeft { get; set; }
         [ObservableProperty] public partial double CurrentWindowTop { get; set; }
-        [ObservableProperty] public partial WindowStyle WindowStyle { get; set; } = WindowStyle.SingleBorderWindow;
         [ObservableProperty] public partial ResizeMode ResizeMode { get; set; } = ResizeMode.CanResize;
         [ObservableProperty] public partial bool IsTopmost { get; set; }
-        [ObservableProperty] public partial double MinWidth { get; set; } = 1000;
-        [ObservableProperty] public partial double MinHeight { get; set; } = 700;
+        [ObservableProperty] public partial double MinWidth { get; set; } = 300;
+        [ObservableProperty] public partial double MinHeight { get; set; } = 200;
         #endregion
 
         #region UI Visibility Properties
@@ -335,8 +334,7 @@ namespace TanukiTarkovMap.ViewModels
                 CurrentWindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
             }
 
-            // Update window style for PIP
-            WindowStyle = WindowStyle.None;
+            // Update window settings for PIP
             ResizeMode = ResizeMode.CanResize;
             MinWidth = 200;
             MinHeight = 150;
@@ -358,8 +356,7 @@ namespace TanukiTarkovMap.ViewModels
             CurrentWindowLeft = normalRect.Left;
             CurrentWindowTop = normalRect.Top;
 
-            // Restore window style
-            WindowStyle = WindowStyle.SingleBorderWindow;
+            // Restore window settings
             ResizeMode = ResizeMode.CanResize;
             MinWidth = 1000;
             MinHeight = 700;
