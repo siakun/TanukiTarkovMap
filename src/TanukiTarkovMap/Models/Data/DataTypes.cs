@@ -4,7 +4,6 @@ namespace TanukiTarkovMap.Models.Data
 {
     public class MapSetting
     {
-        public string Transform { get; set; } = "";
         public double Width { get; set; } = 300;
         public double Height { get; set; } = 250;
         public double Left { get; set; } = -1;

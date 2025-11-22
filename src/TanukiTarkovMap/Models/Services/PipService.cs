@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.Web.WebView2.Wpf;
-using TanukiTarkovMap.Models.Constants;
+using TanukiTarkovMap.Models.JavaScript;
 using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Models.Services
@@ -19,11 +19,7 @@ namespace TanukiTarkovMap.Models.Services
 
             try
             {
-                // Logger.SimpleLog("[PipService] Step 1: Removing existing PIP overlay");
-                // 1. Remove existing PIP overlay
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_PIP_OVERLAY_SCRIPT
-                );
+                // 더 이상 PIP 오버레이를 사용하지 않으므로 제거 스크립트 실행하지 않음
 
                 // Step 2 제거: 맵 스케일링을 적용하지 않음 (창 크기만 조절)
                 // PIP 모드에서도 맵은 원본 크기를 유지하고, 창만 작아짐
@@ -34,32 +30,32 @@ namespace TanukiTarkovMap.Models.Services
                     // Logger.SimpleLog("[PipService] Step 2: Removing UI elements");
 
                     await webView2.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_RIGHT
+                        WebElementsControl.HIDE_PANEL_RIGHT
                     );
 
                     await webView2.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_LEFT
+                        WebElementsControl.HIDE_PANEL_LEFT
                     );
 
                     await webView2.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_PANNEL_TOP
+                        WebElementsControl.HIDE_PANEL_TOP
                     );
 
                     await webView2.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_HEADER
+                        WebElementsControl.HIDE_HEADER
                     );
 
                     await webView2.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.REMOVE_TARKOV_MARGET_ELEMENT_FOOTER
+                        WebElementsControl.HIDE_FOOTER
                     );
                 }
                 else
                 {
                     // Logger.SimpleLog("[PipService] Step 2: Restoring UI elements");
 
-                    // UI 요소만 복원 (PIP 모드에서는 맵 transform을 적용하지 않으므로)
+                    // UI 요소만 복원 (창 크기는 유지)
                     await webView2.CoreWebView2.ExecuteScriptAsync(
-                        JavaScriptConstants.TARKOV_MARGET_ELEMENT_RESTORE_KEEP_TRANSFORM
+                        WebElementsControl.RESTORE_UI_ELEMENTS_KEEP_TRANSFORM
                     );
                 }
 
@@ -86,7 +82,7 @@ namespace TanukiTarkovMap.Models.Services
                 Logger.SimpleLog("[PipService] Restoring removed UI elements");
                 // Restore removed elements
                 await webView2.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.TARKOV_MARGET_ELEMENT_RESTORE
+                    WebElementsControl.RESTORE_ALL_ELEMENTS
                 );
 
                 Logger.SimpleLog("[PipService] Successfully restored normal mode JavaScript");
@@ -95,42 +91,6 @@ namespace TanukiTarkovMap.Models.Services
             {
                 Logger.Error("[PipService] RestoreNormalModeJavaScriptAsync error", ex);
             }
-        }
-
-        public string GetMapTransform(string mapId)
-        {
-            // Null or empty 체크
-            if (string.IsNullOrEmpty(mapId))
-            {
-                // Logger.SimpleLog("[PipService] GetMapTransform: mapId is null or empty, using default transform");
-                return "matrix(0.15, 0, 0, 0.15, -150, -150)";
-            }
-
-            var settings = App.GetSettings();
-
-            // 설정에서 맵 ID로 조회
-            if (settings.MapSettings != null &&
-                settings.MapSettings.ContainsKey(mapId) &&
-                !string.IsNullOrEmpty(settings.MapSettings[mapId].Transform))
-            {
-                return settings.MapSettings[mapId].Transform;
-            }
-
-            // 맵 ID 기반 기본 transform
-            return mapId switch
-            {
-                "sandbox_high_preset" => "matrix(0.347614, 0, 0, 0.347614, -346.781, -365.505)",
-                "factory_day_preset" => "matrix(0.166113, 0, 0, 0.166113, -165.258, -154.371)",
-                "customs_preset" => "matrix(0.177979, 0, 0, 0.177979, -215.026, -185.151)",
-                "shopping_mall" => "matrix(0.125141, 0, 0, 0.125141, -124.377, -127.995)",
-                "woods_preset" => "matrix(0.111237, 0, 0, 0.111237, -101.331, -113.302)",
-                "shoreline_preset" => "matrix(0.222473, 0, 0, 0.222473, -231.212, -228.746)",
-                "rezerv_base_preset" => "matrix(0.222473, 0, 0, 0.222473, -227.365, -224.862)",
-                "lighthouse_preset" => "matrix(0.241013, 0, 0, 0.241013, -258.081, -256.536)",
-                "city_preset" => "matrix(0.21875, 0, 0, 0.21875, -193.814, -223.336)",
-                "laboratory_preset" => "matrix(0.124512, 0, 0, 0.124512, -191.645, -129.873)",
-                _ => "matrix(0.15, 0, 0, 0.15, -150, -150)"
-            };
         }
     }
 }

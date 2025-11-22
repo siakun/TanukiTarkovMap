@@ -7,8 +7,8 @@ using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.Wpf;
-using TanukiTarkovMap.Models.Constants;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.JavaScript;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.ViewModels;
@@ -105,7 +105,7 @@ namespace TanukiTarkovMap.Views
             {
                 await Task.Delay(2000); // 페이지 로딩 완료 대기
                 await webView.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.ADD_DIRECTION_INDICATORS_SCRIPT
+                    MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT
                 );
             }
             catch (Exception)
@@ -120,7 +120,7 @@ namespace TanukiTarkovMap.Views
             try
             {
                 await webView.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_UNWANTED_ELEMENTS_SCRIPT
+                    UICustomization.REMOVE_UNWANTED_ELEMENTS_SCRIPT
                 );
             }
             catch (Exception)
@@ -500,7 +500,7 @@ namespace TanukiTarkovMap.Views
 
                 // 웹 페이지 마진/패딩 제거
                 await webView.CoreWebView2.ExecuteScriptAsync(
-                    JavaScriptConstants.REMOVE_PAGE_MARGINS_SCRIPT
+                    PageLayout.REMOVE_PAGE_MARGINS_SCRIPT
                 );
 
                 // Tarkov Market 전용 처리
@@ -518,7 +518,7 @@ namespace TanukiTarkovMap.Views
                     if (webView.Source?.ToString().Contains("/pilot") == true)
                     {
                         await webView.CoreWebView2.ExecuteScriptAsync(
-                            JavaScriptConstants.DETECT_CONNECTION_STATUS
+                            ConnectionDetector.DETECT_CONNECTION_STATUS
                         );
                         Logger.SimpleLog("[Navigation] Connection detection script injected");
                     }

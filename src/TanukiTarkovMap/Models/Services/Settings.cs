@@ -101,7 +101,6 @@ namespace TanukiTarkovMap.Models.Services
             // Factory (factory_day_preset)
             mapSettings["factory_day_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.166113, 0, 0, 0.166113, -165.258, -154.371)",
                 Width = 327,
                 Height = 315,
                 Left = 1596,
@@ -111,7 +110,6 @@ namespace TanukiTarkovMap.Models.Services
             // Woods (woods_preset)
             mapSettings["woods_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.111237, 0, 0, 0.111237, -101.331, -113.302)",
                 Width = 365,
                 Height = 343,
                 Left = 1559,
@@ -121,7 +119,6 @@ namespace TanukiTarkovMap.Models.Services
             // Customs (customs_preset)
             mapSettings["customs_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.177979, 0, 0, 0.177979, -215.026, -185.151)",
                 Width = 428,
                 Height = 211,
                 Left = 1499,
@@ -131,7 +128,6 @@ namespace TanukiTarkovMap.Models.Services
             // Reserve (rezerv_base_preset)
             mapSettings["rezerv_base_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.222473, 0, 0, 0.222473, -227.365, -224.862)",
                 Width = 317,
                 Height = 250,
                 Left = 1604,
@@ -141,7 +137,6 @@ namespace TanukiTarkovMap.Models.Services
             // Ground Zero (sandbox_high_preset)
             mapSettings["sandbox_high_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.347614, 0, 0, 0.347614, -346.781, -365.505)",
                 Width = 328,
                 Height = 362,
                 Left = 1599,
@@ -151,7 +146,6 @@ namespace TanukiTarkovMap.Models.Services
             // Streets of Tarkov (city_preset)
             mapSettings["city_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.21875, 0, 0, 0.21875, -193.814, -223.336)",
                 Width = 367,
                 Height = 344,
                 Left = 1553,
@@ -161,7 +155,6 @@ namespace TanukiTarkovMap.Models.Services
             // Lighthouse (lighthouse_preset)
             mapSettings["lighthouse_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.241013, 0, 0, 0.241013, -258.081, -256.536)",
                 Width = 299,
                 Height = 414,
                 Left = 1622,
@@ -171,7 +164,6 @@ namespace TanukiTarkovMap.Models.Services
             // Interchange (shopping_mall)
             mapSettings["shopping_mall"] = new MapSetting()
             {
-                Transform = "matrix(0.125141, 0, 0, 0.125141, -124.377, -127.995)",
                 Width = 282,
                 Height = 249,
                 Left = 1644,
@@ -181,7 +173,6 @@ namespace TanukiTarkovMap.Models.Services
             // Shoreline (shoreline_preset)
             mapSettings["shoreline_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.222473, 0, 0, 0.222473, -231.212, -228.746)",
                 Width = 409,
                 Height = 261,
                 Left = 1517,
@@ -191,7 +182,6 @@ namespace TanukiTarkovMap.Models.Services
             // The Lab (laboratory_preset)
             mapSettings["laboratory_preset"] = new MapSetting()
             {
-                Transform = "matrix(0.124512, 0, 0, 0.124512, -191.645, -129.873)",
                 Width = 357,
                 Height = 311,
                 Left = 1560,
