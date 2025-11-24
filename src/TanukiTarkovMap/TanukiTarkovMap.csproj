@@ -25,6 +25,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- JavaScript 파일을 Embedded Resource로 포함 -->
+    <EmbeddedResource Include="Models\JavaScript\Scripts\*.js" />
+  </ItemGroup>
+
+  <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 

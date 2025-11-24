@@ -9,7 +9,12 @@ namespace TanukiTarkovMap.Models.JavaScript
     {
         /// <summary>
         /// 스크린샷 폴더 경로를 자동으로 입력하는 스크립트
-        /// {0} 자리에 스크린샷 폴더 경로가 들어갑니다.
+        ///
+        /// JavaScript 파일 위치: Models/JavaScript/Scripts/screenshot-path-filler.js
+        ///
+        /// 사용 방법:
+        /// string script = ScreenshotPathFiller.AUTO_FILL_SCREENSHOTS_PATH("C:\\Screenshots");
+        /// await webView.CoreWebView2.ExecuteScriptAsync(script);
         ///
         /// 실행 절차:
         /// 1. div.mb-5 요소들 중 "Screenshots folder (case sensitive)" 텍스트를 가진 라벨 찾기
@@ -19,73 +24,12 @@ namespace TanukiTarkovMap.Models.JavaScript
         /// 5. Vue/Nuxt 프레임워크를 위해 input, change, blur 이벤트 발생
         /// 6. 각 단계의 성공/실패 정보를 JSON으로 반환
         /// </summary>
-        public const string AUTO_FILL_SCREENSHOTS_PATH =
-            @"
-                    (function() {{
-                        const debugInfo = [];
-
-                        try {{
-                            debugInfo.push('Starting search for Screenshots folder input...');
-
-                            // Find the label div with exact text ""Screenshots folder (case sensitive)""
-                            const screenshotLabelText = Array.from(document.querySelectorAll('div.mb-5')).find(div =>
-                                div.textContent.trim() === 'Screenshots folder (case sensitive)'
-                            );
-
-                            if (!screenshotLabelText) {{
-                                debugInfo.push('Label div not found');
-                                return JSON.stringify({{ status: 'label_not_found', debug: debugInfo }});
-                            }}
-
-                            debugInfo.push('Found label div');
-
-                            // Get the parent container (mb-15)
-                            const container = screenshotLabelText?.parentElement;
-                            if (!container) {{
-                                debugInfo.push('Parent container not found');
-                                return JSON.stringify({{ status: 'container_not_found', debug: debugInfo }});
-                            }}
-
-                            debugInfo.push('Found parent container');
-
-                            // Get the second child (input container)
-                            const children = Array.from(container?.children || []);
-                            const inputContainer = children[1];
-
-                            if (!inputContainer) {{
-                                debugInfo.push('Input container (2nd child) not found');
-                                return JSON.stringify({{ status: 'input_container_not_found', debug: debugInfo }});
-                            }}
-
-                            debugInfo.push('Found input container');
-
-                            // Get the input element
-                            const input = inputContainer?.querySelector('input');
-
-                            if (!input) {{
-                                debugInfo.push('Input element not found');
-                                return JSON.stringify({{ status: 'input_not_found', debug: debugInfo }});
-                            }}
-
-                            debugInfo.push(`Input found - placeholder: ${{input.placeholder}}`);
-                            debugInfo.push(`Current value: '${{input.value}}'`);
-
-                            // Set the value
-                            input.value = '{0}';
-
-                            // Dispatch events for Vue/Nuxt frameworks
-                            input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                            input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                            input.dispatchEvent(new Event('blur', {{ bubbles: true }}));
-
-                            debugInfo.push('Value set successfully');
-                            return JSON.stringify({{ status: 'success', debug: debugInfo }});
-
-                        }} catch (e) {{
-                            debugInfo.push(`Error: ${{e.message}}`);
-                            return JSON.stringify({{ status: 'error', message: e.message, debug: debugInfo }});
-                        }}
-                    }})();
-                ";
+        /// <param name="screenshotPath">스크린샷 폴더 경로 (예: "C:\\Users\\...\\Screenshots")</param>
+        /// <returns>경로가 삽입된 JavaScript 코드</returns>
+        public static string AUTO_FILL_SCREENSHOTS_PATH(string screenshotPath)
+        {
+            // JavaScriptLoader.LoadTemplate: {0}에 경로를 넣어서 반환
+            return JavaScriptLoader.LoadTemplate("screenshot-path-filler.js", screenshotPath);
+        }
     }
 }
