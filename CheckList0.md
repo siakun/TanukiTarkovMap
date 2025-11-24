@@ -1,359 +1,354 @@
-# PIP 모드 창 위치 관리 리팩토링 체크리스트
+# PIP 기능 잔여물 제거 체크리스트
 
-## ✅ 완료된 작업
+## 📋 프로젝트 배경
 
-### Phase 0: 코드 정리
-- [x] Env.cs 기능을 App.xaml.cs에 통합
-- [x] 프로젝트 전체에서 Env 참조를 App으로 변경 (13개 파일)
-- [x] Env.cs 파일 삭제
-- [x] 빌드 검증 완료
+### 기존 PIP 기능 (Fork 프로젝트)
+- **별도의 PIP 윈도우**: 투명한 소형 윈도우를 별도로 띄워 미니맵 표시
+- **복잡한 구조**: PipWindow.xaml, PipController.cs (774줄), WindowTransparency 등
 
----
+### 현재 프로젝트 구조
+- **단일 윈도우**: 하나의 윈도우에서 Normal 모드와 Compact 모드 전환
+- **핀 기능**: TopMost 설정으로 항상 위에 표시
+- **UI 요소 숨기기**: JavaScript로 웹뷰의 UI 패널 숨김/표시
 
-### Phase 4: WindowStateManager 모듈화 (완료)
-
-#### 4.1 WindowStateManager.cs 생성
-**파일:** `Models\Services\WindowStateManager.cs`
-
-- [x] **WindowStateManager 서비스 생성**
-  - Normal 모드 Rect 저장: `_normalModeRect`
-  - PIP 모드 Rect 저장: `Dictionary<string, Rect> _pipModeRects` (맵별)
-  - `LoadFromSettings()` 메서드
-  - `SaveToSettings()` 메서드
-  - `UpdateAndSave()` 메서드
-  - `GetPipModeRect()` 메서드
-  - `UpdateNormalModeRect()` 메서드
-  - `UpdatePipModeRect()` 메서드
-
-#### 4.2 MainWindowViewModel.cs - WindowStateManager 통합
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **_windowStateManager 필드 추가**
-- [x] **생성자에서 WindowStateManager 초기화**
-- [x] **LoadSettings()에서 WindowStateManager 사용**
-- [x] **OnWindowBoundsChanged()에서 WindowStateManager.UpdateAndSave() 사용**
-- [x] **OnPipModeChanged() 리팩토링** - WindowStateManager로 저장
-- [x] **EnterPipMode() 리팩토링** - WindowStateManager에서 로드
-- [x] **ExitPipMode() 리팩토링** - WindowStateManager에서 로드
-- [x] **OnMapChanged() 리팩토링** - WindowStateManager 사용
-- [x] **SaveSettings() 커맨드 리팩토링** - WindowStateManager 사용
-
-#### 4.3 레거시 메서드 정리
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **LoadMapSettings() 제거** (더 이상 사용되지 않음)
-- [x] **SaveNormalSettings() 제거** (WindowStateManager로 대체)
-- [x] **SavePipSettings() 제거** (WindowStateManager로 대체)
-
-#### 4.4 빌드 검증
-- [x] 프로젝트 빌드 성공 확인
-- [x] 기존 nullable 경고만 존재 (새로운 에러 없음)
+### 문제점
+- **혼란스러운 용어**: 실제로는 "Compact Mode"인데 "PIP Mode"로 명명
+- **사용되지 않는 코드**: 구 PIP 기능의 잔여물 다수 존재
+- **유지보수 어려움**: 코드 목적이 불명확
 
 ---
 
-## 🔄 진행 예정 작업
+## 🔴 즉시 제거 가능 (사용되지 않는 코드)
 
-### Phase 1: 창 위치 이벤트 기반 저장 시스템 구축
+### 1. JavaScriptConstants.cs - CREATE_PIP_OVERLAY_SCRIPT
+**파일**: `src/TanukiTarkovMap/Models/Constants/JavaScriptConstants.cs`
+**라인**: 311-495 (약 185줄)
 
-#### 1.1 MainWindow.xaml.cs - 이벤트 발생 로직 추가
-**파일:** `Views\MainWindow.xaml.cs`
+**현재 상태**:
+```csharp
+public const string CREATE_PIP_OVERLAY_SCRIPT = @"...";
+```
 
-- [x] **WindowBoundsChanged 이벤트 정의**
-  ```csharp
-  // 창 위치/크기 변경 이벤트 (Rect 파라미터 사용)
-  public event EventHandler<WindowBoundsChangedEventArgs>? WindowBoundsChanged;
+**참조 위치**: 없음 (사용되지 않음)
 
-  public class WindowBoundsChangedEventArgs : EventArgs
-  {
-      public Rect Bounds { get; set; }
-      public bool IsPipMode { get; set; }
-  }
-  ```
+**제거 작업**:
+- [ ] 상수 정의 전체 삭제
+- [ ] 관련 주석 삭제
+- [ ] 빌드 검증
 
-- [x] **MainWindow_LocationChanged 메서드 수정**
-  - 위치 변경 시 즉시 이벤트 발생
-  - Rect 객체로 Left, Top, Width, Height 전달
-  - PIP 모드 여부 함께 전달
-  ```csharp
-  private void MainWindow_LocationChanged(object sender, EventArgs e)
-  {
-      if (_isClampingLocation) return;
-
-      // ... 기존 clamping 로직 ...
-
-      // ✅ 이벤트 발생 (즉각 저장)
-      WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
-      {
-          Bounds = new Rect(this.Left, this.Top, this.Width, this.Height),
-          IsPipMode = _viewModel.IsPipMode
-      });
-  }
-  ```
-
-- [x] **MainWindow_SizeChanged 메서드 추가/수정**
-  - 크기 변경 시에도 동일하게 이벤트 발생
-
-- [x] **MainWindow 생성자에서 이벤트 구독**
-  ```csharp
-  public MainWindow()
-  {
-      // ...
-
-      // ViewModel에 이벤트 연결
-      this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
-  }
-  ```
-
-#### 1.2 MainWindowViewModel.cs - 타이머 제거 및 이벤트 핸들러 추가
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **_saveTimer 관련 코드 제거**
-  - Line 55: `_saveTimer` 필드 선언 삭제
-  - Lines 360-379: `ScheduleSaveSettings()` 메서드 삭제
-  - Lines 145-159: PropertyChanged에서 `ScheduleSaveSettings()` 호출 제거
-
-- [x] **OnWindowBoundsChanged 이벤트 핸들러 추가**
-  ```csharp
-  /// <summary>
-  /// View에서 창 위치/크기 변경 이벤트를 받아 즉시 저장
-  /// (모듈화 고려: 나중에 별도 서비스로 분리 가능)
-  /// </summary>
-  public void OnWindowBoundsChanged(object? sender, WindowBoundsChangedEventArgs e)
-  {
-      Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}");
-
-      // ViewModel 속성 업데이트 (PropertyChanged 발생 방지하도록 직접 설정)
-      _windowLeft = e.Bounds.Left;
-      _windowTop = e.Bounds.Top;
-      _windowWidth = e.Bounds.Width;
-      _windowHeight = e.Bounds.Height;
-
-      // 즉시 저장 (타이머 없음)
-      if (e.IsPipMode)
-      {
-          SavePipSettings();
-      }
-      else
-      {
-          SaveNormalSettings();
-      }
-  }
-  ```
-
-- [x] **PropertyChanged 핸들러 정리**
-  - WindowLeft, WindowTop, WindowWidth, WindowHeight의 PropertyChanged 핸들러에서 저장 로직 제거
-  - 이제 View의 이벤트로만 저장
-
-#### 1.3 SaveNormalSettings/SavePipSettings 메서드 확인
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **SaveNormalSettings() 검토** (Lines 326-339)
-  - 현재 로직 유지
-  - 즉시 저장되는지 확인
-
-- [x] **SavePipSettings() 검토** (Lines 309-324)
-  - 현재 로직 유지
-  - 즉시 저장되는지 확인
+**예상 효과**: 185줄 감소
 
 ---
 
-### Phase 2: PIP 모드 진입 시 창 위치 검증
+### 2. MapTransformCalculator.cs - 파일 전체
+**파일**: `src/TanukiTarkovMap/Models/Utils/MapTransformCalculator.cs`
 
-#### 2.1 MainWindow.xaml.cs - HandlePipModeChanged 메서드 수정
-**파일:** `Views\MainWindow.xaml.cs` (Lines 135-168)
+**현재 역할**: 맵별 Transform Matrix 계산 (PiP 모드 스케일링용)
 
-- [x] **PIP 모드 진입 시 EnsureWindowWithinScreen 호출**
-  ```csharp
-  private async Task HandlePipModeChanged()
-  {
-      if (_viewModel.IsPipMode)
-      {
-          var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-          _windowBoundsService.SavePipModeScreen(windowHandle);
+**문제점**:
+- 현재 프로젝트에서는 맵 스케일링을 사용하지 않음
+- `PipService.GetMapTransform()`에서만 참조되지만, 이 메서드 자체가 호출되지 않음
 
-          // ✅ 창 위치를 화면 내부로 보정
-          var dpiInfo = VisualTreeHelper.GetDpi(this);
-          var validatedPosition = _windowBoundsService.EnsureWindowWithinScreen(
-              _viewModel.WindowLeft,
-              _viewModel.WindowTop,
-              _viewModel.WindowWidth,
-              _viewModel.WindowHeight,
-              dpiInfo.DpiScaleX,
-              dpiInfo.DpiScaleY
-          );
+**참조 검증 필요**:
+- [ ] 프로젝트 전체에서 `MapTransformCalculator` 검색
+- [ ] 참조가 없으면 파일 전체 삭제
 
-          // 검증된 위치 반영
-          _viewModel.WindowLeft = validatedPosition.X;
-          _viewModel.WindowTop = validatedPosition.Y;
-
-          Logger.SimpleLog($"[PIP Entry] Position validated: {validatedPosition}");
-
-          // ... 기존 JavaScript 적용 로직 ...
-      }
-      else
-      {
-          // ... 기존 PIP 종료 로직 ...
-      }
-  }
-  ```
-
-#### 2.2 OnPipModeChanged 메서드 수정
-**파일:** `ViewModels\MainWindowViewModel.cs` (Lines 191-203)
-
-- [x] **모드 전환 전 즉시 저장 로직 추가**
-  ```csharp
-  private void OnPipModeChanged()
-  {
-      Logger.SimpleLog($"PIP Mode changed to: {IsPipMode}");
-
-      if (IsPipMode)
-      {
-          // 일반 모드 위치 즉시 저장 (이벤트 발생 전에 저장)
-          SaveNormalSettings();
-          EnterPipMode();
-      }
-      else
-      {
-          // PIP 모드 위치 즉시 저장
-          SavePipSettings();
-          ExitPipMode();
-      }
-  }
-  ```
+**예상 효과**: 약 100-200줄 감소
 
 ---
 
-### Phase 3: 테스트 및 검증
+### 3. PipService.cs - GetMapTransform() 메서드
+**파일**: `src/TanukiTarkovMap/Models/Services/PipService.cs`
+**라인**: 100-134 (35줄)
 
-#### 3.1 빌드 테스트
-- [x] 프로젝트 빌드 성공 확인
-- [x] 경고 메시지 확인 (기존 nullable 경고만 존재)
+**현재 코드**:
+```csharp
+public string GetMapTransform(string mapId)
+{
+    // 맵별 CSS transform 반환
+    // ...
+}
+```
 
-#### 3.2 기능 테스트
+**문제점**:
+- 메서드가 호출되지 않음
+- 현재는 창 크기만 조절하고 맵 스케일링은 하지 않음
 
-**테스트 1: 즉각 저장 테스트**
-- [ ] 일반 모드에서 창 위치 변경
-- [ ] **즉시** F11 누르기 (< 50ms)
-- [ ] F11 다시 눌러 일반 모드 복귀
-- [ ] **기대 결과:** 새로운 위치로 복귀 ✅
+**제거 작업**:
+- [ ] 프로젝트 전체에서 `GetMapTransform` 호출 검색
+- [ ] 호출이 없으면 메서드 삭제
+- [ ] 관련 주석 삭제
 
-**테스트 2: PIP 모드 드래그 즉시 저장 테스트**
-- [ ] F11로 PIP 모드 진입
-- [ ] 창을 새 위치로 드래그
-- [ ] **즉시** F11 누르기
-- [ ] F11 다시 눌러 PIP 모드 재진입
-- [ ] **기대 결과:** 드래그한 위치에 PIP 창 표시 ✅
-
-**테스트 3: 화면 경계 검증 테스트**
-- [ ] settings.json에서 Left/Top을 -1로 설정
-- [ ] F11로 PIP 모드 진입
-- [ ] **기대 결과:** 창이 화면 내부에 위치 ✅
-- [ ] settings.json 확인: Left/Top이 유효한 값으로 저장됨
-
-**테스트 4: 연속 드래그 테스트**
-- [ ] 창을 연속으로 빠르게 드래그
-- [ ] 각 위치 변경마다 즉시 저장되는지 로그 확인
-- [ ] **기대 결과:** 모든 위치 변경이 즉시 저장됨 (타이머 딜레이 없음)
-
-**테스트 5: 멀티 모니터 테스트**
-- [ ] 보조 모니터에서 PIP 모드 진입
-- [ ] 창이 모니터 경계 근처에 위치하도록 설정
-- [ ] **기대 결과:** 창이 작업 영역 내부로 조정 ✅
-
-**테스트 6: DPI 스케일링 테스트**
-- [ ] 시스템 DPI 설정 변경 (125%, 150%)
-- [ ] PIP 모드 진입 및 위치 저장
-- [ ] **기대 결과:** DPI 스케일링에 맞게 올바른 위치 저장
-
-**테스트 7: 맵별 PIP 위치 기억 테스트**
-- [ ] Map A에서 PIP 모드 진입, 위치 1로 이동, F11로 종료
-- [ ] Map B로 전환, PIP 모드 진입, 위치 2로 이동, F11로 종료
-- [ ] Map A로 전환, PIP 모드 재진입
-- [ ] **기대 결과:** Map A의 위치 1로 PIP 창 표시
+**예상 효과**: 35줄 감소
 
 ---
 
-### Phase 4: 성능 및 파일 I/O 최적화 (선택사항)
+### 4. DataTypes.cs - MapSetting.Transform 속성
+**파일**: `src/TanukiTarkovMap/Models/Data/DataTypes.cs`
+**라인**: 7
 
-#### 4.1 파일 I/O 빈도 확인
-- [ ] 로그를 통해 settings.json 저장 빈도 확인
-- [ ] 창 드래그 중 과도한 파일 쓰기 발생 여부 확인
+**현재 코드**:
+```csharp
+public class MapSetting
+{
+    public string Transform { get; set; } = "";  // ← 사용되지 않음
+    public double Width { get; set; } = 300;
+    public double Height { get; set; } = 250;
+    public double Left { get; set; } = -1;
+    public double Top { get; set; } = -1;
+}
+```
 
-#### 4.2 디바운싱 재도입 (필요 시)
-- [ ] 만약 파일 I/O가 과도하다면 (초당 10회 이상):
-  - View에서 짧은 디바운싱 추가 (50-100ms)
-  - 하지만 모드 전환 시에는 즉시 발생
-  ```csharp
-  private DispatcherTimer _boundsChangedDebouncer;
+**문제점**:
+- `Transform` 속성이 사용되지 않음
+- `WindowStateManager`에서 "default" 키로 위치/크기만 저장
 
-  private void MainWindow_LocationChanged(object sender, EventArgs e)
-  {
-      // 짧은 디바운싱 (드래그 중 과도한 이벤트 방지)
-      _boundsChangedDebouncer?.Stop();
-      _boundsChangedDebouncer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
-      _boundsChangedDebouncer.Tick += (s, args) =>
-      {
-          _boundsChangedDebouncer.Stop();
-          WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs { ... });
-      };
-      _boundsChangedDebouncer.Start();
-  }
-  ```
+**제거 작업**:
+- [ ] 프로젝트 전체에서 `Transform` 속성 사용 검색
+- [ ] `GetMapTransform()`에서만 참조되면 함께 삭제
+- [ ] settings.json 호환성 확인 (JSON 역직렬화 시 무시됨)
 
----
-
-### Phase 5: 코드 정리 및 문서화
-
-#### 5.1 주석 및 로그 정리
-- [ ] 각 메서드에 XML 주석 추가
-- [ ] 불필요한 디버그 로그 제거
-- [ ] 중요한 위치에만 로그 유지
-
-#### 5.2 코드 리뷰
-- [ ] MVVM 패턴 준수 확인
-- [ ] View → ViewModel 단방향 이벤트 흐름 확인
-- [ ] ViewModel의 모듈화 가능성 확인
+**예상 효과**: 1줄 감소 (의미상 중요)
 
 ---
 
-## 📊 예상 코드 변경 요약
+## 🟡 리팩토링 권장 (용어 및 구조 변경)
 
-### 추가
-- MainWindow.xaml.cs: `WindowBoundsChangedEventArgs` 클래스
-- MainWindow.xaml.cs: `WindowBoundsChanged` 이벤트
-- MainWindowViewModel.cs: `OnWindowBoundsChanged` 이벤트 핸들러
+### 5. PipService.cs → WebViewUIService.cs 이름 변경
+**파일**: `src/TanukiTarkovMap/Models/Services/PipService.cs` (136줄)
 
-### 수정
-- MainWindow.xaml.cs: `MainWindow_LocationChanged` (이벤트 발생 추가)
-- MainWindow.xaml.cs: `HandlePipModeChanged` (위치 검증 추가)
-- MainWindowViewModel.cs: `OnPipModeChanged` (즉시 저장 추가)
-- MainWindowViewModel.cs: PropertyChanged 핸들러 (저장 로직 제거)
+**현재 역할**:
+- WebView2에서 JavaScript 실행하여 UI 요소 숨김/복원
+- 실제로는 "PIP 모드"가 아니라 "UI 가시성 제어" 서비스
 
-### 삭제
-- MainWindowViewModel.cs: `_saveTimer` 필드
-- MainWindowViewModel.cs: `ScheduleSaveSettings` 메서드
+**리팩토링 계획**:
+- [ ] 클래스명 변경: `PipService` → `WebViewUIService`
+- [ ] 메서드명 변경:
+  - `ApplyPipModeJavaScriptAsync()` → `ApplyUIVisibilityAsync()`
+  - `RestoreNormalModeJavaScriptAsync()` → `RestoreUIElementsAsync()`
+- [ ] 주석 수정: "PIP 모드" → "UI 요소 숨기기"
+- [ ] 모든 참조 위치 업데이트:
+  - `MainWindow.xaml.cs:37, 49, 225, 240`
+  - `MainWindowViewModel.cs:13, 114, 116-118`
+
+**예상 효과**: 코드 목적 명확화, 유지보수성 향상
+
+---
+
+### 6. WindowStateManager.cs - 용어 변경
+**파일**: `src/TanukiTarkovMap/Models/Services/WindowStateManager.cs` (145줄)
+
+**문제점**:
+- "PIP 모드" 용어 사용 (실제로는 "Compact 모드" 또는 "Mini 모드")
+- 주석과 변수명에 혼란 야기
+
+**리팩토링 계획**:
+- [ ] 주석 수정: "PIP 모드" → "Compact 모드"
+- [ ] 변수명 변경 (선택사항):
+  - `_pipModeRect` → `_compactModeRect`
+  - `GetPipModeRect()` → `GetCompactModeRect()`
+  - `UpdatePipModeRect()` → `UpdateCompactModeRect()`
+- [ ] 모든 참조 위치 업데이트 (MainWindowViewModel.cs 전체)
+
+**예상 효과**: 코드 의도 명확화
+
+---
+
+### 7. MainWindowViewModel.cs - 용어 일괄 변경
+**파일**: `src/TanukiTarkovMap/ViewModels/MainWindowViewModel.cs`
+
+**문제점**:
+- `IsPipMode`, `PipHideWebElements`, `PipHotkeyEnabled` 등 "Pip" 접두사
+- 주석에서 "PIP 모드" 용어 반복 사용
+- `_pipService` 필드를 주입받지만 **실제로 사용하지 않음**
+
+**리팩토링 계획**:
+
+#### 7.1 사용하지 않는 필드 제거
+- [ ] `_pipService` 필드 삭제 (Line 13)
+- [ ] 생성자에서 `pipService` 매개변수 제거 (Line 116)
+- [ ] 기본 생성자에서 `new PipService()` 제거 (Line 114)
+
+#### 7.2 속성명 변경 (선택사항)
+- [ ] `IsPipMode` → `IsCompactMode`
+- [ ] `PipHideWebElements` → `HideWebElements`
+- [ ] `PipHotkeyEnabled` → `HotkeyEnabled`
+- [ ] `PipHotkeyKey` → `HotkeyKey`
+- [ ] Region 주석 변경: `#region PIP Mode Properties` → `#region Compact Mode Properties`
+
+#### 7.3 주석 수정
+- [ ] Line 38, 58, 110, 148, 168-177, 242, 294, 318-346 등
+- [ ] "PIP 모드" → "Compact 모드"
+
+**예상 효과**: 일관성 있는 코드베이스
+
+---
+
+### 8. MainWindow.xaml - UI 주석 수정
+**파일**: `src/TanukiTarkovMap/Views/MainWindow.xaml`
+**라인**: 147
+
+**현재 코드**:
+```xaml
+<!-- PIP 모드 UI 요소 숨기기 체크박스 -->
+<CheckBox x:Name="PipHideWebElementsCheckBox"
+          IsChecked="{Binding PipHideWebElements, Mode=TwoWay}"
+          ...
+```
+
+**리팩토링 계획**:
+- [ ] 주석 수정: "PIP 모드 UI 요소 숨기기" → "UI 요소 숨기기"
+- [ ] 바인딩 속성명 변경 (7.2에서 변경 시): `PipHideWebElements` → `HideWebElements`
+
+**예상 효과**: UI와 코드 일관성
+
+---
+
+### 9. MainWindow.xaml.cs - 리팩토링
+**파일**: `src/TanukiTarkovMap/Views/MainWindow.xaml.cs`
+
+**문제점**:
+- `_pipService` 필드를 선언하고 ViewModel에 주입하지만, ViewModel에서 사용하지 않음
+- 실제로는 View에서만 직접 사용 (Line 225, 240)
+
+**리팩토링 계획**:
+
+#### Option A: ViewModel에서 제거, View에서만 유지
+- [ ] `MainWindowViewModel` 생성자에서 `pipService` 매개변수 제거
+- [ ] `MainWindow.xaml.cs:53`에서 ViewModel 생성 시 `_pipService` 전달하지 않음
+- [ ] `_pipService`는 View 내부에서만 사용
+
+#### Option B: View에서 제거, ViewModel로 이동
+- [ ] `_pipService` 사용을 ViewModel 메서드로 래핑
+- [ ] View에서는 ViewModel 메서드만 호출
+- [ ] MVVM 패턴 강화
+
+**권장**: Option A (현재 구조 유지, 단순화)
+
+**예상 효과**: 불필요한 의존성 제거
+
+---
+
+### 10. JavaScriptConstants.cs - 주석 수정
+**파일**: `src/TanukiTarkovMap/Models/Constants/JavaScriptConstants.cs`
+
+**리팩토링 계획**:
+- [ ] Line 309: "PiP 모드용 오버레이 생성" → 삭제 (1번에서 제거)
+- [ ] Line 498: "PiP 모드용 컨트롤 제거" → "UI 오버레이 제거"
+
+---
+
+### 11. MapInfo.cs - 주석 수정
+**파일**: `src/TanukiTarkovMap/Models/Data/MapInfo.cs`
+**라인**: 26
+
+**현재 코드**:
+```csharp
+/// <summary>
+/// 맵 식별자 (예: "sandbox_high_preset", "factory_day_preset")
+/// tarkov-market.com 내부에서 사용하는 맵 ID
+/// PIP 모드에서 맵 스케일링에 사용됨  ← 잘못된 주석
+/// </summary>
+public string MapId { get; set; }
+```
+
+**리팩토링 계획**:
+- [ ] 주석 마지막 줄 삭제: "PIP 모드에서 맵 스케일링에 사용됨"
+- [ ] 현재는 맵 스케일링을 하지 않으므로 오해의 소지
+
+---
+
+## 📊 작업 우선순위
+
+### 🔴 Phase 1: 즉시 제거 (Quick Wins)
+**예상 시간**: 30분
+**효과**: 약 220줄 감소, 사용되지 않는 코드 제거
+
+1. [ ] JavaScriptConstants.cs - CREATE_PIP_OVERLAY_SCRIPT 삭제
+2. [ ] MapTransformCalculator.cs - 파일 삭제 (참조 확인 후)
+3. [ ] PipService.cs - GetMapTransform() 메서드 삭제
+4. [ ] DataTypes.cs - MapSetting.Transform 속성 삭제
+5. [ ] 빌드 검증
+
+---
+
+### 🟡 Phase 2: 리팩토링 (용어 정리)
+**예상 시간**: 1-2시간
+**효과**: 코드 명확성 대폭 향상
+
+6. [ ] MainWindowViewModel.cs - `_pipService` 필드 제거 (사용하지 않음)
+7. [ ] MainWindow.xaml.cs - ViewModel 생성 시 `_pipService` 전달 제거
+8. [ ] PipService.cs → WebViewUIService.cs 이름 변경
+9. [ ] 모든 주석에서 "PIP 모드" → "Compact 모드" or "UI 요소 숨기기"로 수정
+10. [ ] 빌드 및 기능 테스트
+
+---
+
+### 🟢 Phase 3: 전면 리팩토링 (선택사항)
+**예상 시간**: 2-3시간
+**효과**: 완전한 일관성
+
+11. [ ] WindowStateManager.cs - 변수명 변경 (_pipModeRect → _compactModeRect)
+12. [ ] MainWindowViewModel.cs - 속성명 변경 (IsPipMode → IsCompactMode)
+13. [ ] MainWindow.xaml - 바인딩 속성명 업데이트
+14. [ ] 모든 참조 위치 업데이트
+15. [ ] 전체 빌드 및 회귀 테스트
+
+---
+
+## ✅ 검증 체크리스트
+
+### 빌드 검증
+- [ ] 프로젝트 빌드 성공
+- [ ] 새로운 에러/경고 없음
+- [ ] 기존 경고만 존재
+
+### 기능 테스트
+- [ ] Normal 모드 ↔ Compact 모드 전환 정상 작동
+- [ ] UI 요소 숨기기 체크박스 정상 작동
+- [ ] 창 크기/위치 저장/복원 정상 작동
+- [ ] 핀(TopMost) 기능 정상 작동
+- [ ] 단축키 기능 정상 작동
+
+### 코드 리뷰
+- [ ] "PIP" 용어가 적절한 곳에만 사용됨 (또는 완전히 제거됨)
+- [ ] 사용되지 않는 코드 없음
+- [ ] 주석이 실제 동작과 일치함
+- [ ] 변수/메서드명이 의도를 명확히 표현함
 
 ---
 
 ## 🎯 최종 목표
 
-1. **즉각 반응성:** 창 위치 변경 시 타이머 딜레이 없이 즉시 저장
-2. **모드 전환 안정성:** F11을 빠르게 눌러도 위치 손실 없음
-3. **화면 경계 준수:** PIP 모드 진입 시 항상 화면 내부에 위치
-4. **MVVM 준수:** View에서 이벤트 발생, ViewModel에서 비즈니스 로직 처리
-5. **모듈화 가능성:** ViewModel의 위치 관리 로직을 나중에 별도 서비스로 분리 가능
+### 코드 품질
+- ✅ 사용되지 않는 코드 0개
+- ✅ 혼란스러운 용어 0개
+- ✅ 일관성 있는 명명 규칙
+
+### 유지보수성
+- ✅ 코드 목적이 명확함
+- ✅ 새로운 개발자가 이해하기 쉬움
+- ✅ 향후 확장이 용이함
+
+### 성능
+- ✅ 불필요한 코드 로드 감소
+- ✅ 빌드 크기 감소 (약 220줄)
 
 ---
 
-## 🔍 문제 분석 요약
+## 📝 참고 사항
 
-### 문제 1: PIP 모드 진입 시 창이 화면 밖으로 나감
-- **원인:** `EnsureWindowWithinScreen()` 메서드가 존재하지만 PIP 모드 진입 시 호출되지 않음
-- **해결:** `HandlePipModeChanged()`에서 `EnsureWindowWithinScreen()` 호출 추가
+### 용어 정리
+- **구 PIP 모드**: 별도의 투명 윈도우 (제거됨)
+- **현재 Compact 모드**: 단일 윈도우의 작은 크기 모드
+- **핀 모드**: TopMost 설정 (항상 위에 표시)
+- **UI 요소 숨기기**: JavaScript로 웹 UI 패널 제거
 
-### 문제 2: 창 위치 저장 지연 (500ms 타이머)
-- **원인:** `_saveTimer`의 500ms 디바운스로 인해 모드 전환 시 위치가 저장되지 않음
-- **증상:**
-  - 창 이동 후 빠르게 F11을 누르면 이전 위치로 되돌아감
-  - PIP 모드에서 창을 이동해도 초기 위치로 리셋됨
-- **해결:** 타이머 방식을 이벤트 기반 즉각 저장으로 변경
+### 커밋 히스토리
+- `d211047` (Nov 21) - "SettingsPage PIP 모드 제거 및 로직제거"
+- `3c3472c` (Nov 20) - "PIP 모드 제거, 핀 모드로 변경"
+
+### 관련 이슈
+- 사용자는 중복되는 개념을 싫어함
+- 명확하고 간단한 코드 선호
+- 최신 업데이트가 많은 표준 라이브러리 선호
