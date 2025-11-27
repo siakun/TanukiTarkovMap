@@ -10,7 +10,6 @@ namespace TanukiTarkovMap.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject
     {
-        private readonly PipService _pipService;
         private readonly WindowBoundsService _windowBoundsService;
         private readonly WindowStateManager _windowStateManager;
         private AppSettings _settings;
@@ -111,11 +110,10 @@ namespace TanukiTarkovMap.ViewModels
         public Rect GetPipModeBounds() => _windowStateManager.GetPipModeRect();
         #endregion
 
-        public MainWindowViewModel() : this(new PipService(), new WindowBoundsService()) { }
+        public MainWindowViewModel() : this(new WindowBoundsService()) { }
 
-        public MainWindowViewModel(PipService pipService, WindowBoundsService windowBoundsService)
+        public MainWindowViewModel(WindowBoundsService windowBoundsService)
         {
-            _pipService = pipService;
             _windowBoundsService = windowBoundsService;
             _windowStateManager = new WindowStateManager();
             LoadSettings();

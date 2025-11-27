@@ -34,7 +34,7 @@ namespace TanukiTarkovMap.Views
 
         private WebView2 _webView;
         private MainWindowViewModel _viewModel;
-        private PipService _pipService;
+        private WebViewUIService _webViewUIService;
         private WindowBoundsService _windowBoundsService;
         private HotkeyManager _hotkeyManager;
         private bool _isClampingLocation = false; // 무한 루프 방지
@@ -45,17 +45,14 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                // 서비스 초기화
-                _pipService = new PipService();
+                // 서비스 초기화 (View에서 직접 사용하는 서비스)
+                _webViewUIService = new WebViewUIService();
                 _windowBoundsService = new WindowBoundsService();
 
-                // ViewModel 초기화 (서비스 주입)
-                _viewModel = new MainWindowViewModel(_pipService, _windowBoundsService);
-
-                // DataContext를 InitializeComponent 전에 설정하여 바인딩이 즉시 작동하도록 함
-                DataContext = _viewModel;
-
                 InitializeComponent();
+
+                // XAML에서 ViewModelLocator를 통해 설정된 DataContext 가져오기
+                _viewModel = (MainWindowViewModel)DataContext;
 
                 // InitializeComponent 직후 창 크기/위치 명시적 설정 (바인딩보다 먼저 적용)
                 this.Width = _viewModel.CurrentWindowWidth;
@@ -222,7 +219,7 @@ namespace TanukiTarkovMap.Views
                 // PIP 모드 진입 시 JavaScript 적용
                 if (_webView != null)
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
 
                 // Topmost는 ViewModel의 IsTopmost 바인딩으로 자동 처리됨
@@ -237,7 +234,7 @@ namespace TanukiTarkovMap.Views
                 if (_webView != null)
                 {
                     string mapId = _viewModel.CurrentMap ?? "default";
-                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, mapId, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, mapId, _viewModel.PipHideWebElements);
                     Logger.SimpleLog($"[ExitPipMode] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.PipHideWebElements}");
                 }
 
@@ -255,7 +252,7 @@ namespace TanukiTarkovMap.Views
             {
                 if (_webView != null)
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
                 }
             }
         }
@@ -276,7 +273,7 @@ namespace TanukiTarkovMap.Views
 
                 try
                 {
-                    await _pipService.ApplyPipModeJavaScriptAsync(_webView, mapId, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, mapId, _viewModel.PipHideWebElements);
                 }
                 catch (Exception ex)
                 {
@@ -511,7 +508,7 @@ namespace TanukiTarkovMap.Views
 
                     // UI 요소 숨김 설정 적용 (항상 적용)
                     string mapId = _viewModel.CurrentMap ?? "default";
-                    await _pipService.ApplyPipModeJavaScriptAsync(webView, mapId, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(webView, mapId, _viewModel.PipHideWebElements);
                     Logger.SimpleLog($"[WebView_NavigationCompleted] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.PipHideWebElements}");
 
                     // "/pilot" 페이지에서 Connected 상태 감지 시작

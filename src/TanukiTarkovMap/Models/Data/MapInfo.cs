@@ -23,7 +23,6 @@ namespace TanukiTarkovMap.Models.Data
         /// <summary>
         /// 맵 식별자 (예: "sandbox_high_preset", "factory_day_preset")
         /// tarkov-market.com 내부에서 사용하는 맵 ID
-        /// PIP 모드에서 맵 스케일링에 사용됨
         /// </summary>
         public string MapId { get; set; }
 

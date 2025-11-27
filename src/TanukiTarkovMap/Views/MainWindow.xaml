@@ -8,6 +8,7 @@
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:converters="clr-namespace:TanukiTarkovMap.Converters"
         mc:Ignorable="d"
+        DataContext="{Binding MainWindowViewModel, Source={StaticResource Locator}}"
         Title="Tanuki Tarkov Map"
         Icon="pack://application:,,,/Resources/korea.ico"
         Width="{Binding CurrentWindowWidth, Mode=TwoWay}"
