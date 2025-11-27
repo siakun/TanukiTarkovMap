@@ -11,7 +11,6 @@ using Microsoft.Win32;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
-using TanukiTarkovMap.ViewModels;
 using TanukiTarkovMap.Views;
 
 namespace TanukiTarkovMap
@@ -188,7 +187,7 @@ namespace TanukiTarkovMap
             SetCulture();
 
             // DI 컨테이너 초기화
-            ViewModelLocator.Initialize();
+            ServiceLocator.Initialize();
 
             // 애플리케이션 시작 로깅
             Logger.SimpleLog("=== Application Starting ===");

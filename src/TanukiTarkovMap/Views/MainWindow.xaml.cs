@@ -45,13 +45,13 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                // 서비스 초기화 (View에서 직접 사용하는 서비스)
-                _webViewUIService = new WebViewUIService();
-                _windowBoundsService = new WindowBoundsService();
+                // DI 컨테이너에서 싱글톤 서비스 가져오기
+                _webViewUIService = ServiceLocator.WebViewUIService;
+                _windowBoundsService = ServiceLocator.WindowBoundsService;
 
                 InitializeComponent();
 
-                // XAML에서 ViewModelLocator를 통해 설정된 DataContext 가져오기
+                // XAML에서 ServiceLocator를 통해 설정된 DataContext 가져오기
                 _viewModel = (MainWindowViewModel)DataContext;
 
                 // InitializeComponent 직후 창 크기/위치 명시적 설정 (바인딩보다 먼저 적용)

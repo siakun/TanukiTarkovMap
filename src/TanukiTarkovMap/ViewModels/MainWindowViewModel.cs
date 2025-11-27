@@ -12,6 +12,7 @@ namespace TanukiTarkovMap.ViewModels
     {
         private readonly WindowBoundsService _windowBoundsService;
         private readonly WindowStateManager _windowStateManager;
+        private readonly MapEventService _mapEventService;
         private AppSettings _settings;
 
         #region Current Window Properties
@@ -110,12 +111,17 @@ namespace TanukiTarkovMap.ViewModels
         public Rect GetPipModeBounds() => _windowStateManager.GetPipModeRect();
         #endregion
 
-        public MainWindowViewModel() : this(new WindowBoundsService()) { }
-
-        public MainWindowViewModel(WindowBoundsService windowBoundsService)
+        /// <summary>
+        /// DI 컨테이너에서 호출되는 생성자
+        /// </summary>
+        public MainWindowViewModel(
+            WindowBoundsService windowBoundsService,
+            WindowStateManager windowStateManager,
+            MapEventService mapEventService)
         {
             _windowBoundsService = windowBoundsService;
-            _windowStateManager = new WindowStateManager();
+            _windowStateManager = windowStateManager;
+            _mapEventService = mapEventService;
             LoadSettings();
             InitializeCommands();
             SubscribeToMapEvents();
@@ -128,8 +134,8 @@ namespace TanukiTarkovMap.ViewModels
         {
             Logger.SimpleLog("[MainWindowViewModel] Subscribing to MapEventService events");
 
-            MapEventService.Instance.MapChanged += OnMapEventReceived;
-            MapEventService.Instance.ScreenshotTaken += OnScreenshotEventReceived;
+            _mapEventService.MapChanged += OnMapEventReceived;
+            _mapEventService.ScreenshotTaken += OnScreenshotEventReceived;
 
             Logger.SimpleLog("[MainWindowViewModel] Successfully subscribed to MapEventService events");
         }

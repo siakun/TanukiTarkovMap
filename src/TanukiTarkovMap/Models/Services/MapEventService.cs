@@ -5,27 +5,29 @@ namespace TanukiTarkovMap.Models.Services
 {
     /// <summary>
     /// 맵 변경 및 스크린샷 이벤트를 처리하는 서비스
-    /// 싱글톤 패턴으로 FileSystem 모니터링과 ViewModel을 연결
+    /// FileSystem 모니터링과 ViewModel을 연결
+    ///
+    /// 사용법: ServiceLocator.MapEventService (DI 싱글톤)
     /// </summary>
     public class MapEventService
     {
-        private static MapEventService _instance;
-        public static MapEventService Instance => _instance ??= new MapEventService();
+        /// <summary>
+        /// DI 컨테이너 전용 생성자 - 외부에서 new 사용 금지
+        /// </summary>
+        internal MapEventService()
+        {
+            Logger.SimpleLog("[MapEventService] Instance created");
+        }
 
         /// <summary>
         /// 맵이 변경되었을 때 발생하는 이벤트
         /// </summary>
-        public event EventHandler<MapChangedEventArgs> MapChanged;
+        public event EventHandler<MapChangedEventArgs>? MapChanged;
 
         /// <summary>
         /// 스크린샷이 생성되었을 때 발생하는 이벤트
         /// </summary>
-        public event EventHandler ScreenshotTaken;
-
-        private MapEventService()
-        {
-            Logger.SimpleLog("[MapEventService] Instance created");
-        }
+        public event EventHandler? ScreenshotTaken;
 
         /// <summary>
         /// 맵 변경 이벤트 발생

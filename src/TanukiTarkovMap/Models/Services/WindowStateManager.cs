@@ -7,9 +7,16 @@ namespace TanukiTarkovMap.Models.Services
     /// <summary>
     /// 창 위치/크기 상태 관리 서비스
     /// Normal 모드와 PIP 모드의 Rect를 분리하여 관리
+    ///
+    /// 사용법: ServiceLocator.WindowStateManager (DI 싱글톤)
     /// </summary>
     public class WindowStateManager
     {
+        /// <summary>
+        /// DI 컨테이너 전용 생성자 - 외부에서 new 사용 금지
+        /// </summary>
+        internal WindowStateManager() { }
+
         private Rect _normalModeRect;
         private Rect _pipModeRect; // 모든 맵에서 동일한 PIP Rect 사용
 

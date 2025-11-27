@@ -217,7 +217,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                                     Server.SendMap(map);
 
                                     // 1차 트리거: 맵 변경 이벤트 발생
-                                    MapEventService.Instance.OnMapChanged(map);
+                                    ServiceLocator.MapEventService.OnMapChanged(map);
                                 }
                             }
                             else if (line.Contains(LOCATION_SUBSTRING2))
@@ -230,7 +230,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                                     Server.SendMap(map);
 
                                     // 1차 트리거: 맵 변경 이벤트 발생
-                                    MapEventService.Instance.OnMapChanged(map);
+                                    ServiceLocator.MapEventService.OnMapChanged(map);
                                 }
                             }
                             else if (line.Contains(BECLIENT_INIT_SUBSTRING))

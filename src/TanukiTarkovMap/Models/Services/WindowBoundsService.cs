@@ -41,9 +41,16 @@ namespace TanukiTarkovMap.Models.Services
     /// <summary>
     /// 창 경계 처리 서비스
     /// PIP 모드에서 창이 화면 밖으로 나가지 않도록 관리
+    ///
+    /// 사용법: ServiceLocator.WindowBoundsService (DI 싱글톤)
     /// </summary>
     public class WindowBoundsService
     {
+        /// <summary>
+        /// DI 컨테이너 전용 생성자 - 외부에서 new 사용 금지
+        /// </summary>
+        internal WindowBoundsService() { }
+
         private Screen _pipModeScreen = null;
 
         /// <summary>
