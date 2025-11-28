@@ -7,6 +7,232 @@ CefSharp를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감�
 
 ---
 
+## 아키텍처 다이어그램
+
+### 전체 구조
+
+```mermaid
+graph TB
+    subgraph Views["Views (XAML)"]
+        MW[MainWindow]
+        SP[SettingsPage]
+        WBU[WebBrowserUserControl]
+    end
+
+    subgraph Behaviors["Behaviors (UI 인터랙션)"]
+        TBA[TopBarAnimationBehavior]
+        WDB[WindowDragBehavior]
+        WCB[WindowControlBehavior]
+        HIB[HotkeyInputBehavior]
+    end
+
+    subgraph ViewModels["ViewModels"]
+        MWVM[MainWindowViewModel]
+        SPVM[SettingsViewModel]
+        WBVM[WebBrowserViewModel]
+    end
+
+    subgraph Services["Services (DI Singleton)"]
+        SL[ServiceLocator]
+        WVUI[WebViewUIService]
+        WBS[WindowBoundsService]
+        WSM[WindowStateManager]
+        MES[MapEventService]
+    end
+
+    subgraph StaticServices["Static Services"]
+        SET[Settings]
+    end
+
+    subgraph FileSystem["FileSystem Watchers"]
+        W[Watcher]
+        LW[LogsWatcher]
+        SW[ScreenshotsWatcher]
+    end
+
+    subgraph Network["Network"]
+        SRV[Server - WebSocket]
+    end
+
+    subgraph Application["Application"]
+        APP[App.xaml.cs]
+    end
+
+    subgraph JavaScript["JavaScript Integration"]
+        JSL[JavaScriptLoader]
+        WEC[WebElementsControl]
+        PL[PageLayout]
+        CD[ConnectionDetector]
+        UIC[UICustomization]
+        MM[MapMarkers]
+    end
+
+    subgraph External["External"]
+        CEF[CefSharp Browser]
+        TM[tarkov-market.com]
+        TK[Tarkov Log Files]
+    end
+
+    MW -->|ServiceLocator| MWVM
+    SP -->|직접 생성| SPVM
+    WBU -->|직접 생성| WBVM
+
+    MW -.->|code-behind 연결| WBU
+    MW -.->|embed| SP
+
+    TBA -.-> MW
+    WDB -.-> MW
+    WCB -.-> MW
+    HIB -.-> SP
+
+    MWVM --> SL
+    WBVM --> SL
+
+    SL --> WVUI
+    SL --> WBS
+    SL --> WSM
+    SL --> MES
+
+    SPVM --> SET
+    WSM --> SET
+
+    APP -->|Initialize| SL
+    APP -->|Start| W
+    APP -->|Start| SRV
+    APP -->|Load| SET
+    APP -->|Create| MW
+
+    W --> LW
+    W --> SW
+
+    LW --> MES
+    LW --> SRV
+    SW --> MES
+    MES --> MWVM
+
+    WVUI --> JSL
+    JSL --> WEC
+    JSL --> PL
+    JSL --> CD
+    JSL --> UIC
+    JSL --> MM
+
+    WBVM --> CEF
+    CEF --> TM
+    LW --> TK
+```
+
+### MVVM 데이터 흐름
+
+```mermaid
+flowchart LR
+    subgraph View["View Layer"]
+        XAML[XAML Binding]
+        BEH[Behaviors]
+    end
+
+    subgraph ViewModel["ViewModel Layer"]
+        CMD[Commands]
+        PROP[Observable Properties]
+    end
+
+    subgraph Model["Model/Service Layer"]
+        SVC[Services]
+        DATA[Data Models]
+    end
+
+    XAML -->|DataBinding| PROP
+    XAML -->|Command Binding| CMD
+    BEH -->|UI Interaction| CMD
+    CMD --> SVC
+    SVC --> DATA
+    DATA -->|PropertyChanged| PROP
+```
+
+### 맵 전환 시퀀스
+
+#### 자동 맵 전환 (Tarkov 로그 감지)
+
+```mermaid
+sequenceDiagram
+    participant TK as Tarkov Game
+    participant LW as LogsWatcher
+    participant MES as MapEventService
+    participant MWVM as MainWindowViewModel
+
+    TK->>LW: 로그 파일 변경
+    LW->>LW: 맵 ID 파싱
+    LW->>MES: OnMapChanged(mapId)
+    MES->>MWVM: MapChanged Event
+    MWVM->>MWVM: ChangeMapCommand.Execute()
+    Note over MWVM: CurrentMap 속성 변경 (로깅만)
+```
+
+#### 수동 맵 선택 (UI 드롭다운)
+
+```mermaid
+sequenceDiagram
+    participant UI as ComboBox
+    participant MWVM as MainWindowViewModel
+    participant MW as MainWindow
+    participant WBVM as WebBrowserViewModel
+    participant CEF as CefSharp Browser
+
+    UI->>MWVM: SelectedMapInfo 변경
+    MWVM->>MWVM: OnSelectedMapInfoChanged()
+    MW->>MW: ViewModel_PropertyChanged
+    MW->>WBVM: NavigateToMap(mapInfo)
+    WBVM->>CEF: LoadUrl(mapUrl)
+    CEF->>CEF: FrameLoadEnd
+    WBVM->>CEF: ApplyUIVisibilityAsync()
+```
+
+### UI 요소 숨기기 흐름
+
+```mermaid
+flowchart TD
+    START[페이지 로드 완료] --> INIT[INIT_SCRIPT 실행]
+    INIT --> ALWAYS[헤더/푸터 숨김]
+    ALWAYS --> CHECK{HideWebElements?}
+    CHECK -->|true| HIDE[패널 숨김]
+    CHECK -->|false| SHOW[패널 표시]
+    HIDE --> RESIZE[resize 이벤트 발생]
+    SHOW --> RESIZE
+    RESIZE --> END[레이아웃 재계산 완료]
+```
+
+### 서비스 의존성
+
+```mermaid
+graph LR
+    subgraph DI["DI Container"]
+        SL[ServiceLocator]
+    end
+
+    subgraph Services["Singleton Services"]
+        WVUI[WebViewUIService]
+        WBS[WindowBoundsService]
+        WSM[WindowStateManager]
+        MES[MapEventService]
+    end
+
+    subgraph Static["Static Class"]
+        SET[Settings]
+    end
+
+    SL -->|Factory| WVUI
+    SL -->|Factory| WBS
+    SL -->|Factory| WSM
+    SL -->|Factory| MES
+
+    WSM -->|Load/Save| SET
+    SET -->|JSON| FILE[settings.json]
+    WVUI -->|JavaScript| CEF[CefSharp]
+    WBS -->|Screen Info| WIN[System.Windows.Forms]
+```
+
+---
+
 ## 기술 스택
 
 | 항목 | 기술/라이브러리 |
