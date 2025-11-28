@@ -1,359 +1,320 @@
-# PIP 모드 창 위치 관리 리팩토링 체크리스트
+# TanukiTarkovMap MVVM 리팩토링 체크리스트
 
-## ✅ 완료된 작업
-
-### Phase 0: 코드 정리
-- [x] Env.cs 기능을 App.xaml.cs에 통합
-- [x] 프로젝트 전체에서 Env 참조를 App으로 변경 (13개 파일)
-- [x] Env.cs 파일 삭제
-- [x] 빌드 검증 완료
+## 프로젝트 개요
+- **목표**: 코드 비하인드 제거 및 순수 MVVM 패턴 구현
+- **접근법**: 비즈니스 로직 → ViewModel → Service 순차 이동
+- **원칙**: KISS, YAGNI, 실용주의
 
 ---
 
-### Phase 4: WindowStateManager 모듈화 (완료)
+## 📊 현재 상태 분석 (2025-01-20)
 
-#### 4.1 WindowStateManager.cs 생성
-**파일:** `Models\Services\WindowStateManager.cs`
+### 코드 비하인드 비즈니스 로직 현황
+- **MainWindow.xaml.cs**: 594줄 중 **157줄 비즈니스 로직** (31%)
+- **SettingsPage.xaml.cs**: 548줄 중 **365줄 비즈니스 로직** (67%)
+- **총계**: 1,142줄 중 **522줄 비즈니스 로직** (48%)
 
-- [x] **WindowStateManager 서비스 생성**
-  - Normal 모드 Rect 저장: `_normalModeRect`
-  - PIP 모드 Rect 저장: `Dictionary<string, Rect> _pipModeRects` (맵별)
-  - `LoadFromSettings()` 메서드
-  - `SaveToSettings()` 메서드
-  - `UpdateAndSave()` 메서드
-  - `GetPipModeRect()` 메서드
-  - `UpdateNormalModeRect()` 메서드
-  - `UpdatePipModeRect()` 메서드
-
-#### 4.2 MainWindowViewModel.cs - WindowStateManager 통합
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **_windowStateManager 필드 추가**
-- [x] **생성자에서 WindowStateManager 초기화**
-- [x] **LoadSettings()에서 WindowStateManager 사용**
-- [x] **OnWindowBoundsChanged()에서 WindowStateManager.UpdateAndSave() 사용**
-- [x] **OnPipModeChanged() 리팩토링** - WindowStateManager로 저장
-- [x] **EnterPipMode() 리팩토링** - WindowStateManager에서 로드
-- [x] **ExitPipMode() 리팩토링** - WindowStateManager에서 로드
-- [x] **OnMapChanged() 리팩토링** - WindowStateManager 사용
-- [x] **SaveSettings() 커맨드 리팩토링** - WindowStateManager 사용
-
-#### 4.3 레거시 메서드 정리
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **LoadMapSettings() 제거** (더 이상 사용되지 않음)
-- [x] **SaveNormalSettings() 제거** (WindowStateManager로 대체)
-- [x] **SavePipSettings() 제거** (WindowStateManager로 대체)
-
-#### 4.4 빌드 검증
-- [x] 프로젝트 빌드 성공 확인
-- [x] 기존 nullable 경고만 존재 (새로운 에러 없음)
+### 주요 문제점
+- ⚠️ 탭 관리 시스템이 코드 비하인드에 존재 (104줄)
+- ⚠️ 설정 관리 로직이 코드 비하인드에 존재 (80줄)
+- ⚠️ Hotkey 관리가 코드 비하인드에 존재 (198줄)
+- ⚠️ WebView2 이벤트 처리가 코드 비하인드에 존재 (40줄)
+- ⚠️ Map 설정 UI 동적 생성이 코드 비하인드에 존재 (140줄)
+- ⚠️ Map 이름 매핑 로직이 코드 비하인드에 존재 (30줄)
 
 ---
 
-## 🔄 진행 예정 작업
+## 🎯 Phase 1: 코드 비하인드 제거 (최우선 - 현재 진행)
 
-### Phase 1: 창 위치 이벤트 기반 저장 시스템 구축
+### Step 1: Supporting Services 생성
 
-#### 1.1 MainWindow.xaml.cs - 이벤트 발생 로직 추가
-**파일:** `Views\MainWindow.xaml.cs`
+#### 1.1 TabManagementService 생성
+- [ ] `TabManagementService` 클래스 생성
+- [ ] 메서드 구현
+  - [ ] `AddTab(string url)` - 새 탭 추가
+  - [ ] `RemoveTab(string tabId)` - 탭 제거
+  - [ ] `GetActiveTab()` - 현재 활성 탭 조회
+  - [ ] `GetAllTabs()` - 모든 탭 조회
+- [ ] `_tabCounter` 관리 로직 이동
+- [ ] WebView2 컬렉션 관리
+- [ ] MainWindow.xaml.cs에서 104줄 제거
 
-- [x] **WindowBoundsChanged 이벤트 정의**
-  ```csharp
-  // 창 위치/크기 변경 이벤트 (Rect 파라미터 사용)
-  public event EventHandler<WindowBoundsChangedEventArgs>? WindowBoundsChanged;
+#### 1.2 WebViewService 생성
+- [ ] `WebViewService` 클래스 생성
+- [ ] 메서드 구현
+  - [ ] `InitializeWebView2(object webView)` - WebView2 초기화
+  - [ ] `ConfigureWebView2Settings(object webView)` - 설정 구성
+  - [ ] `ExtractPageTitle(object webView)` - 페이지 타이틀 추출
+  - [ ] `ProcessPageTitle(string title)` - 타이틀 가공 ("Tarkov Pilot" → "Tarkov Client")
+  - [ ] `ParseWebMessage(string message)` - 메시지 파싱 ("map:" 프로토콜)
+- [ ] MainWindow.xaml.cs에서 40줄 제거
 
-  public class WindowBoundsChangedEventArgs : EventArgs
-  {
-      public Rect Bounds { get; set; }
-      public bool IsPipMode { get; set; }
-  }
-  ```
+#### 1.3 HotkeyService 생성
+- [ ] `HotkeyService` 클래스 생성
+- [ ] 메서드 구현
+  - [ ] `RegisterHotkey(string key, Action callback)` - Hotkey 등록
+  - [ ] `UnregisterHotkey(string key)` - Hotkey 해제
+  - [ ] `ReloadHotkeys()` - 설정 재로드
+  - [ ] `ValidateHotkey(string key)` - Hotkey 유효성 검사
+- [ ] 기존 `HotkeyManager` 통합
+- [ ] MainWindow.xaml.cs에서 48줄 제거
 
-- [x] **MainWindow_LocationChanged 메서드 수정**
-  - 위치 변경 시 즉시 이벤트 발생
-  - Rect 객체로 Left, Top, Width, Height 전달
-  - PIP 모드 여부 함께 전달
-  ```csharp
-  private void MainWindow_LocationChanged(object sender, EventArgs e)
-  {
-      if (_isClampingLocation) return;
+#### 1.4 MapConfiguration 생성 (또는 MapNameMappingService)
+- [ ] `MapConfiguration` 정적 클래스 생성
+- [ ] 상수 정의
+  - [ ] `DisplayToInternal` Dictionary
+  - [ ] `InternalToDisplay` Dictionary
+  - [ ] `AllDisplayNames` Array
+- [ ] SettingsPage.xaml.cs에서 30줄 제거
 
-      // ... 기존 clamping 로직 ...
-
-      // ✅ 이벤트 발생 (즉각 저장)
-      WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
-      {
-          Bounds = new Rect(this.Left, this.Top, this.Width, this.Height),
-          IsPipMode = _viewModel.IsPipMode
-      });
-  }
-  ```
-
-- [x] **MainWindow_SizeChanged 메서드 추가/수정**
-  - 크기 변경 시에도 동일하게 이벤트 발생
-
-- [x] **MainWindow 생성자에서 이벤트 구독**
-  ```csharp
-  public MainWindow()
-  {
-      // ...
-
-      // ViewModel에 이벤트 연결
-      this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
-  }
-  ```
-
-#### 1.2 MainWindowViewModel.cs - 타이머 제거 및 이벤트 핸들러 추가
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **_saveTimer 관련 코드 제거**
-  - Line 55: `_saveTimer` 필드 선언 삭제
-  - Lines 360-379: `ScheduleSaveSettings()` 메서드 삭제
-  - Lines 145-159: PropertyChanged에서 `ScheduleSaveSettings()` 호출 제거
-
-- [x] **OnWindowBoundsChanged 이벤트 핸들러 추가**
-  ```csharp
-  /// <summary>
-  /// View에서 창 위치/크기 변경 이벤트를 받아 즉시 저장
-  /// (모듈화 고려: 나중에 별도 서비스로 분리 가능)
-  /// </summary>
-  public void OnWindowBoundsChanged(object? sender, WindowBoundsChangedEventArgs e)
-  {
-      Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}");
-
-      // ViewModel 속성 업데이트 (PropertyChanged 발생 방지하도록 직접 설정)
-      _windowLeft = e.Bounds.Left;
-      _windowTop = e.Bounds.Top;
-      _windowWidth = e.Bounds.Width;
-      _windowHeight = e.Bounds.Height;
-
-      // 즉시 저장 (타이머 없음)
-      if (e.IsPipMode)
-      {
-          SavePipSettings();
-      }
-      else
-      {
-          SaveNormalSettings();
-      }
-  }
-  ```
-
-- [x] **PropertyChanged 핸들러 정리**
-  - WindowLeft, WindowTop, WindowWidth, WindowHeight의 PropertyChanged 핸들러에서 저장 로직 제거
-  - 이제 View의 이벤트로만 저장
-
-#### 1.3 SaveNormalSettings/SavePipSettings 메서드 확인
-**파일:** `ViewModels\MainWindowViewModel.cs`
-
-- [x] **SaveNormalSettings() 검토** (Lines 326-339)
-  - 현재 로직 유지
-  - 즉시 저장되는지 확인
-
-- [x] **SavePipSettings() 검토** (Lines 309-324)
-  - 현재 로직 유지
-  - 즉시 저장되는지 확인
+#### 1.5 KeyParsingService 생성
+- [ ] `KeyParsingService` 클래스 생성
+- [ ] 메서드 구현
+  - [ ] `ParseKeyInput(Key key, ModifierKeys modifiers)` - 키 입력 파싱
+  - [ ] `GetKeyString(Key key, ModifierKeys modifiers)` - 키 문자열 생성
+  - [ ] `GetMainKeyString(Key key)` - 주 키 문자열 생성
+  - [ ] `ValidateHotkeyKey(Key key)` - 키 유효성 검사
+- [ ] SettingsPage.xaml.cs에서 150줄 제거
 
 ---
 
-### Phase 2: PIP 모드 진입 시 창 위치 검증
+### Step 2: ViewModel 강화
 
-#### 2.1 MainWindow.xaml.cs - HandlePipModeChanged 메서드 수정
-**파일:** `Views\MainWindow.xaml.cs` (Lines 135-168)
+#### 2.1 MainWindowViewModel 확장
+- [ ] **Tab 관리 프로퍼티 추가**
+  - [ ] `ObservableCollection<TabViewModel> Tabs`
+  - [ ] `int SelectedTabIndex`
+  - [ ] `TabViewModel CurrentTab`
 
-- [x] **PIP 모드 진입 시 EnsureWindowWithinScreen 호출**
-  ```csharp
-  private async Task HandlePipModeChanged()
-  {
-      if (_viewModel.IsPipMode)
-      {
-          var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-          _windowBoundsService.SavePipModeScreen(windowHandle);
+- [ ] **Tab 관리 Commands 추가**
+  - [ ] `AddNewTabCommand` 구현
+  - [ ] `RemoveTabCommand` 구현
+  - [ ] `SwitchTabCommand` 구현
 
-          // ✅ 창 위치를 화면 내부로 보정
-          var dpiInfo = VisualTreeHelper.GetDpi(this);
-          var validatedPosition = _windowBoundsService.EnsureWindowWithinScreen(
-              _viewModel.WindowLeft,
-              _viewModel.WindowTop,
-              _viewModel.WindowWidth,
-              _viewModel.WindowHeight,
-              dpiInfo.DpiScaleX,
-              dpiInfo.DpiScaleY
-          );
+- [ ] **WebView2 이벤트 처리 이동**
+  - [ ] `HandleNavigationCompleted(object webView)` 메서드
+  - [ ] `HandleWebMessageReceived(string message)` 메서드
+  - [ ] Map 이름 추출 로직 이동
 
-          // 검증된 위치 반영
-          _viewModel.WindowLeft = validatedPosition.X;
-          _viewModel.WindowTop = validatedPosition.Y;
+- [ ] **Hotkey 관리 추가**
+  - [ ] `LoadHotkeySettings()` 메서드
+  - [ ] `UpdateHotkeySettings()` 메서드
+  - [ ] `ReloadHotkeysCommand` 구현
 
-          Logger.SimpleLog($"[PIP Entry] Position validated: {validatedPosition}");
+- [ ] **Window 위치 관리 통합**
+  - [ ] `UpdateWindowPosition(double left, double top)` 메서드
+  - [ ] Position clamping 로직 이동
+  - [ ] DPI 계산 로직 이동
 
-          // ... 기존 JavaScript 적용 로직 ...
-      }
-      else
-      {
-          // ... 기존 PIP 종료 로직 ...
-      }
-  }
-  ```
+#### 2.2 SettingsViewModel 완전 구현
+- [ ] **Map 설정 프로퍼티 추가**
+  - [ ] `ObservableCollection<MapSettingViewModel> MapSettings`
+  - [ ] `bool GlobalPipEnabled` (기존 `PipEnabled`)
+  - [ ] UI 상태 프로퍼티들
 
-#### 2.2 OnPipModeChanged 메서드 수정
-**파일:** `ViewModels\MainWindowViewModel.cs` (Lines 191-203)
+- [ ] **Map 설정 Commands 구현**
+  - [ ] `ToggleMapEnabledCommand`
+  - [ ] `GlobalPipEnabledChangedCommand`
 
-- [x] **모드 전환 전 즉시 저장 로직 추가**
-  ```csharp
-  private void OnPipModeChanged()
-  {
-      Logger.SimpleLog($"PIP Mode changed to: {IsPipMode}");
+- [ ] **Hotkey Input 처리 추가**
+  - [ ] `bool IsHotkeyInputMode` 프로퍼티
+  - [ ] `string CurrentHotkeyInput` 프로퍼티
+  - [ ] `StartHotkeyInputCommand` 구현
+  - [ ] `StopHotkeyInputCommand` 구현
+  - [ ] `ProcessKeyInputCommand` 구현
 
-      if (IsPipMode)
-      {
-          // 일반 모드 위치 즉시 저장 (이벤트 발생 전에 저장)
-          SaveNormalSettings();
-          EnterPipMode();
-      }
-      else
-      {
-          // PIP 모드 위치 즉시 저장
-          SavePipSettings();
-          ExitPipMode();
-      }
-  }
-  ```
+- [ ] **Settings 관리 메서드**
+  - [ ] `LoadSettingsFromEnv()` 메서드
+  - [ ] `SaveSettingsToEnv()` 메서드
+  - [ ] `ValidateSettings()` 메서드
 
----
+#### 2.3 TabViewModel 생성
+- [ ] `TabViewModel` 클래스 생성
+- [ ] 프로퍼티 정의
+  - [ ] `string TabId`
+  - [ ] `string TabTitle`
+  - [ ] `string TabUrl`
+  - [ ] `bool IsActive`
+  - [ ] `object WebView` (WebView2 인스턴스)
+- [ ] Commands 구현
+  - [ ] `CloseCommand`
+  - [ ] `ActivateCommand`
 
-### Phase 3: 테스트 및 검증
-
-#### 3.1 빌드 테스트
-- [x] 프로젝트 빌드 성공 확인
-- [x] 경고 메시지 확인 (기존 nullable 경고만 존재)
-
-#### 3.2 기능 테스트
-
-**테스트 1: 즉각 저장 테스트**
-- [ ] 일반 모드에서 창 위치 변경
-- [ ] **즉시** F11 누르기 (< 50ms)
-- [ ] F11 다시 눌러 일반 모드 복귀
-- [ ] **기대 결과:** 새로운 위치로 복귀 ✅
-
-**테스트 2: PIP 모드 드래그 즉시 저장 테스트**
-- [ ] F11로 PIP 모드 진입
-- [ ] 창을 새 위치로 드래그
-- [ ] **즉시** F11 누르기
-- [ ] F11 다시 눌러 PIP 모드 재진입
-- [ ] **기대 결과:** 드래그한 위치에 PIP 창 표시 ✅
-
-**테스트 3: 화면 경계 검증 테스트**
-- [ ] settings.json에서 Left/Top을 -1로 설정
-- [ ] F11로 PIP 모드 진입
-- [ ] **기대 결과:** 창이 화면 내부에 위치 ✅
-- [ ] settings.json 확인: Left/Top이 유효한 값으로 저장됨
-
-**테스트 4: 연속 드래그 테스트**
-- [ ] 창을 연속으로 빠르게 드래그
-- [ ] 각 위치 변경마다 즉시 저장되는지 로그 확인
-- [ ] **기대 결과:** 모든 위치 변경이 즉시 저장됨 (타이머 딜레이 없음)
-
-**테스트 5: 멀티 모니터 테스트**
-- [ ] 보조 모니터에서 PIP 모드 진입
-- [ ] 창이 모니터 경계 근처에 위치하도록 설정
-- [ ] **기대 결과:** 창이 작업 영역 내부로 조정 ✅
-
-**테스트 6: DPI 스케일링 테스트**
-- [ ] 시스템 DPI 설정 변경 (125%, 150%)
-- [ ] PIP 모드 진입 및 위치 저장
-- [ ] **기대 결과:** DPI 스케일링에 맞게 올바른 위치 저장
-
-**테스트 7: 맵별 PIP 위치 기억 테스트**
-- [ ] Map A에서 PIP 모드 진입, 위치 1로 이동, F11로 종료
-- [ ] Map B로 전환, PIP 모드 진입, 위치 2로 이동, F11로 종료
-- [ ] Map A로 전환, PIP 모드 재진입
-- [ ] **기대 결과:** Map A의 위치 1로 PIP 창 표시
+#### 2.4 MapSettingViewModel 생성
+- [ ] `MapSettingViewModel` 클래스 생성
+- [ ] 프로퍼티 정의
+  - [ ] `string MapName` (표시 이름)
+  - [ ] `string MapInternalName`
+  - [ ] `bool Enabled`
+  - [ ] `bool IsEditable` (PIP 활성화 여부에 따라)
+  - [ ] `double Opacity` (UI 투명도)
 
 ---
 
-### Phase 4: 성능 및 파일 I/O 최적화 (선택사항)
+### Step 3: 코드 비하인드 리팩토링
 
-#### 4.1 파일 I/O 빈도 확인
-- [ ] 로그를 통해 settings.json 저장 빈도 확인
-- [ ] 창 드래그 중 과도한 파일 쓰기 발생 여부 확인
+#### 3.1 MainWindow.xaml.cs 리팩토링
+- [ ] **Tab 관리 코드 제거** (104줄)
+  - [ ] `_tabCounter` 필드 제거
+  - [ ] `_tabWebViews` 필드 제거
+  - [ ] `InitializeTabs()` 제거
+  - [ ] `AddNewTab()` 제거
+  - [ ] `InitializeWebView2()` 제거
+  - [ ] `ConfigureWebView2Settings()` 제거
+  - [ ] `NewTab_Click()` 제거 → ViewModel Command 바인딩
+  - [ ] `CloseTab_Click()` 제거 → ViewModel Command 바인딩
 
-#### 4.2 디바운싱 재도입 (필요 시)
-- [ ] 만약 파일 I/O가 과도하다면 (초당 10회 이상):
-  - View에서 짧은 디바운싱 추가 (50-100ms)
-  - 하지만 모드 전환 시에는 즉시 발생
-  ```csharp
-  private DispatcherTimer _boundsChangedDebouncer;
+- [ ] **Hotkey 관리 코드 제거** (48줄)
+  - [ ] `_hotkeyManager` 필드 제거
+  - [ ] `InitializeHotkeyManager()` 제거
+  - [ ] `UpdateHotkeySettings()` 제거
+  - [ ] `MainWindow_PreviewKeyDown()` 제거 → ViewModel 메서드 호출로 변경
 
-  private void MainWindow_LocationChanged(object sender, EventArgs e)
-  {
-      // 짧은 디바운싱 (드래그 중 과도한 이벤트 방지)
-      _boundsChangedDebouncer?.Stop();
-      _boundsChangedDebouncer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(50) };
-      _boundsChangedDebouncer.Tick += (s, args) =>
-      {
-          _boundsChangedDebouncer.Stop();
-          WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs { ... });
-      };
-      _boundsChangedDebouncer.Start();
-  }
-  ```
+- [ ] **WebView2 이벤트 처리 제거** (40줄)
+  - [ ] `WebView_NavigationCompleted()` 로직 → ViewModel로 이동
+  - [ ] `CoreWebView2_WebMessageReceived()` 파싱 → ViewModel로 이동
+  - [ ] 이벤트 핸들러는 ViewModel 메서드만 호출하도록 변경
+
+- [ ] **Window 위치 관리 간소화** (48줄)
+  - [ ] `MainWindow_LocationChanged()` 로직 → ViewModel로 이동
+  - [ ] Clamping 로직 제거
+  - [ ] 이벤트 핸들러는 ViewModel 프로퍼티만 업데이트
+
+- [ ] **Service 인스턴스화 제거** (29줄)
+  - [ ] `_windowBoundsService` 제거 → ViewModel 주입
+  - [ ] `_pipService` 제거 → ViewModel 주입
+  - [ ] 생성자 간소화
+
+- [ ] **최종 코드 비하인드 목표** (50-80줄)
+  - [ ] 생성자 (DataContext 설정)
+  - [ ] `MainWindow_Loaded()` (ViewModel.Initialize() 호출)
+  - [ ] `MainWindow_Closed()` (리소스 정리)
+  - [ ] `Window_MouseLeftButtonDown()` (PIP 드래그)
+  - [ ] `Settings_Click()` (설정 창 표시)
+
+#### 3.2 SettingsPage.xaml.cs 리팩토링
+- [ ] **Map 설정 UI 생성 코드 제거** (140줄)
+  - [ ] `CreateMapSettingsUI()` 제거 → XAML ItemsControl 바인딩
+  - [ ] `UpdateMapSettingsState()` 제거 → ViewModel 프로퍼티
+  - [ ] `GlobalPipEnabled_Changed()` 제거 → ViewModel Command
+  - [ ] `MapEnabled_Changed()` 제거 → ViewModel Command
+  - [ ] 동적 UI 생성 → XAML DataTemplate으로 대체
+
+- [ ] **Map 이름 매핑 제거** (30줄)
+  - [ ] `_mapDisplayToInternal` 제거 → MapConfiguration 사용
+  - [ ] `_mapInternalToDisplay` 제거 → MapConfiguration 사용
+  - [ ] `_mapDisplayNames` 제거 → MapConfiguration 사용
+  - [ ] Dictionary 초기화 코드 제거
+
+- [ ] **Hotkey Input 처리 제거** (150줄)
+  - [ ] `_isHotkeyInputMode` 제거 → ViewModel 프로퍼티
+  - [ ] `PipHotkeyButton_Click()` 제거 → ViewModel Command
+  - [ ] `PipHotkeyButton_LostFocus()` 제거 → ViewModel Command
+  - [ ] `PipHotkeyButton_PreviewKeyDown()` 제거 → ViewModel Command
+  - [ ] `PipHotkeyButton_KeyDown()` 제거 → ViewModel Command
+  - [ ] `GetKeyString()` 제거 → KeyParsingService
+  - [ ] `GetMainKeyString()` 제거 → KeyParsingService
+
+- [ ] **Settings 관리 제거** (80줄)
+  - [ ] `LoadSettings()` 제거 → ViewModel 메서드
+  - [ ] `Save_Click()` 제거 → ViewModel Command
+  - [ ] 직접 `Env` 호출 제거
+
+- [ ] **최종 코드 비하인드 목표** (0-10줄)
+  - [ ] 생성자 (InitializeComponent만)
+  - [ ] 이상적으로는 **완전히 제거** 가능
 
 ---
 
-### Phase 5: 코드 정리 및 문서화
+## 🔄 Phase 2: Service 레이어 모듈화 (추후)
 
-#### 5.1 주석 및 로그 정리
-- [ ] 각 메서드에 XML 주석 추가
-- [ ] 불필요한 디버그 로그 제거
-- [ ] 중요한 위치에만 로그 유지
-
-#### 5.2 코드 리뷰
-- [ ] MVVM 패턴 준수 확인
-- [ ] View → ViewModel 단방향 이벤트 흐름 확인
-- [ ] ViewModel의 모듈화 가능성 확인
+### 긴 로직 분리
+- [ ] ViewModel에서 복잡한 로직을 Service로 추가 분리
+- [ ] 각 Service 단위 테스트 작성
+- [ ] Service 간 의존성 정리
 
 ---
 
-## 📊 예상 코드 변경 요약
+## 📋 마이그레이션 우선순위
 
-### 추가
-- MainWindow.xaml.cs: `WindowBoundsChangedEventArgs` 클래스
-- MainWindow.xaml.cs: `WindowBoundsChanged` 이벤트
-- MainWindowViewModel.cs: `OnWindowBoundsChanged` 이벤트 핸들러
+### 🔴 Priority 1 (즉시 시작 - Quick Wins)
+1. **MapConfiguration 추출** (30분)
+   - SettingsPage.xaml.cs의 Dictionary → 상수 클래스
+   - 30줄 제거
 
-### 수정
-- MainWindow.xaml.cs: `MainWindow_LocationChanged` (이벤트 발생 추가)
-- MainWindow.xaml.cs: `HandlePipModeChanged` (위치 검증 추가)
-- MainWindowViewModel.cs: `OnPipModeChanged` (즉시 저장 추가)
-- MainWindowViewModel.cs: PropertyChanged 핸들러 (저장 로직 제거)
+2. **KeyParsingService 생성** (1시간)
+   - SettingsPage.xaml.cs의 키 파싱 로직 이동
+   - 150줄 제거
 
-### 삭제
-- MainWindowViewModel.cs: `_saveTimer` 필드
-- MainWindowViewModel.cs: `ScheduleSaveSettings` 메서드
+3. **SettingsViewModel Map 설정 바인딩** (2시간)
+   - `CreateMapSettingsUI()` → XAML ItemsControl
+   - 140줄 제거
+
+4. **SettingsViewModel Save Command** (1시간)
+   - `Save_Click()` → ViewModel Command
+   - 80줄 제거
+
+**Quick Wins 합계**: 약 5시간으로 **400줄 제거** (SettingsPage 거의 완료)
+
+### 🟡 Priority 2 (다음 단계)
+5. **TabManagementService 생성** (3시간)
+   - Tab CRUD 로직 이동
+   - 104줄 제거
+
+6. **MainWindowViewModel Tab 관리** (3시간)
+   - TabViewModel 생성
+   - Commands 구현
+   - 바인딩 설정
+
+7. **WebViewService 생성** (2시간)
+   - WebView2 이벤트 처리 이동
+   - 40줄 제거
+
+### 🟢 Priority 3 (마무리)
+8. **HotkeyService 생성** (2시간)
+   - HotkeyManager 통합
+   - 48줄 제거
+
+9. **Window 위치 관리 통합** (1시간)
+   - LocationChanged 로직 이동
+   - 48줄 제거
+
+10. **코드 비하인드 최종 정리** (1시간)
+    - 불필요한 코드 제거
+    - 최소화 검증
 
 ---
 
-## 🎯 최종 목표
+## 📊 진행 상황 추적
 
-1. **즉각 반응성:** 창 위치 변경 시 타이머 딜레이 없이 즉시 저장
-2. **모드 전환 안정성:** F11을 빠르게 눌러도 위치 손실 없음
-3. **화면 경계 준수:** PIP 모드 진입 시 항상 화면 내부에 위치
-4. **MVVM 준수:** View에서 이벤트 발생, ViewModel에서 비즈니스 로직 처리
-5. **모듈화 가능성:** ViewModel의 위치 관리 로직을 나중에 별도 서비스로 분리 가능
+### 현재 상태
+- ✅ PIP 기능 MVVM 전환 완료
+- ✅ 설정 페이지 ViewModel 생성 완료
+- ❌ **코드 비하인드 522줄 비즈니스 로직 존재** ← **현재 작업 대상**
+
+### 목표 상태
+- 🎯 MainWindow.xaml.cs: 594줄 → 70줄 (88% 감소)
+- 🎯 SettingsPage.xaml.cs: 548줄 → 10줄 (98% 감소)
+- 🎯 총 비즈니스 로직: 522줄 → 0줄 (100% ViewModel/Service 이동)
 
 ---
 
-## 🔍 문제 분석 요약
+## 📝 기술 스택
+- **프레임워크**: .NET 8.0 WPF
+- **패턴**: 순수 MVVM (코드 비하인드 최소화)
+- **라이브러리**: CommunityToolkit.Mvvm
+- **원칙**:
+  - 비즈니스 로직은 ViewModel
+  - 긴 로직은 Service
+  - 인터페이스는 필요시에만 (YAGNI)
+  - 코드 비하인드는 UI 연결만
 
-### 문제 1: PIP 모드 진입 시 창이 화면 밖으로 나감
-- **원인:** `EnsureWindowWithinScreen()` 메서드가 존재하지만 PIP 모드 진입 시 호출되지 않음
-- **해결:** `HandlePipModeChanged()`에서 `EnsureWindowWithinScreen()` 호출 추가
+---
 
-### 문제 2: 창 위치 저장 지연 (500ms 타이머)
-- **원인:** `_saveTimer`의 500ms 디바운스로 인해 모드 전환 시 위치가 저장되지 않음
-- **증상:**
-  - 창 이동 후 빠르게 F11을 누르면 이전 위치로 되돌아감
-  - PIP 모드에서 창을 이동해도 초기 위치로 리셋됨
-- **해결:** 타이머 방식을 이벤트 기반 즉각 저장으로 변경
+## 🎯 다음 즉시 작업 (Quick Wins 시작)
+
+1. `Models/Configuration/MapConfiguration.cs` 생성
+2. `Models/Services/KeyParsingService.cs` 생성
+3. `ViewModels/MapSettingViewModel.cs` 생성
+4. `SettingsViewModel` 확장
+5. `SettingsPage.xaml` ItemsControl 바인딩 추가
