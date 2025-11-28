@@ -41,9 +41,8 @@
         // C#에 완료 메시지 전송 (WebView 크기 조정 트리거용)
         setTimeout(() => {
             try {
-                // window.chrome.webview: WPF WebView2와 통신하는 객체
-                // postMessage: C#으로 메시지 전송
-                window.chrome.webview.postMessage(JSON.stringify({
+                // CefSharp.PostMessage: C#으로 메시지 전송
+                CefSharp.PostMessage(JSON.stringify({
                     type: 'margins-removed'
                 }));
                 console.log('[Remove Margins] Sent margins-removed message to C#');

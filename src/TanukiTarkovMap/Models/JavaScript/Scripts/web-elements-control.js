@@ -110,10 +110,10 @@ var hideFooter = function() {
             footerWrap.style.display = 'none';
         }
 
-        // UI 제거 완료 후 C#에 메시지 전송
+        // UI 제거 완료 후 C#에 메시지 전송 (CefSharp)
         setTimeout(() => {
             try {
-                window.chrome.webview.postMessage(JSON.stringify({
+                CefSharp.PostMessage(JSON.stringify({
                     type: 'ui-elements-removed'
                 }));
                 console.log('[UI Elements] Sent ui-elements-removed message to C#');

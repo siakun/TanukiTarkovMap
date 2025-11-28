@@ -101,7 +101,7 @@ namespace TanukiTarkovMap.Models.JavaScript
 
                 setTimeout(() => {
                     try {
-                        window.chrome.webview.postMessage(JSON.stringify({
+                        CefSharp.PostMessage(JSON.stringify({
                             type: 'ui-elements-removed'
                         }));
                     } catch (e) {}

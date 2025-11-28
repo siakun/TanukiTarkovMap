@@ -72,7 +72,7 @@ namespace TanukiTarkovMap.ViewModels
             _browser.FrameLoadEnd += OnFrameLoadEnd;
             _browser.AddressChanged += OnAddressChanged;
 
-            // JavaScript 바인딩 설정
+            // JavaScript 메시지 수신 이벤트 등록
             _browser.JavascriptMessageReceived += OnJavascriptMessageReceived;
 
             Logger.SimpleLog("[WebBrowserViewModel] Browser initialized");
@@ -92,48 +92,52 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// 페이지 로드 완료 이벤트
         /// </summary>
-        private async void OnFrameLoadEnd(object? sender, FrameLoadEndEventArgs e)
+        private void OnFrameLoadEnd(object? sender, FrameLoadEndEventArgs e)
         {
             // 메인 프레임만 처리
             if (!e.Frame.IsMain)
                 return;
 
-            IsLoading = false;
-
-            try
+            // CEF 스레드에서 호출되므로 UI 스레드로 전환
+            System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
             {
-                // 불필요한 UI 요소 제거
-                await ExecuteScriptAsync(UICustomization.REMOVE_UNWANTED_ELEMENTS_SCRIPT);
+                IsLoading = false;
 
-                // 웹 페이지 마진/패딩 제거
-                await ExecuteScriptAsync(PageLayout.REMOVE_PAGE_MARGINS_SCRIPT);
-
-                // 줌 레벨 적용
-                ApplyZoomLevel();
-
-                // Tarkov Market 전용 처리
-                if (_browser?.Address?.Contains("tarkov-market.com") == true)
+                try
                 {
-                    // 방향 표시기 추가
-                    await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT);
+                    // 불필요한 UI 요소 제거
+                    await ExecuteScriptAsync(UICustomization.REMOVE_UNWANTED_ELEMENTS_SCRIPT);
 
-                    // UI 요소 숨김 설정 적용
-                    await ApplyUIVisibilityAsync();
+                    // 웹 페이지 마진/패딩 제거
+                    await ExecuteScriptAsync(PageLayout.REMOVE_PAGE_MARGINS_SCRIPT);
 
-                    // "/pilot" 페이지에서 Connected 상태 감지 시작
-                    if (_browser.Address.Contains("/pilot"))
+                    // 줌 레벨 적용
+                    ApplyZoomLevel();
+
+                    // Tarkov Market 전용 처리
+                    if (_browser?.Address?.Contains("tarkov-market.com") == true)
                     {
-                        await ExecuteScriptAsync(ConnectionDetector.DETECT_CONNECTION_STATUS);
-                        Logger.SimpleLog("[WebBrowserViewModel] Connection detection script injected");
-                    }
-                }
+                        // 방향 표시기 추가
+                        await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT);
 
-                Logger.SimpleLog($"[WebBrowserViewModel] Frame load completed: {e.Url}");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("[WebBrowserViewModel] OnFrameLoadEnd error", ex);
-            }
+                        // UI 요소 숨김 설정 적용
+                        await ApplyUIVisibilityAsync();
+
+                        // "/pilot" 페이지에서 Connected 상태 감지 시작
+                        if (_browser.Address.Contains("/pilot"))
+                        {
+                            await ExecuteScriptAsync(ConnectionDetector.DETECT_CONNECTION_STATUS);
+                            Logger.SimpleLog("[WebBrowserViewModel] Connection detection script injected");
+                        }
+                    }
+
+                    Logger.SimpleLog($"[WebBrowserViewModel] Frame load completed: {e.Url}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.Error("[WebBrowserViewModel] OnFrameLoadEnd error", ex);
+                }
+            });
         }
 
         /// <summary>
@@ -143,7 +147,12 @@ namespace TanukiTarkovMap.ViewModels
         {
             try
             {
+                // 디버깅: 모든 수신 메시지 로깅
+                Logger.SimpleLog($"[WebBrowserViewModel] JavascriptMessageReceived triggered! Raw message type: {e.Message?.GetType().Name}");
+
                 var message = e.Message?.ToString();
+                Logger.SimpleLog($"[WebBrowserViewModel] Message content: {message}");
+
                 if (string.IsNullOrEmpty(message))
                     return;
 
@@ -240,6 +249,15 @@ namespace TanukiTarkovMap.ViewModels
         public void Refresh()
         {
             _browser?.Reload();
+        }
+
+        /// <summary>
+        /// 개발자 도구 열기/닫기
+        /// </summary>
+        [RelayCommand]
+        public void ToggleDevTools()
+        {
+            _browser?.ShowDevTools();
         }
 
         #endregion

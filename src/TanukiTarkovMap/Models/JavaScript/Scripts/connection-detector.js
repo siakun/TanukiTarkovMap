@@ -30,9 +30,9 @@
                     if (!connectionDetected) {
                         connectionDetected = true;
 
-                        // C#에 메시지 전송
+                        // C#에 메시지 전송 (CefSharp)
                         try {
-                            window.chrome.webview.postMessage(JSON.stringify({
+                            CefSharp.PostMessage(JSON.stringify({
                                 type: 'pilot-connected'
                             }));
                             console.log('[Connection Detection] Pilot connected!');

@@ -13,9 +13,8 @@
     </UserControl.DataContext>
 
     <Grid>
-        <!-- CefSharp ChromiumWebBrowser -->
-        <cefSharp:ChromiumWebBrowser x:Name="Browser"
-                                      Address="{Binding Address, Mode=TwoWay}"/>
+        <!-- CefSharp ChromiumWebBrowser - 코드에서 생성 -->
+        <Grid x:Name="BrowserContainer"/>
 
         <!-- 로딩 오버레이 -->
         <Border Background="#DD1A1A1A"
