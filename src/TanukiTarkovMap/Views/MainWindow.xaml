@@ -145,9 +145,9 @@
                             </ComboBox.ItemContainerStyle>
                         </ComboBox>
 
-                        <!-- PIP 모드 UI 요소 숨기기 체크박스 -->
-                        <CheckBox x:Name="PipHideWebElementsCheckBox"
-                                  IsChecked="{Binding PipHideWebElements, Mode=TwoWay}"
+                        <!-- Compact 모드 UI 요소 숨기기 체크박스 -->
+                        <CheckBox x:Name="HideWebElementsCheckBox"
+                                  IsChecked="{Binding HideWebElements, Mode=TwoWay}"
                                   Margin="16,0,0,0"
                                   VerticalAlignment="Center"
                                   Foreground="White"

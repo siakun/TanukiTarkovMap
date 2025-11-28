@@ -40,7 +40,7 @@ namespace TanukiTarkovMap.Models.Services
 
     /// <summary>
     /// 창 경계 처리 서비스
-    /// PIP 모드에서 창이 화면 밖으로 나가지 않도록 관리
+    /// Compact 모드에서 창이 화면 밖으로 나가지 않도록 관리
     ///
     /// 사용법: ServiceLocator.WindowBoundsService (DI 싱글톤)
     /// </summary>
@@ -48,27 +48,28 @@ namespace TanukiTarkovMap.Models.Services
     {
         /// <summary>
         /// DI 컨테이너 전용 생성자 - 외부에서 new 사용 금지
+        /// ServiceLocator.CreateInstance()를 통해서만 생성
         /// </summary>
         internal WindowBoundsService() { }
 
-        private Screen _pipModeScreen = null;
+        private Screen _compactModeScreen = null;
 
         /// <summary>
-        /// PIP 모드 시작 시 현재 화면 저장 (다른 모니터로 이동 방지)
+        /// Compact 모드 시작 시 현재 화면 저장 (다른 모니터로 이동 방지)
         /// </summary>
-        public void SavePipModeScreen(IntPtr windowHandle)
+        public void SaveCompactModeScreen(IntPtr windowHandle)
         {
-            _pipModeScreen = Screen.FromHandle(windowHandle);
-            // Logger.SimpleLog($"[WindowBoundsService] SavePipModeScreen: {_pipModeScreen.DeviceName}, Bounds={_pipModeScreen.Bounds}");
+            _compactModeScreen = Screen.FromHandle(windowHandle);
+            // Logger.SimpleLog($"[WindowBoundsService] SaveCompactModeScreen: {_compactModeScreen.DeviceName}, Bounds={_compactModeScreen.Bounds}");
         }
 
         /// <summary>
-        /// PIP 모드 종료 시 화면 정보 초기화
+        /// Compact 모드 종료 시 화면 정보 초기화
         /// </summary>
-        public void ClearPipModeScreen()
+        public void ClearCompactModeScreen()
         {
-            _pipModeScreen = null;
-            Logger.SimpleLog($"[WindowBoundsService] ClearPipModeScreen: Screen info cleared");
+            _compactModeScreen = null;
+            Logger.SimpleLog($"[WindowBoundsService] ClearCompactModeScreen: Screen info cleared");
         }
 
         /// <summary>
@@ -161,11 +162,11 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// 창을 화면 내부로 이동 (PIP 모드 진입 시 초기 위치 보정)
+        /// 창을 화면 내부로 이동 (Compact 모드 진입 시 초기 위치 보정)
         /// </summary>
         public System.Windows.Point EnsureWindowWithinScreen(double currentLeft, double currentTop, double width, double height, double dpiScaleX, double dpiScaleY)
         {
-            if (_pipModeScreen == null)
+            if (_compactModeScreen == null)
             {
                 Logger.SimpleLog("[WindowBoundsService] EnsureWindowWithinScreen: No saved screen");
                 return new System.Windows.Point(currentLeft, currentTop);
@@ -204,10 +205,10 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         private Rect GetWorkArea(double dpiScaleX, double dpiScaleY)
         {
-            if (_pipModeScreen == null)
-                throw new InvalidOperationException("PIP mode screen not saved");
+            if (_compactModeScreen == null)
+                throw new InvalidOperationException("Compact mode screen not saved");
 
-            return GetWorkAreaForScreen(_pipModeScreen, dpiScaleX, dpiScaleY);
+            return GetWorkAreaForScreen(_compactModeScreen, dpiScaleX, dpiScaleY);
         }
 
         /// <summary>

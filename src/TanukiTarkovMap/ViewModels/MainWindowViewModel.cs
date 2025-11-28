@@ -34,8 +34,8 @@ namespace TanukiTarkovMap.ViewModels
             {
                 if (SetProperty(ref _isAlwaysOnTop, value))
                 {
-                    // IsAlwaysOnTop이 변경되면 IsTopmost도 PIP 모드가 아닐 때만 업데이트
-                    if (!IsPipMode)
+                    // IsAlwaysOnTop이 변경되면 IsTopmost도 Compact 모드가 아닐 때만 업데이트
+                    if (!IsCompactMode)
                     {
                         IsTopmost = value;
                     }
@@ -55,16 +55,16 @@ namespace TanukiTarkovMap.ViewModels
         #region UI Visibility Properties
         [ObservableProperty] public partial Visibility TopBarVisibility { get; set; } = Visibility.Visible;
 
-        /// <summary> PIP 모드일 때 최소화/최대화 버튼 숨김 (닫기만 표시) </summary>
-        public Visibility WindowControlButtonsVisibility => IsPipMode ? Visibility.Collapsed : Visibility.Visible;
+        /// <summary> Compact 모드일 때 최소화/최대화 버튼 숨김 (닫기만 표시) </summary>
+        public Visibility WindowControlButtonsVisibility => IsCompactMode ? Visibility.Collapsed : Visibility.Visible;
         #endregion
 
-        #region PIP Mode Properties
+        #region Compact Mode Properties
         [ObservableProperty] public partial string CurrentMap { get; set; }
-        [ObservableProperty] public partial bool IsPipMode { get; set; }
-        [ObservableProperty] public partial bool PipHotkeyEnabled { get; set; } = true;
-        [ObservableProperty] public partial string PipHotkeyKey { get; set; } = "F11";
-        [ObservableProperty] public partial bool PipHideWebElements { get; set; } = true;
+        [ObservableProperty] public partial bool IsCompactMode { get; set; }
+        [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
+        [ObservableProperty] public partial string HotkeyKey { get; set; } = "F11";
+        [ObservableProperty] public partial bool HideWebElements { get; set; } = true;
         #endregion
 
         #region Map Selection Properties
@@ -107,8 +107,8 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> Normal 모드의 Rect (WindowStateManager에서 관리) </summary>
         public Rect NormalModeBounds => _windowStateManager.NormalModeRect;
 
-        /// <summary> PIP 모드 Rect 가져오기 (모든 맵에서 동일) </summary>
-        public Rect GetPipModeBounds() => _windowStateManager.GetPipModeRect();
+        /// <summary> Compact 모드 Rect 가져오기 (모든 맵에서 동일) </summary>
+        public Rect GetCompactModeBounds() => _windowStateManager.GetCompactModeRect();
         #endregion
 
         /// <summary>
@@ -149,7 +149,7 @@ namespace TanukiTarkovMap.ViewModels
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 Logger.SimpleLog($"[MainWindowViewModel] MapEvent received: {e.MapName}");
-                Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
+                Logger.SimpleLog($"[MainWindowViewModel] Current IsCompactMode: {IsCompactMode}");
 
                 // CurrentMap 업데이트 (ChangeMapCommand 사용)
                 ChangeMapCommand.Execute(e.MapName);
@@ -167,17 +167,17 @@ namespace TanukiTarkovMap.ViewModels
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
                 Logger.SimpleLog("[MainWindowViewModel] Screenshot event received");
-                Logger.SimpleLog($"[MainWindowViewModel] Current IsPipMode: {IsPipMode}");
+                Logger.SimpleLog($"[MainWindowViewModel] Current IsCompactMode: {IsCompactMode}");
 
-                // PIP 모드가 아닐 때만 활성화
-                if (!IsPipMode)
+                // Compact 모드가 아닐 때만 활성화
+                if (!IsCompactMode)
                 {
-                    Logger.SimpleLog("[MainWindowViewModel] Executing TogglePipModeCommand (PIP mode OFF -> ON)");
-                    TogglePipModeCommand.Execute(null);
+                    Logger.SimpleLog("[MainWindowViewModel] Executing ToggleCompactModeCommand (Compact mode OFF -> ON)");
+                    ToggleCompactModeCommand.Execute(null);
                 }
                 else
                 {
-                    Logger.SimpleLog("[MainWindowViewModel] PIP mode already active, skipping toggle");
+                    Logger.SimpleLog("[MainWindowViewModel] Compact mode already active, skipping toggle");
                 }
             });
         }
@@ -190,8 +190,8 @@ namespace TanukiTarkovMap.ViewModels
             _windowStateManager.LoadFromSettings(_settings);
 
             // Load hotkey settings
-            PipHotkeyEnabled = _settings.HotkeyEnabled;
-            PipHotkeyKey = _settings.HotkeyKey;
+            HotkeyEnabled = _settings.HotkeyEnabled;
+            HotkeyKey = _settings.HotkeyKey;
 
             // Load pin mode (IsAlwaysOnTop) - 직접 필드 설정하여 Settings 재저장 방지
             _isAlwaysOnTop = _settings.IsAlwaysOnTop;
@@ -243,8 +243,8 @@ namespace TanukiTarkovMap.ViewModels
             {
                 switch (e.PropertyName)
                 {
-                    case nameof(IsPipMode):
-                        OnPipModeChanged();
+                    case nameof(IsCompactMode):
+                        OnCompactModeChanged();
                         break;
                     case nameof(CurrentMap):
                         OnMapChanged();
@@ -252,14 +252,14 @@ namespace TanukiTarkovMap.ViewModels
                     case nameof(SelectedMapInfo):
                         OnSelectedMapInfoChanged();
                         break;
-                    case nameof(PipHideWebElements):
-                        OnPipHideWebElementsChanged();
+                    case nameof(HideWebElements):
+                        OnHideWebElementsChanged();
                         break;
                     case nameof(CurrentWindowLeft):
-                        // Logger.SimpleLog($"[PropertyChanged] CurrentWindowLeft changed to: {CurrentWindowLeft}, IsPipMode={IsPipMode}");
+                        // Logger.SimpleLog($"[PropertyChanged] CurrentWindowLeft changed to: {CurrentWindowLeft}, IsCompactMode={IsCompactMode}");
                         break;
                     case nameof(CurrentWindowTop):
-                        // Logger.SimpleLog($"[PropertyChanged] CurrentWindowTop changed to: {CurrentWindowTop}, IsPipMode={IsPipMode}");
+                        // Logger.SimpleLog($"[PropertyChanged] CurrentWindowTop changed to: {CurrentWindowTop}, IsCompactMode={IsCompactMode}");
                         break;
                     case nameof(CurrentWindowWidth):
                     case nameof(CurrentWindowHeight):
@@ -271,10 +271,10 @@ namespace TanukiTarkovMap.ViewModels
 
         #region Commands
         [RelayCommand]
-        private void TogglePipMode()
+        private void ToggleCompactMode()
         {
-            Logger.SimpleLog($"TogglePipMode called. Current state: {IsPipMode}");
-            IsPipMode = !IsPipMode;
+            Logger.SimpleLog($"ToggleCompactMode called. Current state: {IsCompactMode}");
+            IsCompactMode = !IsCompactMode;
         }
 
         [RelayCommand]
@@ -295,10 +295,10 @@ namespace TanukiTarkovMap.ViewModels
         private void SaveSettings()
         {
             // Save current window state to WindowStateManager
-            if (IsPipMode)
+            if (IsCompactMode)
             {
-                _windowStateManager.UpdatePipModeRect(CurrentWindowBounds);
-                Logger.SimpleLog($"[SaveSettings] Saved PIP mode: {CurrentWindowBounds}");
+                _windowStateManager.UpdateCompactModeRect(CurrentWindowBounds);
+                Logger.SimpleLog($"[SaveSettings] Saved Compact mode: {CurrentWindowBounds}");
             }
             else
             {
@@ -315,11 +315,11 @@ namespace TanukiTarkovMap.ViewModels
         #endregion
 
         #region Private Methods
-        private void OnPipModeChanged()
+        private void OnCompactModeChanged()
         {
-            // Logger.SimpleLog($"PIP Mode changed to: {IsPipMode}");
+            // Logger.SimpleLog($"Compact Mode changed to: {IsCompactMode}");
 
-            if (IsPipMode)
+            if (IsCompactMode)
             {
                 // 일반 모드 위치를 WindowStateManager에 즉시 저장 (이벤트 발생 전에 저장)
                 _windowStateManager.UpdateNormalModeRect(CurrentWindowBounds);
@@ -329,23 +329,23 @@ namespace TanukiTarkovMap.ViewModels
                 App.SetSettings(settings);
                 Settings.Save();
 
-                // Logger.SimpleLog($"[OnPipModeChanged] Saved Normal mode: {CurrentWindowBounds}");
+                // Logger.SimpleLog($"[OnCompactModeChanged] Saved Normal mode: {CurrentWindowBounds}");
 
-                EnterPipMode();
+                EnterCompactMode();
             }
             else
             {
-                // PIP 모드 위치를 WindowStateManager에 즉시 저장
-                _windowStateManager.UpdatePipModeRect(CurrentWindowBounds);
+                // Compact 모드 위치를 WindowStateManager에 즉시 저장
+                _windowStateManager.UpdateCompactModeRect(CurrentWindowBounds);
 
                 var settings = App.GetSettings();
                 _windowStateManager.SaveToSettings(settings);
                 App.SetSettings(settings);
                 Settings.Save();
 
-                // Logger.SimpleLog($"[OnPipModeChanged] Saved PIP mode: {CurrentWindowBounds}");
+                // Logger.SimpleLog($"[OnCompactModeChanged] Saved Compact mode: {CurrentWindowBounds}");
 
-                ExitPipMode();
+                ExitCompactMode();
             }
         }
 
@@ -355,10 +355,10 @@ namespace TanukiTarkovMap.ViewModels
             string mapKey = string.IsNullOrEmpty(CurrentMap) ? "default" : CurrentMap;
             Logger.SimpleLog($"Map changed to: {mapKey}");
 
-            // PIP 모드일 때는 창 크기/위치를 변경하지 않음 (맵별로 크기가 달라지지 않도록)
-            if (IsPipMode)
+            // Compact 모드일 때는 창 크기/위치를 변경하지 않음 (맵별로 크기가 달라지지 않도록)
+            if (IsCompactMode)
             {
-                Logger.SimpleLog($"[OnMapChanged] PIP mode active - maintaining current window size and position");
+                Logger.SimpleLog($"[OnMapChanged] Compact mode active - maintaining current window size and position");
                 return;
             }
         }
@@ -377,38 +377,38 @@ namespace TanukiTarkovMap.ViewModels
             }
         }
 
-        private void OnPipHideWebElementsChanged()
+        private void OnHideWebElementsChanged()
         {
-            Logger.SimpleLog($"[OnPipHideWebElementsChanged] PipHideWebElements changed to: {PipHideWebElements}");
+            Logger.SimpleLog($"[OnHideWebElementsChanged] HideWebElements changed to: {HideWebElements}");
 
-            // PIP 모드가 활성화되어 있으면 View에서 PropertyChanged 이벤트를 감지하여 재적용함
+            // Compact 모드가 활성화되어 있으면 View에서 PropertyChanged 이벤트를 감지하여 재적용함
         }
 
-        private void EnterPipMode()
+        private void EnterCompactMode()
         {
-            // Load PIP settings from WindowStateManager (모든 맵에서 동일한 PIP 사용)
-            Rect pipRect = _windowStateManager.GetPipModeRect();
+            // Load Compact settings from WindowStateManager (모든 맵에서 동일한 Compact 사용)
+            Rect compactRect = _windowStateManager.GetCompactModeRect();
 
-            // Logger.SimpleLog($"[EnterPipMode] Loaded PIP rect: {pipRect}");
+            // Logger.SimpleLog($"[EnterCompactMode] Loaded Compact rect: {compactRect}");
 
-            // Apply PIP size
-            CurrentWindowWidth = pipRect.Width;
-            CurrentWindowHeight = pipRect.Height;
+            // Apply Compact size
+            CurrentWindowWidth = compactRect.Width;
+            CurrentWindowHeight = compactRect.Height;
 
-            // Apply PIP position (use default if not set)
-            if (pipRect.Left >= 0 && pipRect.Top >= 0)
+            // Apply Compact position (use default if not set)
+            if (compactRect.Left >= 0 && compactRect.Top >= 0)
             {
-                CurrentWindowLeft = pipRect.Left;
-                CurrentWindowTop = pipRect.Top;
+                CurrentWindowLeft = compactRect.Left;
+                CurrentWindowTop = compactRect.Top;
             }
             else
             {
                 // Default position: bottom right
-                CurrentWindowLeft = SystemParameters.PrimaryScreenWidth - pipRect.Width - 20;
-                CurrentWindowTop = SystemParameters.PrimaryScreenHeight - pipRect.Height - 80;
+                CurrentWindowLeft = SystemParameters.PrimaryScreenWidth - compactRect.Width - 20;
+                CurrentWindowTop = SystemParameters.PrimaryScreenHeight - compactRect.Height - 80;
             }
 
-            // Update window settings for PIP
+            // Update window settings for Compact
             ResizeMode = ResizeMode.CanResize;
             MinWidth = 200;
             MinHeight = 150;
@@ -418,11 +418,11 @@ namespace TanukiTarkovMap.ViewModels
             TopBarVisibility = Visibility.Visible;
         }
 
-        private void ExitPipMode()
+        private void ExitCompactMode()
         {
             // Load Normal mode settings from WindowStateManager
             var normalRect = _windowStateManager.NormalModeRect;
-            Logger.SimpleLog($"[ExitPipMode] Loaded Normal rect: {normalRect}");
+            Logger.SimpleLog($"[ExitCompactMode] Loaded Normal rect: {normalRect}");
 
             // Restore normal mode settings
             CurrentWindowWidth = normalRect.Width;
@@ -434,7 +434,7 @@ namespace TanukiTarkovMap.ViewModels
             ResizeMode = ResizeMode.CanResize;
             MinWidth = 1000;
             MinHeight = 700;
-            // PIP 모드 종료 시 핀 설정에 따라 TopMost 유지
+            // Compact 모드 종료 시 핀 설정에 따라 TopMost 유지
             IsTopmost = IsAlwaysOnTop;
 
             // Restore UI visibility
@@ -444,11 +444,11 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary>
         /// View에서 창 위치/크기 변경 이벤트를 받아 즉시 저장
-        /// WindowStateManager를 통해 Normal/PIP 모드 Rect를 분리 관리
+        /// WindowStateManager를 통해 Normal/Compact 모드 Rect를 분리 관리
         /// </summary>
         public void OnWindowBoundsChanged(object? sender, TanukiTarkovMap.Views.WindowBoundsChangedEventArgs e)
         {
-            // Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsPipMode={e.IsPipMode}");
+            // Logger.SimpleLog($"[OnWindowBoundsChanged] Bounds={e.Bounds}, IsCompactMode={e.IsCompactMode}");
 
             // ViewModel 속성 업데이트 (바인딩용)
             CurrentWindowLeft = e.Bounds.Left;
@@ -457,13 +457,13 @@ namespace TanukiTarkovMap.ViewModels
             CurrentWindowHeight = e.Bounds.Height;
 
             // WindowStateManager를 통해 즉시 저장 (타이머 없음)
-            _windowStateManager.UpdateAndSave(e.Bounds, e.IsPipMode);
+            _windowStateManager.UpdateAndSave(e.Bounds, e.IsCompactMode);
         }
 
         /// <summary>
-        /// IsPipMode 변경 시 WindowControlButtonsVisibility 업데이트
+        /// IsCompactMode 변경 시 WindowControlButtonsVisibility 업데이트
         /// </summary>
-        partial void OnIsPipModeChanged(bool value)
+        partial void OnIsCompactModeChanged(bool value)
         {
             OnPropertyChanged(nameof(WindowControlButtonsVisibility));
         }

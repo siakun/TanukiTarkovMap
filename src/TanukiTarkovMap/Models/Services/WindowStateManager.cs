@@ -6,7 +6,7 @@ namespace TanukiTarkovMap.Models.Services
 {
     /// <summary>
     /// 창 위치/크기 상태 관리 서비스
-    /// Normal 모드와 PIP 모드의 Rect를 분리하여 관리
+    /// Normal 모드와 Compact 모드의 Rect를 분리하여 관리
     ///
     /// 사용법: ServiceLocator.WindowStateManager (DI 싱글톤)
     /// </summary>
@@ -14,11 +14,12 @@ namespace TanukiTarkovMap.Models.Services
     {
         /// <summary>
         /// DI 컨테이너 전용 생성자 - 외부에서 new 사용 금지
+        /// ServiceLocator.CreateInstance()를 통해서만 생성
         /// </summary>
         internal WindowStateManager() { }
 
         private Rect _normalModeRect;
-        private Rect _pipModeRect; // 모든 맵에서 동일한 PIP Rect 사용
+        private Rect _compactModeRect; // 모든 맵에서 동일한 Compact Rect 사용
 
         /// <summary>
         /// Normal 모드 창 상태
@@ -30,18 +31,18 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// PIP 모드 창 상태 가져오기 (모든 맵에서 동일)
+        /// Compact 모드 창 상태 가져오기 (모든 맵에서 동일)
         /// </summary>
-        public Rect GetPipModeRect()
+        public Rect GetCompactModeRect()
         {
-            // PIP Rect가 설정되지 않았으면 기본값 반환
-            if (_pipModeRect.Width <= 0 || _pipModeRect.Height <= 0)
+            // Compact Rect가 설정되지 않았으면 기본값 반환
+            if (_compactModeRect.Width <= 0 || _compactModeRect.Height <= 0)
             {
                 // 기본값: 300x250 크기, 위치는 -1 (미설정)
                 return new Rect(-1, -1, 300, 250);
             }
 
-            return _pipModeRect;
+            return _compactModeRect;
         }
 
         /// <summary>
@@ -54,12 +55,12 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// PIP 모드 창 상태 업데이트 (모든 맵에서 동일)
+        /// Compact 모드 창 상태 업데이트 (모든 맵에서 동일)
         /// </summary>
-        public void UpdatePipModeRect(Rect rect)
+        public void UpdateCompactModeRect(Rect rect)
         {
-            _pipModeRect = rect;
-            // Logger.SimpleLog($"[WindowStateManager] PIP mode updated: {rect}");
+            _compactModeRect = rect;
+            // Logger.SimpleLog($"[WindowStateManager] Compact mode updated: {rect}");
         }
 
         /// <summary>
@@ -75,25 +76,25 @@ namespace TanukiTarkovMap.Models.Services
                 settings.NormalHeight > 0 ? settings.NormalHeight : 700
             );
 
-            // PIP 모드 로드 (단일 Rect)
+            // Compact 모드 로드 (단일 Rect)
             // "default" 키의 설정이 있으면 사용, 없으면 기본값
             if (settings.MapSettings != null && settings.MapSettings.ContainsKey("default"))
             {
-                var pipSetting = settings.MapSettings["default"];
-                _pipModeRect = new Rect(
-                    pipSetting.Left,
-                    pipSetting.Top,
-                    pipSetting.Width > 0 ? pipSetting.Width : 300,
-                    pipSetting.Height > 0 ? pipSetting.Height : 250
+                var compactSetting = settings.MapSettings["default"];
+                _compactModeRect = new Rect(
+                    compactSetting.Left,
+                    compactSetting.Top,
+                    compactSetting.Width > 0 ? compactSetting.Width : 300,
+                    compactSetting.Height > 0 ? compactSetting.Height : 250
                 );
             }
             else
             {
                 // 기본값
-                _pipModeRect = new Rect(-1, -1, 300, 250);
+                _compactModeRect = new Rect(-1, -1, 300, 250);
             }
 
-            // Logger.SimpleLog($"[WindowStateManager] Loaded from settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
+            // Logger.SimpleLog($"[WindowStateManager] Loaded from settings: Normal={_normalModeRect}, Compact={_compactModeRect}");
         }
 
         /// <summary>
@@ -107,7 +108,7 @@ namespace TanukiTarkovMap.Models.Services
             settings.NormalWidth = _normalModeRect.Width;
             settings.NormalHeight = _normalModeRect.Height;
 
-            // PIP 모드 저장 (단일 Rect, "default" 키 사용)
+            // Compact 모드 저장 (단일 Rect, "default" 키 사용)
             if (settings.MapSettings == null)
             {
                 settings.MapSettings = new Dictionary<string, MapSetting>();
@@ -118,24 +119,24 @@ namespace TanukiTarkovMap.Models.Services
                 settings.MapSettings["default"] = new MapSetting();
             }
 
-            var pipSetting = settings.MapSettings["default"];
-            pipSetting.Left = _pipModeRect.Left;
-            pipSetting.Top = _pipModeRect.Top;
-            pipSetting.Width = _pipModeRect.Width;
-            pipSetting.Height = _pipModeRect.Height;
+            var compactSetting = settings.MapSettings["default"];
+            compactSetting.Left = _compactModeRect.Left;
+            compactSetting.Top = _compactModeRect.Top;
+            compactSetting.Width = _compactModeRect.Width;
+            compactSetting.Height = _compactModeRect.Height;
 
-            // Logger.SimpleLog($"[WindowStateManager] Saved to settings: Normal={_normalModeRect}, PIP={_pipModeRect}");
+            // Logger.SimpleLog($"[WindowStateManager] Saved to settings: Normal={_normalModeRect}, Compact={_compactModeRect}");
         }
 
         /// <summary>
-        /// Normal 모드 또는 PIP 모드 Rect 업데이트 및 저장
+        /// Normal 모드 또는 Compact 모드 Rect 업데이트 및 저장
         /// </summary>
-        public void UpdateAndSave(Rect rect, bool isPipMode)
+        public void UpdateAndSave(Rect rect, bool isCompactMode)
         {
-            if (isPipMode)
+            if (isCompactMode)
             {
-                UpdatePipModeRect(rect);
-                // Logger.SimpleLog($"[UpdateAndSave] PIP mode saved");
+                UpdateCompactModeRect(rect);
+                // Logger.SimpleLog($"[UpdateAndSave] Compact mode saved");
             }
             else
             {

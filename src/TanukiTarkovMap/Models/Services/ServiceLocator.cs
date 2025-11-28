@@ -21,11 +21,11 @@ namespace TanukiTarkovMap.Models.Services
         {
             var services = new ServiceCollection();
 
-            // Services 등록 (Singleton)
-            services.AddSingleton<WebViewUIService>();
-            services.AddSingleton<WindowBoundsService>();
-            services.AddSingleton<MapEventService>();
-            services.AddSingleton<WindowStateManager>();
+            // Services 등록 (Singleton) - Factory 패턴으로 internal 생성자 호출
+            services.AddSingleton(_ => new WebViewUIService());
+            services.AddSingleton(_ => new WindowBoundsService());
+            services.AddSingleton(_ => new MapEventService());
+            services.AddSingleton(_ => new WindowStateManager());
 
             // ViewModels 등록
             services.AddTransient<MainWindowViewModel>();

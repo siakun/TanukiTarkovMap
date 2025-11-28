@@ -13,6 +13,7 @@ namespace TanukiTarkovMap.Models.Services
     {
         /// <summary>
         /// DI 컨테이너 전용 생성자 - 외부에서 new 사용 금지
+        /// ServiceLocator.CreateInstance()를 통해서만 생성
         /// </summary>
         internal MapEventService()
         {

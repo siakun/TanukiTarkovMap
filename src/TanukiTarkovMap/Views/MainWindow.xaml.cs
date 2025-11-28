@@ -21,7 +21,7 @@ namespace TanukiTarkovMap.Views
     public class WindowBoundsChangedEventArgs : EventArgs
     {
         public Rect Bounds { get; set; }
-        public bool IsPipMode { get; set; }
+        public bool IsCompactMode { get; set; }
     }
 
     /// <summary>
@@ -170,8 +170,8 @@ namespace TanukiTarkovMap.Views
         {
             switch (e.PropertyName)
             {
-                case nameof(MainWindowViewModel.IsPipMode):
-                    await HandlePipModeChanged();
+                case nameof(MainWindowViewModel.IsCompactMode):
+                    await HandleCompactModeChanged();
                     break;
                 case nameof(MainWindowViewModel.CurrentMap):
                     await HandleMapChanged();
@@ -179,8 +179,8 @@ namespace TanukiTarkovMap.Views
                 case nameof(MainWindowViewModel.SelectedMapInfo):
                     await HandleSelectedMapChanged();
                     break;
-                case nameof(MainWindowViewModel.PipHideWebElements):
-                    await HandlePipHideWebElementsChanged();
+                case nameof(MainWindowViewModel.HideWebElements):
+                    await HandleHideWebElementsChanged();
                     break;
                 case nameof(MainWindowViewModel.SelectedZoomLevel):
                     HandleZoomLevelChanged();
@@ -189,15 +189,15 @@ namespace TanukiTarkovMap.Views
         }
 
         /// <summary>
-        /// PIP 모드 변경 처리
+        /// Compact 모드 변경 처리
         /// </summary>
-        private async Task HandlePipModeChanged()
+        private async Task HandleCompactModeChanged()
         {
-            if (_viewModel.IsPipMode)
+            if (_viewModel.IsCompactMode)
             {
-                // PIP 모드 시작 시 현재 화면 저장 (LocationChanged에서 경계 체크에 사용)
+                // Compact 모드 시작 시 현재 화면 저장 (LocationChanged에서 경계 체크에 사용)
                 var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-                _windowBoundsService.SavePipModeScreen(windowHandle);
+                _windowBoundsService.SaveCompactModeScreen(windowHandle);
 
                 // 창 위치를 화면 내부로 보정
                 var dpiInfo = VisualTreeHelper.GetDpi(this);
@@ -214,32 +214,32 @@ namespace TanukiTarkovMap.Views
                 _viewModel.CurrentWindowLeft = validatedPosition.X;
                 _viewModel.CurrentWindowTop = validatedPosition.Y;
 
-                // Logger.SimpleLog($"[PIP Entry] Position validated: ({validatedPosition.X}, {validatedPosition.Y})");
+                // Logger.SimpleLog($"[Compact Entry] Position validated: ({validatedPosition.X}, {validatedPosition.Y})");
 
-                // PIP 모드 진입 시 JavaScript 적용
+                // Compact 모드 진입 시 JavaScript 적용
                 if (_webView != null)
                 {
-                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, _viewModel.CurrentMap, _viewModel.HideWebElements);
                 }
 
                 // Topmost는 ViewModel의 IsTopmost 바인딩으로 자동 처리됨
-                // Logger.SimpleLog("[PIP Entry] TopMost managed by ViewModel binding");
+                // Logger.SimpleLog("[Compact Entry] TopMost managed by ViewModel binding");
             }
             else
             {
-                // PIP 모드 종료 시 화면 정보 초기화
-                _windowBoundsService.ClearPipModeScreen();
+                // Compact 모드 종료 시 화면 정보 초기화
+                _windowBoundsService.ClearCompactModeScreen();
 
                 // 일반 모드 복원 시 UI 요소 숨김 설정 반영
                 if (_webView != null)
                 {
                     string mapId = _viewModel.CurrentMap ?? "default";
-                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, mapId, _viewModel.PipHideWebElements);
-                    Logger.SimpleLog($"[ExitPipMode] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.PipHideWebElements}");
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, mapId, _viewModel.HideWebElements);
+                    Logger.SimpleLog($"[ExitCompactMode] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.HideWebElements}");
                 }
 
                 // Topmost는 ViewModel의 IsTopmost 바인딩으로 자동 처리됨 (핀 설정에 따라)
-                Logger.SimpleLog("[PIP Exit] TopMost managed by ViewModel binding");
+                Logger.SimpleLog("[Compact Exit] TopMost managed by ViewModel binding");
             }
         }
 
@@ -248,41 +248,41 @@ namespace TanukiTarkovMap.Views
         /// </summary>
         private async Task HandleMapChanged()
         {
-            if (_viewModel.IsPipMode && !string.IsNullOrEmpty(_viewModel.CurrentMap))
+            if (_viewModel.IsCompactMode && !string.IsNullOrEmpty(_viewModel.CurrentMap))
             {
                 if (_webView != null)
                 {
-                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, _viewModel.CurrentMap, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, _viewModel.CurrentMap, _viewModel.HideWebElements);
                 }
             }
         }
 
         /// <summary>
-        /// PIP 모드 UI 요소 숨김 설정 변경 처리
+        /// UI 요소 숨김 설정 변경 처리
         /// </summary>
-        private async Task HandlePipHideWebElementsChanged()
+        private async Task HandleHideWebElementsChanged()
         {
-            Logger.SimpleLog($"[HandlePipHideWebElementsChanged] PipHideWebElements changed to: {_viewModel.PipHideWebElements}");
+            Logger.SimpleLog($"[HandleHideWebElementsChanged] HideWebElements changed to: {_viewModel.HideWebElements}");
 
-            // PIP 모드 여부와 관계없이 UI 요소 숨김/복원 JavaScript 적용
+            // Compact 모드 여부와 관계없이 UI 요소 숨김/복원 JavaScript 적용
             if (_webView?.CoreWebView2 != null)
             {
                 // CurrentMap이 null이어도 UI 요소 숨김/복원은 가능
                 string mapId = _viewModel.CurrentMap ?? "default";
-                Logger.SimpleLog($"[HandlePipHideWebElementsChanged] Applying UI elements visibility change (mapId: {mapId})");
+                Logger.SimpleLog($"[HandleHideWebElementsChanged] Applying UI elements visibility change (mapId: {mapId})");
 
                 try
                 {
-                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, mapId, _viewModel.PipHideWebElements);
+                    await _webViewUIService.ApplyUIVisibilityAsync(_webView, mapId, _viewModel.HideWebElements);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Error("[HandlePipHideWebElementsChanged] Error applying UI visibility change", ex);
+                    Logger.Error("[HandleHideWebElementsChanged] Error applying UI visibility change", ex);
                 }
             }
             else
             {
-                Logger.SimpleLog("[HandlePipHideWebElementsChanged] WebView2 not ready, skipping");
+                Logger.SimpleLog("[HandleHideWebElementsChanged] WebView2 not ready, skipping");
             }
         }
 
@@ -351,14 +351,14 @@ namespace TanukiTarkovMap.Views
             try
             {
                 // 설정에서 핫키가 활성화되어 있고, 해당 키가 눌렸을 때
-                if (_viewModel.PipHotkeyEnabled)
+                if (_viewModel.HotkeyEnabled)
                 {
                     // F11 또는 설정된 키 확인
-                    if ((_viewModel.PipHotkeyKey == "F11" && e.Key == Key.F11) ||
-                        (_viewModel.PipHotkeyKey == "Home" && e.Key == Key.Home) ||
-                        (_viewModel.PipHotkeyKey == "F12" && e.Key == Key.F12) ||
-                        (_viewModel.PipHotkeyKey == "F10" && e.Key == Key.F10) ||
-                        (_viewModel.PipHotkeyKey == "F9" && e.Key == Key.F9))
+                    if ((_viewModel.HotkeyKey == "F11" && e.Key == Key.F11) ||
+                        (_viewModel.HotkeyKey == "Home" && e.Key == Key.Home) ||
+                        (_viewModel.HotkeyKey == "F12" && e.Key == Key.F12) ||
+                        (_viewModel.HotkeyKey == "F10" && e.Key == Key.F10) ||
+                        (_viewModel.HotkeyKey == "F9" && e.Key == Key.F9))
                     {
                         Logger.SimpleLog($"MainWindow KeyDown detected: {e.Key}");
 
@@ -508,8 +508,8 @@ namespace TanukiTarkovMap.Views
 
                     // UI 요소 숨김 설정 적용 (항상 적용)
                     string mapId = _viewModel.CurrentMap ?? "default";
-                    await _webViewUIService.ApplyUIVisibilityAsync(webView, mapId, _viewModel.PipHideWebElements);
-                    Logger.SimpleLog($"[WebView_NavigationCompleted] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.PipHideWebElements}");
+                    await _webViewUIService.ApplyUIVisibilityAsync(webView, mapId, _viewModel.HideWebElements);
+                    Logger.SimpleLog($"[WebView_NavigationCompleted] Applied UI visibility setting: mapId={mapId}, hideElements={_viewModel.HideWebElements}");
 
                     // "/pilot" 페이지에서 Connected 상태 감지 시작
                     if (webView.Source?.ToString().Contains("/pilot") == true)
@@ -680,7 +680,7 @@ namespace TanukiTarkovMap.Views
                 Models.Utils.PInvoke.ShowWindow(handle, Models.Utils.PInvoke.SW_SHOWNOACTIVATE);
 
                 // 3. SetWindowPos로 TopMost 설정 (SWP_NOACTIVATE 플래그로 포커스 가져가지 않음)
-                if (_viewModel.IsAlwaysOnTop || _viewModel.IsPipMode)
+                if (_viewModel.IsAlwaysOnTop || _viewModel.IsCompactMode)
                 {
                     Models.Utils.PInvoke.SetWindowPos(
                         handle,
@@ -803,10 +803,10 @@ namespace TanukiTarkovMap.Views
             {
                 _hotkeyManager = new HotkeyManager(this);
 
-                // PIP 핫키 등록
-                if (_viewModel.PipHotkeyEnabled && !string.IsNullOrEmpty(_viewModel.PipHotkeyKey))
+                // 핫키 등록
+                if (_viewModel.HotkeyEnabled && !string.IsNullOrEmpty(_viewModel.HotkeyKey))
                 {
-                    _hotkeyManager.RegisterHotkey(_viewModel.PipHotkeyKey, () =>
+                    _hotkeyManager.RegisterHotkey(_viewModel.HotkeyKey, () =>
                     {
                         Logger.SimpleLog("Global hotkey triggered - Toggle tray visibility");
 
@@ -825,7 +825,7 @@ namespace TanukiTarkovMap.Views
                         });
                     });
 
-                    Logger.SimpleLog($"Hotkey registered: {_viewModel.PipHotkeyKey}");
+                    Logger.SimpleLog($"Hotkey registered: {_viewModel.HotkeyKey}");
                 }
             }
             catch (Exception ex)
@@ -896,7 +896,7 @@ namespace TanukiTarkovMap.Views
                 WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
                 {
                     Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight),
-                    IsPipMode = _viewModel.IsPipMode
+                    IsCompactMode = _viewModel.IsCompactMode
                 });
             }
             finally
@@ -917,7 +917,7 @@ namespace TanukiTarkovMap.Views
             WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
             {
                 Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight),
-                IsPipMode = _viewModel.IsPipMode
+                IsCompactMode = _viewModel.IsCompactMode
             });
         }
 
@@ -1012,11 +1012,11 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // PIP 모드에서 창 드래그 이동 처리
+        // Compact 모드에서 창 드래그 이동 처리
         private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            // PIP 모드일 때만 드래그 가능
-            if (_viewModel.IsPipMode && e.ButtonState == MouseButtonState.Pressed)
+            // Compact 모드일 때만 드래그 가능
+            if (_viewModel.IsCompactMode && e.ButtonState == MouseButtonState.Pressed)
             {
                 // WebView2 영역 외부를 클릭한 경우만 드래그
                 // (WebView2 내부에서는 맵 상호작용을 위해 드래그 비활성화)
