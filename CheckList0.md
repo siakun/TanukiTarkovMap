@@ -22,7 +22,7 @@
 
 ### 기타 ✅
 - [x] `ApplyTopmostSettings()` → 제거 (이미 바인딩으로 처리됨)
-- [ ] `InitializeSettingsPage()` → XAML에서 직접 생성으로 변경 (TODO 유지)
+- [x] `InitializeSettingsPage()` → XAML에서 직접 생성으로 변경
 
 ---
 

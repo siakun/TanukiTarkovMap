@@ -460,11 +460,10 @@
                     </Border>
 
                     <!-- 설정 페이지 컨텐츠 -->
-                    <Border x:Name="SettingsContentContainer"
-                            Grid.Row="1"
+                    <Border Grid.Row="1"
                             Background="Transparent"
                             Padding="0">
-                        <!-- SettingsPage UserControl이 여기에 추가됩니다 -->
+                        <views:SettingsPage/>
                     </Border>
                 </Grid>
             </Border>

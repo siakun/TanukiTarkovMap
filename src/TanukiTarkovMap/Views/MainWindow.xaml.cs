@@ -69,9 +69,6 @@ namespace TanukiTarkovMap.Views
 
             // 핫키 서비스 초기화 (전역 단축키용)
             InitializeHotkeyService();
-
-            // 설정 페이지는 XAML에서 직접 생성하도록 변경됨
-            InitializeSettingsPage();
         }
 
         /// <summary>
@@ -91,16 +88,6 @@ namespace TanukiTarkovMap.Views
             webBrowserViewModel.ZoomLevel = _viewModel.SelectedZoomLevel;
 
             Logger.SimpleLog("[MainWindow] Initial ViewModel state synchronized");
-        }
-
-        /// <summary>
-        /// 설정 페이지 초기화 (재사용을 위해 한 번만 생성)
-        /// </summary>
-        private void InitializeSettingsPage()
-        {
-            // TODO: XAML에서 직접 생성으로 변경 예정
-            var settingsPage = new SettingsPage();
-            SettingsContentContainer.Child = settingsPage;
         }
 
         /// <summary>
