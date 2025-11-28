@@ -15,14 +15,14 @@
 - [x] `ConnectWebBrowserViewModel()` → Messenger 패턴으로 대체
 - [x] `ViewModel_PropertyChanged()` → Messenger 패턴으로 대체
 
-### 창 상태 관리
-- [ ] `MainWindow_StateChanged()` → WindowStateBehavior로 이동
-- [ ] `MainWindow_LocationChanged()` → WindowBoundsBehavior로 이동
-- [ ] `MainWindow_SizeChanged()` → WindowBoundsBehavior로 이동
+### 창 상태 관리 ✅
+- [x] `MainWindow_StateChanged()` → WindowStateBehavior로 이동
+- [x] `MainWindow_LocationChanged()` → WindowStateBehavior로 이동
+- [x] `MainWindow_SizeChanged()` → WindowStateBehavior로 이동
 
-### 기타
-- [ ] `ApplyTopmostSettings()` → 제거 (이미 바인딩으로 처리됨)
-- [ ] `InitializeSettingsPage()` → XAML에서 직접 생성으로 변경
+### 기타 ✅
+- [x] `ApplyTopmostSettings()` → 제거 (이미 바인딩으로 처리됨)
+- [ ] `InitializeSettingsPage()` → XAML에서 직접 생성으로 변경 (TODO 유지)
 
 ---
 

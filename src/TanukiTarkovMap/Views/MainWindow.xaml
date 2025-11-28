@@ -39,6 +39,10 @@
             WebViewContainerName="WebViewContainer"/>
         <!-- 트레이 창 표시/숨김 Behavior -->
         <behaviors:TrayWindowBehavior x:Name="TrayBehavior"/>
+        <!-- 창 상태/위치/크기 변경 Behavior -->
+        <behaviors:WindowStateBehavior
+            MainGridName="MainGrid"
+            MaximizeRestoreButtonName="MaximizeRestoreButton"/>
     </i:Interaction.Behaviors>
 
     <Window.Resources>
