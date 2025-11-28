@@ -1,20 +1,6 @@
 # 프로젝트 리팩토링 체크리스트
 
-## Compact 모드 제거
-
-### 삭제 대상 파일
-- [ ] `Behaviors/CompactModeDragBehavior.cs`
-
-### 코드에서 Compact 관련 제거
-- [ ] `MainWindowViewModel.cs` - IsCompactMode 속성 및 관련 로직
-- [ ] `MainWindow.xaml.cs` - HandleCompactModeChanged(), CompactMode 관련 코드
-- [ ] `WebBrowserViewModel.cs` - IsCompactMode 속성
-- [ ] `WindowStateManager.cs` - CompactModeRect 관련 코드
-- [ ] `AppSettings.cs` - Compact 관련 설정
-- [ ] `PROJECT.md` - Compact 모드 문서 제거
-- [ ] `CheckList0.md` - Compact 관련 항목 제거
-
-### MainWindow.xaml.cs 추가 정리
+## MainWindow.xaml.cs 추가 정리
 - [ ] `ShowWindowFromTray()` / `HideWindowToTray()` → 서비스로 이동
 - [ ] `MainWindow_PreviewKeyDown()` → Behavior로 이동
 - [ ] `UpdateHotkeySettings()` → ViewModel로 이동

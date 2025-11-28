@@ -21,30 +21,11 @@ CefSharp를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감�
 
 ---
 
-## 윈도우 모드 설계
-
-### 모드 개요
-
-| 모드 | 설명 | TopMost |
-|------|------|---------|
-| **Normal 모드** | 일반 크기 윈도우 (기본값: 1000x700) | 핀 설정에 따름 |
-| **Compact 모드** | 소형 윈도우 (기본값: 300x250) | 항상 활성화 |
-
-### 모드 전환 흐름
-
-```
-Normal 모드 ←→ Compact 모드
-     ↑              ↑
-     │              │
-  핀 토글      자동 TopMost
-```
-
-### 핵심 속성 (MainWindowViewModel)
+## 핵심 속성 (MainWindowViewModel)
 
 ```csharp
 // 모드 상태
-bool IsCompactMode        // Compact 모드 활성화 여부
-bool IsAlwaysOnTop        // 핀 모드 (Normal에서 TopMost)
+bool IsAlwaysOnTop        // 핀 모드 (TopMost)
 bool IsTopmost            // 실제 TopMost 상태 (바인딩용)
 
 // 핫키 설정
@@ -53,14 +34,6 @@ string HotkeyKey          // 핫키 키 (기본: F11)
 
 // UI 설정
 bool HideWebElements      // 웹 UI 요소 숨김 여부
-```
-
-### 창 크기/위치 저장 구조
-
-```
-WindowStateManager
-├── NormalModeRect      // Normal 모드 위치/크기
-└── CompactModeRect     // Compact 모드 위치/크기 (모든 맵 공유)
 ```
 
 ---
@@ -72,7 +45,7 @@ src/TanukiTarkovMap/
 ├── Models/
 │   ├── Data/           # 데이터 모델 (MapInfo, Settings 등)
 │   ├── FileSystem/     # 파일 시스템 감시 (LogsWatcher, ScreenshotsWatcher)
-│   ├── JavaScript/     # WebView2 JavaScript 통합
+│   ├── JavaScript/     # CefSharp JavaScript 통합
 │   ├── Services/       # 비즈니스 로직 서비스
 │   └── Utils/          # 유틸리티 (Logger, HotkeyManager 등)
 ├── ViewModels/         # MVVM ViewModel
@@ -101,9 +74,9 @@ ServiceLocator.WindowStateManager
 
 | 서비스 | 역할 |
 |--------|------|
-| `WebViewUIService` | WebView2 UI 요소 가시성 제어 |
+| `WebViewUIService` | CefSharp UI 요소 가시성 제어 |
 | `WindowBoundsService` | 창 경계 체크 및 화면 내 위치 보정 |
-| `WindowStateManager` | Normal/Compact 모드별 창 상태 저장/복원 |
+| `WindowStateManager` | 창 상태 저장/복원 |
 | `MapEventService` | 맵 변경 및 스크린샷 이벤트 발행 |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
 
@@ -134,21 +107,7 @@ services.AddSingleton(_ => new ServiceName());
        ↓
   ChangeMapCommand 실행
        ↓
-  WebView2 URL 변경
-```
-
-### 스크린샷 감지
-
-```
-타르코프 스크린샷 생성
-       ↓
-  ScreenshotsWatcher 감지
-       ↓
-  MapEventService.RaiseScreenshotTaken()
-       ↓
-  MainWindowViewModel.OnScreenshotEventReceived()
-       ↓
-  Compact 모드 자동 활성화
+  CefSharp URL 변경
 ```
 
 ---
@@ -165,15 +124,7 @@ services.AddSingleton(_ => new ServiceName());
   "NormalHeight": 700,
   "HotkeyEnabled": true,
   "HotkeyKey": "F11",
-  "IsAlwaysOnTop": false,
-  "MapSettings": {
-    "default": {
-      "Left": 1600,
-      "Top": 800,
-      "Width": 300,
-      "Height": 250
-    }
-  }
+  "IsAlwaysOnTop": false
 }
 ```
 
@@ -188,7 +139,7 @@ tarkov-market.com 웹페이지의 UI 요소들을 JavaScript로 제어하여 맵
 ### 요소 분류
 
 | 요소 | 숨김 조건 | 복원 가능 |
-|------|-----------|-----------|
+|------|-----------| ----------|
 | **헤더 (header)** | 항상 숨김 | X |
 | **푸터 (footer-wrap)** | 항상 숨김 | X |
 | **좌측 패널 (panel_left)** | 체크 시 숨김 | O |
@@ -263,14 +214,5 @@ await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);  // "window.h
 
 | 용어 | 설명 |
 |------|------|
-| **Normal 모드** | 일반 크기의 윈도우 상태 |
-| **Compact 모드** | 소형 윈도우 상태 (게임 중 오버레이용) |
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
 | **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
-
----
-
-## 히스토리
-
-- **2025-11-28**: PIP 용어를 Compact로 전면 리팩토링
-- 기존 Fork 프로젝트의 별도 PIP 윈도우 방식에서 단일 윈도우 모드 전환 방식으로 변경

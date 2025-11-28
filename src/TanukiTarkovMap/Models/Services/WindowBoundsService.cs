@@ -40,7 +40,7 @@ namespace TanukiTarkovMap.Models.Services
 
     /// <summary>
     /// 창 경계 처리 서비스
-    /// Compact 모드에서 창이 화면 밖으로 나가지 않도록 관리
+    /// 창이 화면 밖으로 나가지 않도록 관리
     ///
     /// 사용법: ServiceLocator.WindowBoundsService (DI 싱글톤)
     /// </summary>
@@ -51,26 +51,6 @@ namespace TanukiTarkovMap.Models.Services
         /// ServiceLocator.CreateInstance()를 통해서만 생성
         /// </summary>
         internal WindowBoundsService() { }
-
-        private Screen _compactModeScreen = null;
-
-        /// <summary>
-        /// Compact 모드 시작 시 현재 화면 저장 (다른 모니터로 이동 방지)
-        /// </summary>
-        public void SaveCompactModeScreen(IntPtr windowHandle)
-        {
-            _compactModeScreen = Screen.FromHandle(windowHandle);
-            // Logger.SimpleLog($"[WindowBoundsService] SaveCompactModeScreen: {_compactModeScreen.DeviceName}, Bounds={_compactModeScreen.Bounds}");
-        }
-
-        /// <summary>
-        /// Compact 모드 종료 시 화면 정보 초기화
-        /// </summary>
-        public void ClearCompactModeScreen()
-        {
-            _compactModeScreen = null;
-            Logger.SimpleLog($"[WindowBoundsService] ClearCompactModeScreen: Screen info cleared");
-        }
 
         /// <summary>
         /// 창 위치가 화면 경계를 벗어났는지 체크하고 조정
@@ -159,56 +139,6 @@ namespace TanukiTarkovMap.Models.Services
             }
 
             return null; // 조정 불필요
-        }
-
-        /// <summary>
-        /// 창을 화면 내부로 이동 (Compact 모드 진입 시 초기 위치 보정)
-        /// </summary>
-        public System.Windows.Point EnsureWindowWithinScreen(double currentLeft, double currentTop, double width, double height, double dpiScaleX, double dpiScaleY)
-        {
-            if (_compactModeScreen == null)
-            {
-                Logger.SimpleLog("[WindowBoundsService] EnsureWindowWithinScreen: No saved screen");
-                return new System.Windows.Point(currentLeft, currentTop);
-            }
-
-            var workArea = GetWorkArea(dpiScaleX, dpiScaleY);
-
-            double newLeft = currentLeft;
-            double newTop = currentTop;
-            double newWidth = width;
-            double newHeight = height;
-
-            // 창이 화면보다 크면 화면 크기로 제한
-            if (newWidth > workArea.Width)
-                newWidth = workArea.Width;
-            if (newHeight > workArea.Height)
-                newHeight = workArea.Height;
-
-            // 경계 체크 및 조정
-            if (newLeft < workArea.Left)
-                newLeft = workArea.Left;
-            if (newLeft + newWidth > workArea.Right)
-                newLeft = workArea.Right - newWidth;
-            if (newTop < workArea.Top)
-                newTop = workArea.Top;
-            if (newTop + newHeight > workArea.Bottom)
-                newTop = workArea.Bottom - newHeight;
-
-            Logger.SimpleLog($"[WindowBoundsService] EnsureWindowWithinScreen: ({currentLeft}, {currentTop}) -> ({newLeft}, {newTop})");
-
-            return new System.Windows.Point(newLeft, newTop);
-        }
-
-        /// <summary>
-        /// 저장된 화면의 작업 영역 가져오기 (DPI 스케일 적용)
-        /// </summary>
-        private Rect GetWorkArea(double dpiScaleX, double dpiScaleY)
-        {
-            if (_compactModeScreen == null)
-                throw new InvalidOperationException("Compact mode screen not saved");
-
-            return GetWorkAreaForScreen(_compactModeScreen, dpiScaleX, dpiScaleY);
         }
 
         /// <summary>

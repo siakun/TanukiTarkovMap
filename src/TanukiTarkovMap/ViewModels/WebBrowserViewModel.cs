@@ -36,10 +36,6 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty]
         private bool _hideWebElements = true;
 
-        /// <summary> Compact 모드 여부 </summary>
-        [ObservableProperty]
-        private bool _isCompactMode;
-
         /// <summary> 줌 레벨 (%) </summary>
         [ObservableProperty]
         private int _zoomLevel = 67;
@@ -332,11 +328,6 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnZoomLevelChanged(int value)
         {
             ApplyZoomLevel();
-        }
-
-        partial void OnIsCompactModeChanged(bool value)
-        {
-            _ = ApplyUIVisibilityAsync();
         }
 
         #endregion

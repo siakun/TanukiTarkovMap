@@ -51,10 +51,6 @@
     </WindowChrome.WindowChrome>
 
     <Grid x:Name="MainGrid">
-        <!-- Compact 모드 드래그 Behavior -->
-        <i:Interaction.Behaviors>
-            <behaviors:CompactModeDragBehavior IsCompactMode="{Binding IsCompactMode}"/>
-        </i:Interaction.Behaviors>
         <!-- Border로 감싸서 리사이즈 시 부드러운 효과 + 둥근 모서리 -->
         <Border x:Name="ContentBorder"
                 Background="#FF1A1A1A"
@@ -163,7 +159,7 @@
                             </ComboBox.ItemContainerStyle>
                         </ComboBox>
 
-                        <!-- Compact 모드 UI 요소 숨기기 체크박스 -->
+                        <!-- UI 요소 숨기기 체크박스 -->
                         <CheckBox x:Name="HideWebElementsCheckBox"
                                   IsChecked="{Binding HideWebElements, Mode=TwoWay}"
                                   Margin="16,0,0,0"

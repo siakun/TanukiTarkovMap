@@ -11,7 +11,6 @@ namespace TanukiTarkovMap.Models.Services
     ///
     /// 주요 기능:
     /// - tarkov-market.com 웹페이지의 UI 패널(좌측, 우측, 상단, 헤더, 푸터) 숨기기/복원
-    /// - Compact 모드에서 맵만 표시하도록 불필요한 UI 요소 제거
     ///
     /// 사용법: ServiceLocator.WebViewUIService (DI 싱글톤)
     /// </summary>

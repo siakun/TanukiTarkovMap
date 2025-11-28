@@ -14,7 +14,6 @@ namespace TanukiTarkovMap.Views
     public class WindowBoundsChangedEventArgs : EventArgs
     {
         public Rect Bounds { get; set; }
-        public bool IsCompactMode { get; set; }
     }
 
     /// <summary>
@@ -92,7 +91,7 @@ namespace TanukiTarkovMap.Views
             // WebBrowser ViewModel과 MainWindow ViewModel 연결
             ConnectWebBrowserViewModel();
 
-            // ViewModel이 PIP 모드 변경을 처리하도록 PropertyChanged 구독
+            // ViewModel PropertyChanged 구독
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
 
             // 핫키 매니저 초기화 (전역 단축키용)
@@ -117,7 +116,6 @@ namespace TanukiTarkovMap.Views
             // ViewModel 간 속성 동기화
             webBrowserViewModel.HideWebElements = _viewModel.HideWebElements;
             webBrowserViewModel.ZoomLevel = _viewModel.SelectedZoomLevel;
-            webBrowserViewModel.IsCompactMode = _viewModel.IsCompactMode;
 
             // 맵 수신 이벤트 연결
             webBrowserViewModel.MapReceived += (s, mapName) =>
@@ -168,11 +166,6 @@ namespace TanukiTarkovMap.Views
 
             switch (e.PropertyName)
             {
-                case nameof(MainWindowViewModel.IsCompactMode):
-                    webBrowserViewModel.IsCompactMode = _viewModel.IsCompactMode;
-                    HandleCompactModeChanged();
-                    break;
-
                 case nameof(MainWindowViewModel.SelectedMapInfo):
                     if (_viewModel.SelectedMapInfo != null)
                     {
@@ -188,40 +181,6 @@ namespace TanukiTarkovMap.Views
                 case nameof(MainWindowViewModel.SelectedZoomLevel):
                     webBrowserViewModel.ZoomLevel = _viewModel.SelectedZoomLevel;
                     break;
-            }
-        }
-
-        /// <summary>
-        /// Compact 모드 변경 처리
-        /// </summary>
-        private void HandleCompactModeChanged()
-        {
-            if (_viewModel.IsCompactMode)
-            {
-                // Compact 모드 시작 시 현재 화면 저장 (LocationChanged에서 경계 체크에 사용)
-                var windowHandle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-                _windowBoundsService.SaveCompactModeScreen(windowHandle);
-
-                // 창 위치를 화면 내부로 보정
-                var dpiInfo = VisualTreeHelper.GetDpi(this);
-                var validatedPosition = _windowBoundsService.EnsureWindowWithinScreen(
-                    _viewModel.CurrentWindowLeft,
-                    _viewModel.CurrentWindowTop,
-                    _viewModel.CurrentWindowWidth,
-                    _viewModel.CurrentWindowHeight,
-                    dpiInfo.DpiScaleX,
-                    dpiInfo.DpiScaleY
-                );
-
-                // 검증된 위치 반영
-                _viewModel.CurrentWindowLeft = validatedPosition.X;
-                _viewModel.CurrentWindowTop = validatedPosition.Y;
-            }
-            else
-            {
-                // Compact 모드 종료 시 화면 정보 초기화
-                _windowBoundsService.ClearCompactModeScreen();
-                Logger.SimpleLog("[Compact Exit] TopMost managed by ViewModel binding");
             }
         }
 
@@ -287,7 +246,7 @@ namespace TanukiTarkovMap.Views
                 PInvoke.ShowWindow(handle, PInvoke.SW_SHOWNOACTIVATE);
 
                 // 3. SetWindowPos로 TopMost 설정 (SWP_NOACTIVATE 플래그로 포커스 가져가지 않음)
-                if (_viewModel.IsAlwaysOnTop || _viewModel.IsCompactMode)
+                if (_viewModel.IsAlwaysOnTop)
                 {
                     PInvoke.SetWindowPos(
                         handle,
@@ -429,8 +388,7 @@ namespace TanukiTarkovMap.Views
                 // 창 위치/크기 변경 이벤트 발생 (ViewModel에서 즉시 저장)
                 WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
                 {
-                    Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight),
-                    IsCompactMode = _viewModel.IsCompactMode
+                    Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight)
                 });
             }
             finally
@@ -450,8 +408,7 @@ namespace TanukiTarkovMap.Views
             // 창 위치/크기 변경 이벤트 발생 (ViewModel에서 즉시 저장)
             WindowBoundsChanged?.Invoke(this, new WindowBoundsChangedEventArgs
             {
-                Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight),
-                IsCompactMode = _viewModel.IsCompactMode
+                Bounds = new Rect(this.Left, this.Top, this.ActualWidth, this.ActualHeight)
             });
         }
 
