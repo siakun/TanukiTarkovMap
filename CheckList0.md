@@ -59,6 +59,25 @@
 
 ---
 
+## Phase 4: Code-behind 제거 리팩토링
+
+### 완료
+- [x] `SettingsPage.xaml.cs` - MVVM + Behavior 패턴으로 리팩토링 완료
+  - SettingsViewModel로 비즈니스 로직 이동
+  - HotkeyInputBehavior로 키 입력 캡처 분리
+  - Code-behind는 `InitializeComponent()`만 포함
+
+### 진행 필요
+- [ ] `MainWindow.xaml.cs` (1167줄) - 대규모 리팩토링 필요
+  - 이벤트 핸들러들을 Behavior로 분리
+  - 비즈니스 로직을 MainWindowViewModel로 이동
+  - WebView 관련 로직 분리 검토
+
+### 참고
+- `App.xaml.cs` (394줄) - Application 수준 로직은 허용 (WPF 표준)
+
+---
+
 ## 최종 목표
 
 ### 코드 품질 ✅

@@ -13,6 +13,33 @@
 # Claude Code가 준수해야 하는 사항
 - 빌드는 하더라도 실행은 하지마세요.
 
+## MVVM 패턴 및 Code-behind 금지 원칙
+
+**Code-behind(*.xaml.cs)에 로직을 추가하지 마세요.**
+
+- View의 Code-behind는 `InitializeComponent()` 호출만 포함해야 함
+- 이벤트 핸들러, UI 조작 로직은 **절대** Code-behind에 작성하지 않음
+- UI 인터랙션이 필요한 경우 `Microsoft.Xaml.Behaviors.Wpf`의 **Behavior**를 사용
+- 데이터/비즈니스 로직은 **ViewModel**에서 처리
+- Command 바인딩으로 버튼 클릭 등 처리
+
+### 올바른 패턴
+```
+View (XAML)
+  ├── DataContext → ViewModel (데이터 바인딩)
+  └── Behaviors (UI 인터랙션)
+```
+
+### 기존 Code-behind 발견 시
+Code-behind에 로직이 있는 파일을 발견하면:
+1. 해당 내용을 사용자에게 보고
+2. Behavior 또는 ViewModel로 리팩토링 제안
+3. 수정 작업 항목으로 등록
+
+### 참고 예시
+- `Behaviors/HotkeyInputBehavior.cs` - 키 입력 캡처 Behavior
+- `ViewModels/SettingsViewModel.cs` - 설정 페이지 ViewModel
+
 ## 빌드 방법
 ```bash
 cd src && dotnet build

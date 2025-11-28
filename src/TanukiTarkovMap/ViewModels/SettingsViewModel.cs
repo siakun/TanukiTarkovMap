@@ -1,11 +1,14 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+using TanukiTarkovMap.Views;
 
 namespace TanukiTarkovMap.ViewModels
 {
     public partial class SettingsViewModel : ObservableObject
     {
+        private bool _isLoading = false;
+
         [ObservableProperty] public partial string GameFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial string ScreenshotsFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
@@ -15,8 +18,33 @@ namespace TanukiTarkovMap.ViewModels
 
         public SettingsViewModel()
         {
-            // Load current settings
             LoadCurrentSettings();
+        }
+
+        // 속성 변경 시 자동 저장 (partial 메서드)
+        partial void OnGameFolderChanged(string value) => AutoSave();
+        partial void OnScreenshotsFolderChanged(string value) => AutoSave();
+        partial void OnHotkeyEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
+        partial void OnHotkeyKeyChanged(string value) => AutoSaveAndUpdateHotkey();
+        partial void OnAutoDeleteLogsChanged(bool value) => AutoSave();
+        partial void OnAutoDeleteScreenshotsChanged(bool value) => AutoSave();
+
+        private void AutoSave()
+        {
+            if (_isLoading) return;
+            Save();
+        }
+
+        private void AutoSaveAndUpdateHotkey()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // 핫키 설정 변경 시 MainWindow에서 핫키 재등록
+            if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
+            {
+                mainWindow.UpdateHotkeySettings();
+            }
         }
 
         // Commands
@@ -88,14 +116,22 @@ namespace TanukiTarkovMap.ViewModels
 
         private void LoadCurrentSettings()
         {
-            GameFolder = App.GameFolder ?? string.Empty;
-            ScreenshotsFolder = App.ScreenshotsFolder ?? string.Empty;
+            _isLoading = true;
+            try
+            {
+                GameFolder = App.GameFolder ?? string.Empty;
+                ScreenshotsFolder = App.ScreenshotsFolder ?? string.Empty;
 
-            var settings = App.GetSettings();
-            HotkeyEnabled = settings.HotkeyEnabled;
-            HotkeyKey = settings.HotkeyKey ?? "F11";
-            AutoDeleteLogs = settings.autoDeleteLogs;
-            AutoDeleteScreenshots = settings.autoDeleteScreenshots;
+                var settings = App.GetSettings();
+                HotkeyEnabled = settings.HotkeyEnabled;
+                HotkeyKey = settings.HotkeyKey ?? "F11";
+                AutoDeleteLogs = settings.autoDeleteLogs;
+                AutoDeleteScreenshots = settings.autoDeleteScreenshots;
+            }
+            finally
+            {
+                _isLoading = false;
+            }
         }
     }
 }
