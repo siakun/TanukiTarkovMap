@@ -17,16 +17,14 @@ if exist "%OUTPUT_DIR%" (
 )
 mkdir "%OUTPUT_DIR%"
 
-:: Build Single File Executable
+:: Build Release (CefSharp는 SingleFile 미지원)
 echo.
-echo [2/3] Building single file executable...
+echo [2/3] Building release...
 dotnet publish "%PROJECT_PATH%" ^
     -c Release ^
     -r win-x64 ^
     --self-contained true ^
-    -p:PublishSingleFile=true ^
-    -p:IncludeNativeLibrariesForSelfExtract=true ^
-    -p:EnableCompressionInSingleFile=true ^
+    -p:PublishSingleFile=false ^
     -p:DebugType=None ^
     -p:DebugSymbols=false ^
     -o "%OUTPUT_DIR%"
@@ -42,7 +40,6 @@ echo.
 echo [3/3] Cleaning up unnecessary files...
 if exist "%OUTPUT_DIR%\*.xml" del /q "%OUTPUT_DIR%\*.xml" >nul 2>&1
 if exist "%OUTPUT_DIR%\*.pdb" del /q "%OUTPUT_DIR%\*.pdb" >nul 2>&1
-if exist "%OUTPUT_DIR%\Resources" rd /s /q "%OUTPUT_DIR%\Resources" >nul 2>&1
 echo Cleaned up unnecessary files.
 
 :: Show build results
@@ -51,14 +48,13 @@ echo ========================================
 echo Build completed successfully!
 echo ========================================
 echo.
-echo Output: %OUTPUT_DIR%\TanukiTarkovMap.exe
+echo Output: %OUTPUT_DIR%\
 echo.
 
-:: Display file size
-for %%F in ("%OUTPUT_DIR%\TanukiTarkovMap.exe") do (
-    set /a size=%%~zF/1048576
-    echo File Size: !size! MB
-)
+:: Display folder size
+for /f "tokens=3" %%a in ('dir "%OUTPUT_DIR%" /s /-c ^| findstr "File(s)"') do set totalsize=%%a
+set /a sizemb=!totalsize!/1048576
+echo Total Size: !sizemb! MB
 
 echo.
 echo Press any key to open release folder...

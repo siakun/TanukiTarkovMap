@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
+using TanukiTarkovMap.Behaviors;
 
 namespace TanukiTarkovMap.Models.Utils
 {
@@ -145,6 +146,10 @@ namespace TanukiTarkovMap.Models.Utils
         /// </summary>
         private bool IsRegisteredHotkey(uint vkCode)
         {
+            // 핫키 입력 모드일 때는 전역 핫키 무시
+            if (HotkeyInputBehavior.IsInInputMode)
+                return false;
+
             if (_registeredVirtualKey == 0 || vkCode != _registeredVirtualKey)
                 return false;
 

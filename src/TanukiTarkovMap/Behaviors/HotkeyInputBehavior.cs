@@ -3,6 +3,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Xaml.Behaviors;
+using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Behaviors
 {
@@ -12,7 +13,11 @@ namespace TanukiTarkovMap.Behaviors
     /// </summary>
     public class HotkeyInputBehavior : Behavior<Button>
     {
-        private bool _isInputMode = false;
+        /// <summary>
+        /// 현재 입력 모드 여부 (전역 핫키 비활성화용)
+        /// </summary>
+        public static bool IsInInputMode { get; private set; } = false;
+
         private readonly SolidColorBrush _normalBrush = new(Color.FromRgb(0x3A, 0x3A, 0x3A));
         private readonly SolidColorBrush _inputModeBrush = new(Color.FromRgb(0x6A, 0x6A, 0x2A));
 
@@ -50,27 +55,40 @@ namespace TanukiTarkovMap.Behaviors
 
         private void OnClick(object sender, RoutedEventArgs e)
         {
-            AssociatedObject.Content = "키를 눌러주세요...";
-            AssociatedObject.Background = _inputModeBrush;
-            AssociatedObject.Focus();
-            _isInputMode = true;
+            EnterInputMode();
         }
 
         private void OnPreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (!_isInputMode)
+            if (!IsInInputMode)
                 return;
 
-            // Tab 키는 포커스 이동을 위해 허용
-            if (e.Key == Key.Tab)
+            // Tab, Escape 키는 입력 모드 취소
+            if (e.Key == Key.Tab || e.Key == Key.Escape)
+            {
+                ExitInputMode();
+                e.Handled = true;
                 return;
+            }
 
-            string keyString = e.Key.ToString();
+            // 시스템 키 (Alt 등)는 실제 키로 변환
+            Key actualKey = e.Key == Key.System ? e.SystemKey : e.Key;
+
+            // 수정자 키만 눌린 경우 무시
+            if (actualKey == Key.LeftShift || actualKey == Key.RightShift ||
+                actualKey == Key.LeftCtrl || actualKey == Key.RightCtrl ||
+                actualKey == Key.LeftAlt || actualKey == Key.RightAlt ||
+                actualKey == Key.LWin || actualKey == Key.RWin)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            string keyString = actualKey.ToString();
             if (!string.IsNullOrEmpty(keyString))
             {
                 Hotkey = keyString;
                 ExitInputMode();
-                AssociatedObject.MoveFocus(new TraversalRequest(FocusNavigationDirection.Next));
             }
 
             e.Handled = true;
@@ -78,17 +96,28 @@ namespace TanukiTarkovMap.Behaviors
 
         private void OnLostFocus(object sender, RoutedEventArgs e)
         {
-            if (_isInputMode)
+            if (IsInInputMode)
             {
                 ExitInputMode();
             }
         }
 
+        private void EnterInputMode()
+        {
+            IsInInputMode = true;
+            AssociatedObject.Content = "키를 눌러주세요...";
+            AssociatedObject.Background = _inputModeBrush;
+            AssociatedObject.Focus();
+            Logger.SimpleLog("[HotkeyInputBehavior] Entered input mode");
+        }
+
         private void ExitInputMode()
         {
-            _isInputMode = false;
+            IsInInputMode = false;
             AssociatedObject.Background = _normalBrush;
-            // Content는 바인딩으로 자동 복원됨
+            // Content를 현재 Hotkey 값으로 복원
+            AssociatedObject.Content = Hotkey;
+            Logger.SimpleLog($"[HotkeyInputBehavior] Exited input mode, Hotkey={Hotkey}");
         }
     }
 }

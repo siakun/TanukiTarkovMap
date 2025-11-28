@@ -60,9 +60,6 @@ namespace TanukiTarkovMap.Views
                 // ViewModel에 창 위치/크기 변경 이벤트 연결
                 this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
 
-                // 키보드 이벤트 핸들러 추가 (디버그 모드용)
-                this.PreviewKeyDown += MainWindow_PreviewKeyDown;
-
                 // Note: Activated, Deactivated, MouseEnter, MouseLeave 이벤트는
                 // TopBarAnimationBehavior에서 처리합니다.
             }
@@ -181,46 +178,6 @@ namespace TanukiTarkovMap.Views
                 case nameof(MainWindowViewModel.SelectedZoomLevel):
                     webBrowserViewModel.ZoomLevel = _viewModel.SelectedZoomLevel;
                     break;
-            }
-        }
-
-        /// <summary>
-        /// MainWindow 내에서의 키 입력 처리 (디버그 모드용)
-        /// </summary>
-        private void MainWindow_PreviewKeyDown(object sender, KeyEventArgs e)
-        {
-            try
-            {
-                // 설정에서 핫키가 활성화되어 있고, 해당 키가 눌렸을 때
-                if (_viewModel.HotkeyEnabled)
-                {
-                    // F11 또는 설정된 키 확인
-                    if ((_viewModel.HotkeyKey == "F11" && e.Key == Key.F11) ||
-                        (_viewModel.HotkeyKey == "Home" && e.Key == Key.Home) ||
-                        (_viewModel.HotkeyKey == "F12" && e.Key == Key.F12) ||
-                        (_viewModel.HotkeyKey == "F10" && e.Key == Key.F10) ||
-                        (_viewModel.HotkeyKey == "F9" && e.Key == Key.F9))
-                    {
-                        Logger.SimpleLog($"MainWindow KeyDown detected: {e.Key}");
-
-                        // 트레이로 숨기기/열기 토글
-                        if (this.IsVisible)
-                        {
-                            HideWindowToTray();
-                        }
-                        else
-                        {
-                            ShowWindowFromTray();
-                        }
-
-                        // 이벤트 처리 완료 표시
-                        e.Handled = true;
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("MainWindow_PreviewKeyDown error", ex);
             }
         }
 
