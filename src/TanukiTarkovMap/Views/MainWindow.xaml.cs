@@ -26,7 +26,7 @@ namespace TanukiTarkovMap.Views
 
         private MainWindowViewModel _viewModel;
         private WindowBoundsService _windowBoundsService;
-        private HotkeyManager? _hotkeyManager;
+        private HotkeyService _hotkeyService;
         private bool _isClampingLocation = false; // 무한 루프 방지
         private bool _isInitializing = true; // 초기화 중 플래그
         private SettingsPage? _settingsPage; // 설정 페이지 재사용
@@ -37,6 +37,7 @@ namespace TanukiTarkovMap.Views
             {
                 // DI 컨테이너에서 싱글톤 서비스 가져오기
                 _windowBoundsService = ServiceLocator.WindowBoundsService;
+                _hotkeyService = ServiceLocator.HotkeyService;
 
                 InitializeComponent();
 
@@ -91,8 +92,8 @@ namespace TanukiTarkovMap.Views
             // ViewModel PropertyChanged 구독
             _viewModel.PropertyChanged += ViewModel_PropertyChanged;
 
-            // 핫키 매니저 초기화 (전역 단축키용)
-            InitializeHotkeyManager();
+            // 핫키 서비스 초기화 (전역 단축키용)
+            InitializeHotkeyService();
 
             // 설정 페이지 초기화
             InitializeSettingsPage();
@@ -272,39 +273,30 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // 핫키 매니저 초기화 (전역 단축키용)
-        private void InitializeHotkeyManager()
+        // 핫키 서비스 초기화 (전역 단축키용)
+        private void InitializeHotkeyService()
         {
             try
             {
-                _hotkeyManager = new HotkeyManager(this);
-
-                // 핫키 등록
-                if (_viewModel.HotkeyEnabled && !string.IsNullOrEmpty(_viewModel.HotkeyKey))
+                // HotkeyService 초기화 (Window와 Action 전달)
+                _hotkeyService.Initialize(this, () =>
                 {
-                    _hotkeyManager.RegisterHotkey(_viewModel.HotkeyKey, () =>
+                    if (this.IsVisible)
                     {
-                        Logger.SimpleLog("Global hotkey triggered - Toggle tray visibility");
+                        HideWindowToTray();
+                    }
+                    else
+                    {
+                        ShowWindowFromTray();
+                    }
+                });
 
-                        Dispatcher.Invoke(() =>
-                        {
-                            if (this.IsVisible)
-                            {
-                                HideWindowToTray();
-                            }
-                            else
-                            {
-                                ShowWindowFromTray();
-                            }
-                        });
-                    });
-
-                    Logger.SimpleLog($"Hotkey registered: {_viewModel.HotkeyKey}");
-                }
+                // 현재 설정으로 핫키 등록
+                _hotkeyService.RegisterHotkey(_viewModel.HotkeyEnabled, _viewModel.HotkeyKey);
             }
             catch (Exception ex)
             {
-                Logger.Error("Failed to initialize HotkeyManager", ex);
+                Logger.Error("Failed to initialize HotkeyService", ex);
             }
         }
 
@@ -313,16 +305,11 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                // 기존 핫키 매니저 정리
-                _hotkeyManager?.Dispose();
-
                 // ViewModel의 설정 다시 로드
                 _viewModel.LoadSettings();
 
-                // 핫키 매니저 재초기화
-                InitializeHotkeyManager();
-
-                Logger.SimpleLog("Hotkey settings updated");
+                // HotkeyService를 통해 핫키 업데이트
+                _hotkeyService.UpdateHotkey(_viewModel.HotkeyEnabled, _viewModel.HotkeyKey);
             }
             catch (Exception ex)
             {
@@ -377,8 +364,7 @@ namespace TanukiTarkovMap.Views
                 _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
             }
 
-            // 핫키 매니저 정리
-            _hotkeyManager?.Dispose();
+            // HotkeyService는 DI 컨테이너에서 관리되므로 여기서 Dispose하지 않음
         }
     }
 }

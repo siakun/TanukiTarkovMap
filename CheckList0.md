@@ -1,9 +1,28 @@
 # 프로젝트 리팩토링 체크리스트
 
-## MainWindow.xaml.cs 추가 정리
-- [ ] `ShowWindowFromTray()` / `HideWindowToTray()` → 서비스로 이동
-- [ ] `MainWindow_PreviewKeyDown()` → Behavior로 이동
-- [ ] `UpdateHotkeySettings()` → ViewModel로 이동
+## MainWindow.xaml.cs Code-behind 정리
+
+### 핫키 관련 ✅
+- [x] `InitializeHotkeyManager()` → HotkeyService로 이동
+- [x] `UpdateHotkeySettings()` → HotkeyService로 이동
+- [x] `_hotkeyManager` 필드 → HotkeyService에서 관리
+
+### 트레이 관련
+- [ ] `ShowWindowFromTray()` → TrayService 또는 Behavior로 이동
+- [ ] `HideWindowToTray()` → TrayService 또는 Behavior로 이동
+
+### ViewModel 연결 로직
+- [ ] `ConnectWebBrowserViewModel()` → MainWindowViewModel로 이동 또는 Messenger 패턴 사용
+- [ ] `ViewModel_PropertyChanged()` → ViewModel 간 직접 바인딩 또는 Messenger 패턴 사용
+
+### 창 상태 관리
+- [ ] `MainWindow_StateChanged()` → WindowStateBehavior로 이동
+- [ ] `MainWindow_LocationChanged()` → WindowBoundsBehavior로 이동
+- [ ] `MainWindow_SizeChanged()` → WindowBoundsBehavior로 이동
+
+### 기타
+- [ ] `ApplyTopmostSettings()` → 제거 (이미 바인딩으로 처리됨)
+- [ ] `InitializeSettingsPage()` → XAML에서 직접 생성으로 변경
 
 ---
 

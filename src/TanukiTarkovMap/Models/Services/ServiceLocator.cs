@@ -26,6 +26,7 @@ namespace TanukiTarkovMap.Models.Services
             services.AddSingleton(_ => new WindowBoundsService());
             services.AddSingleton(_ => new MapEventService());
             services.AddSingleton(_ => new WindowStateManager());
+            services.AddSingleton(_ => new HotkeyService());
 
             // ViewModels 등록
             services.AddTransient<MainWindowViewModel>();
@@ -60,6 +61,13 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         public static WindowStateManager WindowStateManager
             => _serviceProvider?.GetRequiredService<WindowStateManager>()
+               ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
+
+        /// <summary>
+        /// HotkeyService 싱글톤 인스턴스
+        /// </summary>
+        public static HotkeyService HotkeyService
+            => _serviceProvider?.GetRequiredService<HotkeyService>()
                ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
         #endregion
 
