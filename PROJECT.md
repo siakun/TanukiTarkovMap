@@ -3,7 +3,7 @@
 ## 개요
 
 Escape from Tarkov 게임을 위한 인터랙티브 맵 뷰어 애플리케이션.
-WebView2를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감시를 통한 자동 맵 전환 기능을 제공.
+CefSharp를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감시를 통한 자동 맵 전환 기능을 제공.
 
 ---
 
@@ -13,7 +13,7 @@ WebView2를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감�
 |------|-----------------|
 | UI Framework | WPF (Windows Presentation Foundation) |
 | Target Framework | .NET 8.0 |
-| 웹뷰 | Microsoft.WebView2 |
+| 웹뷰 | CefSharp.Wpf.NETCore |
 | DI/IoC | Microsoft.Extensions.DependencyInjection |
 | MVVM | CommunityToolkit.Mvvm |
 | JSON | Newtonsoft.Json |
@@ -179,6 +179,86 @@ services.AddSingleton(_ => new ServiceName());
 
 ---
 
+## UI 요소 숨기기 로직
+
+### 개념
+
+tarkov-market.com 웹페이지의 UI 요소들을 JavaScript로 제어하여 맵만 깔끔하게 표시.
+
+### 요소 분류
+
+| 요소 | 숨김 조건 | 복원 가능 |
+|------|-----------|-----------|
+| **헤더 (header)** | 항상 숨김 | X |
+| **푸터 (footer-wrap)** | 항상 숨김 | X |
+| **좌측 패널 (panel_left)** | 체크 시 숨김 | O |
+| **우측 패널 (panel_right)** | 체크 시 숨김 | O |
+| **상단 패널 (panel_top)** | 체크 시 숨김 | O |
+
+### 동작 방식
+
+```
+페이지 로드 완료
+       ↓
+INIT_SCRIPT 실행 (함수들을 window 객체에 등록)
+       ↓
+헤더/푸터 항상 숨김 (window.hideHeader(), window.hideFooter())
+       ↓
+"UI 요소 숨기기" 체크 여부 확인
+       ↓
+  ┌─ 체크됨: 패널들도 숨김 (window.hidePanelLeft() 등)
+  └─ 해제됨: 패널들 복원 (window.restorePanels())
+       ↓
+resize 이벤트 발생 → SVG 맵 레이아웃 재계산
+```
+
+### 핵심 원칙
+
+1. **헤더/푸터는 항상 숨김**: 맵 이동, 체크 해제와 무관하게 절대 표시하지 않음
+2. **패널만 토글 대상**: "UI 요소 숨기기" 체크박스는 좌/우/상단 패널에만 적용
+3. **레이아웃 재계산**: 요소 숨김 후 `window.dispatchEvent(new Event('resize'))` 호출로 검은 영역 방지
+
+### JavaScript 스크립트 구조
+
+프로젝트의 JavaScript는 다음 패턴으로 관리됩니다:
+
+```
+Models/JavaScript/
+├── Scripts/                      # 실제 JavaScript 파일 (Embedded Resource)
+│   ├── web-elements-control.js   # UI 요소 제어 함수 정의
+│   ├── page-layout.js            # 마진/패딩 제거
+│   ├── connection-detector.js    # 연결 상태 감지
+│   └── ...
+├── WebElementsControl.js.cs      # C# 래퍼 (함수 호출용 상수)
+├── PageLayout.js.cs              # C# 래퍼
+├── ConnectionDetector.js.cs      # C# 래퍼
+└── JavaScriptLoader.cs           # Embedded Resource 로더
+```
+
+**동작 원리:**
+1. `.js` 파일: IIFE 패턴으로 함수들을 `window` 객체에 등록
+2. `.js.cs` 파일: `JavaScriptLoader.Load()`로 스크립트 로드 + 함수 호출 상수 정의
+3. `WebViewUIService`: 초기화 스크립트 → 함수 호출 순서로 실행
+
+**예시 (WebElementsControl):**
+```csharp
+// 1. 함수 등록 (INIT_SCRIPT)
+await browser.EvaluateScriptAsync(WebElementsControl.INIT_SCRIPT);
+
+// 2. 함수 호출
+await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);  // "window.hideHeader();"
+```
+
+### 관련 파일
+
+- `Scripts/web-elements-control.js`: JavaScript 함수 정의 (IIFE)
+- `WebElementsControl.js.cs`: C# 래퍼 클래스 (INIT_SCRIPT, HIDE_* 상수)
+- `WebViewUIService.cs`: 브라우저에 스크립트 실행 서비스
+- `WebBrowserViewModel.cs`: 페이지 로드 시 `ApplyUIVisibilityAsync()` 호출
+- `JavaScriptLoader.cs`: Embedded Resource에서 .js 파일 로드
+
+---
+
 ## 용어 정리
 
 | 용어 | 설명 |
@@ -186,7 +266,7 @@ services.AddSingleton(_ => new ServiceName());
 | **Normal 모드** | 일반 크기의 윈도우 상태 |
 | **Compact 모드** | 소형 윈도우 상태 (게임 중 오버레이용) |
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
-| **UI 요소 숨김** | JavaScript로 웹페이지 UI 패널 제거 |
+| **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
 
 ---
 

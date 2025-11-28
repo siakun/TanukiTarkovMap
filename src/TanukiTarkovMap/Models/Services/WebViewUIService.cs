@@ -41,16 +41,23 @@ namespace TanukiTarkovMap.Models.Services
 
             try
             {
+                // 함수들을 window 객체에 등록 (최초 1회)
+                await browser.EvaluateScriptAsync(WebElementsControl.INIT_SCRIPT);
+
+                // 헤더와 푸터는 항상 숨김
+                await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);
+                await browser.EvaluateScriptAsync(WebElementsControl.HIDE_FOOTER);
+
                 if (hideElements)
                 {
+                    // 패널들도 숨김
                     await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_RIGHT);
                     await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_LEFT);
                     await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_TOP);
-                    await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);
-                    await browser.EvaluateScriptAsync(WebElementsControl.HIDE_FOOTER);
                 }
                 else
                 {
+                    // 패널들만 복원 (헤더/푸터는 숨김 유지)
                     await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_UI_ELEMENTS_KEEP_TRANSFORM);
                 }
 
@@ -78,6 +85,9 @@ namespace TanukiTarkovMap.Models.Services
 
             try
             {
+                // 함수들을 window 객체에 등록 (최초 1회)
+                await browser.EvaluateScriptAsync(WebElementsControl.INIT_SCRIPT);
+
                 Logger.SimpleLog("[WebViewUIService] Restoring all UI elements");
                 await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_ALL_ELEMENTS);
 

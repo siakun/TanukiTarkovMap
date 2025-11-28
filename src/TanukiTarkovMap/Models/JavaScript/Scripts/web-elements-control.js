@@ -1,186 +1,132 @@
 /**
  * 웹 요소 제어 스크립트
  *
- * 이 파일은 함수가 아닌 "스크립트 조각"들의 모음입니다.
- * C#에서 필요한 스크립트를 선택해서 실행합니다.
+ * tarkov-market.com 웹페이지의 UI 요소 가시성을 제어합니다.
  *
- * 주의: 이 파일은 직접 실행되지 않고, C#에서 개별 함수를 호출합니다.
+ * 구조:
+ * - 각 함수는 window 객체에 등록되어 C#에서 호출 가능
+ * - 헤더/푸터는 항상 숨김 유지
+ * - 패널(좌/우/상단)은 "UI 요소 숨기기" 체크박스에 따라 토글
  */
 
-// ============================================================
-// UI 요소 복원 (창 크기는 유지)
-// ============================================================
-// 사용법: C#에서 이 함수를 문자열로 가져와서 ExecuteScriptAsync
-var restoreUIElementsKeepTransform = function() {
-    try {
-        // 왼쪽 패널 복원
-        var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-        if (panelLeft) {
-            panelLeft.style.display = '';  // 빈 문자열 = 원래 값으로 복원
-        }
+(function() {
+    'use strict';
 
-        // 오른쪽 패널 복원
-        var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-        if (panelRight) {
-            panelRight.style.display = '';
-        }
+    // ============================================================
+    // 헤더 숨기기 (항상 숨김 유지)
+    // ============================================================
+    window.hideHeader = function() {
+        try {
+            function hideAllHeaders() {
+                // 맵 페이지 header
+                var header = document.querySelector('#__nuxt > div > div > header');
+                if (header) header.style.display = 'none';
 
-        // 상단 패널 복원
-        var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
-        if (panelTop) {
-            panelTop.style.display = '';
-        }
+                // 모든 header 태그 숨기기 (pilot 페이지 포함)
+                var headers = document.querySelectorAll('header');
+                headers.forEach(function(h) { h.style.display = 'none'; });
 
-        // 헤더 복원
-        var header = document.querySelector('#__nuxt > div > div > header');
-        if (header) {
-            header.style.display = '';
-        }
-
-        // 푸터 복원
-        var footerWrap = document.querySelector('#__nuxt > div > div > div.footer-wrap');
-        if (footerWrap) {
-            footerWrap.style.display = '';
-        }
-    } catch (e) {
-        // 에러 무시
-    }
-};
-
-// ============================================================
-// 모든 요소 복원 (일반 모드)
-// ============================================================
-var restoreAllElements = function() {
-    try {
-        var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-        if (panelLeft) panelLeft.style.display = '';
-
-        var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-        if (panelRight) panelRight.style.display = '';
-
-        var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
-        if (panelTop) panelTop.style.display = '';
-
-        var header = document.querySelector('#__nuxt > div > div > header');
-        if (header) header.style.display = '';
-
-        var footerWrap = document.querySelector('#__nuxt > div > div > div.footer-wrap');
-        if (footerWrap) footerWrap.style.display = '';
-    } catch (e) {}
-};
-
-// ============================================================
-// 개별 패널 숨기기 함수들
-// ============================================================
-
-var hidePanelLeft = function() {
-    try {
-        var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-        if (panelLeft) {
-            panelLeft.style.display = 'none';  // none = 숨김
-        }
-    } catch (e) {}
-};
-
-var hidePanelRight = function() {
-    try {
-        var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-        if (panelRight) panelRight.style.display = 'none';
-    } catch (e) {}
-};
-
-var hidePanelTop = function() {
-    try {
-        var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
-        if (panelTop) panelTop.style.display = 'none';
-    } catch (e) {}
-};
-
-var hideHeader = function() {
-    try {
-        var header = document.querySelector('#__nuxt > div > div > header');
-        if (header) header.style.display = 'none';
-    } catch (e) {}
-};
-
-var hideFooter = function() {
-    try {
-        var footerWrap = document.querySelector('#__nuxt > div > div > div.footer-wrap');
-        if (footerWrap) {
-            footerWrap.style.display = 'none';
-        }
-
-        // UI 제거 완료 후 C#에 메시지 전송 (CefSharp)
-        setTimeout(() => {
-            try {
-                CefSharp.PostMessage(JSON.stringify({
-                    type: 'ui-elements-removed'
-                }));
-                console.log('[UI Elements] Sent ui-elements-removed message to C#');
-            } catch (e) {
-                console.error('[UI Elements] Failed to send message:', e);
+                // 레이아웃 재계산을 위해 resize 이벤트 발생
+                window.dispatchEvent(new Event('resize'));
             }
-        }, 100);
-    } catch (e) {}
-};
 
-// ============================================================
-// 큰 창일 때 요소 복원
-// ============================================================
-var restoreElementsForLargeSize = function() {
-    try {
-        var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-        if (panelLeft) panelLeft.style.display = '';
+            // 즉시 실행
+            hideAllHeaders();
 
-        var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-        if (panelRight) panelRight.style.display = '';
+            // 동적 로딩을 위해 지연 실행
+            setTimeout(hideAllHeaders, 300);
+            setTimeout(hideAllHeaders, 600);
+            setTimeout(hideAllHeaders, 1000);
+        } catch (e) {
+            console.error('[WebElements] hideHeader error:', e);
+        }
+    };
 
-        var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
-        if (panelTop) panelTop.style.display = '';
+    // ============================================================
+    // 푸터 숨기기 (항상 숨김 유지)
+    // ============================================================
+    window.hideFooter = function() {
+        try {
+            var footerWrap = document.querySelector('#__nuxt > div > div > div.footer-wrap');
+            if (footerWrap) footerWrap.style.display = 'none';
 
-        var header = document.querySelector('#__nuxt > div > div > header');
-        if (header) header.style.display = '';
-    } catch (e) {}
-};
+            // 레이아웃 재계산을 위해 resize 이벤트 발생
+            window.dispatchEvent(new Event('resize'));
 
-// ============================================================
-// 작은 창일 때 요소 숨김
-// ============================================================
-var hideElementsForSmallSize = function() {
-    try {
-        var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-        if (panelLeft) panelLeft.style.display = 'none';
+            // UI 제거 완료 후 C#에 메시지 전송
+            setTimeout(function() {
+                try {
+                    CefSharp.PostMessage(JSON.stringify({
+                        type: 'ui-elements-removed'
+                    }));
+                } catch (e) {}
+            }, 100);
+        } catch (e) {
+            console.error('[WebElements] hideFooter error:', e);
+        }
+    };
 
-        var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-        if (panelRight) panelRight.style.display = 'none';
+    // ============================================================
+    // 패널 숨기기 (UI 요소 숨기기 체크 시)
+    // ============================================================
+    window.hidePanelLeft = function() {
+        try {
+            var panel = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
+            if (panel) panel.style.display = 'none';
+        } catch (e) {}
+    };
 
-        var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
-        if (panelTop) panelTop.style.display = 'none';
+    window.hidePanelRight = function() {
+        try {
+            var panel = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
+            if (panel) panel.style.display = 'none';
+        } catch (e) {}
+    };
 
-        var header = document.querySelector('#__nuxt > div > div > header');
-        if (header) header.style.display = 'none';
-    } catch (e) {}
-};
+    window.hidePanelTop = function() {
+        try {
+            var panel = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
+            if (panel) panel.style.display = 'none';
+        } catch (e) {}
+    };
 
-// ============================================================
-// 요소 표시 상태 확인
-// ============================================================
-var checkElementsVisibilityStatus = function() {
-    try {
-        var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-        var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-        var header = document.querySelector('#__nuxt > div > div > header');
+    // ============================================================
+    // 패널 복원 (UI 요소 숨기기 해제 시) - 헤더/푸터는 복원하지 않음
+    // ============================================================
+    window.restorePanels = function() {
+        try {
+            var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
+            if (panelLeft) panelLeft.style.display = '';
 
-        // 객체 리터럴: { key: value } 형태로 데이터 저장
-        var status = {
-            panelLeftVisible: panelLeft ? (panelLeft.style.display !== 'none') : false,
-            panelRightVisible: panelRight ? (panelRight.style.display !== 'none') : false,
-            headerVisible: header ? (header.style.display !== 'none') : false
-        };
+            var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
+            if (panelRight) panelRight.style.display = '';
 
-        // JSON.stringify: 객체를 JSON 문자열로 변환
-        return JSON.stringify(status);
-    } catch (e) {
-        return '{}';
-    }
-};
+            var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
+            if (panelTop) panelTop.style.display = '';
+
+            // 헤더와 푸터는 복원하지 않음 (항상 숨김 유지)
+        } catch (e) {
+            console.error('[WebElements] restorePanels error:', e);
+        }
+    };
+
+    // ============================================================
+    // 요소 표시 상태 확인 (디버깅용)
+    // ============================================================
+    window.checkElementsVisibility = function() {
+        try {
+            var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
+            var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
+            var header = document.querySelector('#__nuxt > div > div > header');
+
+            return JSON.stringify({
+                panelLeftVisible: panelLeft ? (panelLeft.style.display !== 'none') : false,
+                panelRightVisible: panelRight ? (panelRight.style.display !== 'none') : false,
+                headerVisible: header ? (header.style.display !== 'none') : false
+            });
+        } catch (e) {
+            return '{}';
+        }
+    };
+
+})();
