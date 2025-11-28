@@ -14,12 +14,15 @@ namespace TanukiTarkovMap.Views
     {
         // 핫키 입력 모드 플래그
         private bool _isHotkeyInputMode = false;
+        // 초기화 중 플래그 (이벤트 핸들러에서 SaveSettings 호출 방지)
+        private bool _isInitializing = true;
 
         public SettingsPage()
         {
             InitializeComponent();
             LoadSettings();
             UpdateHotkeySettingsState(); // 핫키 설정 상태 초기화
+            _isInitializing = false; // 초기화 완료
         }
 
         /// <summary>
@@ -114,7 +117,10 @@ namespace TanukiTarkovMap.Views
         /// </summary>
         private void AutoDeleteLogs_Changed(object sender, RoutedEventArgs e)
         {
-            SaveSettings();
+            if (!_isInitializing)
+            {
+                SaveSettings();
+            }
         }
 
         /// <summary>
@@ -122,7 +128,10 @@ namespace TanukiTarkovMap.Views
         /// </summary>
         private void AutoDeleteScreenshots_Changed(object sender, RoutedEventArgs e)
         {
-            SaveSettings();
+            if (!_isInitializing)
+            {
+                SaveSettings();
+            }
         }
 
         /// <summary>
@@ -131,7 +140,10 @@ namespace TanukiTarkovMap.Views
         private void HotkeyEnabled_Changed(object sender, RoutedEventArgs e)
         {
             UpdateHotkeySettingsState();
-            SaveSettings();
+            if (!_isInitializing)
+            {
+                SaveSettings();
+            }
         }
 
         /// <summary>
