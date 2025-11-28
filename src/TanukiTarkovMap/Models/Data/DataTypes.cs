@@ -36,7 +36,7 @@ namespace TanukiTarkovMap.Models.Data
         public bool autoDeleteScreenshots { get; set; } = false;    // 스크린샷 자동 정리
 
         // 창 고정 설정
-        public bool IsAlwaysOnTop { get; set; } = false;            // 항상 위 (Topmost) 설정
+        public bool IsAlwaysOnTop { get; set; } = true;             // 항상 위 (Topmost) 설정 - 기본값 활성화
 
         // WebView 배율 설정
         public int WebViewZoomLevel { get; set; } = 67;             // WebView 배율 (%)
