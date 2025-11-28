@@ -7,9 +7,9 @@
 - [x] `UpdateHotkeySettings()` → HotkeyService로 이동
 - [x] `_hotkeyManager` 필드 → HotkeyService에서 관리
 
-### 트레이 관련
-- [ ] `ShowWindowFromTray()` → TrayService 또는 Behavior로 이동
-- [ ] `HideWindowToTray()` → TrayService 또는 Behavior로 이동
+### 트레이 관련 ✅
+- [x] `ShowWindowFromTray()` → TrayWindowBehavior로 이동
+- [x] `HideWindowToTray()` → TrayWindowBehavior로 이동
 
 ### ViewModel 연결 로직
 - [ ] `ConnectWebBrowserViewModel()` → MainWindowViewModel로 이동 또는 Messenger 패턴 사용

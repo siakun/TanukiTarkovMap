@@ -30,12 +30,15 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
-    <!-- TopBar 애니메이션 Behavior -->
+    <!-- Behaviors -->
     <i:Interaction.Behaviors>
+        <!-- TopBar 애니메이션 Behavior -->
         <behaviors:TopBarAnimationBehavior
             IsAlwaysOnTop="{Binding IsAlwaysOnTop}"
             TopBarTransformName="TopBarTransform"
             WebViewContainerName="WebViewContainer"/>
+        <!-- 트레이 창 표시/숨김 Behavior -->
+        <behaviors:TrayWindowBehavior x:Name="TrayBehavior"/>
     </i:Interaction.Behaviors>
 
     <Window.Resources>

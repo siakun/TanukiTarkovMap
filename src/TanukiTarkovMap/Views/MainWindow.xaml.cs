@@ -2,6 +2,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using Microsoft.Xaml.Behaviors;
+using TanukiTarkovMap.Behaviors;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.ViewModels;
@@ -27,6 +29,7 @@ namespace TanukiTarkovMap.Views
         private MainWindowViewModel _viewModel;
         private WindowBoundsService _windowBoundsService;
         private HotkeyService _hotkeyService;
+        private TrayWindowBehavior? _trayBehavior;
         private bool _isClampingLocation = false; // 무한 루프 방지
         private bool _isInitializing = true; // 초기화 중 플래그
         private SettingsPage? _settingsPage; // 설정 페이지 재사용
@@ -82,6 +85,10 @@ namespace TanukiTarkovMap.Views
 
             // 초기화 완료 - 이제부터 OnWindowBoundsChanged가 정상 동작
             _isInitializing = false;
+
+            // TrayWindowBehavior 찾기
+            var behaviors = Interaction.GetBehaviors(this);
+            _trayBehavior = behaviors.OfType<TrayWindowBehavior>().FirstOrDefault();
 
             // IsAlwaysOnTop 설정 적용
             ApplyTopmostSettings();
@@ -189,63 +196,6 @@ namespace TanukiTarkovMap.Views
             Logger.SimpleLog("[ApplyTopmostSettings] TopMost state managed by ViewModel binding");
         }
 
-        // 트레이에서 창 복원 (포커스를 가져가지 않음 - 게임 플레이 끊김 방지)
-        private void ShowWindowFromTray()
-        {
-            try
-            {
-                var handle = new System.Windows.Interop.WindowInteropHelper(this).Handle;
-
-                // 1. WPF Show() 호출하여 레이아웃 활성화 (이것이 없으면 창이 표시되지 않음)
-                this.Show();
-                this.WindowState = WindowState.Normal;
-
-                // 2. 즉시 ShowWindow를 SW_SHOWNOACTIVATE로 호출하여 포커스 제거
-                PInvoke.ShowWindow(handle, PInvoke.SW_SHOWNOACTIVATE);
-
-                // 3. SetWindowPos로 TopMost 설정 (SWP_NOACTIVATE 플래그로 포커스 가져가지 않음)
-                if (_viewModel.IsAlwaysOnTop)
-                {
-                    PInvoke.SetWindowPos(
-                        handle,
-                        PInvoke.HWND_TOPMOST,
-                        0, 0, 0, 0,
-                        PInvoke.SWP_NOMOVE | PInvoke.SWP_NOSIZE | PInvoke.SWP_NOACTIVATE
-                    );
-                    Logger.SimpleLog("[ShowWindowFromTray] TopMost set without stealing focus");
-                }
-
-                // 4. 핀 모드가 활성화된 경우 TopBar를 숨긴 상태로 시작
-                //    TopBarAnimationBehavior가 Activated 이벤트에서 애니메이션을 처리함
-                if (_viewModel.IsAlwaysOnTop)
-                {
-                    // 즉시 TopBar 숨김 (애니메이션 없이)
-                    TopBarTransform.Y = -20;
-                    WebViewContainer.Margin = new Thickness(0, 0, 0, 0);
-                }
-
-                Logger.SimpleLog("[ShowWindowFromTray] Window shown without stealing focus");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("[ShowWindowFromTray] Failed to show window", ex);
-            }
-        }
-
-        // 창을 트레이로 숨김
-        private void HideWindowToTray()
-        {
-            try
-            {
-                this.Hide();
-                Logger.SimpleLog("[HideWindowToTray] Window hidden to tray");
-            }
-            catch (Exception ex)
-            {
-                Logger.Error("[HideWindowToTray] Failed to hide window", ex);
-            }
-        }
-
         // WindowState 변경 시 처리 (최대화/복원 시 여백 조정)
         private void MainWindow_StateChanged(object? sender, EventArgs e)
         {
@@ -278,17 +228,10 @@ namespace TanukiTarkovMap.Views
         {
             try
             {
-                // HotkeyService 초기화 (Window와 Action 전달)
+                // HotkeyService 초기화 (Window와 TrayBehavior의 ToggleVisibility 전달)
                 _hotkeyService.Initialize(this, () =>
                 {
-                    if (this.IsVisible)
-                    {
-                        HideWindowToTray();
-                    }
-                    else
-                    {
-                        ShowWindowFromTray();
-                    }
+                    _trayBehavior?.ToggleVisibility();
                 });
 
                 // 현재 설정으로 핫키 등록
