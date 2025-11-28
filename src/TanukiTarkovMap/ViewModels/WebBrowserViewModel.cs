@@ -2,6 +2,8 @@ using CefSharp;
 using CefSharp.Wpf;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.JavaScript;
 using TanukiTarkovMap.Models.Services;
@@ -13,7 +15,10 @@ namespace TanukiTarkovMap.ViewModels
     /// WebBrowser UserControl의 ViewModel
     /// CefSharp 브라우저 로직을 관리
     /// </summary>
-    public partial class WebBrowserViewModel : ObservableObject
+    public partial class WebBrowserViewModel : ObservableObject,
+        IRecipient<MapSelectionChangedMessage>,
+        IRecipient<HideWebElementsChangedMessage>,
+        IRecipient<ZoomLevelChangedMessage>
     {
         private readonly WebViewUIService _webViewUIService;
         private ChromiumWebBrowser? _browser;
@@ -42,19 +47,12 @@ namespace TanukiTarkovMap.ViewModels
 
         #endregion
 
-        /// <summary>
-        /// 맵 변경 이벤트 (MainWindowViewModel에서 구독)
-        /// </summary>
-        public event EventHandler<string>? MapReceived;
-
-        /// <summary>
-        /// 연결 상태 변경 이벤트
-        /// </summary>
-        public event EventHandler? PilotConnected;
-
         public WebBrowserViewModel()
         {
             _webViewUIService = ServiceLocator.WebViewUIService;
+
+            // Messenger 등록 (MainWindowViewModel로부터 메시지 수신)
+            WeakReferenceMessenger.Default.RegisterAll(this);
         }
 
         /// <summary>
@@ -161,7 +159,8 @@ namespace TanukiTarkovMap.ViewModels
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
                         CurrentMap = mapName;
-                        MapReceived?.Invoke(this, mapName);
+                        // Messenger로 MainWindowViewModel에 전달
+                        WeakReferenceMessenger.Default.Send(new MapReceivedMessage(mapName));
                     });
                 }
                 // JSON 메시지 처리
@@ -192,7 +191,8 @@ namespace TanukiTarkovMap.ViewModels
                         Logger.SimpleLog("[WebBrowserViewModel] Pilot connected detected!");
                         System.Windows.Application.Current.Dispatcher.Invoke(() =>
                         {
-                            PilotConnected?.Invoke(this, EventArgs.Empty);
+                            // Messenger로 MainWindowViewModel에 전달
+                            WeakReferenceMessenger.Default.Send(new PilotConnectedMessage());
                         });
                         break;
 
@@ -328,6 +328,41 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnZoomLevelChanged(int value)
         {
             ApplyZoomLevel();
+        }
+
+        #endregion
+
+        #region Messenger Handlers
+
+        /// <summary>
+        /// 맵 선택 변경 메시지 핸들러 (MainWindowViewModel → WebBrowserViewModel)
+        /// </summary>
+        public void Receive(MapSelectionChangedMessage message)
+        {
+            if (message.Value != null)
+            {
+                CurrentMap = message.Value.MapId;
+                NavigateToMap(message.Value);
+                Logger.SimpleLog($"[WebBrowserViewModel] MapSelectionChanged via Messenger: {message.Value.MapId}");
+            }
+        }
+
+        /// <summary>
+        /// UI 요소 숨기기 설정 변경 메시지 핸들러 (MainWindowViewModel → WebBrowserViewModel)
+        /// </summary>
+        public void Receive(HideWebElementsChangedMessage message)
+        {
+            HideWebElements = message.Value;
+            Logger.SimpleLog($"[WebBrowserViewModel] HideWebElementsChanged via Messenger: {message.Value}");
+        }
+
+        /// <summary>
+        /// 줌 레벨 변경 메시지 핸들러 (MainWindowViewModel → WebBrowserViewModel)
+        /// </summary>
+        public void Receive(ZoomLevelChangedMessage message)
+        {
+            ZoomLevel = message.Value;
+            Logger.SimpleLog($"[WebBrowserViewModel] ZoomLevelChanged via Messenger: {message.Value}");
         }
 
         #endregion

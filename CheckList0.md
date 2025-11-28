@@ -11,9 +11,9 @@
 - [x] `ShowWindowFromTray()` → TrayWindowBehavior로 이동
 - [x] `HideWindowToTray()` → TrayWindowBehavior로 이동
 
-### ViewModel 연결 로직
-- [ ] `ConnectWebBrowserViewModel()` → MainWindowViewModel로 이동 또는 Messenger 패턴 사용
-- [ ] `ViewModel_PropertyChanged()` → ViewModel 간 직접 바인딩 또는 Messenger 패턴 사용
+### ViewModel 연결 로직 ✅
+- [x] `ConnectWebBrowserViewModel()` → Messenger 패턴으로 대체
+- [x] `ViewModel_PropertyChanged()` → Messenger 패턴으로 대체
 
 ### 창 상태 관리
 - [ ] `MainWindow_StateChanged()` → WindowStateBehavior로 이동

@@ -1,14 +1,18 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.Generic;
 using System.Windows;
+using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.ViewModels
 {
-    public partial class MainWindowViewModel : ObservableObject
+    public partial class MainWindowViewModel : ObservableObject,
+        IRecipient<MapReceivedMessage>,
+        IRecipient<PilotConnectedMessage>
     {
         private readonly WindowBoundsService _windowBoundsService;
         private readonly WindowStateManager _windowStateManager;
@@ -123,6 +127,9 @@ namespace TanukiTarkovMap.ViewModels
             LoadSettings();
             InitializeCommands();
             SubscribeToMapEvents();
+
+            // Messenger 등록 (WebBrowserViewModel로부터 메시지 수신)
+            WeakReferenceMessenger.Default.RegisterAll(this);
         }
 
         /// <summary>
@@ -233,9 +240,17 @@ namespace TanukiTarkovMap.ViewModels
                         break;
                     case nameof(SelectedMapInfo):
                         OnSelectedMapInfoChanged();
+                        // WebBrowserViewModel에 메시지 전송
+                        WeakReferenceMessenger.Default.Send(new MapSelectionChangedMessage(SelectedMapInfo));
                         break;
                     case nameof(HideWebElements):
                         OnHideWebElementsChanged();
+                        // WebBrowserViewModel에 메시지 전송
+                        WeakReferenceMessenger.Default.Send(new HideWebElementsChangedMessage(HideWebElements));
+                        break;
+                    case nameof(SelectedZoomLevel):
+                        // WebBrowserViewModel에 메시지 전송
+                        WeakReferenceMessenger.Default.Send(new ZoomLevelChangedMessage(SelectedZoomLevel));
                         break;
                 }
             };
@@ -357,6 +372,43 @@ namespace TanukiTarkovMap.ViewModels
         {
             CurrentWindowLeft = left;
             CurrentWindowTop = top;
+        }
+
+        #endregion
+
+        #region Messenger Handlers
+
+        /// <summary>
+        /// 맵 수신 메시지 핸들러 (WebBrowserViewModel → MainWindowViewModel)
+        /// </summary>
+        public void Receive(MapReceivedMessage message)
+        {
+            CurrentMap = message.Value;
+            Logger.SimpleLog($"[MainWindowViewModel] MapReceived via Messenger: {message.Value}");
+        }
+
+        /// <summary>
+        /// Pilot 연결 메시지 핸들러 (WebBrowserViewModel → MainWindowViewModel)
+        /// </summary>
+        public void Receive(PilotConnectedMessage message)
+        {
+            Logger.SimpleLog("[MainWindowViewModel] PilotConnected via Messenger");
+
+            if (SelectedMapInfo == null)
+            {
+                // 맵이 선택되어 있지 않으면 기본 맵으로 이동
+                var defaultMap = App.AvailableMaps.FirstOrDefault();
+                if (defaultMap != null)
+                {
+                    SelectedMapInfo = defaultMap;
+                    Logger.SimpleLog($"[MainWindowViewModel] Auto-navigating to default map: {defaultMap.DisplayName}");
+                }
+            }
+            else
+            {
+                // 이미 선택된 맵이 있으면 해당 맵으로 네비게이션 메시지 전송
+                WeakReferenceMessenger.Default.Send(new MapSelectionChangedMessage(SelectedMapInfo));
+            }
         }
 
         #endregion

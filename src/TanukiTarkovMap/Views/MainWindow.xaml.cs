@@ -93,11 +93,8 @@ namespace TanukiTarkovMap.Views
             // IsAlwaysOnTop 설정 적용
             ApplyTopmostSettings();
 
-            // WebBrowser ViewModel과 MainWindow ViewModel 연결
-            ConnectWebBrowserViewModel();
-
-            // ViewModel PropertyChanged 구독
-            _viewModel.PropertyChanged += ViewModel_PropertyChanged;
+            // ViewModel 간 초기 동기화 (Messenger 패턴으로 대체됨)
+            SyncInitialViewModelState();
 
             // 핫키 서비스 초기화 (전역 단축키용)
             InitializeHotkeyService();
@@ -107,9 +104,9 @@ namespace TanukiTarkovMap.Views
         }
 
         /// <summary>
-        /// WebBrowser ViewModel과 MainWindow ViewModel 연결
+        /// ViewModel 간 초기 상태 동기화 (Messenger 패턴으로 대체됨)
         /// </summary>
-        private void ConnectWebBrowserViewModel()
+        private void SyncInitialViewModelState()
         {
             var webBrowserViewModel = WebBrowser.ViewModel;
             if (webBrowserViewModel == null)
@@ -118,37 +115,11 @@ namespace TanukiTarkovMap.Views
                 return;
             }
 
-            // ViewModel 간 속성 동기화
+            // 초기 값 동기화 (Messenger는 구독 후 발송된 메시지만 수신하므로 초기값은 직접 설정)
             webBrowserViewModel.HideWebElements = _viewModel.HideWebElements;
             webBrowserViewModel.ZoomLevel = _viewModel.SelectedZoomLevel;
 
-            // 맵 수신 이벤트 연결
-            webBrowserViewModel.MapReceived += (s, mapName) =>
-            {
-                _viewModel.CurrentMap = mapName;
-            };
-
-            // Pilot 연결 이벤트 연결
-            webBrowserViewModel.PilotConnected += (s, e) =>
-            {
-                if (_viewModel.SelectedMapInfo == null)
-                {
-                    // 맵이 선택되어 있지 않으면 기본 맵으로 이동
-                    var defaultMap = App.AvailableMaps.FirstOrDefault();
-                    if (defaultMap != null)
-                    {
-                        _viewModel.SelectedMapInfo = defaultMap;
-                        Logger.SimpleLog($"[MainWindow] Auto-navigating to default map: {defaultMap.DisplayName}");
-                    }
-                }
-                else
-                {
-                    // 맵이 이미 선택되어 있으면 해당 맵으로 네비게이션 수행
-                    webBrowserViewModel.NavigateToMap(_viewModel.SelectedMapInfo);
-                }
-            };
-
-            Logger.SimpleLog("[MainWindow] WebBrowserViewModel connected");
+            Logger.SimpleLog("[MainWindow] Initial ViewModel state synchronized");
         }
 
         /// <summary>
@@ -158,35 +129,6 @@ namespace TanukiTarkovMap.Views
         {
             _settingsPage = new SettingsPage();
             SettingsContentContainer.Child = _settingsPage;
-        }
-
-        /// <summary>
-        /// ViewModel 프로퍼티 변경 처리
-        /// </summary>
-        private void ViewModel_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
-        {
-            var webBrowserViewModel = WebBrowser.ViewModel;
-            if (webBrowserViewModel == null)
-                return;
-
-            switch (e.PropertyName)
-            {
-                case nameof(MainWindowViewModel.SelectedMapInfo):
-                    if (_viewModel.SelectedMapInfo != null)
-                    {
-                        _viewModel.CurrentMap = _viewModel.SelectedMapInfo.MapId;
-                        webBrowserViewModel.NavigateToMap(_viewModel.SelectedMapInfo);
-                    }
-                    break;
-
-                case nameof(MainWindowViewModel.HideWebElements):
-                    webBrowserViewModel.HideWebElements = _viewModel.HideWebElements;
-                    break;
-
-                case nameof(MainWindowViewModel.SelectedZoomLevel):
-                    webBrowserViewModel.ZoomLevel = _viewModel.SelectedZoomLevel;
-                    break;
-            }
         }
 
         // 시작 시 IsAlwaysOnTop 설정 적용 (더 이상 필요 없음 - ViewModel 바인딩으로 처리)
@@ -301,12 +243,7 @@ namespace TanukiTarkovMap.Views
 
         private void MainWindow_Closed(object? sender, EventArgs e)
         {
-            // ViewModel 이벤트 구독 해제
-            if (_viewModel != null)
-            {
-                _viewModel.PropertyChanged -= ViewModel_PropertyChanged;
-            }
-
+            // ViewModel 이벤트는 Messenger 패턴으로 대체되어 별도 구독 해제 불필요
             // HotkeyService는 DI 컨테이너에서 관리되므로 여기서 Dispose하지 않음
         }
     }
