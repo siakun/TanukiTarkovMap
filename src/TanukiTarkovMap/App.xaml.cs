@@ -6,6 +6,8 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
+using CefSharp;
+using CefSharp.Wpf;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Win32;
 using TanukiTarkovMap.Models.Data;
@@ -185,6 +187,9 @@ namespace TanukiTarkovMap
         private void Application_Startup(object sender, StartupEventArgs e)
         {
             SetCulture();
+
+            // CEF 초기화 (반드시 다른 CefSharp 관련 코드보다 먼저 호출)
+            InitializeCef();
 
             // DI 컨테이너 초기화
             ServiceLocator.Initialize();
@@ -384,12 +389,54 @@ namespace TanukiTarkovMap
                     _mutex?.Dispose();
                 }
             }
+
+            // CEF 종료
+            Cef.Shutdown();
         }
 
         private static void SetCulture()
         {
             // 소수점을 점(.)으로 표시
             Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+        }
+
+        /// <summary>
+        /// CEF (Chromium Embedded Framework) 초기화
+        /// </summary>
+        private static void InitializeCef()
+        {
+            // CEF가 이미 초기화되었는지 확인
+            if (Cef.IsInitialized == true)
+                return;
+
+            var settings = new CefSettings
+            {
+                // 캐시 경로 설정
+                CachePath = Path.Combine(
+                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+                    "TarkovClient",
+                    "CefSharp",
+                    "Cache"),
+
+                // 로그 비활성화 (프로덕션용)
+                LogSeverity = LogSeverity.Disable,
+
+                // 언어 설정
+                Locale = "ko",
+
+                // GPU 가속 활성화
+                // CefCommandLineArgs에서 설정
+            };
+
+            // GPU 가속 설정
+            settings.CefCommandLineArgs.Add("enable-gpu");
+            settings.CefCommandLineArgs.Add("enable-gpu-compositing");
+
+            // 자동 재생 정책
+            settings.CefCommandLineArgs.Add("autoplay-policy", "no-user-gesture-required");
+
+            // CEF 초기화
+            Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
         }
     }
 }

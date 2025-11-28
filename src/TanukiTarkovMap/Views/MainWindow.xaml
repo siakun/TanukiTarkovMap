@@ -4,11 +4,11 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
-        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:converters="clr-namespace:TanukiTarkovMap.Converters"
         xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
+        xmlns:views="clr-namespace:TanukiTarkovMap.Views"
         mc:Ignorable="d"
         DataContext="{Binding MainWindowViewModel, Source={StaticResource Locator}}"
         Title="Tanuki Tarkov Map"
@@ -75,14 +75,14 @@
             <Grid x:Name="MainContentGrid" Panel.ZIndex="1" ClipToBounds="True">
                 <!-- WebView가 전체 영역을 차지하고, TopBar는 위에 오버레이 -->
 
-                <!-- WebView2 영역 (전체) -->
+                <!-- WebBrowser 영역 (전체) -->
                 <Border x:Name="WebViewContainer"
                         Background="#FF212121"
                         CornerRadius="0,0,8,8"
                         Margin="0,20,0,0"
                         ClipToBounds="True"
                         Visibility="{Binding WebViewContainerVisibility}">
-                    <!-- WebView2는 코드에서 추가됩니다 -->
+                    <views:WebBrowserUserControl x:Name="WebBrowser"/>
                 </Border>
 
                 <!-- 상단 바 (맵 선택 + UI 요소 숨기기 + 설정 버튼 + 윈도우 컨트롤) - WebView 위에 오버레이 -->

@@ -9,11 +9,49 @@
 
 ---
 
-## Code-behind 제거 리팩토링
+## WebView2 → CefSharp 마이그레이션
 
-### MainWindow.xaml.cs - 진행 중
+### 1단계: CefSharp 도입
+- [ ] NuGet 패키지 추가 (CefSharp.Wpf)
+- [ ] Microsoft.Web.WebView2 패키지 제거
+- [ ] CEF 초기화 코드 추가 (App.xaml.cs)
 
-#### ✅ 완료된 항목
+### 2단계: WebBrowserUserControl 생성
+- [ ] `Views/WebBrowserUserControl.xaml` 생성
+- [ ] `Views/WebBrowserUserControl.xaml.cs` - InitializeComponent만 포함
+- [ ] `ViewModels/WebBrowserViewModel.cs` 생성
+- [ ] CefSharp 브라우저 래핑 및 MVVM 바인딩
+
+### 3단계: MainWindow에서 WebView 로직 분리
+- [ ] WebBrowserUserControl을 MainWindow에 배치
+- [ ] MainWindow.xaml.cs에서 WebView 관련 코드 제거
+  - [ ] `InitializeWebView()` → WebBrowserViewModel
+  - [ ] `ConfigureWebView2Settings()` → WebBrowserViewModel
+  - [ ] `WebView_NavigationCompleted()` → WebBrowserViewModel
+  - [ ] `CoreWebView2_WebMessageReceived()` → WebBrowserViewModel
+  - [ ] `ApplyWebViewClipping()` → UserControl 또는 Behavior
+  - [ ] `TriggerWebViewResize()` → UserControl 또는 제거
+
+### 4단계: Handle 메서드들 리팩토링
+- [ ] `HandleCompactModeChanged()` → ViewModel 간 메시징 또는 서비스
+- [ ] `HandleMapChanged()` → WebBrowserViewModel
+- [ ] `HandleHideWebElementsChanged()` → WebBrowserViewModel
+- [ ] `HandleZoomLevelChanged()` → WebBrowserViewModel
+- [ ] `HandleSelectedMapChanged()` → WebBrowserViewModel
+
+### 5단계: JavaScript 통신 재구현
+- [ ] CefSharp IJavascriptCallback 또는 EvaluateScriptAsync 사용
+- [ ] 기존 JavaScript 스크립트 호환성 확인
+
+### 6단계: 정리
+- [ ] 불필요한 WebView2 관련 코드 제거
+- [ ] MainWindow.xaml.cs 최소화 (InitializeComponent 수준)
+
+---
+
+## Code-behind 제거 리팩토링 (이전 완료)
+
+### ✅ 완료된 항목
 
 **이벤트 핸들러 → Behavior 분리**
 - [x] `TitleBar_MouseLeftButtonDown` → WindowDragBehavior
@@ -30,36 +68,12 @@
 - [x] `MaximizeRestore_Click` → WindowControlBehavior
 - [x] `Close_Click` → WindowControlBehavior
 
-#### 남은 항목 (검토 필요)
-
-**비즈니스 로직 (현재 유지 - WebView2 의존성으로 인해)**
-- [ ] `HandleCompactModeChanged()` - WebView2 JavaScript 호출 필요
-- [ ] `HandleMapChanged()` - WebView2 네비게이션 필요
-- [ ] `HandleHideWebElementsChanged()` - WebView2 JavaScript 호출 필요
-- [ ] `HandleZoomLevelChanged()` - WebView2 ZoomFactor 설정 필요
-- [ ] `HandleSelectedMapChanged()` - WebView2 네비게이션 필요
-- [ ] `ShowWindowFromTray/HideWindowToTray` - Win32 API 직접 호출 필요
-
-**WebView 관련 로직 (현재 유지 - WPF/WebView2 통합 제약)**
-- [ ] `InitializeWebView()` - WebView 초기화
-- [ ] `ConfigureWebView2Settings()` - WebView 설정
-- [ ] `WebView_NavigationCompleted()` - 네비게이션 완료 처리
-- [ ] `CoreWebView2_WebMessageReceived()` - 웹 메시지 수신 처리
-
-**기타 (현재 유지)**
-- [ ] `ApplyWebViewClipping()` - WebView2 클리핑 (WebView 생성 후 적용 필요)
-- [ ] `TriggerWebViewResize()` - WebView 리사이즈 트리거
-
 ### 생성된 Behavior 파일들
 - `Behaviors/WindowDragBehavior.cs` - 타이틀바 드래그 + 더블클릭 최대화
 - `Behaviors/CompactModeDragBehavior.cs` - Compact 모드 창 드래그
 - `Behaviors/TopBarAnimationBehavior.cs` - TopBar 자동 숨김/표시 애니메이션
 - `Behaviors/WindowControlBehavior.cs` - 창 제어 (최소화/최대화/닫기)
 - `Behaviors/HotkeyInputBehavior.cs` - 핫키 입력 캡처
-
-### 참고
-- `App.xaml.cs` - Application 수준 로직은 WPF 표준으로 허용
-- `SettingsPage.xaml.cs` - ✅ 완료 (InitializeComponent만 포함)
 
 ---
 

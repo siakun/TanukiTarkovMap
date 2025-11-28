@@ -13,6 +13,9 @@
 
             <!-- ServiceLocator를 Application 리소스로 등록 -->
             <svc:ServiceLocator x:Key="Locator"/>
+
+            <!-- 공통 Converter -->
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

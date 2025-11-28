@@ -1,6 +1,6 @@
 using System.Windows;
 using System.Windows.Input;
-using Microsoft.Web.WebView2.Wpf;
+using CefSharp.Wpf;
 using Microsoft.Xaml.Behaviors;
 using TanukiTarkovMap.Models.Utils;
 
@@ -8,7 +8,7 @@ namespace TanukiTarkovMap.Behaviors
 {
     /// <summary>
     /// Compact 모드에서 창 드래그 이동 Behavior
-    /// WebView2 영역 외부를 클릭한 경우에만 드래그 허용
+    /// ChromiumWebBrowser 영역 외부를 클릭한 경우에만 드래그 허용
     /// </summary>
     public class CompactModeDragBehavior : Behavior<UIElement>
     {
@@ -50,23 +50,23 @@ namespace TanukiTarkovMap.Behaviors
             if (window == null)
                 return;
 
-            // WebView2 영역 외부를 클릭한 경우만 드래그
+            // ChromiumWebBrowser 영역 외부를 클릭한 경우만 드래그
             var position = e.GetPosition(window);
             var hitElement = window.InputHitTest(position) as DependencyObject;
 
-            // WebView2가 아닌 경우에만 드래그 허용
-            bool isWebView2 = false;
+            // ChromiumWebBrowser가 아닌 경우에만 드래그 허용
+            bool isBrowser = false;
             while (hitElement != null)
             {
-                if (hitElement is WebView2)
+                if (hitElement is ChromiumWebBrowser)
                 {
-                    isWebView2 = true;
+                    isBrowser = true;
                     break;
                 }
                 hitElement = System.Windows.Media.VisualTreeHelper.GetParent(hitElement);
             }
 
-            if (!isWebView2)
+            if (!isBrowser)
             {
                 var handle = new System.Windows.Interop.WindowInteropHelper(window).Handle;
                 PInvoke.ReleaseCapture();

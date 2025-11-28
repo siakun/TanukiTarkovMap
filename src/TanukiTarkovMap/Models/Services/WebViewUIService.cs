@@ -1,12 +1,13 @@
 using System.Threading.Tasks;
-using Microsoft.Web.WebView2.Wpf;
+using CefSharp;
+using CefSharp.Wpf;
 using TanukiTarkovMap.Models.JavaScript;
 using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Models.Services
 {
     /// <summary>
-    /// WebView2의 UI 요소 가시성을 제어하는 서비스
+    /// CefSharp ChromiumWebBrowser의 UI 요소 가시성을 제어하는 서비스
     ///
     /// 주요 기능:
     /// - tarkov-market.com 웹페이지의 UI 패널(좌측, 우측, 상단, 헤더, 푸터) 숨기기/복원
@@ -23,18 +24,18 @@ namespace TanukiTarkovMap.Models.Services
         internal WebViewUIService() { }
 
         /// <summary>
-        /// WebView2의 UI 요소 가시성을 설정합니다.
+        /// ChromiumWebBrowser의 UI 요소 가시성을 설정합니다.
         /// </summary>
-        /// <param name="webView">대상 WebView2 컨트롤</param>
+        /// <param name="browser">대상 ChromiumWebBrowser 컨트롤</param>
         /// <param name="mapId">현재 맵 ID (로깅용)</param>
         /// <param name="hideElements">true: UI 요소 숨김, false: UI 요소 표시</param>
-        public async Task ApplyUIVisibilityAsync(object webView, string mapId, bool hideElements = true)
+        public async Task ApplyUIVisibilityAsync(ChromiumWebBrowser browser, string mapId, bool hideElements = true)
         {
             Logger.SimpleLog($"[WebViewUIService] ApplyUIVisibilityAsync called for map ID: {mapId}, hideElements: {hideElements}");
 
-            if (webView is not WebView2 webView2 || webView2.CoreWebView2 == null)
+            if (browser?.IsBrowserInitialized != true)
             {
-                Logger.SimpleLog("[WebViewUIService] WebView2 is null or not initialized, aborting");
+                Logger.SimpleLog("[WebViewUIService] Browser is null or not initialized, aborting");
                 return;
             }
 
@@ -42,31 +43,15 @@ namespace TanukiTarkovMap.Models.Services
             {
                 if (hideElements)
                 {
-                    await webView2.CoreWebView2.ExecuteScriptAsync(
-                        WebElementsControl.HIDE_PANEL_RIGHT
-                    );
-
-                    await webView2.CoreWebView2.ExecuteScriptAsync(
-                        WebElementsControl.HIDE_PANEL_LEFT
-                    );
-
-                    await webView2.CoreWebView2.ExecuteScriptAsync(
-                        WebElementsControl.HIDE_PANEL_TOP
-                    );
-
-                    await webView2.CoreWebView2.ExecuteScriptAsync(
-                        WebElementsControl.HIDE_HEADER
-                    );
-
-                    await webView2.CoreWebView2.ExecuteScriptAsync(
-                        WebElementsControl.HIDE_FOOTER
-                    );
+                    await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_RIGHT);
+                    await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_LEFT);
+                    await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_TOP);
+                    await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);
+                    await browser.EvaluateScriptAsync(WebElementsControl.HIDE_FOOTER);
                 }
                 else
                 {
-                    await webView2.CoreWebView2.ExecuteScriptAsync(
-                        WebElementsControl.RESTORE_UI_ELEMENTS_KEEP_TRANSFORM
-                    );
+                    await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_UI_ELEMENTS_KEEP_TRANSFORM);
                 }
 
                 Logger.SimpleLog($"[WebViewUIService] Successfully applied UI visibility for map ID: {mapId}");
@@ -78,25 +63,23 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// WebView2의 모든 UI 요소를 복원합니다.
+        /// ChromiumWebBrowser의 모든 UI 요소를 복원합니다.
         /// </summary>
-        /// <param name="webView">대상 WebView2 컨트롤</param>
-        public async Task RestoreUIElementsAsync(object webView)
+        /// <param name="browser">대상 ChromiumWebBrowser 컨트롤</param>
+        public async Task RestoreUIElementsAsync(ChromiumWebBrowser browser)
         {
             Logger.SimpleLog("[WebViewUIService] RestoreUIElementsAsync called");
 
-            if (webView is not WebView2 webView2 || webView2.CoreWebView2 == null)
+            if (browser?.IsBrowserInitialized != true)
             {
-                Logger.SimpleLog("[WebViewUIService] WebView2 is null or not initialized, aborting");
+                Logger.SimpleLog("[WebViewUIService] Browser is null or not initialized, aborting");
                 return;
             }
 
             try
             {
                 Logger.SimpleLog("[WebViewUIService] Restoring all UI elements");
-                await webView2.CoreWebView2.ExecuteScriptAsync(
-                    WebElementsControl.RESTORE_ALL_ELEMENTS
-                );
+                await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_ALL_ELEMENTS);
 
                 Logger.SimpleLog("[WebViewUIService] Successfully restored all UI elements");
             }
