@@ -67,16 +67,15 @@ namespace TanukiTarkovMap.Views
                 LocationChanged += MainWindow_LocationChanged;
                 SizeChanged += MainWindow_SizeChanged;
                 StateChanged += MainWindow_StateChanged;
-                Activated += MainWindow_Activated;
-                Deactivated += MainWindow_Deactivated;
-                MouseEnter += MainWindow_MouseEnter;
-                MouseLeave += MainWindow_MouseLeave;
 
                 // ViewModel에 창 위치/크기 변경 이벤트 연결
                 this.WindowBoundsChanged += _viewModel.OnWindowBoundsChanged;
 
                 // 키보드 이벤트 핸들러 추가 (디버그 모드용)
                 this.PreviewKeyDown += MainWindow_PreviewKeyDown;
+
+                // Note: Activated, Deactivated, MouseEnter, MouseLeave 이벤트는
+                // TopBarAnimationBehavior에서 처리합니다.
             }
             catch (Exception)
             {
@@ -625,38 +624,9 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // 설정 버튼 클릭 (토글)
-        private void Settings_Click(object sender, RoutedEventArgs e)
-        {
-            // 설정 오버레이 토글
-            if (SettingsOverlay.Visibility == Visibility.Collapsed)
-            {
-                // 설정 열기 - WebView 숨김 (Airspace 문제 해결)
-                WebViewContainer.Visibility = Visibility.Collapsed;
-                SettingsOverlay.Visibility = Visibility.Visible;
-            }
-            else
-            {
-                // 설정 닫기 - WebView 복원
-                SettingsOverlay.Visibility = Visibility.Collapsed;
-                WebViewContainer.Visibility = Visibility.Visible;
-            }
-        }
-
-        // 설정 닫기 버튼 클릭
-        private void CloseSettings_Click(object sender, RoutedEventArgs e)
-        {
-            // 설정 닫기 - WebView 복원
-            SettingsOverlay.Visibility = Visibility.Collapsed;
-            WebViewContainer.Visibility = Visibility.Visible;
-        }
-
-        // 핀 버튼 클릭 - ViewModel 커맨드 호출
-        private void PinToggle_Click(object sender, RoutedEventArgs e)
-        {
-            // ViewModel의 TogglePinModeCommand 실행
-            _viewModel.TogglePinModeCommand.Execute(null);
-        }
+        // Note: Settings_Click, CloseSettings_Click, PinToggle_Click은
+        // ViewModel의 Command로 대체되었습니다.
+        // (ToggleSettingsCommand, CloseSettingsCommand, TogglePinModeCommand)
 
         // 시작 시 IsAlwaysOnTop 설정 적용 (더 이상 필요 없음 - ViewModel 바인딩으로 처리)
         private void ApplyTopmostSettings()
@@ -693,9 +663,12 @@ namespace TanukiTarkovMap.Views
 
                 // 4. 핀 모드가 활성화된 경우 TopBar를 숨긴 상태로 시작
                 //    (창이 포커스 없이 표시되므로, 사용자가 클릭할 때 Activated 이벤트에서 TopBar가 나타남)
+                //    TopBarAnimationBehavior가 Activated 이벤트에서 애니메이션을 처리함
                 if (_viewModel.IsAlwaysOnTop)
                 {
-                    AnimateTopBar(-20);
+                    // 즉시 TopBar 숨김 (애니메이션 없이)
+                    TopBarTransform.Y = -20;
+                    WebViewContainer.Margin = new Thickness(0, 0, 0, 0);
                 }
 
                 Logger.SimpleLog("[ShowWindowFromTray] Window shown without stealing focus");
@@ -720,48 +693,8 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // 타이틀바 드래그로 창 이동
-        private void TitleBar_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ChangedButton == MouseButton.Left)
-            {
-                // 더블클릭 시 최대화/복원
-                if (e.ClickCount == 2)
-                {
-                    MaximizeRestore_Click(sender, e);
-                }
-                // 단일 클릭 시 드래그 이동
-                else
-                {
-                    PInvoke.ReleaseCapture();
-                    PInvoke.SendMessage(
-                        new System.Windows.Interop.WindowInteropHelper(this).Handle,
-                        PInvoke.WM_NCLBUTTONDOWN,
-                        PInvoke.HT_CAPTION,
-                        0
-                    );
-                }
-            }
-        }
-
-        // 최소화 버튼
-        private void Minimize_Click(object sender, RoutedEventArgs e)
-        {
-            WindowState = WindowState.Minimized;
-        }
-
-        // 최대화/복원 버튼
-        private void MaximizeRestore_Click(object sender, RoutedEventArgs e)
-        {
-            if (WindowState == WindowState.Maximized)
-            {
-                WindowState = WindowState.Normal;
-            }
-            else
-            {
-                WindowState = WindowState.Maximized;
-            }
-        }
+        // Note: TitleBar_MouseLeftButtonDown은 WindowDragBehavior로 대체되었습니다.
+        // Note: Minimize_Click, MaximizeRestore_Click, Close_Click은 WindowControlBehavior로 대체되었습니다.
 
         // WindowState 변경 시 처리 (최대화/복원 시 여백 조정)
         private void MainWindow_StateChanged(object? sender, EventArgs e)
@@ -788,12 +721,6 @@ namespace TanukiTarkovMap.Views
                 // 복원 버튼 아이콘 변경
                 MaximizeRestoreButton.Content = "□";
             }
-        }
-
-        // 닫기 버튼
-        private void Close_Click(object sender, RoutedEventArgs e)
-        {
-            Close();
         }
 
         // 핫키 매니저 초기화 (전역 단축키용)
@@ -1012,143 +939,9 @@ namespace TanukiTarkovMap.Views
             }
         }
 
-        // Compact 모드에서 창 드래그 이동 처리
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            // Compact 모드일 때만 드래그 가능
-            if (_viewModel.IsCompactMode && e.ButtonState == MouseButtonState.Pressed)
-            {
-                // WebView2 영역 외부를 클릭한 경우만 드래그
-                // (WebView2 내부에서는 맵 상호작용을 위해 드래그 비활성화)
-                var position = e.GetPosition(this);
-                var hitElement = this.InputHitTest(position) as DependencyObject;
-
-                // WebView2가 아닌 경우에만 드래그 허용
-                bool isWebView2 = false;
-                while (hitElement != null)
-                {
-                    if (hitElement is WebView2)
-                    {
-                        isWebView2 = true;
-                        break;
-                    }
-                    hitElement = System.Windows.Media.VisualTreeHelper.GetParent(hitElement);
-                }
-
-                if (!isWebView2)
-                {
-                    PInvoke.ReleaseCapture();
-                    PInvoke.SendMessage(new System.Windows.Interop.WindowInteropHelper(this).Handle,
-                               PInvoke.WM_NCLBUTTONDOWN, PInvoke.HT_CAPTION, 0);
-                }
-            }
-        }
-
-        // 창 닫기 시 정리
-        /// <summary>
-        /// 창 활성화 이벤트 핸들러 (포커스 획득)
-        /// </summary>
-        private void MainWindow_Activated(object? sender, EventArgs e)
-        {
-            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
-            if (_viewModel?.IsAlwaysOnTop == true)
-            {
-                AnimateTopBar(0); // TopBar 보이기 (Y = 0)
-            }
-        }
-
-        /// <summary>
-        /// 창 비활성화 이벤트 핸들러 (포커스 잃음)
-        /// </summary>
-        private void MainWindow_Deactivated(object? sender, EventArgs e)
-        {
-            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
-            if (_viewModel?.IsAlwaysOnTop == true)
-            {
-                AnimateTopBar(-20); // TopBar 숨기기 (Y = -20, TopBar 높이만큼 위로)
-            }
-        }
-
-        /// <summary>
-        /// 마우스가 창 위로 들어올 때 (Hover 시작)
-        /// </summary>
-        private void MainWindow_MouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
-            if (_viewModel?.IsAlwaysOnTop == true)
-            {
-                AnimateTopBar(0); // TopBar 보이기 (Y = 0)
-            }
-        }
-
-        /// <summary>
-        /// 마우스가 창 밖으로 나갈 때 (Hover 종료)
-        /// </summary>
-        private void MainWindow_MouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
-        {
-            // 핀 모드가 활성화된 경우에만 TopBar 애니메이션
-            if (_viewModel?.IsAlwaysOnTop == true)
-            {
-                // 마우스가 실제로 창 밖으로 나갔는지 확인
-                var position = e.GetPosition(this);
-                var isOutside = position.X < 0 || position.Y < 0 ||
-                                position.X > this.ActualWidth || position.Y > this.ActualHeight;
-
-                if (isOutside)
-                {
-                    AnimateTopBar(-20); // TopBar 숨기기 (Y = -20, TopBar 높이만큼 위로)
-                }
-            }
-        }
-
-        /// <summary>
-        /// TopBar 애니메이션
-        /// </summary>
-        /// <param name="targetY">목표 Y 위치 (0: 보이기, -20: 숨기기)</param>
-        private void AnimateTopBar(double targetY)
-        {
-            try
-            {
-                // TopBar 애니메이션
-                var transform = TopBarTransform;
-                if (transform != null)
-                {
-                    var topBarAnimation = new System.Windows.Media.Animation.DoubleAnimation
-                    {
-                        To = targetY,
-                        Duration = TimeSpan.FromMilliseconds(200),
-                        EasingFunction = new System.Windows.Media.Animation.CubicEase
-                        {
-                            EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut
-                        }
-                    };
-                    transform.BeginAnimation(System.Windows.Media.TranslateTransform.YProperty, topBarAnimation);
-                }
-
-                // WebViewContainer Margin.Top 애니메이션
-                // targetY = 0 (보이기) -> Margin.Top = 20
-                // targetY = -20 (숨기기) -> Margin.Top = 0
-                var targetMarginTop = targetY == 0 ? 20.0 : 0.0;
-                var webViewContainer = WebViewContainer;
-                if (webViewContainer != null)
-                {
-                    var marginAnimation = new System.Windows.Media.Animation.ThicknessAnimation
-                    {
-                        To = new Thickness(0, targetMarginTop, 0, 0),
-                        Duration = TimeSpan.FromMilliseconds(200),
-                        EasingFunction = new System.Windows.Media.Animation.CubicEase
-                        {
-                            EasingMode = System.Windows.Media.Animation.EasingMode.EaseInOut
-                        }
-                    };
-                    webViewContainer.BeginAnimation(System.Windows.Controls.Border.MarginProperty, marginAnimation);
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.SimpleLog($"[AnimateTopBar] Error: {ex.Message}");
-            }
-        }
+        // Note: Window_MouseLeftButtonDown은 CompactModeDragBehavior로 대체되었습니다.
+        // Note: MainWindow_Activated, MainWindow_Deactivated, MainWindow_MouseEnter,
+        //       MainWindow_MouseLeave, AnimateTopBar는 TopBarAnimationBehavior로 대체되었습니다.
 
         private void MainWindow_Closed(object sender, EventArgs e)
         {

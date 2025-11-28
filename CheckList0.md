@@ -1,56 +1,6 @@
-# PIP 기능 잔여물 제거 체크리스트
+# 프로젝트 리팩토링 체크리스트
 
-## 프로젝트 배경
-
-### 기존 PIP 기능 (Fork 프로젝트)
-- **별도의 PIP 윈도우**: 투명한 소형 윈도우를 별도로 띄워 미니맵 표시
-- **복잡한 구조**: PipWindow.xaml, PipController.cs (774줄), WindowTransparency 등
-
-### 현재 프로젝트 구조
-- **단일 윈도우**: 하나의 윈도우에서 Normal 모드와 Compact 모드 전환
-- **핀 기능**: TopMost 설정으로 항상 위에 표시
-- **UI 요소 숨기기**: JavaScript로 웹뷰의 UI 패널 숨김/표시
-
----
-
-## 작업 완료
-
-### Phase 3: 전면 리팩토링 - ✅ 완료 (2025-11-28)
-
-#### WindowStateManager.cs
-- [x] 변수명 변경: `_pipModeRect` → `_compactModeRect`
-- [x] 메서드명 변경: `GetPipModeRect()` → `GetCompactModeRect()`
-- [x] 메서드명 변경: `UpdatePipModeRect()` → `UpdateCompactModeRect()`
-
-#### MainWindowViewModel.cs
-- [x] `IsPipMode` → `IsCompactMode`
-- [x] `PipHotkeyEnabled` → `HotkeyEnabled`
-- [x] `PipHotkeyKey` → `HotkeyKey`
-- [x] `PipHideWebElements` → `HideWebElements`
-- [x] Region 주석 변경: `#region PIP Mode Properties` → `#region Compact Mode Properties`
-- [x] 관련 메서드명 변경: `EnterPipMode()` → `EnterCompactMode()`, `ExitPipMode()` → `ExitCompactMode()`
-
-#### MainWindow.xaml
-- [x] 바인딩 속성명 업데이트 (`HideWebElements`)
-
-#### MainWindow.xaml.cs
-- [x] 모든 PIP 관련 참조를 Compact로 변경
-- [x] `WindowBoundsChangedEventArgs.IsPipMode` → `IsCompactMode`
-
-#### WindowBoundsService.cs
-- [x] `_pipModeScreen` → `_compactModeScreen`
-- [x] `SavePipModeScreen()` → `SaveCompactModeScreen()`
-- [x] `ClearPipModeScreen()` → `ClearCompactModeScreen()`
-
----
-
-## 검증 체크리스트
-
-### 빌드 검증
-- [x] 프로젝트 빌드 성공
-- [x] 새로운 에러 없음 (기존 경고만 존재)
-
-### 기능 테스트 (수동 확인 필요)
+## 기능 테스트 (수동 확인 필요)
 - [ ] Normal 모드 ↔ Compact 모드 전환 정상 작동
 - [ ] UI 요소 숨기기 체크박스 정상 작동
 - [ ] 창 크기/위치 저장/복원 정상 작동
@@ -59,48 +9,62 @@
 
 ---
 
-## Phase 4: Code-behind 제거 리팩토링
+## Code-behind 제거 리팩토링
 
-### 완료
-- [x] `SettingsPage.xaml.cs` - MVVM + Behavior 패턴으로 리팩토링 완료
-  - SettingsViewModel로 비즈니스 로직 이동
-  - HotkeyInputBehavior로 키 입력 캡처 분리
-  - Code-behind는 `InitializeComponent()`만 포함
+### MainWindow.xaml.cs - 진행 중
 
-### 진행 필요
-- [ ] `MainWindow.xaml.cs` (1167줄) - 대규모 리팩토링 필요
-  - 이벤트 핸들러들을 Behavior로 분리
-  - 비즈니스 로직을 MainWindowViewModel로 이동
-  - WebView 관련 로직 분리 검토
+#### ✅ 완료된 항목
+
+**이벤트 핸들러 → Behavior 분리**
+- [x] `TitleBar_MouseLeftButtonDown` → WindowDragBehavior
+- [x] `Window_MouseLeftButtonDown` → CompactModeDragBehavior
+- [x] `MainWindow_Activated/Deactivated` → TopBarAnimationBehavior
+- [x] `MainWindow_MouseEnter/MouseLeave` → TopBarAnimationBehavior
+- [x] `AnimateTopBar()` → TopBarAnimationBehavior
+
+**버튼 클릭 핸들러 → Command/Behavior 바인딩**
+- [x] `Settings_Click` → ToggleSettingsCommand
+- [x] `CloseSettings_Click` → CloseSettingsCommand
+- [x] `PinToggle_Click` → TogglePinModeCommand
+- [x] `Minimize_Click` → WindowControlBehavior
+- [x] `MaximizeRestore_Click` → WindowControlBehavior
+- [x] `Close_Click` → WindowControlBehavior
+
+#### 남은 항목 (검토 필요)
+
+**비즈니스 로직 (현재 유지 - WebView2 의존성으로 인해)**
+- [ ] `HandleCompactModeChanged()` - WebView2 JavaScript 호출 필요
+- [ ] `HandleMapChanged()` - WebView2 네비게이션 필요
+- [ ] `HandleHideWebElementsChanged()` - WebView2 JavaScript 호출 필요
+- [ ] `HandleZoomLevelChanged()` - WebView2 ZoomFactor 설정 필요
+- [ ] `HandleSelectedMapChanged()` - WebView2 네비게이션 필요
+- [ ] `ShowWindowFromTray/HideWindowToTray` - Win32 API 직접 호출 필요
+
+**WebView 관련 로직 (현재 유지 - WPF/WebView2 통합 제약)**
+- [ ] `InitializeWebView()` - WebView 초기화
+- [ ] `ConfigureWebView2Settings()` - WebView 설정
+- [ ] `WebView_NavigationCompleted()` - 네비게이션 완료 처리
+- [ ] `CoreWebView2_WebMessageReceived()` - 웹 메시지 수신 처리
+
+**기타 (현재 유지)**
+- [ ] `ApplyWebViewClipping()` - WebView2 클리핑 (WebView 생성 후 적용 필요)
+- [ ] `TriggerWebViewResize()` - WebView 리사이즈 트리거
+
+### 생성된 Behavior 파일들
+- `Behaviors/WindowDragBehavior.cs` - 타이틀바 드래그 + 더블클릭 최대화
+- `Behaviors/CompactModeDragBehavior.cs` - Compact 모드 창 드래그
+- `Behaviors/TopBarAnimationBehavior.cs` - TopBar 자동 숨김/표시 애니메이션
+- `Behaviors/WindowControlBehavior.cs` - 창 제어 (최소화/최대화/닫기)
+- `Behaviors/HotkeyInputBehavior.cs` - 핫키 입력 캡처
 
 ### 참고
-- `App.xaml.cs` (394줄) - Application 수준 로직은 허용 (WPF 표준)
-
----
-
-## 최종 목표
-
-### 코드 품질 ✅
-- 사용되지 않는 코드 0개
-- 혼란스러운 용어 0개 (PIP → Compact 일관성)
-- 일관성 있는 명명 규칙
-
-### 유지보수성 ✅
-- 코드 목적이 명확함
-- 새로운 개발자가 이해하기 쉬움
-- 향후 확장이 용이함
+- `App.xaml.cs` - Application 수준 로직은 WPF 표준으로 허용
+- `SettingsPage.xaml.cs` - ✅ 완료 (InitializeComponent만 포함)
 
 ---
 
 ## 용어 정리
 
-- **구 PIP 모드**: 별도의 투명 윈도우 (제거됨)
-- **현재 Compact 모드**: 단일 윈도우의 작은 크기 모드
+- **Compact 모드**: 단일 윈도우의 작은 크기 모드
 - **핀 모드**: TopMost 설정 (항상 위에 표시)
 - **UI 요소 숨기기**: JavaScript로 웹 UI 패널 제거
-
----
-
-## 검증일
-- **2025-11-27**: Phase 1, 2 완료
-- **2025-11-28**: Phase 3 완료

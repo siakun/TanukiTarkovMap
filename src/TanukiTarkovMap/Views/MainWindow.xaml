@@ -3,10 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
         xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
         xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
         xmlns:tb="http://www.hardcodet.net/taskbar"
         xmlns:converters="clr-namespace:TanukiTarkovMap.Converters"
+        xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
         mc:Ignorable="d"
         DataContext="{Binding MainWindowViewModel, Source={StaticResource Locator}}"
         Title="Tanuki Tarkov Map"
@@ -28,6 +30,14 @@
         UseLayoutRounding="True"
         SnapsToDevicePixels="True">
 
+    <!-- TopBar 애니메이션 Behavior -->
+    <i:Interaction.Behaviors>
+        <behaviors:TopBarAnimationBehavior
+            IsAlwaysOnTop="{Binding IsAlwaysOnTop}"
+            TopBarTransformName="TopBarTransform"
+            WebViewContainerName="WebViewContainer"/>
+    </i:Interaction.Behaviors>
+
     <Window.Resources>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
     </Window.Resources>
@@ -40,7 +50,11 @@
                       UseAeroCaptionButtons="False"/>
     </WindowChrome.WindowChrome>
 
-    <Grid x:Name="MainGrid" MouseLeftButtonDown="Window_MouseLeftButtonDown">
+    <Grid x:Name="MainGrid">
+        <!-- Compact 모드 드래그 Behavior -->
+        <i:Interaction.Behaviors>
+            <behaviors:CompactModeDragBehavior IsCompactMode="{Binding IsCompactMode}"/>
+        </i:Interaction.Behaviors>
         <!-- Border로 감싸서 리사이즈 시 부드러운 효과 + 둥근 모서리 -->
         <Border x:Name="ContentBorder"
                 Background="#FF1A1A1A"
@@ -66,7 +80,8 @@
                         Background="#FF212121"
                         CornerRadius="0,0,8,8"
                         Margin="0,20,0,0"
-                        ClipToBounds="True">
+                        ClipToBounds="True"
+                        Visibility="{Binding WebViewContainerVisibility}">
                     <!-- WebView2는 코드에서 추가됩니다 -->
                 </Border>
 
@@ -80,11 +95,14 @@
                         Padding="8,0"
                         Panel.ZIndex="200"
                         Height="20"
-                        MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
                         Visibility="{Binding TopBarVisibility}"
                         SnapsToDevicePixels="True"
                         UseLayoutRounding="True"
                         RenderTransformOrigin="0.5,0.5">
+                    <!-- TitleBar 드래그 Behavior -->
+                    <i:Interaction.Behaviors>
+                        <behaviors:WindowDragBehavior EnableMaximizeOnDoubleClick="True"/>
+                    </i:Interaction.Behaviors>
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="TopBarTransform" Y="0"/>
                     </Border.RenderTransform>
@@ -169,7 +187,7 @@
                             Foreground="White"
                             Content="⚙"
                             FontSize="12"
-                            Click="Settings_Click"
+                            Command="{Binding ToggleSettingsCommand}"
                             WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button.Style>
                             <Style TargetType="Button">
@@ -206,7 +224,7 @@
                             Foreground="{Binding IsAlwaysOnTop, Converter={StaticResource BoolToColorConverter}}"
                             Content="📌"
                             FontSize="12"
-                            Click="PinToggle_Click"
+                            Command="{Binding TogglePinModeCommand}"
                             WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button.Style>
                             <Style TargetType="Button">
@@ -244,9 +262,11 @@
                                 Foreground="White"
                                 Content="─"
                                 FontSize="10"
-                                Click="Minimize_Click"
                                 Visibility="Collapsed"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
+                            <i:Interaction.Behaviors>
+                                <behaviors:WindowControlBehavior Action="Minimize"/>
+                            </i:Interaction.Behaviors>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Template">
@@ -277,9 +297,11 @@
                                 Foreground="White"
                                 Content="□"
                                 FontSize="12"
-                                Click="MaximizeRestore_Click"
                                 Visibility="Collapsed"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
+                            <i:Interaction.Behaviors>
+                                <behaviors:WindowControlBehavior Action="MaximizeRestore"/>
+                            </i:Interaction.Behaviors>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Template">
@@ -310,8 +332,10 @@
                                 Foreground="White"
                                 Content="✕"
                                 FontSize="12"
-                                Click="Close_Click"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
+                            <i:Interaction.Behaviors>
+                                <behaviors:WindowControlBehavior Action="Close"/>
+                            </i:Interaction.Behaviors>
                             <Button.Style>
                                 <Style TargetType="Button">
                                     <Setter Property="Template">
@@ -346,7 +370,7 @@
         <!-- 설정 패널 오버레이 (미니멀 스타일) -->
         <Border x:Name="SettingsOverlay"
                 Panel.ZIndex="1000"
-                Visibility="Collapsed"
+                Visibility="{Binding SettingsOverlayVisibility}"
                 Background="#AA000000"
                 CornerRadius="8"
                 Margin="8">
@@ -403,7 +427,7 @@
                                     BorderThickness="0"
                                     Foreground="White"
                                     FontSize="10"
-                                    Click="CloseSettings_Click">
+                                    Command="{Binding CloseSettingsCommand}">
                                 <Button.Style>
                                     <Style TargetType="Button">
                                         <Setter Property="Template">

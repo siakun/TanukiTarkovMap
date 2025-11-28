@@ -57,6 +57,15 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary> Compact 모드일 때 최소화/최대화 버튼 숨김 (닫기만 표시) </summary>
         public Visibility WindowControlButtonsVisibility => IsCompactMode ? Visibility.Collapsed : Visibility.Visible;
+
+        /// <summary> 설정 오버레이 표시 여부 </summary>
+        [ObservableProperty] public partial bool IsSettingsOpen { get; set; } = false;
+
+        /// <summary> 설정 오버레이 Visibility (IsSettingsOpen과 연동) </summary>
+        public Visibility SettingsOverlayVisibility => IsSettingsOpen ? Visibility.Visible : Visibility.Collapsed;
+
+        /// <summary> WebView 컨테이너 Visibility (설정이 열리면 숨김) </summary>
+        public Visibility WebViewContainerVisibility => IsSettingsOpen ? Visibility.Collapsed : Visibility.Visible;
         #endregion
 
         #region Compact Mode Properties
@@ -312,6 +321,26 @@ namespace TanukiTarkovMap.ViewModels
             App.SetSettings(settings);
             Settings.Save();
         }
+
+        /// <summary>
+        /// 설정 오버레이 토글
+        /// </summary>
+        [RelayCommand]
+        private void ToggleSettings()
+        {
+            IsSettingsOpen = !IsSettingsOpen;
+            Logger.SimpleLog($"[ToggleSettings] IsSettingsOpen: {IsSettingsOpen}");
+        }
+
+        /// <summary>
+        /// 설정 오버레이 닫기
+        /// </summary>
+        [RelayCommand]
+        private void CloseSettings()
+        {
+            IsSettingsOpen = false;
+            Logger.SimpleLog("[CloseSettings] Settings closed");
+        }
         #endregion
 
         #region Private Methods
@@ -466,6 +495,15 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnIsCompactModeChanged(bool value)
         {
             OnPropertyChanged(nameof(WindowControlButtonsVisibility));
+        }
+
+        /// <summary>
+        /// IsSettingsOpen 변경 시 관련 Visibility 속성 업데이트
+        /// </summary>
+        partial void OnIsSettingsOpenChanged(bool value)
+        {
+            OnPropertyChanged(nameof(SettingsOverlayVisibility));
+            OnPropertyChanged(nameof(WebViewContainerVisibility));
         }
 
         #endregion
