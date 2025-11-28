@@ -10,7 +10,7 @@ namespace TanukiTarkovMap.Models.JavaScript
     /// 작동 방식:
     /// 1. .js 파일들이 빌드 시 DLL에 Embedded Resource로 포함됩니다
     /// 2. 런타임에 Assembly.GetManifestResourceStream으로 읽어옵니다
-    /// 3. 읽은 내용을 문자열로 변환하여 WebView2에서 실행합니다
+    /// 3. 읽은 내용을 문자열로 변환하여 CefSharp에서 실행합니다
     ///
     /// 장점:
     /// - Visual Studio에서 JavaScript IntelliSense 완벽 지원
@@ -31,7 +31,7 @@ namespace TanukiTarkovMap.Models.JavaScript
         ///
         /// 사용 예시:
         /// string script = JavaScriptLoader.Load("ui-customization.js");
-        /// await webView.CoreWebView2.ExecuteScriptAsync(script);
+        /// await browser.EvaluateScriptAsync(script);
         /// </summary>
         /// <param name="fileName">JavaScript 파일명 (예: "ui-customization.js")</param>
         /// <returns>JavaScript 코드 문자열</returns>
@@ -79,7 +79,7 @@ namespace TanukiTarkovMap.Models.JavaScript
         ///
         /// 사용 예시:
         /// string script = JavaScriptLoader.LoadTemplate("screenshot-path-filler.js", screenshotPath);
-        /// await webView.CoreWebView2.ExecuteScriptAsync(script);
+        /// await browser.EvaluateScriptAsync(script);
         /// </summary>
         /// <param name="fileName">JavaScript 파일명</param>
         /// <param name="args">string.Format에 전달할 인자들 (예: 경로, URL 등)</param>

@@ -1,7 +1,7 @@
 namespace TanukiTarkovMap.Models.JavaScript
 {
     /// <summary>
-    /// WebView2 UI 커스터마이징 관련 JavaScript 스크립트
+    /// CefSharp UI 커스터마이징 관련 JavaScript 스크립트
     /// - 불필요한 UI 요소 제거
     /// - "Tarkov Pilot" → "Tarkov Client" 브랜딩 변경
     /// - DOM 변경 감시 및 자동 재적용

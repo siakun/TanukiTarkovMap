@@ -61,8 +61,8 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> 설정 오버레이 Visibility (IsSettingsOpen과 연동) </summary>
         public Visibility SettingsOverlayVisibility => IsSettingsOpen ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary> WebView 컨테이너 Visibility (설정이 열리면 숨김) </summary>
-        public Visibility WebViewContainerVisibility => IsSettingsOpen ? Visibility.Collapsed : Visibility.Visible;
+        /// <summary> Browser 컨테이너 Visibility (설정이 열리면 숨김) </summary>
+        public Visibility BrowserContainerVisibility => IsSettingsOpen ? Visibility.Collapsed : Visibility.Visible;
         #endregion
 
         #region Settings Properties
@@ -80,12 +80,12 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial MapInfo SelectedMapInfo { get; set; }
         #endregion
 
-        #region WebView Zoom Properties
-        /// <summary> 사용 가능한 WebView 배율 목록 </summary>
+        #region Browser Zoom Properties
+        /// <summary> 사용 가능한 Browser 배율 목록 </summary>
         public List<int> AvailableZoomLevels { get; } = new List<int> { 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200 };
 
         private int _selectedZoomLevel = 67;
-        /// <summary> 선택된 WebView 배율 (%) </summary>
+        /// <summary> 선택된 Browser 배율 (%) </summary>
         public int SelectedZoomLevel
         {
             get => _selectedZoomLevel;
@@ -95,7 +95,7 @@ namespace TanukiTarkovMap.ViewModels
                 {
                     // Settings에 저장
                     var settings = App.GetSettings();
-                    settings.WebViewZoomLevel = value;
+                    settings.BrowserZoomLevel = value;
                     App.SetSettings(settings);
                     Settings.Save();
 
@@ -190,8 +190,8 @@ namespace TanukiTarkovMap.ViewModels
             IsTopmost = _settings.IsAlwaysOnTop; // 초기 TopMost 상태 설정
             OnPropertyChanged(nameof(IsAlwaysOnTop));
 
-            // Load WebView zoom level
-            _selectedZoomLevel = _settings.WebViewZoomLevel > 0 ? _settings.WebViewZoomLevel : 67;
+            // Load Browser zoom level
+            _selectedZoomLevel = _settings.BrowserZoomLevel > 0 ? _settings.BrowserZoomLevel : 67;
             OnPropertyChanged(nameof(SelectedZoomLevel));
 
             // Load last selected map
@@ -358,7 +358,7 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnIsSettingsOpenChanged(bool value)
         {
             OnPropertyChanged(nameof(SettingsOverlayVisibility));
-            OnPropertyChanged(nameof(WebViewContainerVisibility));
+            OnPropertyChanged(nameof(BrowserContainerVisibility));
         }
 
         #endregion

@@ -14,7 +14,7 @@ namespace TanukiTarkovMap.Behaviors
     public class TopBarAnimationBehavior : Behavior<Window>
     {
         private TranslateTransform? _topBarTransform;
-        private Border? _webViewContainer;
+        private Border? _browserContainer;
         private const double TopBarHeight = 20.0;
         private const int AnimationDurationMs = 200;
 
@@ -53,19 +53,19 @@ namespace TanukiTarkovMap.Behaviors
         }
 
         /// <summary>
-        /// WebViewContainer 이름 (XAML에서 x:Name으로 지정)
+        /// BrowserContainer 이름 (XAML에서 x:Name으로 지정)
         /// </summary>
-        public static readonly DependencyProperty WebViewContainerNameProperty =
+        public static readonly DependencyProperty BrowserContainerNameProperty =
             DependencyProperty.Register(
-                nameof(WebViewContainerName),
+                nameof(BrowserContainerName),
                 typeof(string),
                 typeof(TopBarAnimationBehavior),
-                new PropertyMetadata("WebViewContainer"));
+                new PropertyMetadata("BrowserContainer"));
 
-        public string WebViewContainerName
+        public string BrowserContainerName
         {
-            get => (string)GetValue(WebViewContainerNameProperty);
-            set => SetValue(WebViewContainerNameProperty, value);
+            get => (string)GetValue(BrowserContainerNameProperty);
+            set => SetValue(BrowserContainerNameProperty, value);
         }
 
         #endregion
@@ -96,7 +96,7 @@ namespace TanukiTarkovMap.Behaviors
         {
             // XAML에서 정의된 요소 찾기
             _topBarTransform = AssociatedObject.FindName(TopBarTransformName) as TranslateTransform;
-            _webViewContainer = AssociatedObject.FindName(WebViewContainerName) as Border;
+            _browserContainer = AssociatedObject.FindName(BrowserContainerName) as Border;
         }
 
         private static void OnIsAlwaysOnTopChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -175,10 +175,10 @@ namespace TanukiTarkovMap.Behaviors
                     _topBarTransform.BeginAnimation(TranslateTransform.YProperty, topBarAnimation);
                 }
 
-                // WebViewContainer Margin.Top 애니메이션
+                // BrowserContainer Margin.Top 애니메이션
                 // targetY = 0 (보이기) -> Margin.Top = 20
                 // targetY = -20 (숨기기) -> Margin.Top = 0
-                if (_webViewContainer != null)
+                if (_browserContainer != null)
                 {
                     var targetMarginTop = targetY == 0 ? TopBarHeight : 0.0;
                     var marginAnimation = new ThicknessAnimation
@@ -190,7 +190,7 @@ namespace TanukiTarkovMap.Behaviors
                             EasingMode = EasingMode.EaseInOut
                         }
                     };
-                    _webViewContainer.BeginAnimation(Border.MarginProperty, marginAnimation);
+                    _browserContainer.BeginAnimation(Border.MarginProperty, marginAnimation);
                 }
             }
             catch (System.Exception)

@@ -6,7 +6,7 @@ namespace TanukiTarkovMap.Models.Utils
 {
     /// <summary>
     /// Windows API를 사용한 창 투명도 제어 유틸리티
-    /// WebView2와 호환되는 LayeredWindow 방식 구현
+    /// CefSharp과 호환되는 LayeredWindow 방식 구현
     /// </summary>
     public static class WindowTransparency
     {

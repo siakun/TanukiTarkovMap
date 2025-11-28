@@ -38,7 +38,7 @@
 
         console.log('[Remove Margins] Page margins and paddings removed');
 
-        // C#에 완료 메시지 전송 (WebView 크기 조정 트리거용)
+        // C#에 완료 메시지 전송 (Browser 크기 조정 트리거용)
         setTimeout(() => {
             try {
                 // CefSharp.PostMessage: C#으로 메시지 전송

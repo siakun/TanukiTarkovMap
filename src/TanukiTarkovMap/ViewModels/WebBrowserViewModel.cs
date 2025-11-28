@@ -20,7 +20,7 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<HideWebElementsChangedMessage>,
         IRecipient<ZoomLevelChangedMessage>
     {
-        private readonly WebViewUIService _webViewUIService;
+        private readonly BrowserUIService _browserUIService;
         private ChromiumWebBrowser? _browser;
 
         #region Observable Properties
@@ -49,7 +49,7 @@ namespace TanukiTarkovMap.ViewModels
 
         public WebBrowserViewModel()
         {
-            _webViewUIService = ServiceLocator.WebViewUIService;
+            _browserUIService = ServiceLocator.BrowserUIService;
 
             // Messenger 등록 (MainWindowViewModel로부터 메시지 수신)
             WeakReferenceMessenger.Default.RegisterAll(this);
@@ -269,7 +269,7 @@ namespace TanukiTarkovMap.ViewModels
                 return;
 
             string mapId = CurrentMap ?? "default";
-            await _webViewUIService.ApplyUIVisibilityAsync(_browser, mapId, HideWebElements);
+            await _browserUIService.ApplyUIVisibilityAsync(_browser, mapId, HideWebElements);
             Logger.SimpleLog($"[WebBrowserViewModel] Applied UI visibility: mapId={mapId}, hide={HideWebElements}");
         }
 

@@ -38,8 +38,8 @@ namespace TanukiTarkovMap.Models.Data
         // 창 고정 설정
         public bool IsAlwaysOnTop { get; set; } = true;             // 항상 위 (Topmost) 설정 - 기본값 활성화
 
-        // WebView 배율 설정
-        public int WebViewZoomLevel { get; set; } = 67;             // WebView 배율 (%)
+        // Browser 배율 설정
+        public int BrowserZoomLevel { get; set; } = 67;             // Browser 배율 (%)
 
         public override string ToString()
         {

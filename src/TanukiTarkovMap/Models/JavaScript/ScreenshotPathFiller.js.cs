@@ -14,7 +14,7 @@ namespace TanukiTarkovMap.Models.JavaScript
         ///
         /// 사용 방법:
         /// string script = ScreenshotPathFiller.AUTO_FILL_SCREENSHOTS_PATH("C:\\Screenshots");
-        /// await webView.CoreWebView2.ExecuteScriptAsync(script);
+        /// await browser.EvaluateScriptAsync(script);
         ///
         /// 실행 절차:
         /// 1. div.mb-5 요소들 중 "Screenshots folder (case sensitive)" 텍스트를 가진 라벨 찾기

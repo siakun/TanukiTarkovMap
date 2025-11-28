@@ -8,7 +8,7 @@ namespace TanukiTarkovMap.Models.Services
     ///
     /// 사용법:
     /// - XAML: DataContext="{Binding MainWindowViewModel, Source={StaticResource Locator}}"
-    /// - Code: ServiceLocator.WebViewUIService (static 접근)
+    /// - Code: ServiceLocator.BrowserUIService (static 접근)
     /// </summary>
     public class ServiceLocator
     {
@@ -22,7 +22,7 @@ namespace TanukiTarkovMap.Models.Services
             var services = new ServiceCollection();
 
             // Services 등록 (Singleton) - Factory 패턴으로 internal 생성자 호출
-            services.AddSingleton(_ => new WebViewUIService());
+            services.AddSingleton(_ => new BrowserUIService());
             services.AddSingleton(_ => new WindowBoundsService());
             services.AddSingleton(_ => new MapEventService());
             services.AddSingleton(_ => new WindowStateManager());
@@ -36,10 +36,10 @@ namespace TanukiTarkovMap.Models.Services
 
         #region Service Accessors (Static)
         /// <summary>
-        /// WebViewUIService 싱글톤 인스턴스
+        /// BrowserUIService 싱글톤 인스턴스
         /// </summary>
-        public static WebViewUIService WebViewUIService
-            => _serviceProvider?.GetRequiredService<WebViewUIService>()
+        public static BrowserUIService BrowserUIService
+            => _serviceProvider?.GetRequiredService<BrowserUIService>()
                ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
 
         /// <summary>

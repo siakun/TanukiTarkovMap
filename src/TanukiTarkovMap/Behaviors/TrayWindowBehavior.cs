@@ -15,7 +15,7 @@ namespace TanukiTarkovMap.Behaviors
     {
         private MainWindowViewModel? _viewModel;
         private TranslateTransform? _topBarTransform;
-        private Border? _webViewContainer;
+        private Border? _browserContainer;
 
         #region Dependency Properties
 
@@ -36,19 +36,19 @@ namespace TanukiTarkovMap.Behaviors
         }
 
         /// <summary>
-        /// WebViewContainer 이름 (XAML에서 x:Name으로 지정)
+        /// BrowserContainer 이름 (XAML에서 x:Name으로 지정)
         /// </summary>
-        public static readonly DependencyProperty WebViewContainerNameProperty =
+        public static readonly DependencyProperty BrowserContainerNameProperty =
             DependencyProperty.Register(
-                nameof(WebViewContainerName),
+                nameof(BrowserContainerName),
                 typeof(string),
                 typeof(TrayWindowBehavior),
-                new PropertyMetadata("WebViewContainer"));
+                new PropertyMetadata("BrowserContainer"));
 
-        public string WebViewContainerName
+        public string BrowserContainerName
         {
-            get => (string)GetValue(WebViewContainerNameProperty);
-            set => SetValue(WebViewContainerNameProperty, value);
+            get => (string)GetValue(BrowserContainerNameProperty);
+            set => SetValue(BrowserContainerNameProperty, value);
         }
 
         #endregion
@@ -69,7 +69,7 @@ namespace TanukiTarkovMap.Behaviors
         {
             _viewModel = AssociatedObject.DataContext as MainWindowViewModel;
             _topBarTransform = AssociatedObject.FindName(TopBarTransformName) as TranslateTransform;
-            _webViewContainer = AssociatedObject.FindName(WebViewContainerName) as Border;
+            _browserContainer = AssociatedObject.FindName(BrowserContainerName) as Border;
         }
 
         /// <summary>
@@ -102,10 +102,10 @@ namespace TanukiTarkovMap.Behaviors
                 }
 
                 // 4. 핀 모드가 활성화된 경우 TopBar를 숨긴 상태로 시작
-                if (_viewModel?.IsAlwaysOnTop == true && _topBarTransform != null && _webViewContainer != null)
+                if (_viewModel?.IsAlwaysOnTop == true && _topBarTransform != null && _browserContainer != null)
                 {
                     _topBarTransform.Y = -20;
-                    _webViewContainer.Margin = new Thickness(0, 0, 0, 0);
+                    _browserContainer.Margin = new Thickness(0, 0, 0, 0);
                 }
 
                 Logger.SimpleLog("[TrayWindowBehavior] Window shown without stealing focus");

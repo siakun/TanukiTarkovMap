@@ -35,5 +35,5 @@
 
 ---
 
-## 선택 사항
-- [ ] 주석의 WebView2 언급을 CefSharp으로 업데이트
+## 선택 사항 ✅
+- [x] 주석의 WebView2 언급을 CefSharp으로 업데이트
