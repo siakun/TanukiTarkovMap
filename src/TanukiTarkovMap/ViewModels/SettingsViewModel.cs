@@ -1,7 +1,8 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Win32;
-using TanukiTarkovMap.Views;
+using TanukiTarkovMap.Messages;
 
 namespace TanukiTarkovMap.ViewModels
 {
@@ -40,11 +41,8 @@ namespace TanukiTarkovMap.ViewModels
             if (_isLoading) return;
             Save();
 
-            // 핫키 설정 변경 시 MainWindow에서 핫키 재등록
-            if (System.Windows.Application.Current.MainWindow is MainWindow mainWindow)
-            {
-                mainWindow.UpdateHotkeySettings();
-            }
+            // 핫키 설정 변경 메시지 발송 (MainWindow에서 수신하여 핫키 재등록)
+            WeakReferenceMessenger.Default.Send(new HotkeySettingsChangedMessage());
         }
 
         // Commands

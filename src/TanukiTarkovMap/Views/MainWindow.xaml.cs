@@ -1,6 +1,8 @@
 using System.Windows;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Xaml.Behaviors;
 using TanukiTarkovMap.Behaviors;
+using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.ViewModels;
@@ -18,7 +20,7 @@ namespace TanukiTarkovMap.Views
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, IRecipient<HotkeySettingsChangedMessage>
     {
         private MainWindowViewModel _viewModel;
         private HotkeyService _hotkeyService;
@@ -43,6 +45,9 @@ namespace TanukiTarkovMap.Views
 
             // 윈도우 로드 완료 후 초기화
             Loaded += MainWindow_Loaded;
+
+            // Messenger 등록 (핫키 설정 변경 메시지 수신)
+            WeakReferenceMessenger.Default.Register(this);
 
             // Note: StateChanged, LocationChanged, SizeChanged 이벤트는
             // WindowStateBehavior에서 처리합니다.
@@ -113,9 +118,9 @@ namespace TanukiTarkovMap.Views
         }
 
         /// <summary>
-        /// 핫키 설정 업데이트 (SettingsPage에서 호출)
+        /// 핫키 설정 변경 메시지 수신 (IRecipient 구현)
         /// </summary>
-        public void UpdateHotkeySettings()
+        public void Receive(HotkeySettingsChangedMessage message)
         {
             try
             {

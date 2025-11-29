@@ -41,4 +41,11 @@ namespace TanukiTarkovMap.Messages
     public class PilotConnectedMessage
     {
     }
+
+    /// <summary>
+    /// 핫키 설정 변경 메시지 (SettingsViewModel → MainWindow)
+    /// </summary>
+    public class HotkeySettingsChangedMessage
+    {
+    }
 }
