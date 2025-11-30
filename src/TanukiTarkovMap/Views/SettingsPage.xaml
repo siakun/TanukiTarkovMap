@@ -83,10 +83,6 @@
                                 </Button.Style>
                             </Button>
                         </Grid>
-                        <TextBlock Text="경로에 {0}을 사용하면 현재 사용자 이름으로 자동 치환됩니다"
-                                   FontSize="8"
-                                   Foreground="#FF666666"
-                                   Margin="0,2,0,0"/>
                     </StackPanel>
 
                     <!-- 스크린샷 폴더 경로 -->
@@ -144,10 +140,6 @@
                                 </Button.Style>
                             </Button>
                         </Grid>
-                        <TextBlock Text="경로에 {0}을 사용하면 현재 사용자 이름으로 자동 치환됩니다"
-                                   FontSize="8"
-                                   Foreground="#FF666666"
-                                   Margin="0,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
