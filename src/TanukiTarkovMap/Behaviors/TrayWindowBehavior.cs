@@ -82,6 +82,12 @@ namespace TanukiTarkovMap.Behaviors
                 var window = AssociatedObject;
                 var handle = new System.Windows.Interop.WindowInteropHelper(window).Handle;
 
+                // 0. 설정 메뉴가 열려있으면 닫기
+                if (_viewModel != null)
+                {
+                    _viewModel.IsSettingsOpen = false;
+                }
+
                 // 1. WPF Show() 호출하여 레이아웃 활성화
                 window.Show();
                 window.WindowState = WindowState.Normal;
