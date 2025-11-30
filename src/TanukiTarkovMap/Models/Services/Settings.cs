@@ -3,6 +3,20 @@ using System.Text.Json;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Utils;
 
+/**
+Settings - 앱 설정 파일 관리 (settings.json)
+
+Purpose: AppSettings를 JSON 파일로 저장/로드하며, 첫 실행 시 기본값 자동 생성
+
+Core Functionality:
+- Save(): App.GetSettings() 데이터를 settings.json에 저장
+- Load(): settings.json 읽기, 없으면 CreateDefaultSettings() 호출
+- Delete(): 설정 파일 삭제 (리셋용)
+
+첫 실행 시:
+- TarkovPathFinder로 게임/스크린샷 폴더 자동 탐지
+- 각 맵별 기본 창 위치/크기 설정값 생성
+*/
 namespace TanukiTarkovMap.Models.Services
 {
     public class Settings

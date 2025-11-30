@@ -11,6 +11,26 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TanukiTarkovMap.Models.Data;
 
+/**
+Server - WebSocket 서버 (ASP.NET Core Kestrel 기반)
+
+Purpose: tarkov-market.com 웹사이트와 실시간 양방향 통신을 담당
+
+Core Functionality:
+- 서버 시작/종료: Start(), Stop() - 포트 5123에서 WebSocket 수신
+- 메시지 브로드캐스트: SendMap, SendPosition, SendFilename 등
+- 클라이언트 관리: ConcurrentDictionary로 다중 연결 관리
+- 설정 동기화: 웹에서 설정 변경 시 ProcessMessage()로 수신 처리
+
+Message Types (WsMessageType):
+- CONFIGURATION: 앱 버전, 게임/스크린샷 폴더 정보
+- MAP_CHANGE: 현재 맵 정보 전송
+- POSITION_UPDATE: 플레이어 위치 좌표
+- SEND_FILENAME: 스크린샷 파일명
+- SETTINGS_UPDATE/RESET: 웹에서 설정 변경 요청
+
+Endpoint: ws://0.0.0.0:5123/ws 또는 ws://0.0.0.0:5123/
+*/
 namespace TanukiTarkovMap.Models.Services
 {
     static class Server
