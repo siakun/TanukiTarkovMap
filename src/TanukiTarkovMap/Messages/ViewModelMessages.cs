@@ -48,4 +48,13 @@ namespace TanukiTarkovMap.Messages
     public class HotkeySettingsChangedMessage
     {
     }
+
+    /// <summary>
+    /// Extraction 필터 변경 메시지 (MainWindowViewModel → WebBrowserViewModel)
+    /// true = PMC, false = SCAV
+    /// </summary>
+    public class ExtractionFilterChangedMessage : ValueChangedMessage<bool>
+    {
+        public ExtractionFilterChangedMessage(bool value) : base(value) { }
+    }
 }

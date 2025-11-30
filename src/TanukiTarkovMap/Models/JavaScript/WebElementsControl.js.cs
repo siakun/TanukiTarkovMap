@@ -61,5 +61,15 @@ namespace TanukiTarkovMap.Models.JavaScript
         /// 요소 표시 상태 확인 (디버깅용)
         /// </summary>
         public const string CHECK_ELEMENTS_VISIBILITY_STATUS = "window.checkElementsVisibility();";
+
+        /// <summary>
+        /// PMC Extraction 필터 클릭
+        /// </summary>
+        public const string CLICK_PMC_EXTRACTION = "window.clickPmcExtraction();";
+
+        /// <summary>
+        /// SCAV Extraction 필터 클릭
+        /// </summary>
+        public const string CLICK_SCAV_EXTRACTION = "window.clickScavExtraction();";
     }
 }

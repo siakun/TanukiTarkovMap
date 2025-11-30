@@ -129,4 +129,80 @@
         }
     };
 
+    // ============================================================
+    // PMC Extraction 필터 활성화 (SCAV 비활성화 후 PMC 활성화)
+    // ============================================================
+    window.clickPmcExtraction = function() {
+        try {
+            var items = document.querySelector('.two-columns > div:nth-child(1) > div:nth-child(2)');
+            if (!items) {
+                console.warn('[WebElements] Extraction filter container not found');
+                return false;
+            }
+
+            var pmcFilter = items.querySelector('div:nth-child(2)');
+            var scavFilter = items.querySelector('div:nth-child(3)');
+
+            if (!pmcFilter || !scavFilter) {
+                console.warn('[WebElements] PMC or SCAV filter not found');
+                return false;
+            }
+
+            // PMC가 inactive면 클릭하여 활성화
+            if (pmcFilter.classList.contains('inactive')) {
+                pmcFilter.click();
+                console.log('[WebElements] PMC Extraction filter activated');
+            }
+
+            // SCAV가 active면 클릭하여 비활성화
+            if (!scavFilter.classList.contains('inactive')) {
+                scavFilter.click();
+                console.log('[WebElements] SCAV Extraction filter deactivated');
+            }
+
+            return true;
+        } catch (e) {
+            console.error('[WebElements] clickPmcExtraction error:', e);
+            return false;
+        }
+    };
+
+    // ============================================================
+    // SCAV Extraction 필터 활성화 (PMC 비활성화 후 SCAV 활성화)
+    // ============================================================
+    window.clickScavExtraction = function() {
+        try {
+            var items = document.querySelector('.two-columns > div:nth-child(1) > div:nth-child(2)');
+            if (!items) {
+                console.warn('[WebElements] Extraction filter container not found');
+                return false;
+            }
+
+            var pmcFilter = items.querySelector('div:nth-child(2)');
+            var scavFilter = items.querySelector('div:nth-child(3)');
+
+            if (!pmcFilter || !scavFilter) {
+                console.warn('[WebElements] PMC or SCAV filter not found');
+                return false;
+            }
+
+            // SCAV가 inactive면 클릭하여 활성화
+            if (scavFilter.classList.contains('inactive')) {
+                scavFilter.click();
+                console.log('[WebElements] SCAV Extraction filter activated');
+            }
+
+            // PMC가 active면 클릭하여 비활성화
+            if (!pmcFilter.classList.contains('inactive')) {
+                pmcFilter.click();
+                console.log('[WebElements] PMC Extraction filter deactivated');
+            }
+
+            return true;
+        } catch (e) {
+            console.error('[WebElements] clickScavExtraction error:', e);
+            return false;
+        }
+    };
+
 })();

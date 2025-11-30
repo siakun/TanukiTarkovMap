@@ -30,7 +30,8 @@ namespace TanukiTarkovMap.ViewModels
     public partial class WebBrowserViewModel : ObservableObject,
         IRecipient<MapSelectionChangedMessage>,
         IRecipient<HideWebElementsChangedMessage>,
-        IRecipient<ZoomLevelChangedMessage>
+        IRecipient<ZoomLevelChangedMessage>,
+        IRecipient<ExtractionFilterChangedMessage>
     {
         private readonly BrowserUIService _browserUIService;
         private ChromiumWebBrowser? _browser;
@@ -56,6 +57,10 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> 줌 레벨 (%) </summary>
         [ObservableProperty]
         private int _zoomLevel = 67;
+
+        /// <summary> Extraction 필터: true = PMC, false = SCAV </summary>
+        [ObservableProperty]
+        private bool _isPmcExtraction = true;
 
         #endregion
 
@@ -128,6 +133,12 @@ namespace TanukiTarkovMap.ViewModels
 
                         // UI 요소 숨김 설정 적용
                         await ApplyUIVisibilityAsync();
+
+                        // 맵 페이지에서 Extraction 필터 적용 (맵 이동 직후이므로 DOM 대기 필요)
+                        if (_browser.Address.Contains("/maps/"))
+                        {
+                            await ApplyExtractionFilterAsync(IsPmcExtraction, waitForDom: true);
+                        }
 
                         // "/pilot" 페이지에서 Connected 상태 감지 시작
                         if (_browser.Address.Contains("/pilot"))
@@ -375,6 +386,58 @@ namespace TanukiTarkovMap.ViewModels
         {
             ZoomLevel = message.Value;
             Logger.SimpleLog($"[WebBrowserViewModel] ZoomLevelChanged via Messenger: {message.Value}");
+        }
+
+        /// <summary>
+        /// Extraction 필터 변경 메시지 핸들러 (MainWindowViewModel → WebBrowserViewModel)
+        /// </summary>
+        public void Receive(ExtractionFilterChangedMessage message)
+        {
+            IsPmcExtraction = message.Value;
+            _ = ApplyExtractionFilterAsync(message.Value);
+            Logger.SimpleLog($"[WebBrowserViewModel] ExtractionFilterChanged via Messenger: {(message.Value ? "PMC" : "SCAV")}");
+        }
+
+        #endregion
+
+        #region Private Methods
+
+        /// <summary>
+        /// Extraction 필터 적용 (PMC/SCAV)
+        /// </summary>
+        /// <param name="isPmc">true = PMC, false = SCAV</param>
+        /// <param name="waitForDom">true = 맵 이동 직후 DOM 대기 필요</param>
+        private async Task ApplyExtractionFilterAsync(bool isPmc, bool waitForDom = false)
+        {
+            if (_browser?.IsBrowserInitialized != true)
+                return;
+
+            // tarkov-market.com 맵 페이지에서만 동작
+            if (_browser.Address?.Contains("tarkov-market.com/maps/") != true)
+                return;
+
+            try
+            {
+                // 먼저 초기화 스크립트 실행 (함수가 없을 수 있음)
+                await ExecuteScriptAsync(WebElementsControl.INIT_SCRIPT);
+
+                // 맵 이동 직후에만 DOM 렌더링 대기
+                if (waitForDom)
+                {
+                    await Task.Delay(700);
+                }
+
+                var script = isPmc
+                    ? WebElementsControl.CLICK_PMC_EXTRACTION
+                    : WebElementsControl.CLICK_SCAV_EXTRACTION;
+
+                await ExecuteScriptAsync(script);
+                Logger.SimpleLog($"[WebBrowserViewModel] Applied extraction filter: {(isPmc ? "PMC" : "SCAV")}");
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[WebBrowserViewModel] ApplyExtractionFilterAsync error", ex);
+            }
         }
 
         #endregion

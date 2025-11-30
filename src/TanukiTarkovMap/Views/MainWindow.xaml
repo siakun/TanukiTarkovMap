@@ -47,6 +47,7 @@
 
     <Window.Resources>
         <converters:BoolToColorConverter x:Key="BoolToColorConverter"/>
+        <converters:BoolToToggleBackgroundConverter x:Key="BoolToToggleBackgroundConverter"/>
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
@@ -179,6 +180,56 @@
                                            FontSize="12"/>
                             </CheckBox.Content>
                         </CheckBox>
+
+                        <!-- PMC/SCAV 토글 버튼 -->
+                        <Border Margin="16,0,0,0"
+                                Background="#FF3A3A3A"
+                                CornerRadius="3"
+                                Height="16"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto"/>
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+                                <!-- PMC 버튼 -->
+                                <Border x:Name="PmcButton"
+                                        Grid.Column="0"
+                                        Background="{Binding IsPmcExtraction, Converter={StaticResource BoolToToggleBackgroundConverter}}"
+                                        CornerRadius="3,0,0,3"
+                                        Padding="6,0"
+                                        Cursor="Hand">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding SetPmcExtractionCommand}"
+                                                      CommandParameter="True"/>
+                                    </Border.InputBindings>
+                                    <TextBlock Text="PMC"
+                                               FontSize="10"
+                                               FontWeight="SemiBold"
+                                               Foreground="White"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                                <!-- SCAV 버튼 -->
+                                <Border x:Name="ScavButton"
+                                        Grid.Column="1"
+                                        Background="{Binding IsPmcExtraction, Converter={StaticResource BoolToToggleBackgroundConverter}, ConverterParameter=Invert}"
+                                        CornerRadius="0,3,3,0"
+                                        Padding="6,0"
+                                        Cursor="Hand">
+                                    <Border.InputBindings>
+                                        <MouseBinding MouseAction="LeftClick"
+                                                      Command="{Binding SetPmcExtractionCommand}"
+                                                      CommandParameter="False"/>
+                                    </Border.InputBindings>
+                                    <TextBlock Text="SCAV"
+                                               FontSize="10"
+                                               FontWeight="SemiBold"
+                                               Foreground="White"
+                                               VerticalAlignment="Center"/>
+                                </Border>
+                            </Grid>
+                        </Border>
                     </StackPanel>
 
                     <!-- 중간: 설정 버튼 -->

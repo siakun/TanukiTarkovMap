@@ -92,6 +92,9 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
         [ObservableProperty] public partial string HotkeyKey { get; set; } = "F11";
         [ObservableProperty] public partial bool HideWebElements { get; set; } = true;
+
+        /// <summary> Extraction 필터: true = PMC, false = SCAV </summary>
+        [ObservableProperty] public partial bool IsPmcExtraction { get; set; } = true;
         #endregion
 
         #region Map Selection Properties
@@ -274,6 +277,10 @@ namespace TanukiTarkovMap.ViewModels
                         // WebBrowserViewModel에 메시지 전송
                         WeakReferenceMessenger.Default.Send(new ZoomLevelChangedMessage(SelectedZoomLevel));
                         break;
+                    case nameof(IsPmcExtraction):
+                        // WebBrowserViewModel에 메시지 전송
+                        WeakReferenceMessenger.Default.Send(new ExtractionFilterChangedMessage(IsPmcExtraction));
+                        break;
                 }
             };
         }
@@ -325,6 +332,23 @@ namespace TanukiTarkovMap.ViewModels
         {
             IsSettingsOpen = false;
             Logger.SimpleLog("[CloseSettings] Settings closed");
+        }
+
+        /// <summary>
+        /// PMC/SCAV Extraction 필터 설정
+        /// </summary>
+        [RelayCommand]
+        private void SetPmcExtraction(object parameter)
+        {
+            if (parameter is string strValue)
+            {
+                IsPmcExtraction = bool.Parse(strValue);
+            }
+            else if (parameter is bool boolValue)
+            {
+                IsPmcExtraction = boolValue;
+            }
+            Logger.SimpleLog($"[SetPmcExtraction] IsPmcExtraction: {IsPmcExtraction}");
         }
         #endregion
 
