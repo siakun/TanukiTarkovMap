@@ -34,7 +34,9 @@ namespace TanukiTarkovMap.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject,
         IRecipient<MapReceivedMessage>,
-        IRecipient<PilotConnectedMessage>
+        IRecipient<PilotConnectedMessage>,
+        IRecipient<TopBarHiddenChangedMessage>,
+        IRecipient<OpacitySliderDragMessage>
     {
         private readonly WindowBoundsService _windowBoundsService;
         private readonly WindowStateManager _windowStateManager;
@@ -77,7 +79,7 @@ namespace TanukiTarkovMap.ViewModels
         #region UI Visibility Properties
         [ObservableProperty] public partial Visibility TopBarVisibility { get; set; } = Visibility.Visible;
 
-        /// <summary> 창 투명도 (0.1 ~ 1.0) </summary>
+        /// <summary> 창 투명도 (0.1 ~ 1.0) - 사용자 설정값 </summary>
         private double _windowOpacity = 1.0;
         public double WindowOpacity
         {
@@ -93,9 +95,48 @@ namespace TanukiTarkovMap.ViewModels
                     settings.WindowOpacity = clampedValue;
                     App.SetSettings(settings);
                     Settings.Save();
+
+                    // ActualWindowOpacity 업데이트
+                    OnPropertyChanged(nameof(ActualWindowOpacity));
                 }
             }
         }
+
+        /// <summary> TopBar 숨김 상태 (true = 숨김, false = 보임) </summary>
+        private bool _isTopBarHidden = false;
+        public bool IsTopBarHidden
+        {
+            get => _isTopBarHidden;
+            set
+            {
+                if (SetProperty(ref _isTopBarHidden, value))
+                {
+                    OnPropertyChanged(nameof(ActualWindowOpacity));
+                }
+            }
+        }
+
+        /// <summary> 투명도 슬라이더 드래그 중 여부 </summary>
+        private bool _isOpacitySliderDragging = false;
+        public bool IsOpacitySliderDragging
+        {
+            get => _isOpacitySliderDragging;
+            set
+            {
+                if (SetProperty(ref _isOpacitySliderDragging, value))
+                {
+                    OnPropertyChanged(nameof(ActualWindowOpacity));
+                }
+            }
+        }
+
+        /// <summary>
+        /// 실제 적용되는 투명도
+        /// - 슬라이더 드래그 중 → WindowOpacity (미리보기)
+        /// - TopBar 숨김 → WindowOpacity
+        /// - 그 외 → 1.0 (불투명)
+        /// </summary>
+        public double ActualWindowOpacity => IsOpacitySliderDragging || IsTopBarHidden ? WindowOpacity : 1.0;
 
         /// <summary> 설정 오버레이 표시 여부 </summary>
         [ObservableProperty] public partial bool IsSettingsOpen { get; set; } = false;
@@ -479,6 +520,22 @@ namespace TanukiTarkovMap.ViewModels
                 // 이미 선택된 맵이 있으면 해당 맵으로 네비게이션 메시지 전송
                 WeakReferenceMessenger.Default.Send(new MapSelectionChangedMessage(SelectedMapInfo));
             }
+        }
+
+        /// <summary>
+        /// TopBar 숨김 상태 변경 메시지 핸들러 (TopBarAnimationBehavior → MainWindowViewModel)
+        /// </summary>
+        public void Receive(TopBarHiddenChangedMessage message)
+        {
+            IsTopBarHidden = message.Value;
+        }
+
+        /// <summary>
+        /// 투명도 슬라이더 드래그 상태 메시지 핸들러 (OpacitySliderDragBehavior → MainWindowViewModel)
+        /// </summary>
+        public void Receive(OpacitySliderDragMessage message)
+        {
+            IsOpacitySliderDragging = message.Value;
         }
 
         #endregion

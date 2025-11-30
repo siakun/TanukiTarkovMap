@@ -57,4 +57,22 @@ namespace TanukiTarkovMap.Messages
     {
         public ExtractionFilterChangedMessage(bool value) : base(value) { }
     }
+
+    /// <summary>
+    /// TopBar 숨김 상태 변경 메시지 (TopBarAnimationBehavior → MainWindowViewModel)
+    /// true = 숨김, false = 보임
+    /// </summary>
+    public class TopBarHiddenChangedMessage : ValueChangedMessage<bool>
+    {
+        public TopBarHiddenChangedMessage(bool value) : base(value) { }
+    }
+
+    /// <summary>
+    /// 투명도 슬라이더 드래그 상태 메시지 (OpacitySliderDragBehavior → MainWindowViewModel)
+    /// true = 드래그 시작, false = 드래그 종료
+    /// </summary>
+    public class OpacitySliderDragMessage : ValueChangedMessage<bool>
+    {
+        public OpacitySliderDragMessage(bool value) : base(value) { }
+    }
 }

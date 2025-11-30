@@ -260,6 +260,14 @@ string HotkeyKey          // 핫키 키 (기본: F11)
 
 // UI 설정
 bool HideWebElements      // 웹 UI 요소 숨김 여부
+bool IsPmcExtraction      // Extraction 필터 (true=PMC, false=SCAV)
+
+// 창 투명도
+double WindowOpacity      // 사용자 설정 투명도 (0.1 ~ 1.0)
+bool IsTopBarHidden       // TopBar 숨김 상태
+double ActualWindowOpacity // 실제 적용 투명도 (계산됨)
+                          // TopBar 보임 → 1.0
+                          // TopBar 숨김 → WindowOpacity
 ```
 
 ---
@@ -350,7 +358,8 @@ services.AddSingleton(_ => new ServiceName());
   "NormalHeight": 700,
   "HotkeyEnabled": true,
   "HotkeyKey": "F11",
-  "IsAlwaysOnTop": false
+  "IsAlwaysOnTop": false,
+  "WindowOpacity": 1.0
 }
 ```
 
@@ -436,9 +445,72 @@ await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);  // "window.h
 
 ---
 
+## TopBar 자동 숨김 동작
+
+### 개요
+
+핀 모드(IsAlwaysOnTop) 활성화 시, TopBar가 자동으로 숨겨지는 기능.
+마우스가 창을 떠나거나 창이 비활성화되면 2.5초 후 TopBar가 숨겨짐.
+
+### 동작 흐름
+
+```mermaid
+flowchart TD
+    START{핀 모드 활성화?} -->|No| SHOW[TopBar 항상 표시]
+    START -->|Yes| CHECK{이벤트 종류}
+    CHECK -->|창 활성화 / 마우스 진입| CANCEL[타이머 취소]
+    CANCEL --> VISIBLE[TopBar 표시]
+    CHECK -->|창 비활성화 / 마우스 이탈| TIMER[2.5초 타이머 시작]
+    TIMER -->|2.5초 내 재진입| CANCEL
+    TIMER -->|2.5초 경과| HIDE[TopBar 숨김]
+```
+
+### 트리거 조건
+
+| 이벤트 | 동작 |
+|--------|------|
+| 창 활성화 (Activated) | 타이머 취소, TopBar 표시 |
+| 창 비활성화 (Deactivated) | 2.5초 타이머 시작 |
+| 마우스 진입 (MouseEnter) | 타이머 취소, TopBar 표시 |
+| 마우스 이탈 (MouseLeave) | 2.5초 타이머 시작 |
+
+### 투명도 연동
+
+TopBar 상태에 따라 창 투명도가 자동 조절됨:
+
+```
+TopBar 표시 → ActualWindowOpacity = 1.0 (불투명)
+TopBar 숨김 → ActualWindowOpacity = WindowOpacity (사용자 설정값)
+```
+
+### 메시지 흐름
+
+```mermaid
+sequenceDiagram
+    participant TBA as TopBarAnimationBehavior
+    participant MSG as WeakReferenceMessenger
+    participant MWVM as MainWindowViewModel
+
+    TBA->>TBA: AnimateTopBar(targetY)
+    TBA->>MSG: Send(TopBarHiddenChangedMessage)
+    MSG->>MWVM: Receive(message)
+    MWVM->>MWVM: IsTopBarHidden = message.Value
+    MWVM->>MWVM: OnPropertyChanged(ActualWindowOpacity)
+    Note over MWVM: ContentBorder.Opacity 자동 갱신
+```
+
+### 관련 파일
+
+- `Behaviors/TopBarAnimationBehavior.cs`: TopBar 애니메이션 및 타이머 로직
+- `Messages/ViewModelMessages.cs`: TopBarHiddenChangedMessage 정의
+- `ViewModels/MainWindowViewModel.cs`: IsTopBarHidden, ActualWindowOpacity 속성
+
+---
+
 ## 용어 정리
 
 | 용어 | 설명 |
 |------|------|
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
 | **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
+| **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |

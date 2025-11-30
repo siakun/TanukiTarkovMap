@@ -3,7 +3,9 @@ using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Xaml.Behaviors;
+using TanukiTarkovMap.Messages;
 
 namespace TanukiTarkovMap.Behaviors
 {
@@ -197,6 +199,10 @@ namespace TanukiTarkovMap.Behaviors
         {
             try
             {
+                // TopBar 숨김 상태 메시지 전송 (true = 숨김, false = 보임)
+                bool isHidden = targetY < 0;
+                WeakReferenceMessenger.Default.Send(new TopBarHiddenChangedMessage(isHidden));
+
                 // TopBar 위치 애니메이션
                 if (_topBarTransform != null)
                 {

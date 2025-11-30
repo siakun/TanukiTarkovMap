@@ -66,7 +66,7 @@
                 BorderThickness="1"
                 CornerRadius="8"
                 Margin="8"
-                Opacity="{Binding WindowOpacity}"
+                Opacity="{Binding ActualWindowOpacity}"
                 SnapsToDevicePixels="True"
                 UseLayoutRounding="True">
             <Border.Effect>
@@ -253,6 +253,9 @@
                                 VerticalAlignment="Center"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
                                 ToolTip="창 투명도 조절">
+                            <i:Interaction.Behaviors>
+                                <behaviors:OpacitySliderDragBehavior/>
+                            </i:Interaction.Behaviors>
                             <Slider.Style>
                                 <Style TargetType="Slider">
                                     <Setter Property="Template">
