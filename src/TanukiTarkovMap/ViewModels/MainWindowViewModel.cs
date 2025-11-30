@@ -77,6 +77,26 @@ namespace TanukiTarkovMap.ViewModels
         #region UI Visibility Properties
         [ObservableProperty] public partial Visibility TopBarVisibility { get; set; } = Visibility.Visible;
 
+        /// <summary> 창 투명도 (0.1 ~ 1.0) </summary>
+        private double _windowOpacity = 1.0;
+        public double WindowOpacity
+        {
+            get => _windowOpacity;
+            set
+            {
+                // 최소값 0.1, 최대값 1.0으로 제한
+                var clampedValue = Math.Max(0.1, Math.Min(1.0, value));
+                if (SetProperty(ref _windowOpacity, clampedValue))
+                {
+                    // Settings에 저장
+                    var settings = App.GetSettings();
+                    settings.WindowOpacity = clampedValue;
+                    App.SetSettings(settings);
+                    Settings.Save();
+                }
+            }
+        }
+
         /// <summary> 설정 오버레이 표시 여부 </summary>
         [ObservableProperty] public partial bool IsSettingsOpen { get; set; } = false;
 
@@ -218,6 +238,10 @@ namespace TanukiTarkovMap.ViewModels
             // Load Browser zoom level
             _selectedZoomLevel = _settings.BrowserZoomLevel > 0 ? _settings.BrowserZoomLevel : 67;
             OnPropertyChanged(nameof(SelectedZoomLevel));
+
+            // Load window opacity
+            _windowOpacity = _settings.WindowOpacity > 0 ? _settings.WindowOpacity : 1.0;
+            OnPropertyChanged(nameof(WindowOpacity));
 
             // Load last selected map
             if (!string.IsNullOrEmpty(_settings.SelectedMapId))

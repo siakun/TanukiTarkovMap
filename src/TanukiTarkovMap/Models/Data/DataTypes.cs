@@ -41,6 +41,9 @@ namespace TanukiTarkovMap.Models.Data
         // Browser 배율 설정
         public int BrowserZoomLevel { get; set; } = 67;             // Browser 배율 (%)
 
+        // 창 투명도 설정
+        public double WindowOpacity { get; set; } = 1.0;            // 창 투명도 (0.1 ~ 1.0)
+
         public override string ToString()
         {
             return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}'";
