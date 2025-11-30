@@ -6,6 +6,21 @@
 
 (function() {
     try {
+        // 스크롤바 숨기기 - 웹 앱이므로 스크롤바 불필요
+        const hideScrollbarStyle = document.createElement('style');
+        hideScrollbarStyle.textContent = `
+            html, body {
+                scrollbar-width: none !important;
+                -ms-overflow-style: none !important;
+            }
+            html::-webkit-scrollbar,
+            body::-webkit-scrollbar {
+                display: none !important;
+            }
+        `;
+        document.head.appendChild(hideScrollbarStyle);
+        console.log('[Page Layout] Scrollbar hidden');
+
         // querySelectorAll로 모든 .wrap 클래스 요소 찾기
         const wrapElements = document.querySelectorAll('.wrap');
         // forEach로 각 요소의 스타일 변경
