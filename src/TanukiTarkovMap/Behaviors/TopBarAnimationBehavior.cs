@@ -2,6 +2,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Threading;
 using Microsoft.Xaml.Behaviors;
 
 namespace TanukiTarkovMap.Behaviors
@@ -10,13 +11,16 @@ namespace TanukiTarkovMap.Behaviors
     /// TopBar 자동 숨김/표시 애니메이션 Behavior
     /// 핀 모드(IsAlwaysOnTop)가 활성화된 경우에만 작동
     /// 창 활성화/비활성화 및 마우스 호버에 따라 TopBar 표시/숨김
+    /// 마우스가 창을 떠나면 2.5초 후에 숨김 (그 전에 돌아오면 취소)
     /// </summary>
     public class TopBarAnimationBehavior : Behavior<Window>
     {
         private TranslateTransform? _topBarTransform;
         private Border? _browserContainer;
+        private DispatcherTimer? _hideDelayTimer;
         private const double TopBarHeight = 20.0;
         private const int AnimationDurationMs = 200;
+        private const int HideDelayMs = 2500;
 
         #region Dependency Properties
 
@@ -83,6 +87,8 @@ namespace TanukiTarkovMap.Behaviors
 
         protected override void OnDetaching()
         {
+            CancelHideTimer();
+
             AssociatedObject.Loaded -= OnWindowLoaded;
             AssociatedObject.Activated -= OnWindowActivated;
             AssociatedObject.Deactivated -= OnWindowDeactivated;
@@ -115,6 +121,7 @@ namespace TanukiTarkovMap.Behaviors
         {
             if (IsAlwaysOnTop)
             {
+                CancelHideTimer();
                 AnimateTopBar(0); // TopBar 보이기
             }
         }
@@ -123,7 +130,8 @@ namespace TanukiTarkovMap.Behaviors
         {
             if (IsAlwaysOnTop)
             {
-                AnimateTopBar(-TopBarHeight); // TopBar 숨기기
+                // 창이 비활성화되면 타이머 시작 (마우스가 돌아오면 취소됨)
+                StartHideTimer();
             }
         }
 
@@ -131,6 +139,7 @@ namespace TanukiTarkovMap.Behaviors
         {
             if (IsAlwaysOnTop)
             {
+                CancelHideTimer();
                 AnimateTopBar(0); // TopBar 보이기
             }
         }
@@ -139,17 +148,45 @@ namespace TanukiTarkovMap.Behaviors
         {
             if (IsAlwaysOnTop)
             {
-                // 마우스가 실제로 창 밖으로 나갔는지 확인
-                var position = e.GetPosition(AssociatedObject);
-                var isOutside = position.X < 0 || position.Y < 0 ||
-                                position.X > AssociatedObject.ActualWidth ||
-                                position.Y > AssociatedObject.ActualHeight;
-
-                if (isOutside)
-                {
-                    AnimateTopBar(-TopBarHeight); // TopBar 숨기기
-                }
+                StartHideTimer();
             }
+        }
+
+        /// <summary>
+        /// 숨김 타이머 시작 (2.5초 후 TopBar 숨김)
+        /// </summary>
+        private void StartHideTimer()
+        {
+            CancelHideTimer();
+
+            _hideDelayTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(HideDelayMs)
+            };
+            _hideDelayTimer.Tick += OnHideTimerTick;
+            _hideDelayTimer.Start();
+        }
+
+        /// <summary>
+        /// 숨김 타이머 취소
+        /// </summary>
+        private void CancelHideTimer()
+        {
+            if (_hideDelayTimer != null)
+            {
+                _hideDelayTimer.Stop();
+                _hideDelayTimer.Tick -= OnHideTimerTick;
+                _hideDelayTimer = null;
+            }
+        }
+
+        /// <summary>
+        /// 타이머 만료 시 TopBar 숨기기
+        /// </summary>
+        private void OnHideTimerTick(object? sender, EventArgs e)
+        {
+            CancelHideTimer();
+            AnimateTopBar(-TopBarHeight); // TopBar 숨기기
         }
 
         /// <summary>
