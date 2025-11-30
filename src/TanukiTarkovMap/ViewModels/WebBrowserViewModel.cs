@@ -9,12 +9,24 @@ using TanukiTarkovMap.Models.JavaScript;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
+/**
+WebBrowserViewModel - CefSharp 웹 브라우저 제어 ViewModel
+
+Purpose: tarkov-market.com 웹페이지를 표시하고, JavaScript 주입/메시지 수신을 처리
+
+Core Functionality:
+- 브라우저 초기화: SetBrowser()로 ChromiumWebBrowser 인스턴스 연결
+- 페이지 로드 후처리: UI 요소 제거, 마진 제거, 줌 적용
+- JavaScript 통신: CefSharp.PostMessage로 맵 정보/연결 상태 수신
+- Messenger 수신: MainWindowViewModel에서 맵 선택/줌/UI 숨김 설정 수신
+
+Message Flow:
+  MainWindowViewModel → MapSelectionChangedMessage → NavigateToMap
+  MainWindowViewModel → ZoomLevelChangedMessage → ApplyZoomLevel
+  JavaScript(pilot-connected) → PilotConnectedMessage → MainWindowViewModel
+*/
 namespace TanukiTarkovMap.ViewModels
 {
-    /// <summary>
-    /// WebBrowser UserControl의 ViewModel
-    /// CefSharp 브라우저 로직을 관리
-    /// </summary>
     public partial class WebBrowserViewModel : ObservableObject,
         IRecipient<MapSelectionChangedMessage>,
         IRecipient<HideWebElementsChangedMessage>,

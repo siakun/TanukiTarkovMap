@@ -8,6 +8,28 @@ using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
+/**
+MainWindowViewModel - 메인 윈도우 상태 및 UI 로직 관리
+
+Purpose: MainWindow의 모든 바인딩 데이터와 커맨드를 제공하며, 창 상태/맵 선택/설정을 관리
+
+Core Functionality:
+- 창 상태 관리: 위치, 크기, 항상 위, 리사이즈 모드
+- 맵 선택: ComboBox 바인딩, MapEventService 이벤트 수신으로 자동 맵 전환
+- 설정 오버레이: 설정 페이지 토글 및 Visibility 관리
+- 브라우저 줌: 배율 선택 및 WebBrowserViewModel로 메시지 전송
+
+Message Flow:
+  MapEventService.MapChanged → OnMapEventReceived → ChangeMapCommand
+  SelectedMapInfo 변경 → MapSelectionChangedMessage → WebBrowserViewModel
+  WebBrowserViewModel → MapReceivedMessage/PilotConnectedMessage → 이 ViewModel
+
+Dependencies:
+- WindowBoundsService: 창 위치/크기 저장소
+- WindowStateManager: Normal 모드 Rect 관리
+- MapEventService: 게임 로그 기반 맵 변경 이벤트
+- WeakReferenceMessenger: ViewModel 간 통신
+*/
 namespace TanukiTarkovMap.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject,
