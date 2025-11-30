@@ -13,7 +13,7 @@
         <vm:SettingsViewModel/>
     </UserControl.DataContext>
 
-    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,8">
 
             <!-- 타르코프 경로 설정 섹션 -->
@@ -285,6 +285,116 @@
                                    FontSize="8"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 개발자 도구 섹션 -->
+            <Border Background="#FF1A1A1A"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="개발자 도구"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,6"/>
+
+                    <!-- Pilot 설정 페이지로 이동 -->
+                    <Button Content="Tarkov Market 설정 페이지로 이동"
+                            Command="{Binding NavigateToPilotCommand}"
+                            Height="28"
+                            Background="#FF3A3A3A"
+                            Foreground="White"
+                            BorderThickness="0"
+                            FontSize="10"
+                            HorizontalAlignment="Left"
+                            Padding="12,0">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border Background="{TemplateBinding Background}"
+                                                    CornerRadius="3"
+                                                    Padding="{TemplateBinding Padding}">
+                                                <ContentPresenter HorizontalAlignment="Center"
+                                                                VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter Property="Background" Value="#FF5A5A5A"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                    <TextBlock Text="tarkov-market.com/pilot 페이지를 표시합니다"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="0,4,0,0"/>
+
+                    <!-- URL 직접 입력 -->
+                    <TextBlock Text="URL 직접 이동"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               Margin="0,12,0,4"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding CustomUrl, UpdateSourceTrigger=PropertyChanged}"
+                                 Height="24"
+                                 Padding="6,4"
+                                 FontSize="9"
+                                 Background="#FF2A2A2A"
+                                 Foreground="White"
+                                 BorderBrush="#FF3A3A3A"
+                                 BorderThickness="1"
+                                 VerticalContentAlignment="Center"/>
+                        <Button Grid.Column="1"
+                                Content="이동"
+                                Command="{Binding NavigateToCustomUrlCommand}"
+                                Width="50"
+                                Height="24"
+                                Margin="4,0,0,0"
+                                Background="#FF3A3A3A"
+                                Foreground="White"
+                                BorderThickness="0"
+                                FontSize="9">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}"
+                                                        CornerRadius="3"
+                                                        Padding="8,4">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FF5A5A5A"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+                    </Grid>
+                    <TextBlock Text="디버그 모드로 지정된 URL로 이동합니다 (JavaScript 비활성화)"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
         </StackPanel>

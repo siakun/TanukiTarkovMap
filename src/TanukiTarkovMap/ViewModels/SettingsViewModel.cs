@@ -16,6 +16,7 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial string HotkeyKey { get; set; } = "F11";
         [ObservableProperty] public partial bool AutoDeleteLogs { get; set; } = false;
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
+        [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
 
         public SettingsViewModel()
         {
@@ -110,6 +111,21 @@ namespace TanukiTarkovMap.ViewModels
             // Reset to default settings
             App.ResetSettings();
             LoadCurrentSettings();
+        }
+
+        [RelayCommand]
+        private void NavigateToPilot()
+        {
+            WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(App.WebsiteUrl));
+        }
+
+        [RelayCommand]
+        private void NavigateToCustomUrl()
+        {
+            if (!string.IsNullOrWhiteSpace(CustomUrl))
+            {
+                WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(CustomUrl));
+            }
         }
 
         private void LoadCurrentSettings()

@@ -75,4 +75,13 @@ namespace TanukiTarkovMap.Messages
     {
         public OpacitySliderDragMessage(bool value) : base(value) { }
     }
+
+    /// <summary>
+    /// URL 이동 메시지 (SettingsViewModel → WebBrowserViewModel)
+    /// 디버그 모드로 지정된 URL로 이동
+    /// </summary>
+    public class NavigateToUrlMessage : ValueChangedMessage<string>
+    {
+        public NavigateToUrlMessage(string url) : base(url) { }
+    }
 }

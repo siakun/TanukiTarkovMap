@@ -145,8 +145,8 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> 설정 오버레이 Visibility (IsSettingsOpen과 연동) </summary>
         public Visibility SettingsOverlayVisibility => IsSettingsOpen ? Visibility.Visible : Visibility.Collapsed;
 
-        /// <summary> Browser 컨테이너 Visibility (설정이 열리면 숨김) </summary>
-        public Visibility BrowserContainerVisibility => IsSettingsOpen ? Visibility.Collapsed : Visibility.Visible;
+        /// <summary> Browser 컨테이너 Visibility (CefSharp은 WPF 렌더링이므로 항상 표시) </summary>
+        public Visibility BrowserContainerVisibility => Visibility.Visible;
         #endregion
 
         #region Settings Properties

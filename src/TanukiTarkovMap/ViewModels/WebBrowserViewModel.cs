@@ -31,10 +31,14 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<MapSelectionChangedMessage>,
         IRecipient<HideWebElementsChangedMessage>,
         IRecipient<ZoomLevelChangedMessage>,
-        IRecipient<ExtractionFilterChangedMessage>
+        IRecipient<ExtractionFilterChangedMessage>,
+        IRecipient<NavigateToUrlMessage>
     {
         private readonly BrowserUIService _browserUIService;
         private ChromiumWebBrowser? _browser;
+
+        /// <summary> 디버그 모드 - 모든 JavaScript 주입 비활성화 </summary>
+        private bool _isDebugMode = false;
 
         #region Observable Properties
 
@@ -113,6 +117,13 @@ namespace TanukiTarkovMap.ViewModels
             System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
             {
                 IsLoading = false;
+
+                // 디버그 모드일 때는 모든 JavaScript 주입 스킵
+                if (_isDebugMode)
+                {
+                    Logger.SimpleLog($"[WebBrowserViewModel] Debug mode - skipping all scripts: {e.Url}");
+                    return;
+                }
 
                 try
                 {
@@ -364,6 +375,13 @@ namespace TanukiTarkovMap.ViewModels
         {
             if (message.Value != null)
             {
+                // 맵 선택 시 디버그 모드 해제
+                if (_isDebugMode)
+                {
+                    _isDebugMode = false;
+                    Logger.SimpleLog("[WebBrowserViewModel] Debug mode disabled - Map selected");
+                }
+
                 CurrentMap = message.Value.MapId;
                 NavigateToMap(message.Value);
                 Logger.SimpleLog($"[WebBrowserViewModel] MapSelectionChanged via Messenger: {message.Value.MapId}");
@@ -396,6 +414,17 @@ namespace TanukiTarkovMap.ViewModels
             IsPmcExtraction = message.Value;
             _ = ApplyExtractionFilterAsync(message.Value);
             Logger.SimpleLog($"[WebBrowserViewModel] ExtractionFilterChanged via Messenger: {(message.Value ? "PMC" : "SCAV")}");
+        }
+
+        /// <summary>
+        /// URL 이동 메시지 핸들러 (SettingsViewModel → WebBrowserViewModel)
+        /// 디버그 모드 활성화 및 지정된 URL로 이동
+        /// </summary>
+        public void Receive(NavigateToUrlMessage message)
+        {
+            _isDebugMode = true;
+            Navigate(message.Value);
+            Logger.SimpleLog($"[WebBrowserViewModel] Debug mode enabled - Navigate to: {message.Value}");
         }
 
         #endregion

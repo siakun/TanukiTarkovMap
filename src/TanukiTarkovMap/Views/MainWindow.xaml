@@ -520,7 +520,7 @@
         <Border x:Name="SettingsOverlay"
                 Panel.ZIndex="1000"
                 Visibility="{Binding SettingsOverlayVisibility}"
-                Background="#AA000000"
+                Background="#88000000"
                 CornerRadius="8"
                 Margin="8">
             <Grid>
@@ -537,6 +537,9 @@
                     BorderBrush="#FF3A3A3A"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center">
+                <i:Interaction.Behaviors>
+                    <behaviors:BlockMouseEventBehavior/>
+                </i:Interaction.Behaviors>
                 <Border.Effect>
                     <DropShadowEffect Color="Black"
                                       Direction="270"
@@ -545,11 +548,8 @@
                                       Opacity="0.5"/>
                 </Border.Effect>
 
-                <!-- 설정 패널 내용 영역에서 클릭 시 이벤트 전파 차단 -->
+                <!-- 설정 패널 내용 영역 -->
                 <Grid>
-                    <Grid.InputBindings>
-                        <MouseBinding MouseAction="LeftClick" />
-                    </Grid.InputBindings>
 
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
