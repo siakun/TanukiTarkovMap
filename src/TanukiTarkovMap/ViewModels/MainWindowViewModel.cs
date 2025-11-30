@@ -252,7 +252,10 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnGoonsMapChanged(object? sender, string? goonsMap)
         {
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            var app = System.Windows.Application.Current;
+            if (app == null) return;
+
+            app.Dispatcher.Invoke(() =>
             {
                 UpdateGoonsOnCurrentMap();
             });
