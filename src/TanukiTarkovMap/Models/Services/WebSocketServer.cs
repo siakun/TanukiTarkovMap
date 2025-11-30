@@ -58,24 +58,20 @@ namespace TanukiTarkovMap.Models.Services
         {
             isClosing = true;
 
-            // 모든 WebSocket 연결 종료
+            // 모든 WebSocket 연결 즉시 종료 (graceful close 생략)
             foreach (var socket in _sockets.Values)
             {
                 try
                 {
-                    if (socket.State == WebSocketState.Open)
-                    {
-                        socket.CloseAsync(WebSocketCloseStatus.NormalClosure,
-                            "Server shutting down", CancellationToken.None).Wait(1000);
-                    }
+                    socket.Abort();
                     socket.Dispose();
                 }
                 catch { }
             }
             _sockets.Clear();
 
-            // ASP.NET Core 호스트 종료
-            _host?.StopAsync().Wait(5000);
+            // ASP.NET Core 호스트 빠른 종료
+            _host?.StopAsync(TimeSpan.FromMilliseconds(500)).Wait(500);
             _host?.Dispose();
             _host = null;
         }

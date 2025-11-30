@@ -341,6 +341,7 @@ namespace TanukiTarkovMap
             // 정리 작업
             _mainWindow?.Close();
             _trayIcon?.Dispose();
+            ServiceLocator.GoonTrackerService.Dispose();
             Watcher.Stop();
             Server.Stop();
 
