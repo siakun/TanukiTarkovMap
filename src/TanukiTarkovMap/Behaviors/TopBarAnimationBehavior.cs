@@ -13,16 +13,22 @@ namespace TanukiTarkovMap.Behaviors
     /// TopBar 자동 숨김/표시 애니메이션 Behavior
     /// 핀 모드(IsAlwaysOnTop)가 활성화된 경우에만 작동
     /// 창 활성화/비활성화 및 마우스 호버에 따라 TopBar 표시/숨김
-    /// 마우스가 창을 떠나면 2.5초 후에 숨김 (그 전에 돌아오면 취소)
+    /// 마우스가 창을 떠나면 HideDelayMs 후에 숨김 (그 전에 돌아오면 취소)
+    /// 보더 색상도 HideDelayMs 동안 점진적으로 변경
     /// </summary>
     public class TopBarAnimationBehavior : Behavior<Window>
     {
         private TranslateTransform? _topBarTransform;
         private Border? _browserContainer;
+        private Border? _contentBorder;
         private DispatcherTimer? _hideDelayTimer;
         private const double TopBarHeight = 20.0;
         private const int AnimationDurationMs = 200;
-        private const int HideDelayMs = 2500;
+        private const int HideDelayMs = 1500;
+
+        // 보더 색상 상수
+        private static readonly Color ActiveBorderColor = (Color)ColorConverter.ConvertFromString("#FF8B5CF6");
+        private static readonly Color InactiveBorderColor = (Color)ColorConverter.ConvertFromString("#FF3A3A3A");
 
         #region Dependency Properties
 
@@ -105,6 +111,7 @@ namespace TanukiTarkovMap.Behaviors
             // XAML에서 정의된 요소 찾기
             _topBarTransform = AssociatedObject.FindName(TopBarTransformName) as TranslateTransform;
             _browserContainer = AssociatedObject.FindName(BrowserContainerName) as Border;
+            _contentBorder = AssociatedObject.FindName("ContentBorder") as Border;
         }
 
         private static void OnIsAlwaysOnTopChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
@@ -112,10 +119,12 @@ namespace TanukiTarkovMap.Behaviors
             var behavior = (TopBarAnimationBehavior)d;
             var newValue = (bool)e.NewValue;
 
-            // 핀 모드가 비활성화되면 TopBar를 보이는 상태로 복원
+            // 핀 모드가 비활성화되면 TopBar를 보이는 상태로 복원하고 보더 색상 제어 해제
             if (!newValue)
             {
+                behavior.CancelHideTimer();
                 behavior.AnimateTopBar(0);
+                behavior.ClearBorderColorAnimation(); // XAML 트리거 복원
             }
         }
 
@@ -125,6 +134,7 @@ namespace TanukiTarkovMap.Behaviors
             {
                 CancelHideTimer();
                 AnimateTopBar(0); // TopBar 보이기
+                AnimateBorderColor(ActiveBorderColor, AnimationDurationMs); // 보더 색상 복원
             }
         }
 
@@ -143,6 +153,7 @@ namespace TanukiTarkovMap.Behaviors
             {
                 CancelHideTimer();
                 AnimateTopBar(0); // TopBar 보이기
+                AnimateBorderColor(ActiveBorderColor, AnimationDurationMs); // 보더 색상 복원
             }
         }
 
@@ -155,11 +166,15 @@ namespace TanukiTarkovMap.Behaviors
         }
 
         /// <summary>
-        /// 숨김 타이머 시작 (2.5초 후 TopBar 숨김)
+        /// 숨김 타이머 시작 (HideDelayMs 후 TopBar 숨김)
+        /// 보더 색상도 HideDelayMs 동안 점진적으로 비활성 색상으로 변경
         /// </summary>
         private void StartHideTimer()
         {
             CancelHideTimer();
+
+            // 보더 색상 애니메이션 시작 (HideDelayMs 동안 점진적으로 변경)
+            AnimateBorderColor(InactiveBorderColor, HideDelayMs);
 
             _hideDelayTimer = new DispatcherTimer
             {
@@ -170,16 +185,11 @@ namespace TanukiTarkovMap.Behaviors
         }
 
         /// <summary>
-        /// 숨김 타이머 취소
+        /// 숨김 타이머 취소 (타이머만 정리, 색상 복원은 호출자가 처리)
         /// </summary>
         private void CancelHideTimer()
         {
-            if (_hideDelayTimer != null)
-            {
-                _hideDelayTimer.Stop();
-                _hideDelayTimer.Tick -= OnHideTimerTick;
-                _hideDelayTimer = null;
-            }
+            StopHideTimer();
         }
 
         /// <summary>
@@ -187,8 +197,21 @@ namespace TanukiTarkovMap.Behaviors
         /// </summary>
         private void OnHideTimerTick(object? sender, EventArgs e)
         {
-            CancelHideTimer();
+            StopHideTimer(); // 타이머만 정리 (색상 복원 없이)
             AnimateTopBar(-TopBarHeight); // TopBar 숨기기
+        }
+
+        /// <summary>
+        /// 타이머만 정리 (색상 복원 없이)
+        /// </summary>
+        private void StopHideTimer()
+        {
+            if (_hideDelayTimer != null)
+            {
+                _hideDelayTimer.Stop();
+                _hideDelayTimer.Tick -= OnHideTimerTick;
+                _hideDelayTimer = null;
+            }
         }
 
         /// <summary>
@@ -239,6 +262,65 @@ namespace TanukiTarkovMap.Behaviors
             catch (System.Exception)
             {
                 // 애니메이션 오류 무시
+            }
+        }
+
+        /// <summary>
+        /// 보더 색상 애니메이션
+        /// </summary>
+        /// <param name="targetColor">목표 색상</param>
+        /// <param name="durationMs">애니메이션 지속 시간(ms)</param>
+        private void AnimateBorderColor(Color targetColor, int durationMs)
+        {
+            if (_contentBorder == null)
+                return;
+
+            try
+            {
+                // 현재 브러시가 애니메이션 가능한지 확인
+                var currentBrush = _contentBorder.BorderBrush as SolidColorBrush;
+                if (currentBrush == null || currentBrush.IsFrozen)
+                {
+                    // Frozen 브러시면 새로운 애니메이션 가능한 브러시로 교체
+                    var currentColor = currentBrush?.Color ?? InactiveBorderColor;
+                    currentBrush = new SolidColorBrush(currentColor);
+                    _contentBorder.BorderBrush = currentBrush;
+                }
+
+                var animation = new ColorAnimation
+                {
+                    To = targetColor,
+                    Duration = TimeSpan.FromMilliseconds(durationMs),
+                    EasingFunction = new CubicEase
+                    {
+                        EasingMode = EasingMode.EaseInOut
+                    }
+                };
+
+                currentBrush.BeginAnimation(SolidColorBrush.ColorProperty, animation);
+            }
+            catch (System.Exception)
+            {
+                // 애니메이션 오류 무시
+            }
+        }
+
+        /// <summary>
+        /// 보더 색상 애니메이션 제거 및 XAML 트리거 복원
+        /// </summary>
+        private void ClearBorderColorAnimation()
+        {
+            if (_contentBorder == null)
+                return;
+
+            try
+            {
+                // 애니메이션 제거하고 null로 설정하면 XAML Style이 다시 적용됨
+                _contentBorder.ClearValue(Border.BorderBrushProperty);
+            }
+            catch (System.Exception)
+            {
+                // 오류 무시
             }
         }
     }
