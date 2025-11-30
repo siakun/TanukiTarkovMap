@@ -41,6 +41,7 @@ namespace TanukiTarkovMap.ViewModels
         private readonly WindowBoundsService _windowBoundsService;
         private readonly WindowStateManager _windowStateManager;
         private readonly MapEventService _mapEventService;
+        private readonly GoonTrackerService _goonTrackerService;
         private AppSettings _settings;
 
         #region Current Window Properties
@@ -156,6 +157,9 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary> Extraction 필터: true = PMC, false = SCAV </summary>
         [ObservableProperty] public partial bool IsPmcExtraction { get; set; } = true;
+
+        /// <summary> 현재 선택된 맵에 Goons가 있는지 여부 </summary>
+        [ObservableProperty] public partial bool GoonsOnCurrentMap { get; set; } = false;
         #endregion
 
         #region Map Selection Properties
@@ -205,14 +209,17 @@ namespace TanukiTarkovMap.ViewModels
         public MainWindowViewModel(
             WindowBoundsService windowBoundsService,
             WindowStateManager windowStateManager,
-            MapEventService mapEventService)
+            MapEventService mapEventService,
+            GoonTrackerService goonTrackerService)
         {
             _windowBoundsService = windowBoundsService;
             _windowStateManager = windowStateManager;
             _mapEventService = mapEventService;
+            _goonTrackerService = goonTrackerService;
             LoadSettings();
             InitializeCommands();
             SubscribeToMapEvents();
+            SubscribeToGoonTrackerEvents();
 
             // Messenger 등록 (WebBrowserViewModel로부터 메시지 수신)
             WeakReferenceMessenger.Default.RegisterAll(this);
@@ -229,6 +236,35 @@ namespace TanukiTarkovMap.ViewModels
             _mapEventService.ScreenshotTaken += OnScreenshotEventReceived;
 
             Logger.SimpleLog("[MainWindowViewModel] Successfully subscribed to MapEventService events");
+        }
+
+        /// <summary>
+        /// GoonTrackerService 이벤트 구독
+        /// </summary>
+        private void SubscribeToGoonTrackerEvents()
+        {
+            _goonTrackerService.GoonsMapChanged += OnGoonsMapChanged;
+            UpdateGoonsOnCurrentMap();
+        }
+
+        /// <summary>
+        /// Goons 맵 변경 이벤트 처리
+        /// </summary>
+        private void OnGoonsMapChanged(object? sender, string? goonsMap)
+        {
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateGoonsOnCurrentMap();
+            });
+        }
+
+        /// <summary>
+        /// 현재 선택된 맵에 Goons가 있는지 업데이트
+        /// </summary>
+        private void UpdateGoonsOnCurrentMap()
+        {
+            GoonsOnCurrentMap = _goonTrackerService.IsGoonsOnMap(SelectedMapInfo?.Name);
+            Logger.SimpleLog($"[MainWindowViewModel] GoonsOnCurrentMap updated: {GoonsOnCurrentMap} (Map: {SelectedMapInfo?.Name}, Goons: {_goonTrackerService.CurrentGoonsMap})");
         }
 
         /// <summary>
@@ -436,6 +472,9 @@ namespace TanukiTarkovMap.ViewModels
                 settings.SelectedMapId = SelectedMapInfo.MapId;
                 App.SetSettings(settings);
                 Settings.Save();
+
+                // Goons 상태 업데이트
+                UpdateGoonsOnCurrentMap();
             }
         }
 
