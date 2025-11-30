@@ -48,17 +48,17 @@ namespace TanukiTarkovMap.Behaviors
             if (window == null)
                 return;
 
-            // 더블클릭 시 최대화/복원
-            if (EnableMaximizeOnDoubleClick && e.ClickCount == 2)
+            // 더블클릭 처리
+            if (e.ClickCount == 2)
             {
-                if (window.WindowState == WindowState.Maximized)
+                if (EnableMaximizeOnDoubleClick)
                 {
-                    window.WindowState = WindowState.Normal;
+                    if (window.WindowState == WindowState.Maximized)
+                        window.WindowState = WindowState.Normal;
+                    else
+                        window.WindowState = WindowState.Maximized;
                 }
-                else
-                {
-                    window.WindowState = WindowState.Maximized;
-                }
+                // 더블클릭 시 WM_NCLBUTTONDOWN을 보내지 않음 (Windows 기본 최대화 방지)
                 return;
             }
 

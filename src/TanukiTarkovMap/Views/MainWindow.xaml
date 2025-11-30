@@ -52,7 +52,7 @@
     </Window.Resources>
 
     <WindowChrome.WindowChrome>
-        <WindowChrome CaptionHeight="20"
+        <WindowChrome CaptionHeight="0"
                       ResizeBorderThickness="8"
                       CornerRadius="8"
                       GlassFrameThickness="0"
@@ -137,7 +137,7 @@
                         RenderTransformOrigin="0.5,0.5">
                     <!-- TitleBar 드래그 Behavior -->
                     <i:Interaction.Behaviors>
-                        <behaviors:WindowDragBehavior EnableMaximizeOnDoubleClick="True"/>
+                        <behaviors:WindowDragBehavior EnableMaximizeOnDoubleClick="False"/>
                     </i:Interaction.Behaviors>
                     <Border.RenderTransform>
                         <TranslateTransform x:Name="TopBarTransform" Y="0"/>
