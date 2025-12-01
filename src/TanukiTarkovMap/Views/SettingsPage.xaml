@@ -280,6 +280,32 @@
                 </StackPanel>
             </Border>
 
+            <!-- Goon Tracker 섹션 -->
+            <Border Background="#FF1A1A1A"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="Goon Tracker"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,6"/>
+
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,4">
+                        <CheckBox IsChecked="{Binding GoonTrackerEnabled}"
+                                  Content="Goon Tracker 사용"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"/>
+                        <TextBlock Text="tarkov-goon-tracker.com에서 Goons 위치 정보를 가져옵니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="18,2,0,0"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- 개발자 도구 섹션 -->
             <Border Background="#FF1A1A1A"
                     CornerRadius="4"

@@ -230,6 +230,9 @@ namespace TanukiTarkovMap
                 Logger.SimpleLog("Loading settings...");
                 Settings.Load();
 
+                // GoonTracker 설정 적용
+                ServiceLocator.GoonTrackerService.Enabled = GetSettings().GoonTrackerEnabled;
+
                 // 서버 시작
                 Logger.SimpleLog("Starting WebSocket server...");
                 Server.Start();

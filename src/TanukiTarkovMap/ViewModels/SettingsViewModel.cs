@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Win32;
 using TanukiTarkovMap.Messages;
+using TanukiTarkovMap.Models.Services;
 
 namespace TanukiTarkovMap.ViewModels
 {
@@ -16,6 +17,7 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial string HotkeyKey { get; set; } = "F11";
         [ObservableProperty] public partial bool AutoDeleteLogs { get; set; } = false;
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
+        [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
         [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
 
         public string AppVersion => App.Version;
@@ -32,6 +34,7 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnHotkeyKeyChanged(string value) => AutoSaveAndUpdateHotkey();
         partial void OnAutoDeleteLogsChanged(bool value) => AutoSave();
         partial void OnAutoDeleteScreenshotsChanged(bool value) => AutoSave();
+        partial void OnGoonTrackerEnabledChanged(bool value) => AutoSaveAndUpdateGoonTracker();
 
         private void AutoSave()
         {
@@ -46,6 +49,15 @@ namespace TanukiTarkovMap.ViewModels
 
             // 핫키 설정 변경 메시지 발송 (MainWindow에서 수신하여 핫키 재등록)
             WeakReferenceMessenger.Default.Send(new HotkeySettingsChangedMessage());
+        }
+
+        private void AutoSaveAndUpdateGoonTracker()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // GoonTrackerService 활성화/비활성화
+            ServiceLocator.GoonTrackerService.Enabled = GoonTrackerEnabled;
         }
 
         // Commands
@@ -63,6 +75,7 @@ namespace TanukiTarkovMap.ViewModels
             settings.HotkeyKey = HotkeyKey;
             settings.autoDeleteLogs = AutoDeleteLogs;
             settings.autoDeleteScreenshots = AutoDeleteScreenshots;
+            settings.GoonTrackerEnabled = GoonTrackerEnabled;
 
             App.SetSettings(settings);
             Models.Services.Settings.Save();
@@ -143,6 +156,7 @@ namespace TanukiTarkovMap.ViewModels
                 HotkeyKey = settings.HotkeyKey ?? "F11";
                 AutoDeleteLogs = settings.autoDeleteLogs;
                 AutoDeleteScreenshots = settings.autoDeleteScreenshots;
+                GoonTrackerEnabled = settings.GoonTrackerEnabled;
             }
             finally
             {

@@ -44,6 +44,9 @@ namespace TanukiTarkovMap.Models.Data
         // 창 투명도 설정
         public double WindowOpacity { get; set; } = 1.0;            // 창 투명도 (0.1 ~ 1.0)
 
+        // Goon Tracker 설정
+        public bool GoonTrackerEnabled { get; set; } = true;        // Goon Tracker 사용 여부
+
         public override string ToString()
         {
             return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}'";

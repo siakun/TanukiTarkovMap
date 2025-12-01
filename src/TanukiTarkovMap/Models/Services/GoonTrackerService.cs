@@ -28,6 +28,7 @@ namespace TanukiTarkovMap.Models.Services
         private readonly System.Timers.Timer _updateTimer;
         private string? _currentGoonsMap;
         private bool _disposed = false;
+        private bool _enabled = true;
 
         /// <summary>
         /// Goons 위치 맵 이름 목록 (tarkov-goon-tracker에서 사용하는 이름과 앱 내 Name 매핑)
@@ -58,6 +59,33 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         public event EventHandler<string?>? GoonsMapChanged;
 
+        /// <summary>
+        /// Goon Tracker 활성화 여부
+        /// </summary>
+        public bool Enabled
+        {
+            get => _enabled;
+            set
+            {
+                if (_enabled != value)
+                {
+                    _enabled = value;
+                    if (_enabled)
+                    {
+                        _updateTimer.Start();
+                        _ = FetchCurrentGoonsMapAsync();
+                        Logger.SimpleLog("[GoonTrackerService] Enabled");
+                    }
+                    else
+                    {
+                        _updateTimer.Stop();
+                        CurrentGoonsMap = null;
+                        Logger.SimpleLog("[GoonTrackerService] Disabled");
+                    }
+                }
+            }
+        }
+
         internal GoonTrackerService()
         {
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "TanukiTarkovMap/1.0");
@@ -82,6 +110,9 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         public async Task FetchCurrentGoonsMapAsync()
         {
+            if (!_enabled)
+                return;
+
             try
             {
                 var response = await _httpClient.GetStringAsync("https://www.tarkov-goon-tracker.com/pve");
