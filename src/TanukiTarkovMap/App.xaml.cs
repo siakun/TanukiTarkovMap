@@ -14,14 +14,19 @@ using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.Views;
+using Velopack;
+using Velopack.Sources;
 
 namespace TanukiTarkovMap
 {
     /// <summary> Interaction logic for App.xaml </summary>
     public partial class App : Application
     {
+        private const string GitHubRepoUrl = "https://github.com/Sia819/TanukiTarkovMap";
+
         private TaskbarIcon? _trayIcon;
         private MainWindow? _mainWindow;
+        private SplashWindow? _splashWindow;
         private bool _isExiting = false; // 중복 종료 방지 플래그
 
         //===================== Application Global State (from Env.cs) ============================
@@ -184,11 +189,19 @@ namespace TanukiTarkovMap
 
         //===================== End of Application Global State ============================
 
-        private void Application_Startup(object sender, StartupEventArgs e)
+        private async void Application_Startup(object sender, StartupEventArgs e)
         {
             SetCulture();
 
-            // CEF 초기화 (반드시 다른 CefSharp 관련 코드보다 먼저 호출)
+            // 1. 스플래시 창 먼저 표시
+            _splashWindow = new SplashWindow();
+            _splashWindow.Show();
+
+            // 2. 업데이트 체크 (Velopack 설치 시에만)
+            await CheckForUpdatesAsync();
+
+            // 3. CEF 초기화
+            _splashWindow.SetStatus("초기화 중...");
             InitializeCef();
 
             // DI 컨테이너 초기화
@@ -219,9 +232,58 @@ namespace TanukiTarkovMap
             Logger.SimpleLog("Cleaning old log folders...");
             Models.FileSystem.GameSessionCleaner.CleanOldLogFolders();
 
-            // 메인 창 표시 (항상 시작 시 메인 창을 표시)
+            // 4. 스플래시 닫고 메인 창 표시
+            _splashWindow.Close();
+            _splashWindow = null;
+
             Logger.SimpleLog("Showing main window...");
             ShowMainWindow();
+        }
+
+        private async Task CheckForUpdatesAsync()
+        {
+            try
+            {
+                var updateManager = new UpdateManager(new GithubSource(GitHubRepoUrl, null, false));
+
+                // Velopack으로 설치되지 않은 경우 (개발 모드) 스킵
+                if (!updateManager.IsInstalled)
+                {
+                    _splashWindow?.SetStatus("시작하는 중...");
+                    await Task.Delay(500); // 스플래시를 잠시 보여주기
+                    return;
+                }
+
+                _splashWindow?.SetStatus("업데이트 확인 중...");
+
+                // 업데이트 확인
+                var updateInfo = await updateManager.CheckForUpdatesAsync();
+                if (updateInfo == null)
+                {
+                    _splashWindow?.SetStatus("시작하는 중...");
+                    return;
+                }
+
+                // 업데이트 발견 - 다운로드
+                _splashWindow?.SetStatus($"v{updateInfo.TargetFullRelease.Version} 다운로드 중...");
+
+                await updateManager.DownloadUpdatesAsync(updateInfo, progress =>
+                {
+                    _splashWindow?.SetProgress(progress);
+                });
+
+                _splashWindow?.SetStatus("업데이트 적용 중...");
+                _splashWindow?.SetProgress(100);
+
+                // 업데이트 적용 및 재시작 (자동)
+                updateManager.ApplyUpdatesAndRestart(updateInfo);
+            }
+            catch (Exception ex)
+            {
+                // 업데이트 실패해도 앱은 정상 실행
+                System.Diagnostics.Debug.WriteLine($"Update check failed: {ex.Message}");
+                _splashWindow?.SetStatus("시작하는 중...");
+            }
         }
 
         private void CreateTrayIcon()

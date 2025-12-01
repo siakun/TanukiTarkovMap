@@ -1,7 +1,5 @@
 using System.Runtime.InteropServices;
-using System.Windows;
 using Velopack;
-using Velopack.Sources;
 
 namespace TanukiTarkovMap;
 
@@ -70,10 +68,6 @@ public static class Program
         // 3. WPF 앱 시작
         var app = new App();
         app.InitializeComponent();
-
-        // 4. 업데이트 체크 (백그라운드)
-        _ = CheckForUpdatesAsync();
-
         app.Run();
     }
 
@@ -97,52 +91,5 @@ public static class Program
             SetForegroundWindow(hwnd);
         }
         // 창을 찾지 못한 경우 (트레이에만 있을 수 있음) - 조용히 종료
-    }
-
-    private static async Task CheckForUpdatesAsync()
-    {
-        try
-        {
-            var updateManager = new UpdateManager(new GithubSource(GitHubRepoUrl, null, false));
-
-            // Velopack으로 설치되지 않은 경우 (개발 모드) 스킵
-            if (!updateManager.IsInstalled)
-                return;
-
-            // 업데이트 확인
-            var updateInfo = await updateManager.CheckForUpdatesAsync();
-            if (updateInfo == null)
-                return;
-
-            // 업데이트 발견 - 사용자에게 알림
-            var result = MessageBox.Show(
-                $"새 버전 {updateInfo.TargetFullRelease.Version}이 있습니다.\n\n지금 업데이트하시겠습니까?",
-                "업데이트 가능",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (result != MessageBoxResult.Yes)
-                return;
-
-            // 업데이트 다운로드
-            await updateManager.DownloadUpdatesAsync(updateInfo);
-
-            // 업데이트 적용 및 재시작
-            var restartResult = MessageBox.Show(
-                "업데이트 다운로드가 완료되었습니다.\n\n지금 재시작하시겠습니까?",
-                "업데이트 완료",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
-
-            if (restartResult == MessageBoxResult.Yes)
-            {
-                updateManager.ApplyUpdatesAndRestart(updateInfo);
-            }
-        }
-        catch (Exception ex)
-        {
-            // 업데이트 실패해도 앱은 정상 실행
-            System.Diagnostics.Debug.WriteLine($"Update check failed: {ex.Message}");
-        }
     }
 }
