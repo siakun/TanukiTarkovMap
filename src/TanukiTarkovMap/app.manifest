@@ -10,12 +10,12 @@
              requestedExecutionLevel 노드를 다음 중 하나로 바꿉니다.
 
         <requestedExecutionLevel level="asInvoker" uiAccess="false" />
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
         <requestedExecutionLevel level="highestAvailable" uiAccess="false" />
 
             requireAdministrator로 설정하면 응용 프로그램이 항상 관리자 권한으로 실행됩니다.
         -->
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>

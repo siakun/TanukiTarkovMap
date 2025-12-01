@@ -22,7 +22,6 @@ namespace TanukiTarkovMap
     {
         private TaskbarIcon? _trayIcon;
         private MainWindow? _mainWindow;
-        private Mutex? _mutex;
         private bool _isExiting = false; // 중복 종료 방지 플래그
 
         //===================== Application Global State (from Env.cs) ============================
@@ -200,19 +199,6 @@ namespace TanukiTarkovMap
             Logger.SimpleLog($"Working Directory: {Environment.CurrentDirectory}");
             Logger.SimpleLog($"Executable Path: {System.Reflection.Assembly.GetExecutingAssembly().Location}");
 
-            // 중복 실행 방지
-            bool createdNew;
-            _mutex = new Mutex(true, "TanukiTarkovMapMutex", out createdNew);
-
-            if (!createdNew)
-            {
-                Logger.SimpleLog("Application already running, exiting...");
-                MessageBox.Show("Tanuki Tarkov Map이 이미 실행 중입니다.", "알림",
-                    MessageBoxButton.OK, MessageBoxImage.Information);
-                Shutdown();
-                return;
-            }
-
             // 시스템 트레이 아이콘 생성
             Logger.SimpleLog("Creating tray icon...");
             CreateTrayIcon();
@@ -359,18 +345,6 @@ namespace TanukiTarkovMap
             Watcher.Stop();
             Server.Stop();
 
-            // 뮤텍스 해제
-            try
-            {
-                _mutex?.ReleaseMutex();
-            }
-            catch { }
-            finally
-            {
-                _mutex?.Dispose();
-                _mutex = null;
-            }
-
             Shutdown();
         }
 
@@ -380,16 +354,6 @@ namespace TanukiTarkovMap
             if (!_isExiting)
             {
                 _trayIcon?.Dispose();
-
-                try
-                {
-                    _mutex?.ReleaseMutex();
-                }
-                catch { }
-                finally
-                {
-                    _mutex?.Dispose();
-                }
             }
 
             // CEF 종료

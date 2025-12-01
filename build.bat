@@ -72,6 +72,10 @@ if !errorlevel! neq 0 (
     goto :error
 )
 
+:: Remove unnecessary files
+del "%RELEASE_DIR%\assets.win.json" 2>nul
+del "%RELEASE_DIR%\RELEASES" 2>nul
+
 :: Show build results
 echo.
 echo ========================================
