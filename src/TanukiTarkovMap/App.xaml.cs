@@ -28,6 +28,7 @@ namespace TanukiTarkovMap
         private MainWindow? _mainWindow;
         private SplashWindow? _splashWindow;
         private bool _isExiting = false; // 중복 종료 방지 플래그
+        private bool _isUpdating = false; // 업데이트 중 빠른 종료 플래그
 
         //===================== Application Global State (from Env.cs) ============================
 
@@ -313,9 +314,14 @@ namespace TanukiTarkovMap
                 _splashWindow?.SetStatus("업데이트 적용 중...");
                 _splashWindow?.SetProgress(100);
 
-                // 업데이트 적용 및 재시작 (자동)
-                Logger.SimpleLog($"Update Apply: Applying v{targetVersion} and restarting...");
-                updateManager.ApplyUpdatesAndRestart(updateInfo);
+                // 업데이트 적용 및 재시작 (silent 모드 - UI 없이)
+                Logger.SimpleLog($"Update Apply: Applying v{targetVersion} silently and restarting...");
+                _isUpdating = true; // 빠른 종료 플래그 설정
+                updateManager.WaitExitThenApplyUpdates(updateInfo.TargetFullRelease, silent: true, restart: true);
+
+                // 즉시 종료 (Update.exe가 프로세스 종료 대기 후 업데이트 적용)
+                Logger.SimpleLog("Update: Fast exit for update apply...");
+                Environment.Exit(0);
             }
             catch (Exception ex)
             {
@@ -432,18 +438,23 @@ namespace TanukiTarkovMap
 
             try
             {
-                // 1. 서비스 정리
+                // 1. 서비스 정리 (병렬 처리로 빠른 종료)
                 Logger.SimpleLog("Stopping services...");
-                ServiceLocator.GoonTrackerService.Dispose();
-                Watcher.Stop();
-                Server.Stop();
+                var cleanupTasks = new List<Task>
+                {
+                    Task.Run(() => ServiceLocator.GoonTrackerService.Dispose()),
+                    Task.Run(() => ServiceLocator.HotkeyService.Dispose()),
+                    Task.Run(() => Watcher.Stop()),
+                    Task.Run(() => Server.Stop()),
+                };
+                Task.WaitAll(cleanupTasks.ToArray(), 300); // 최대 300ms 대기
 
                 // 2. UI 정리
                 Logger.SimpleLog("Closing UI...");
                 _mainWindow?.Close();
                 _trayIcon?.Dispose();
 
-                // 3. CEF 종료 (가장 중요 - 브라우저 서브프로세스 종료)
+                // 3. CEF 종료 (UI 스레드에서 실행 필요)
                 Logger.SimpleLog("Shutting down CEF...");
                 if (Cef.IsInitialized == true)
                 {
@@ -478,6 +489,13 @@ namespace TanukiTarkovMap
 
         private void Application_Exit(object sender, ExitEventArgs e)
         {
+            // 업데이트 중이면 빠른 종료 (정리 작업 스킵)
+            if (_isUpdating)
+            {
+                Logger.SimpleLog("Application_Exit: Fast exit for update (skipping cleanup)");
+                return;
+            }
+
             // ExitApplication에서 이미 처리되지 않은 경우만 처리
             if (!_isExiting)
             {

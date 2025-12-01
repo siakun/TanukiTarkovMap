@@ -3,7 +3,6 @@ using System.Net.WebSockets;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using System.Windows;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,13 +40,8 @@ namespace TanukiTarkovMap.Models.Services
         static IHost? _host = null;
         static readonly ConcurrentDictionary<string, WebSocket> _sockets = new();
 
-        static Server()
-        {
-            if (Application.Current != null)
-            {
-                Application.Current.Exit += (object sender, ExitEventArgs e) => Stop();
-            }
-        }
+        // 참고: Server.Stop()은 App.ExitApplication()에서 명시적으로 호출됨
+        // Application.Exit 이벤트 핸들러는 중복 호출을 피하기 위해 제거됨
 
         public static bool CanSend
         {
@@ -70,8 +64,8 @@ namespace TanukiTarkovMap.Models.Services
             }
             _sockets.Clear();
 
-            // ASP.NET Core 호스트 빠른 종료
-            _host?.StopAsync(TimeSpan.FromMilliseconds(500)).Wait(500);
+            // ASP.NET Core 호스트 빠른 종료 (100ms 타임아웃)
+            _host?.StopAsync(TimeSpan.FromMilliseconds(100)).Wait(100);
             _host?.Dispose();
             _host = null;
         }
