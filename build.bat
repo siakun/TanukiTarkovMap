@@ -11,12 +11,22 @@ set PROJECT_PATH=src\TanukiTarkovMap\TanukiTarkovMap.csproj
 set PUBLISH_DIR=publish
 set RELEASE_DIR=releases
 
-:: Version (수동 지정 또는 자동)
+:: Version (필수 입력)
 if "%1"=="" (
-    set VERSION=1.0.0
-) else (
-    set VERSION=%1
+    echo [ERROR] Version is required!
+    echo.
+    echo Usage:
+    echo   CMD:        build.bat ^<version^>
+    echo   PowerShell: .\build.bat ^<version^>
+    echo.
+    echo Example:
+    echo   CMD:        build.bat 0.1.0
+    echo   PowerShell: .\build.bat 0.1.0
+    echo.
+    pause
+    exit /b 1
 )
+set VERSION=%1
 
 echo Version: %VERSION%
 echo.
