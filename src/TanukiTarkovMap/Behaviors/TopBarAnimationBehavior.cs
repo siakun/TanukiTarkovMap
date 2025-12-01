@@ -26,9 +26,9 @@ namespace TanukiTarkovMap.Behaviors
         private const int AnimationDurationMs = 200;
         private const int HideDelayMs = 1500;
 
-        // 보더 색상 상수
-        private static readonly Color ActiveBorderColor = (Color)ColorConverter.ConvertFromString("#FF8B5CF6");
-        private static readonly Color InactiveBorderColor = (Color)ColorConverter.ConvertFromString("#FF3A3A3A");
+        // 보더 색상 (App.xaml 리소스에서 참조)
+        private static Color ActiveBorderColor => (Color)Application.Current.Resources["ActiveBorderColor"];
+        private static Color InactiveBorderColor => (Color)Application.Current.Resources["InactiveBorderColor"];
 
         #region Dependency Properties
 

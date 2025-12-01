@@ -17,6 +17,10 @@
 
             <!-- 공통 Converter -->
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+
+            <!-- 앱 테마 색상 -->
+            <Color x:Key="ActiveBorderColor">#FF8B5CF6</Color>
+            <Color x:Key="InactiveBorderColor">#FF3A3A3A</Color>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
