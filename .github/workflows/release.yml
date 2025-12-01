@@ -54,6 +54,22 @@ jobs:
         Remove-Item -Path "releases/assets.win.json" -ErrorAction SilentlyContinue
         Remove-Item -Path "releases/RELEASES" -ErrorAction SilentlyContinue
 
+    - name: Rename release files (MS style)
+      run: |
+        $version = "${{ steps.version.outputs.version }}"
+
+        # Setup.exe 이름 변경
+        $setupFile = Get-ChildItem -Path "releases" -Filter "*-Setup.exe" | Select-Object -First 1
+        if ($setupFile) {
+          Rename-Item -Path $setupFile.FullName -NewName "TanukiTarkovMap-Setup-$version-x64.exe"
+        }
+
+        # Portable.zip 이름 변경
+        $portableFile = Get-ChildItem -Path "releases" -Filter "*-Portable.zip" | Select-Object -First 1
+        if ($portableFile) {
+          Rename-Item -Path $portableFile.FullName -NewName "TanukiTarkovMap-Portable-$version-x64.zip"
+        }
+
     - name: List release files
       run: Get-ChildItem -Path releases
 
@@ -61,13 +77,13 @@ jobs:
       uses: softprops/action-gh-release@v2
       with:
         tag_name: ${{ steps.version.outputs.tag }}
-        name: ${{ steps.version.outputs.tag }}
+        name: Release ${{ steps.version.outputs.tag }}
         draft: false
         prerelease: ${{ contains(steps.version.outputs.version, '-') }}
         files: |
           releases/*.nupkg
           releases/releases.win.json
-          releases/*-Setup.exe
-          releases/*-Portable.zip
+          releases/*-Setup-*.exe
+          releases/*-Portable-*.zip
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

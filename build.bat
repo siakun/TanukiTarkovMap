@@ -76,6 +76,16 @@ if !errorlevel! neq 0 (
 del "%RELEASE_DIR%\assets.win.json" 2>nul
 del "%RELEASE_DIR%\RELEASES" 2>nul
 
+:: Rename files (MS style)
+echo.
+echo Renaming files to MS style...
+for %%f in ("%RELEASE_DIR%\*-Setup.exe") do (
+    ren "%%f" "TanukiTarkovMap-Setup-%VERSION%-x64.exe"
+)
+for %%f in ("%RELEASE_DIR%\*-Portable.zip") do (
+    ren "%%f" "TanukiTarkovMap-Portable-%VERSION%-x64.zip"
+)
+
 :: Show build results
 echo.
 echo ========================================
