@@ -8,7 +8,16 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Resources\korea.ico</ApplicationIcon>
+
+    <!-- Velopack: 커스텀 Main 메서드 사용 -->
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
   </PropertyGroup>
+
+  <!-- App.xaml을 ApplicationDefinition 대신 Page로 처리 -->
+  <ItemGroup>
+    <Page Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
 
   <!-- Release 모드에서만 관리자 권한 요구 (Visual Studio 디버그 모드 제외) -->
   <PropertyGroup Condition="'$(Configuration)' == 'Release'">
@@ -42,6 +51,7 @@
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
+    <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 
 </Project>

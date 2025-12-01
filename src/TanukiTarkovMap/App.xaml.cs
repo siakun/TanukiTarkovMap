@@ -29,20 +29,34 @@ namespace TanukiTarkovMap
 
         static App()
         {
-            // exe 파일 생성일을 버전으로 사용
-            var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TanukiTarkovMap.exe");
-            if (File.Exists(exePath))
+            // Velopack에서 버전 가져오기
+            try
             {
-                var fileInfo = new FileInfo(exePath);
-                Version = $"Built: {fileInfo.CreationTime:yyyy-MM-dd HH:mm:ss}";
+                var updateManager = new Velopack.UpdateManager(
+                    new Velopack.Sources.GithubSource("https://github.com/Sia819/TanukiTarkovMap", null, false));
+
+                if (updateManager.IsInstalled && updateManager.CurrentVersion != null)
+                {
+                    Version = $"v{updateManager.CurrentVersion}";
+                }
+                else
+                {
+                    // 개발 모드 - exe 파일 생성일 사용
+                    var exePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TanukiTarkovMap.exe");
+                    if (File.Exists(exePath))
+                    {
+                        var fileInfo = new FileInfo(exePath);
+                        Version = $"Dev ({fileInfo.CreationTime:yyyy-MM-dd})";
+                    }
+                }
             }
-            else
+            catch
             {
-                Version = "Unknown";
+                Version = "Dev";
             }
         }
 
-        public static string Version { get; private set; } = "Unknown";
+        public static string Version { get; private set; } = "Dev";
 
         public static string WebsiteUrl { get; } = "https://tarkov-market.com/pilot";
 
