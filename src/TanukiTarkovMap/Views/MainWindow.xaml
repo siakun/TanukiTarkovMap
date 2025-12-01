@@ -531,7 +531,7 @@
                 Background="#88000000"
                 CornerRadius="8"
                 Margin="8">
-            <Grid>
+            <Grid Background="Transparent">
                 <!-- 반투명 배경 클릭 시 닫기 -->
                 <Grid.InputBindings>
                     <MouseBinding MouseAction="LeftClick" Command="{Binding CloseSettingsCommand}"/>
