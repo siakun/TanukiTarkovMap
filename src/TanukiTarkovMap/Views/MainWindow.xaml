@@ -12,7 +12,7 @@
         mc:Ignorable="d"
         DataContext="{Binding MainWindowViewModel, Source={StaticResource Locator}}"
         Title="Tanuki Tarkov Map"
-        Icon="pack://application:,,,/Resources/korea.ico"
+        Icon="pack://application:,,,/Resources/icon.ico"
         Width="{Binding CurrentWindowWidth, Mode=TwoWay}"
         Height="{Binding CurrentWindowHeight, Mode=TwoWay}"
         Left="{Binding CurrentWindowLeft, Mode=TwoWay}"

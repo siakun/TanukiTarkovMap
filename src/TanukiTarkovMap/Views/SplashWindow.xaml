@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
         Title="TanukiTarkovMap"
-        Width="400" Height="200"
+        Width="280" Height="360"
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
@@ -13,21 +13,12 @@
         ResizeMode="NoResize"
         Topmost="True">
 
-    <Window.Resources>
-        <Storyboard x:Key="LogoPulse" RepeatBehavior="Forever">
-            <DoubleAnimation Storyboard.TargetName="LogoImage"
-                           Storyboard.TargetProperty="Opacity"
-                           From="1" To="0.6" Duration="0:0:0.8"
-                           AutoReverse="True"/>
-        </Storyboard>
-    </Window.Resources>
-
     <Border Background="#1a1a2e" CornerRadius="12" BorderBrush="#3a3a5e" BorderThickness="1">
         <Border.Effect>
             <DropShadowEffect BlurRadius="20" ShadowDepth="0" Opacity="0.5" Color="Black"/>
         </Border.Effect>
 
-        <Grid Margin="30">
+        <Grid Margin="40">
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
@@ -37,8 +28,8 @@
             <!-- Logo and Title -->
             <StackPanel Grid.Row="0" VerticalAlignment="Center" HorizontalAlignment="Center">
                 <Image x:Name="LogoImage"
-                       Source="/Resources/korea.ico"
-                       Width="48" Height="48"
+                       Source="/Resources/icon.png"
+                       Width="120" Height="120"
                        RenderTransformOrigin="0.5,0.5"/>
                 <TextBlock Text="TanukiTarkovMap"
                           FontSize="20"
@@ -55,10 +46,10 @@
                       FontSize="12"
                       Foreground="#a0a0b0"
                       HorizontalAlignment="Center"
-                      Margin="0,0,0,10"/>
+                      Margin="0,0,0,18"/>
 
-            <!-- Progress Bar -->
-            <Grid Grid.Row="2" Height="4">
+            <!-- Progress Bar (다운로드 시에만 표시) -->
+            <Grid x:Name="ProgressBarContainer" Grid.Row="2" Height="4" Visibility="Collapsed">
                 <Border Background="#2a2a4e" CornerRadius="2"/>
                 <Border x:Name="ProgressFill" CornerRadius="2" Width="0" HorizontalAlignment="Left">
                     <Border.Background>

@@ -7,7 +7,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>Resources\korea.ico</ApplicationIcon>
+    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
 
     <!-- Velopack: 커스텀 Main 메서드 사용 -->
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>

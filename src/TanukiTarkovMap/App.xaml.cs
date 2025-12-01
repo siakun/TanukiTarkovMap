@@ -329,7 +329,7 @@ namespace TanukiTarkovMap
         private void CreateTrayIcon()
         {
             // WPF BitmapImage로 아이콘 로드
-            var iconUri = new Uri("pack://application:,,,/Resources/korea.ico");
+            var iconUri = new Uri("pack://application:,,,/Resources/icon.ico");
             var iconStream = Application.GetResourceStream(iconUri)?.Stream;
 
             _trayIcon = new TaskbarIcon
