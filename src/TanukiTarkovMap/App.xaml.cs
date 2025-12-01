@@ -416,22 +416,10 @@ namespace TanukiTarkovMap
         private void ShowSettings()
         {
             ShowMainWindow();
-            // MainWindow가 표시된 후 설정 탭으로 이동
-            if (_mainWindow != null)
+            // MainWindow가 표시된 후 설정 패널 열기
+            if (_mainWindow?.DataContext is ViewModels.MainWindowViewModel viewModel)
             {
-                _mainWindow.Dispatcher.BeginInvoke(() =>
-                {
-                    try
-                    {
-                        // Settings_Click 메서드 호출
-                        var settingsButton = _mainWindow.FindName("SettingsButton") as Button;
-                        if (settingsButton != null)
-                        {
-                            settingsButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
-                        }
-                    }
-                    catch { }
-                });
+                viewModel.IsSettingsOpen = true;
             }
         }
 
