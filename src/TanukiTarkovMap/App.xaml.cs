@@ -504,9 +504,8 @@ namespace TanukiTarkovMap
             {
                 // 캐시 경로 설정
                 CachePath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "TarkovClient",
-                    "CefSharp",
+                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                    "TanukiTarkovMap",
                     "Cache"),
 
                 // 로그 비활성화 (프로덕션용)
