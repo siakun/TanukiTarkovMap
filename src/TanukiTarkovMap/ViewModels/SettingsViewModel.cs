@@ -1,3 +1,5 @@
+using System.Diagnostics;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -22,6 +24,12 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
 
         public string AppVersion => App.Version;
+
+        public string SettingsFilePath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TanukiTarkovMap",
+            "settings.json"
+        );
 
         public SettingsViewModel()
         {
@@ -141,6 +149,20 @@ namespace TanukiTarkovMap.ViewModels
             if (!string.IsNullOrWhiteSpace(CustomUrl))
             {
                 WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(CustomUrl));
+            }
+        }
+
+        [RelayCommand]
+        private void OpenSettingsFolder()
+        {
+            var folder = Path.GetDirectoryName(SettingsFilePath);
+            if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true
+                });
             }
         }
 
