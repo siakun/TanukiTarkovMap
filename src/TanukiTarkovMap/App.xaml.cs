@@ -11,6 +11,7 @@ using CefSharp.Wpf;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Win32;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.FileSystem;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.Views;
@@ -240,7 +241,8 @@ namespace TanukiTarkovMap
 
                 // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
                 Logger.SimpleLog("Starting file watchers...");
-                Watcher.Start();
+                ScreenshotsWatcher.Start();
+                LogsWatcher.Start();
 
                 // 프로그램 자동 정리 실행
                 Logger.SimpleLog("Cleaning old log folders...");
@@ -444,7 +446,7 @@ namespace TanukiTarkovMap
                 {
                     Task.Run(() => ServiceLocator.GoonTrackerService.Dispose()),
                     Task.Run(() => ServiceLocator.HotkeyService.Dispose()),
-                    Task.Run(() => Watcher.Stop()),
+                    Task.Run(() => { ScreenshotsWatcher.Stop(); LogsWatcher.Stop(); }),
                     Task.Run(() => Server.Stop()),
                 };
                 Task.WaitAll(cleanupTasks.ToArray(), 300); // 최대 300ms 대기
