@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using TanukiTarkovMap.Behaviors;
 
 namespace TanukiTarkovMap.Models.Utils
@@ -228,53 +229,26 @@ namespace TanukiTarkovMap.Models.Utils
 
         /// <summary>
         /// 키 이름을 Virtual Key Code로 변환합니다.
+        /// WPF KeyInterop을 사용하여 모든 키를 자동 변환합니다.
         /// </summary>
         private uint GetVirtualKeyCode(string keyName)
         {
-            // F1-F12 키
-            if (keyName.StartsWith("F") && keyName.Length > 1)
+            // WPF Key enum으로 파싱 시도
+            if (Enum.TryParse<Key>(keyName, ignoreCase: true, out Key key))
             {
-                if (
-                    int.TryParse(keyName.Substring(1), out int fKeyNum)
-                    && fKeyNum >= 1
-                    && fKeyNum <= 12
-                )
-                {
-                    return (uint)(0x70 + fKeyNum - 1); // VK_F1 = 0x70
-                }
+                int vk = KeyInterop.VirtualKeyFromKey(key);
+                if (vk != 0)
+                    return (uint)vk;
             }
 
-            // 알파벳 키
-            if (keyName.Length == 1 && char.IsLetter(keyName[0]))
-            {
-                return (uint)keyName.ToUpper()[0];
-            }
-
-            // 숫자 키
+            // 숫자 키 (D0-D9)
             if (keyName.Length == 1 && char.IsDigit(keyName[0]))
             {
-                return (uint)keyName[0];
+                if (Enum.TryParse<Key>($"D{keyName}", out Key digitKey))
+                    return (uint)KeyInterop.VirtualKeyFromKey(digitKey);
             }
 
-            // 특수 키들
-            return keyName.ToUpper() switch
-            {
-                "SPACE" => 0x20,
-                "ENTER" => 0x0D,
-                "ESC" => 0x1B,
-                "TAB" => 0x09,
-                "BACKSPACE" => 0x08,
-                "DELETE" => 0x2E,
-                "HOME" => 0x24,
-                "END" => 0x23,
-                "PAGEUP" => 0x21,
-                "PAGEDOWN" => 0x22,
-                "UP" => 0x26,
-                "DOWN" => 0x28,
-                "LEFT" => 0x25,
-                "RIGHT" => 0x27,
-                _ => 0,
-            };
+            return 0;
         }
 
         /// <summary>

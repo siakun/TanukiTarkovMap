@@ -50,7 +50,7 @@ namespace TanukiTarkovMap
                     if (File.Exists(exePath))
                     {
                         var fileInfo = new FileInfo(exePath);
-                        Version = $"Dev ({fileInfo.CreationTime:yyyy-MM-dd})";
+                        Version = $"Dev ({fileInfo.LastWriteTime:yyyy-MM-dd})";
                     }
                 }
             }

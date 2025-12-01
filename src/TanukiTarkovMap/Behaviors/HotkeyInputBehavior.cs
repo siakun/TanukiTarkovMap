@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -84,7 +85,8 @@ namespace TanukiTarkovMap.Behaviors
                 return;
             }
 
-            string keyString = actualKey.ToString();
+            // 조합키 문자열 생성
+            string keyString = BuildHotkeyString(actualKey);
             if (!string.IsNullOrEmpty(keyString))
             {
                 Hotkey = keyString;
@@ -92,6 +94,28 @@ namespace TanukiTarkovMap.Behaviors
             }
 
             e.Handled = true;
+        }
+
+        /// <summary>
+        /// 현재 눌린 modifier 키와 메인 키를 조합하여 핫키 문자열을 생성합니다.
+        /// 예: Ctrl+Alt+X, Shift+F1
+        /// </summary>
+        private string BuildHotkeyString(Key mainKey)
+        {
+            var parts = new List<string>();
+
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+                parts.Add("Ctrl");
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Alt))
+                parts.Add("Alt");
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
+                parts.Add("Shift");
+            if (Keyboard.Modifiers.HasFlag(ModifierKeys.Windows))
+                parts.Add("Win");
+
+            parts.Add(mainKey.ToString());
+
+            return string.Join("+", parts);
         }
 
         private void OnLostFocus(object sender, RoutedEventArgs e)
