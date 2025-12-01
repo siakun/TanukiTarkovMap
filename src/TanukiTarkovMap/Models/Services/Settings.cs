@@ -21,22 +21,32 @@ namespace TanukiTarkovMap.Models.Services
 {
     public class Settings
     {
-        const string SETTINGS_FILE_PATH = "settings.json";
+        private static readonly string SettingsFolder = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
+            "TanukiTarkovMap"
+        );
+        private static readonly string SettingsFilePath = Path.Combine(SettingsFolder, "settings.json");
 
         public static void Save()
         {
             AppSettings settings = App.GetSettings();
 
+            // 설정 폴더가 없으면 생성
+            if (!Directory.Exists(SettingsFolder))
+            {
+                Directory.CreateDirectory(SettingsFolder);
+            }
+
             var json = JsonSerializer.Serialize(
                 settings,
                 new JsonSerializerOptions { WriteIndented = true }
             );
-            File.WriteAllText(SETTINGS_FILE_PATH, json);
+            File.WriteAllText(SettingsFilePath, json);
         }
 
         public static void Load()
         {
-            if (!File.Exists(SETTINGS_FILE_PATH))
+            if (!File.Exists(SettingsFilePath))
             {
                 // 설정 파일이 없으면 기본값으로 생성
                 CreateDefaultSettings();
@@ -45,7 +55,7 @@ namespace TanukiTarkovMap.Models.Services
 
             try
             {
-                var json = File.ReadAllText(SETTINGS_FILE_PATH);
+                var json = File.ReadAllText(SettingsFilePath);
                 var settings = JsonSerializer.Deserialize<AppSettings>(json);
 
                 // 경로에 {0} 플레이스홀더가 있으면 현재 사용자 이름으로 치환
@@ -208,10 +218,10 @@ namespace TanukiTarkovMap.Models.Services
         {
             try
             {
-                if (!File.Exists(SETTINGS_FILE_PATH))
+                if (!File.Exists(SettingsFilePath))
                     return;
 
-                File.Delete(SETTINGS_FILE_PATH);
+                File.Delete(SettingsFilePath);
             }
             catch (Exception) { }
         }
