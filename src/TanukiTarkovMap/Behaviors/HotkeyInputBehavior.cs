@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Xaml.Behaviors;
+using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Behaviors
@@ -27,7 +28,7 @@ namespace TanukiTarkovMap.Behaviors
                 nameof(Hotkey),
                 typeof(string),
                 typeof(HotkeyInputBehavior),
-                new FrameworkPropertyMetadata("F11", FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+                new FrameworkPropertyMetadata(AppSettings.DefaultHotkeyKey, FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
 
         /// <summary>
         /// 바인딩된 핫키 값

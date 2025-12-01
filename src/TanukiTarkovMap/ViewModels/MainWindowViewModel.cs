@@ -152,7 +152,7 @@ namespace TanukiTarkovMap.ViewModels
         #region Settings Properties
         [ObservableProperty] public partial string CurrentMap { get; set; }
         [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
-        [ObservableProperty] public partial string HotkeyKey { get; set; } = "F11";
+        [ObservableProperty] public partial string HotkeyKey { get; set; } = AppSettings.DefaultHotkeyKey;
         [ObservableProperty] public partial bool HideWebElements { get; set; } = true;
 
         /// <summary> Extraction 필터: true = PMC, false = SCAV </summary>

@@ -12,6 +12,8 @@ namespace TanukiTarkovMap.Models.Data
 
     public class AppSettings
     {
+        public const string DefaultHotkeyKey = "F11";
+
         public string GameFolder { get; set; } = "";
         public string ScreenshotsFolder { get; set; } = "";
 
@@ -29,7 +31,7 @@ namespace TanukiTarkovMap.Models.Data
 
         // 전역 단축키 설정
         public bool HotkeyEnabled { get; set; } = true;          // 전역 단축키 사용 여부
-        public string HotkeyKey { get; set; } = "F11";           // 단축키 (트레이 숨기기/열기)
+        public string HotkeyKey { get; set; } = DefaultHotkeyKey; // 단축키 (트레이 숨기기/열기)
 
         // 파일 자동 정리 설정
         public bool autoDeleteLogs { get; set; } = false;           // 로그 폴더 자동 정리

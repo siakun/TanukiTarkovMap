@@ -93,7 +93,6 @@ namespace TanukiTarkovMap.Models.Services
                 NormalTop = -1,
                 MapSettings = CreateDefaultMapSettings(),
                 HotkeyEnabled = true,
-                HotkeyKey = "F11",
                 autoDeleteLogs = false,
                 autoDeleteScreenshots = false,
                 IsAlwaysOnTop = true,   // 기본적으로 항상 위 활성화

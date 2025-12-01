@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Win32;
 using TanukiTarkovMap.Messages;
+using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 
 namespace TanukiTarkovMap.ViewModels
@@ -14,7 +15,7 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial string GameFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial string ScreenshotsFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
-        [ObservableProperty] public partial string HotkeyKey { get; set; } = "F11";
+        [ObservableProperty] public partial string HotkeyKey { get; set; } = AppSettings.DefaultHotkeyKey;
         [ObservableProperty] public partial bool AutoDeleteLogs { get; set; } = false;
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
         [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
@@ -153,7 +154,7 @@ namespace TanukiTarkovMap.ViewModels
 
                 var settings = App.GetSettings();
                 HotkeyEnabled = settings.HotkeyEnabled;
-                HotkeyKey = settings.HotkeyKey ?? "F11";
+                HotkeyKey = settings.HotkeyKey ?? AppSettings.DefaultHotkeyKey;
                 AutoDeleteLogs = settings.autoDeleteLogs;
                 AutoDeleteScreenshots = settings.autoDeleteScreenshots;
                 GoonTrackerEnabled = settings.GoonTrackerEnabled;
