@@ -1,7 +1,10 @@
-﻿using System.Text.Json.Serialization;
+using System.Text.Json.Serialization;
 
 namespace TanukiTarkovMap.Models.Data
 {
+    /// <summary>
+    /// 맵별 창 위치/크기 설정 (settings.json에 저장)
+    /// </summary>
     public class MapSetting
     {
         public double Width { get; set; } = 300;
@@ -10,6 +13,10 @@ namespace TanukiTarkovMap.Models.Data
         public double Top { get; set; } = -1;
     }
 
+    /// <summary>
+    /// 앱 전체 설정 (settings.json으로 직렬화/역직렬화)
+    /// Settings.Save()/Load()를 통해 파일로 저장됨
+    /// </summary>
     public class AppSettings
     {
         public const string DefaultHotkeyKey = "F11";
@@ -55,6 +62,24 @@ namespace TanukiTarkovMap.Models.Data
         }
     }
 
+    /// <summary>
+    /// WebSocket 메시지 기본 클래스
+    /// 모든 WS 메시지 타입의 부모 클래스
+    /// </summary>
+    public class WsMessage
+    {
+        [JsonPropertyName("messageType")] public string MessageType { get; set; } = "";
+
+        public override string ToString()
+        {
+            return $"messageType: {MessageType}";
+        }
+    }
+
+    /// <summary>
+    /// 맵 변경 WebSocket 메시지 (게임 → 앱)
+    /// 게임에서 맵이 변경되었을 때 수신
+    /// </summary>
     public class MapChangeData : WsMessage
     {
         [JsonPropertyName("map")] public string Map { get; set; } = "";
@@ -65,6 +90,9 @@ namespace TanukiTarkovMap.Models.Data
         }
     }
 
+    /// <summary>
+    /// 플레이어 위치 업데이트 WebSocket 메시지 (게임 → 앱)
+    /// </summary>
     public class UpdatePositionData : WsMessage
     {
         [JsonPropertyName("x")] public float X { get; set; }
@@ -77,6 +105,9 @@ namespace TanukiTarkovMap.Models.Data
         }
     }
 
+    /// <summary>
+    /// 스크린샷 파일명 전송 WebSocket 메시지 (앱 → 웹)
+    /// </summary>
     public class SendFilenameData : WsMessage
     {
         [JsonPropertyName("filename")]
@@ -88,6 +119,9 @@ namespace TanukiTarkovMap.Models.Data
         }
     }
 
+    /// <summary>
+    /// 퀘스트 상태 업데이트 WebSocket 메시지 (게임 → 앱)
+    /// </summary>
     public class QuestUpdateData : WsMessage
     {
         [JsonPropertyName("questId")] public string QuestId { get; set; } = "";
@@ -99,16 +133,10 @@ namespace TanukiTarkovMap.Models.Data
         }
     }
 
-    public class WsMessage
-    {
-        [JsonPropertyName("messageType")] public string MessageType { get; set; } = "";
-        
-        public override string ToString()
-        {
-            return $"messageType: {MessageType}";
-        }
-    }
-
+    /// <summary>
+    /// 앱 설정 정보 WebSocket 메시지 (앱 → 웹)
+    /// 웹에 현재 앱 설정을 전달할 때 사용
+    /// </summary>
     public class ConfigurationData : WsMessage
     {
         [JsonPropertyName("gameFolder")] public string GameFolder { get; set; } = "";
@@ -123,6 +151,10 @@ namespace TanukiTarkovMap.Models.Data
         }
     }
 
+    /// <summary>
+    /// 설정 업데이트 WebSocket 메시지 (웹 → 앱)
+    /// 웹에서 앱 설정을 변경할 때 사용
+    /// </summary>
     public class UpdateSettingsData : AppSettings
     {
         [JsonPropertyName("messageType")] public string MessageType { get; set; } = "";
