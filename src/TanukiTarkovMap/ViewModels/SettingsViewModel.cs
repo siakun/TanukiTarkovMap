@@ -37,8 +37,8 @@ namespace TanukiTarkovMap.ViewModels
         }
 
         // 속성 변경 시 자동 저장 (partial 메서드)
-        partial void OnGameFolderChanged(string value) => AutoSave();
-        partial void OnScreenshotsFolderChanged(string value) => AutoSave();
+        partial void OnGameFolderChanged(string value) => AutoSaveAndRestartLogWatcher();
+        partial void OnScreenshotsFolderChanged(string value) => AutoSaveAndRestartScreenshotWatcher();
         partial void OnHotkeyEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
         partial void OnHotkeyKeyChanged(string value) => AutoSaveAndUpdateHotkey();
         partial void OnAutoDeleteLogsChanged(bool value) => AutoSave();
@@ -49,6 +49,24 @@ namespace TanukiTarkovMap.ViewModels
         {
             if (_isLoading) return;
             Save();
+        }
+
+        private void AutoSaveAndRestartLogWatcher()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // 게임 폴더 변경 시 LogsWatcher 재시작
+            Models.FileSystem.LogsWatcher.Restart();
+        }
+
+        private void AutoSaveAndRestartScreenshotWatcher()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // 스크린샷 폴더 변경 시 ScreenshotsWatcher 재시작
+            Models.FileSystem.ScreenshotsWatcher.Restart();
         }
 
         private void AutoSaveAndUpdateHotkey()
