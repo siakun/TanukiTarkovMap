@@ -6,6 +6,9 @@ on:
       - 'v*'      # v0.1.0, v1.0.0 등
       - '[0-9]*'  # 0.0.1 (v 없는 태그도 지원)
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
