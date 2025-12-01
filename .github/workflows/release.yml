@@ -1,0 +1,73 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'      # v0.1.0, v1.0.0 등
+      - '[0-9]*'  # 0.0.1 (v 없는 태그도 지원)
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Extract version from tag
+      id: version
+      shell: bash
+      run: |
+        TAG=${GITHUB_REF#refs/tags/}
+        # v 접두사 제거 (v0.1.0 -> 0.1.0)
+        VERSION=${TAG#v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+    - name: Publish application
+      run: |
+        dotnet publish src/TanukiTarkovMap/TanukiTarkovMap.csproj `
+          -c Release `
+          -r win-x64 `
+          --self-contained true `
+          -o publish
+
+    - name: Install Velopack
+      run: dotnet tool install -g vpk
+
+    - name: Pack with Velopack
+      run: |
+        vpk pack `
+          --packId "TanukiTarkovMap" `
+          --packVersion "${{ steps.version.outputs.version }}" `
+          --packDir "publish" `
+          --mainExe "TanukiTarkovMap.exe" `
+          --outputDir "releases"
+
+    - name: Remove unnecessary files
+      run: |
+        Remove-Item -Path "releases/assets.win.json" -ErrorAction SilentlyContinue
+        Remove-Item -Path "releases/RELEASES" -ErrorAction SilentlyContinue
+
+    - name: List release files
+      run: Get-ChildItem -Path releases
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.version.outputs.tag }}
+        name: ${{ steps.version.outputs.tag }}
+        draft: false
+        prerelease: ${{ contains(steps.version.outputs.version, '-') }}
+        files: |
+          releases/*.nupkg
+          releases/releases.win.json
+          releases/*-Setup.exe
+          releases/*-Portable.zip
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
