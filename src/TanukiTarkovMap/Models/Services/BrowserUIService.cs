@@ -57,7 +57,7 @@ namespace TanukiTarkovMap.Models.Services
                 else
                 {
                     // 패널들만 복원 (헤더/푸터는 숨김 유지)
-                    await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_UI_ELEMENTS_KEEP_TRANSFORM);
+                    await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_PANELS);
                 }
 
                 Logger.SimpleLog($"[BrowserUIService] Successfully applied UI visibility for map ID: {mapId}");
@@ -88,7 +88,7 @@ namespace TanukiTarkovMap.Models.Services
                 await browser.EvaluateScriptAsync(WebElementsControl.INIT_SCRIPT);
 
                 Logger.SimpleLog("[BrowserUIService] Restoring all UI elements");
-                await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_ALL_ELEMENTS);
+                await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_PANELS);
 
                 Logger.SimpleLog("[BrowserUIService] Successfully restored all UI elements");
             }

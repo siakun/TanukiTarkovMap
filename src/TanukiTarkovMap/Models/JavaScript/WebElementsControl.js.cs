@@ -50,12 +50,7 @@ namespace TanukiTarkovMap.Models.JavaScript
         /// <summary>
         /// 패널 복원 (헤더/푸터는 숨김 유지)
         /// </summary>
-        public const string RESTORE_UI_ELEMENTS_KEEP_TRANSFORM = "window.restorePanels();";
-
-        /// <summary>
-        /// 패널 복원 (헤더/푸터는 숨김 유지) - RESTORE_UI_ELEMENTS_KEEP_TRANSFORM과 동일
-        /// </summary>
-        public const string RESTORE_ALL_ELEMENTS = "window.restorePanels();";
+        public const string RESTORE_PANELS = "window.restorePanels();";
 
         /// <summary>
         /// 요소 표시 상태 확인 (디버깅용)

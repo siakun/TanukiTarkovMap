@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.FileSystem;
 
 /**
 Server - WebSocket 서버 (ASP.NET Core Kestrel 기반)
@@ -388,8 +389,8 @@ namespace TanukiTarkovMap.Models.Services
                 Settings.Save();
                 SendConfiguration();
 
-                Watcher.Restart();
-                //App.RestartApp();
+                ScreenshotsWatcher.Restart();
+                LogsWatcher.Restart();
             }
             else if (msg != null && msg.MessageType == WsMessageType.SETTINGS_RESET)
             {
@@ -397,7 +398,8 @@ namespace TanukiTarkovMap.Models.Services
                 App.ResetSettings();
                 SendConfiguration();
 
-                Watcher.Restart();
+                ScreenshotsWatcher.Restart();
+                LogsWatcher.Restart();
             }
         }
     }
