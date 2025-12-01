@@ -462,6 +462,9 @@ namespace TanukiTarkovMap
                     Cef.Shutdown();
                 }
 
+                // 4. Velopack 로그 파일 정리 (포터블 버전용)
+                CleanupVelopackLog();
+
                 Logger.SimpleLog("=== Application Exit Completed ===");
             }
             catch (Exception ex)
@@ -470,6 +473,19 @@ namespace TanukiTarkovMap
             }
 
             Shutdown();
+        }
+
+        private void CleanupVelopackLog()
+        {
+            try
+            {
+                var logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "velopack.log");
+                if (File.Exists(logPath))
+                {
+                    File.Delete(logPath);
+                }
+            }
+            catch { }
         }
 
         private void Application_Exit(object sender, ExitEventArgs e)
