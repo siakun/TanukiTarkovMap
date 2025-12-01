@@ -87,8 +87,8 @@ namespace TanukiTarkovMap.Models.Services
             {
                 GameFolder = detectedGameFolder,
                 ScreenshotsFolder = detectedScreenshotsFolder,
-                NormalWidth = 1400,
-                NormalHeight = 900,
+                NormalWidth = 800,
+                NormalHeight = 600,
                 NormalLeft = -1,
                 NormalTop = -1,
                 MapSettings = CreateDefaultMapSettings(),

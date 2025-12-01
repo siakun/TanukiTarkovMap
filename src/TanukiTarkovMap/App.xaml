@@ -4,7 +4,8 @@
              xmlns:local="clr-namespace:TanukiTarkovMap"
              xmlns:svc="clr-namespace:TanukiTarkovMap.Models.Services"
              Startup="Application_Startup"
-             Exit="Application_Exit">
+             Exit="Application_Exit"
+             ShutdownMode="OnExplicitShutdown">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -171,8 +171,8 @@ namespace TanukiTarkovMap
             {
                 GameFolder = null,
                 ScreenshotsFolder = null,
-                NormalWidth = 1400,
-                NormalHeight = 900,
+                NormalWidth = 800,
+                NormalHeight = 600,
                 NormalLeft = -1,
                 NormalTop = -1,
             };
@@ -193,95 +193,132 @@ namespace TanukiTarkovMap
         {
             SetCulture();
 
-            // 1. 스플래시 창 먼저 표시
-            _splashWindow = new SplashWindow();
-            _splashWindow.Show();
+            Logger.SimpleLog("=== Application_Startup Begin ===");
 
-            // 2. 업데이트 체크 (Velopack 설치 시에만)
-            await CheckForUpdatesAsync();
+            try
+            {
+                // 1. 스플래시 창 먼저 표시
+                Logger.SimpleLog("Creating SplashWindow...");
+                _splashWindow = new SplashWindow();
+                Logger.SimpleLog("Showing SplashWindow...");
+                _splashWindow.Show();
 
-            // 3. CEF 초기화
-            _splashWindow.SetStatus("초기화 중...");
-            InitializeCef();
+                // 2. 업데이트 체크 (Velopack 설치 시에만)
+                Logger.SimpleLog("Starting CheckForUpdatesAsync...");
+                await CheckForUpdatesAsync();
+                Logger.SimpleLog("CheckForUpdatesAsync completed.");
 
-            // DI 컨테이너 초기화
-            ServiceLocator.Initialize();
+                // 3. CEF 초기화
+                Logger.SimpleLog("Initializing CEF...");
+                _splashWindow?.SetStatus("초기화 중...");
+                InitializeCef();
+                Logger.SimpleLog("CEF initialized.");
 
-            // 애플리케이션 시작 로깅
-            Logger.SimpleLog("=== Application Starting ===");
-            Logger.SimpleLog($"Working Directory: {Environment.CurrentDirectory}");
-            Logger.SimpleLog($"Executable Path: {System.Reflection.Assembly.GetExecutingAssembly().Location}");
+                // DI 컨테이너 초기화
+                ServiceLocator.Initialize();
 
-            // 시스템 트레이 아이콘 생성
-            Logger.SimpleLog("Creating tray icon...");
-            CreateTrayIcon();
+                // 애플리케이션 시작 로깅
+                Logger.SimpleLog("=== Application Starting ===");
+                Logger.SimpleLog($"Working Directory: {Environment.CurrentDirectory}");
+                Logger.SimpleLog($"Executable Path: {System.Reflection.Assembly.GetExecutingAssembly().Location}");
 
-            // 설정 로드
-            Logger.SimpleLog("Loading settings...");
-            Settings.Load();
+                // 시스템 트레이 아이콘 생성
+                Logger.SimpleLog("Creating tray icon...");
+                CreateTrayIcon();
 
-            // 서버 시작
-            Logger.SimpleLog("Starting WebSocket server...");
-            Server.Start();
+                // 설정 로드
+                Logger.SimpleLog("Loading settings...");
+                Settings.Load();
 
-            // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
-            Logger.SimpleLog("Starting file watchers...");
-            Watcher.Start();
+                // 서버 시작
+                Logger.SimpleLog("Starting WebSocket server...");
+                Server.Start();
 
-            // 프로그램 자동 정리 실행
-            Logger.SimpleLog("Cleaning old log folders...");
-            Models.FileSystem.GameSessionCleaner.CleanOldLogFolders();
+                // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
+                Logger.SimpleLog("Starting file watchers...");
+                Watcher.Start();
 
-            // 4. 스플래시 닫고 메인 창 표시
-            _splashWindow.Close();
-            _splashWindow = null;
+                // 프로그램 자동 정리 실행
+                Logger.SimpleLog("Cleaning old log folders...");
+                Models.FileSystem.GameSessionCleaner.CleanOldLogFolders();
 
-            Logger.SimpleLog("Showing main window...");
-            ShowMainWindow();
+                // 4. 스플래시 닫고 메인 창 표시
+                Logger.SimpleLog("Closing splash window...");
+                _splashWindow?.Close();
+                _splashWindow = null;
+
+                Logger.SimpleLog("Showing main window...");
+                ShowMainWindow();
+                Logger.SimpleLog("Main window shown successfully.");
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"ERROR in Application_Startup: {ex}");
+                MessageBox.Show($"앱 시작 중 오류 발생:\n{ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                Shutdown();
+            }
         }
 
         private async Task CheckForUpdatesAsync()
         {
             try
             {
+                Logger.SimpleLog("=== Update Check Started ===");
+                Logger.SimpleLog($"Update Source: {GitHubRepoUrl}");
+                Logger.SimpleLog($"Current Version: {Version}");
+
                 var updateManager = new UpdateManager(new GithubSource(GitHubRepoUrl, null, false));
 
                 // Velopack으로 설치되지 않은 경우 (개발 모드) 스킵
+                Logger.SimpleLog($"IsInstalled: {updateManager.IsInstalled}");
                 if (!updateManager.IsInstalled)
                 {
+                    Logger.SimpleLog("Update Check: Skipped (Development mode - not installed via Velopack)");
                     _splashWindow?.SetStatus("시작하는 중...");
                     await Task.Delay(500); // 스플래시를 잠시 보여주기
                     return;
                 }
 
                 _splashWindow?.SetStatus("업데이트 확인 중...");
+                Logger.SimpleLog("Update Check: Checking for updates from GitHub...");
 
                 // 업데이트 확인
                 var updateInfo = await updateManager.CheckForUpdatesAsync();
+
                 if (updateInfo == null)
                 {
+                    Logger.SimpleLog("Update Check: Already up to date (no updates available)");
                     _splashWindow?.SetStatus("시작하는 중...");
                     return;
                 }
 
-                // 업데이트 발견 - 다운로드
-                _splashWindow?.SetStatus($"v{updateInfo.TargetFullRelease.Version} 다운로드 중...");
+                // 업데이트 발견
+                var targetVersion = updateInfo.TargetFullRelease.Version.ToString();
+                Logger.SimpleLog($"Update Available: {Version} → v{targetVersion}");
+                Logger.SimpleLog($"Download URL: {updateInfo.TargetFullRelease.FileName}");
+
+                // 다운로드
+                _splashWindow?.SetStatus($"v{targetVersion} 다운로드 중...");
+                Logger.SimpleLog($"Update Download: Starting download of v{targetVersion}...");
 
                 await updateManager.DownloadUpdatesAsync(updateInfo, progress =>
                 {
                     _splashWindow?.SetProgress(progress);
                 });
 
+                Logger.SimpleLog($"Update Download: Completed successfully");
                 _splashWindow?.SetStatus("업데이트 적용 중...");
                 _splashWindow?.SetProgress(100);
 
                 // 업데이트 적용 및 재시작 (자동)
+                Logger.SimpleLog($"Update Apply: Applying v{targetVersion} and restarting...");
                 updateManager.ApplyUpdatesAndRestart(updateInfo);
             }
             catch (Exception ex)
             {
                 // 업데이트 실패해도 앱은 정상 실행
-                System.Diagnostics.Debug.WriteLine($"Update check failed: {ex.Message}");
+                Logger.SimpleLog($"Update Check FAILED: {ex.Message}");
+                Logger.SimpleLog($"Update Error Details: {ex}");
                 _splashWindow?.SetStatus("시작하는 중...");
             }
         }
@@ -400,12 +437,34 @@ namespace TanukiTarkovMap
             if (_isExiting) return; // 이미 종료 중이면 중복 실행 방지
             _isExiting = true;
 
-            // 정리 작업
-            _mainWindow?.Close();
-            _trayIcon?.Dispose();
-            ServiceLocator.GoonTrackerService.Dispose();
-            Watcher.Stop();
-            Server.Stop();
+            Logger.SimpleLog("=== Application Exit Started ===");
+
+            try
+            {
+                // 1. 서비스 정리
+                Logger.SimpleLog("Stopping services...");
+                ServiceLocator.GoonTrackerService.Dispose();
+                Watcher.Stop();
+                Server.Stop();
+
+                // 2. UI 정리
+                Logger.SimpleLog("Closing UI...");
+                _mainWindow?.Close();
+                _trayIcon?.Dispose();
+
+                // 3. CEF 종료 (가장 중요 - 브라우저 서브프로세스 종료)
+                Logger.SimpleLog("Shutting down CEF...");
+                if (Cef.IsInitialized == true)
+                {
+                    Cef.Shutdown();
+                }
+
+                Logger.SimpleLog("=== Application Exit Completed ===");
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"Exit error: {ex.Message}");
+            }
 
             Shutdown();
         }
@@ -415,11 +474,15 @@ namespace TanukiTarkovMap
             // ExitApplication에서 이미 처리되지 않은 경우만 처리
             if (!_isExiting)
             {
+                Logger.SimpleLog("Application_Exit: Cleanup not done by ExitApplication");
                 _trayIcon?.Dispose();
-            }
 
-            // CEF 종료
-            Cef.Shutdown();
+                // CEF 종료
+                if (Cef.IsInitialized == true)
+                {
+                    Cef.Shutdown();
+                }
+            }
         }
 
         private static void SetCulture()
