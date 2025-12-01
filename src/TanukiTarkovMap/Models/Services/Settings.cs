@@ -96,7 +96,7 @@ namespace TanukiTarkovMap.Models.Services
                 HotkeyKey = "F11",
                 autoDeleteLogs = false,
                 autoDeleteScreenshots = false,
-                IsAlwaysOnTop = false,  // 기본적으로 항상 위 비활성화
+                IsAlwaysOnTop = true,   // 기본적으로 항상 위 활성화
             };
 
             App.SetSettings(defaultSettings, true);
