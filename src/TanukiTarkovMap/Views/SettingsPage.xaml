@@ -389,6 +389,13 @@
                                Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
+
+            <!-- 버전 정보 -->
+            <TextBlock Text="{Binding AppVersion}"
+                       FontSize="10"
+                       Foreground="#FF666666"
+                       HorizontalAlignment="Center"
+                       Margin="0,4,0,8"/>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

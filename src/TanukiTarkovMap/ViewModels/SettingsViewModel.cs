@@ -18,6 +18,8 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
         [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
 
+        public string AppVersion => App.Version;
+
         public SettingsViewModel()
         {
             LoadCurrentSettings();
