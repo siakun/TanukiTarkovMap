@@ -1,0 +1,26 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            // IntelliSense를 사용하여 C# 디버깅을 위해 존재하는 특성 찾기
+            // 기존 속성 설명에 마우스 오버 사용
+            // 자세한 내용은 https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md을(를) 방문하세요.
+            "name": ".NET Core Launch (console)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build",
+            // 대상 프레임워크를 변경한 경우 프로그램 경로를 업데이트해야 합니다.
+            "program": "${workspaceFolder}/src/TanukiTarkovMap/bin/Debug/net8.0-windows/TanukiTarkovMap.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}/src/TanukiTarkovMap",
+            // '콘솔' 필드에 대한 자세한 내용은 https://aka.ms/VSCode-CS-LaunchJson-Console을(를) 참조하세요.
+            "console": "internalConsole",
+            "stopAtEntry": false
+        },
+        {
+            "name": ".NET Core Attach",
+            "type": "coreclr",
+            "request": "attach"
+        }
+    ]
+}

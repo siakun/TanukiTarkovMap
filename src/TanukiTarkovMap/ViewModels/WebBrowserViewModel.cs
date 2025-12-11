@@ -133,6 +133,9 @@ namespace TanukiTarkovMap.ViewModels
                     // 웹 페이지 마진/패딩 제거
                     await ExecuteScriptAsync(PageLayout.REMOVE_PAGE_MARGINS_SCRIPT);
 
+                    // SVG 투명화 (#0f0f0f 색상 제거)
+                    await ExecuteScriptAsync(SvgTransparency.Script);
+
                     // 줌 레벨 적용
                     ApplyZoomLevel();
 
