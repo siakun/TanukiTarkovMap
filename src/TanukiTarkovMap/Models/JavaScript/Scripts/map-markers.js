@@ -169,4 +169,316 @@
     // setTimeout: 2000ms (2초) 후에 함수 실행
     // 웹페이지가 완전히 로드될 때까지 기다립니다
     setTimeout(initMarkers, 2000);
+
+    // ========================================
+    // 오른쪽 클릭을 왼쪽 클릭으로 변환
+    // ========================================
+    /**
+     * marker 요소의 왼쪽 클릭으로 오른쪽 클릭 메뉴 열기
+     *
+     * @param {HTMLElement} element - 클릭 변환을 적용할 요소
+     */
+    function convertRightClickToLeftClick(element) {
+        // 이미 변환이 적용되었는지 확인 (중복 방지)
+        if (element.dataset.clickConverted === 'true') {
+            return;
+        }
+
+
+        // 원본 contextmenu 이벤트 리스너들을 저장
+        const originalListeners = [];
+
+        // contextmenu 이벤트 리스너 가로채기
+        const originalAddEventListener = element.addEventListener;
+        element.addEventListener = function(type, listener, options) {
+            if (type === 'contextmenu') {
+                originalListeners.push({ listener, options });
+            }
+            return originalAddEventListener.call(this, type, listener, options);
+        };
+
+        // 왼쪽 클릭을 우클릭 contextmenu 핸들러로 연결
+        element.addEventListener('click', function (e) {
+            // 기본 왼쪽 클릭 동작 차단
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+
+            // 우클릭 이벤트 생성 (isTrusted를 우회하기 위해 실제 마우스 위치 사용)
+            const rect = element.getBoundingClientRect();
+            const x = e.clientX || rect.left + rect.width / 2;
+            const y = e.clientY || rect.top + rect.height / 2;
+
+            // 저장된 contextmenu 리스너들을 직접 호출
+            if (originalListeners.length > 0) {
+                const fakeEvent = {
+                    type: 'contextmenu',
+                    button: 2,
+                    buttons: 2,
+                    clientX: x,
+                    clientY: y,
+                    screenX: e.screenX || x,
+                    screenY: e.screenY || y,
+                    target: element,
+                    currentTarget: element,
+                    preventDefault: () => {},
+                    stopPropagation: () => {},
+                    stopImmediatePropagation: () => {}
+                };
+
+                originalListeners.forEach(({ listener }) => {
+                    try {
+                        listener.call(element, fakeEvent);
+                    } catch (err) {
+                        // Ignore errors
+                    }
+                });
+            } else {
+                // contextmenu 이벤트 발생
+                const contextMenuEvent = new MouseEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    button: 2,
+                    buttons: 2,
+                    clientX: x,
+                    clientY: y,
+                    screenX: e.screenX || x,
+                    screenY: e.screenY || y
+                });
+
+                // 여러 대상에 이벤트 발생
+                element.dispatchEvent(contextMenuEvent);
+
+                // 부모 요소들에도 시도
+                let parent = element.parentElement;
+                while (parent && parent !== document.body) {
+                    parent.dispatchEvent(contextMenuEvent);
+                    parent = parent.parentElement;
+                }
+
+                // document에도 발생
+                document.dispatchEvent(contextMenuEvent);
+            }
+        }, true);
+
+        // addEventListener 복원
+        setTimeout(() => {
+            element.addEventListener = originalAddEventListener;
+        }, 100);
+
+        // 변환 완료 표시
+        element.dataset.clickConverted = 'true';
+    }
+
+    /**
+     * 모든 marker에 클릭 변환 적용
+     */
+    function initClickConverter() {
+        // class 이름과 id 패턴 모두 검색
+        const markers = document.querySelectorAll('.marker, [id^="marker_"]');
+
+        // document의 contextmenu 이벤트를 가로채기
+        const originalDocumentListener = document.addEventListener;
+        let documentContextMenuListeners = [];
+
+        document.addEventListener = function(type, listener, options) {
+            if (type === 'contextmenu') {
+                documentContextMenuListeners.push({ listener, options });
+            }
+            return originalDocumentListener.call(this, type, listener, options);
+        };
+
+        markers.forEach(convertRightClickToLeftClick);
+
+        // 드래그 감지를 위한 변수
+        let isDragging = false;
+        let mouseDownPos = { x: 0, y: 0 };
+
+        document.addEventListener('mousedown', function(e) {
+            mouseDownPos = { x: e.clientX, y: e.clientY };
+            isDragging = false;
+        }, true);
+
+        document.addEventListener('mousemove', function(e) {
+            if (mouseDownPos.x !== 0 || mouseDownPos.y !== 0) {
+                const deltaX = Math.abs(e.clientX - mouseDownPos.x);
+                const deltaY = Math.abs(e.clientY - mouseDownPos.y);
+                // 5픽셀 이상 움직이면 드래그로 간주
+                if (deltaX > 5 || deltaY > 5) {
+                    isDragging = true;
+                }
+            }
+        }, true);
+
+        document.addEventListener('mouseup', function(e) {
+            // mouseup 직후 잠시 대기 후 드래그 상태 리셋
+            setTimeout(() => {
+                isDragging = false;
+                mouseDownPos = { x: 0, y: 0 };
+            }, 100);
+        }, true);
+
+        // 전역 클릭 리스너 추가
+        document.addEventListener('click', function(e) {
+            // 드래그 중이면 무시
+            if (isDragging) {
+                return;
+            }
+            // marker 요소나 그 자식인지 확인
+            let target = e.target;
+            let isMarkerClick = false;
+            let isMenuClick = false;
+
+            // 클릭한 요소가 marker인지, 메뉴인지 확인
+            let checkTarget = target;
+            while (checkTarget) {
+                if (checkTarget.id && checkTarget.id.startsWith('marker_')) {
+                    isMarkerClick = true;
+                    break;
+                }
+                checkTarget = checkTarget.parentElement;
+            }
+
+            // 메뉴 내부 클릭인지 확인
+            // 메뉴는 매우 높은 z-index를 가진 오버레이 요소여야 함
+            checkTarget = target;
+            while (checkTarget && checkTarget !== document.body) {
+                const style = window.getComputedStyle(checkTarget);
+                const position = style.position;
+                const zIndex = parseInt(style.zIndex) || 0;
+                const className = checkTarget.className || '';
+
+                // 메뉴 판별 조건:
+                // 1. 클래스 이름에 'menu', 'popup', 'modal', 'dropdown', 'context'가 포함
+                // 2. OR z-index가 1000 이상 (일반 맵 요소는 보통 낮은 z-index)
+                // 3. AND position이 absolute 또는 fixed
+                if ((position === 'absolute' || position === 'fixed')) {
+                    const hasMenuClass = typeof className === 'string' &&
+                        (className.includes('menu') ||
+                         className.includes('popup') ||
+                         className.includes('modal') ||
+                         className.includes('dropdown') ||
+                         className.includes('context'));
+
+                    const hasHighZIndex = zIndex >= 1000;
+
+                    // 클래스 이름에 menu 관련 단어가 있거나 z-index가 1000 이상이면 메뉴
+                    if (hasMenuClass || hasHighZIndex) {
+                        isMenuClick = true;
+                        break;
+                    }
+                }
+
+                checkTarget = checkTarget.parentElement;
+            }
+
+            if (isMarkerClick) {
+                // marker 클릭 - 메뉴 열기
+                // 방법 1: React Fiber를 통한 핸들러 찾기
+                const fiberKey = Object.keys(target).find(key => key.startsWith('__react'));
+                if (fiberKey) {
+                    const fiber = target[fiberKey];
+
+                    // React props에서 onContextMenu 찾기
+                    if (fiber && fiber.memoizedProps && fiber.memoizedProps.onContextMenu) {
+                        const fakeEvent = {
+                            type: 'contextmenu',
+                            button: 2,
+                            buttons: 2,
+                            clientX: e.clientX,
+                            clientY: e.clientY,
+                            target: target,
+                            currentTarget: target,
+                            preventDefault: () => {},
+                            stopPropagation: () => {},
+                            nativeEvent: e
+                        };
+                        fiber.memoizedProps.onContextMenu(fakeEvent);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return;
+                    }
+                }
+
+                // 방법 2: 모든 이벤트 타입 시도
+                ['contextmenu', 'mousedown', 'mouseup', 'pointerdown', 'pointerup'].forEach(eventType => {
+                    const event = new PointerEvent(eventType, {
+                        bubbles: true,
+                        cancelable: true,
+                        view: window,
+                        button: 2,
+                        buttons: 2,
+                        clientX: e.clientX,
+                        clientY: e.clientY,
+                        pointerId: 1,
+                        pointerType: 'mouse'
+                    });
+                    target.dispatchEvent(event);
+                });
+
+                // 방법 3: document에도 발생
+                const contextEvent = new PointerEvent('contextmenu', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window,
+                    button: 2,
+                    buttons: 2,
+                    clientX: e.clientX,
+                    clientY: e.clientY,
+                    pointerId: 1,
+                    pointerType: 'mouse'
+                });
+                document.dispatchEvent(contextEvent);
+
+                e.preventDefault();
+                e.stopPropagation();
+            } else if (isMenuClick) {
+                // 메뉴 내부 클릭 - 아무것도 하지 않음 (메뉴 항목 선택 허용)
+            } else {
+                // marker도 메뉴도 아닌 곳 클릭 - ESC 키로 메뉴 닫기
+                // ESC 키 이벤트 발생
+                const escapeEvent = new KeyboardEvent('keydown', {
+                    key: 'Escape',
+                    code: 'Escape',
+                    keyCode: 27,
+                    which: 27,
+                    bubbles: true,
+                    cancelable: true
+                });
+
+                document.dispatchEvent(escapeEvent);
+                window.dispatchEvent(escapeEvent);
+                document.body.dispatchEvent(escapeEvent);
+            }
+        }, true);
+    }
+
+    // 클릭 변환 초기화
+    setTimeout(initClickConverter, 2000);
+
+    // MutationObserver에도 클릭 변환 추가
+    const clickObserver = new MutationObserver(mutations => {
+        for (const mutation of mutations) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    if (!(node instanceof HTMLElement)) return;
+
+                    // class 또는 id 패턴으로 marker 확인
+                    if ((node.classList && node.classList.contains('marker')) ||
+                        (node.id && node.id.startsWith('marker_'))) {
+                        convertRightClickToLeftClick(node);
+                    } else {
+                        // 하위 요소에서도 검색
+                        node.querySelectorAll('.marker, [id^="marker_"]').forEach(convertRightClickToLeftClick);
+                    }
+                });
+            }
+        }
+    });
+
+    clickObserver.observe(container, {
+        childList: true,
+        subtree: true
+    });
 })();
