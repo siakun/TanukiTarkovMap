@@ -111,6 +111,63 @@
             }
 
             // ========================================
+            // Step 5: 격자판(Grid) 제거
+            // ========================================
+            // SVG 격자판 패턴 제거 - 더 광범위하게 검색
+            var gridElements = document.querySelectorAll(
+                'svg pattern, ' +
+                'svg rect[class*="grid"], ' +
+                'svg line[class*="grid"], ' +
+                'svg g[class*="grid"], ' +
+                'svg path[class*="grid"], ' +
+                'rect[id*="grid"], ' +
+                'line[id*="grid"], ' +
+                'path[id*="grid"], ' +
+                'g[id*="grid"]'
+            );
+            for (var i = 0; i < gridElements.length; i++) {
+                gridElements[i].remove();
+            }
+
+            // Canvas 격자판 제거
+            var gridCanvases = document.querySelectorAll('canvas[class*="grid"], canvas[id*="grid"]');
+            for (var i = 0; i < gridCanvases.length; i++) {
+                gridCanvases[i].style.display = 'none';
+            }
+
+            // 모든 SVG 내에서 stroke가 있는 line, rect 요소 중 격자판으로 보이는 것들 제거
+            var svgLines = document.querySelectorAll('svg line, svg rect');
+            for (var i = 0; i < svgLines.length; i++) {
+                var element = svgLines[i];
+                var style = window.getComputedStyle(element);
+                var stroke = style.stroke;
+
+                // 회색 계열의 stroke를 가진 line/rect는 격자판일 가능성이 높음
+                if (stroke && (stroke.includes('rgb(') || stroke.includes('rgba('))) {
+                    // 매우 얇은 선이고 회색 계열이면 격자판으로 간주
+                    var strokeWidth = parseFloat(style.strokeWidth);
+                    if (strokeWidth <= 2) {
+                        element.style.display = 'none';
+                    }
+                }
+            }
+
+            // ========================================
+            // Step 6: 배경색 제거
+            // ========================================
+            // body 배경 투명화
+            document.body.style.backgroundColor = 'transparent';
+
+            // html 배경 투명화
+            document.documentElement.style.backgroundColor = 'transparent';
+
+            // 모든 주요 컨테이너 배경 투명화
+            var mainContainers = document.querySelectorAll('#__nuxt, #app, .page-content, main, .map-container, .map-wrapper');
+            for (var i = 0; i < mainContainers.length; i++) {
+                mainContainers[i].style.backgroundColor = 'transparent';
+            }
+
+            // ========================================
             // Step 4: 브랜딩 변경 - "Tarkov Client" 추가
             // ========================================
             var tarkovPilotElement = document.querySelector('.p-relative a');
