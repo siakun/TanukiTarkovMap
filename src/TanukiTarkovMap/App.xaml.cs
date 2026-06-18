@@ -23,7 +23,7 @@ namespace TanukiTarkovMap
     /// <summary> Interaction logic for App.xaml </summary>
     public partial class App : Application
     {
-        private const string GitHubRepoUrl = "https://github.com/Sia819/TanukiTarkovMap";
+        private const string GitHubRepoUrl = "https://github.com/siakun/TanukiTarkovMap";
 
         private TaskbarIcon? _trayIcon;
         private MainWindow? _mainWindow;
@@ -39,7 +39,7 @@ namespace TanukiTarkovMap
             try
             {
                 var updateManager = new Velopack.UpdateManager(
-                    new Velopack.Sources.GithubSource("https://github.com/Sia819/TanukiTarkovMap", null, false));
+                    new Velopack.Sources.GithubSource(GitHubRepoUrl, null, false));
 
                 if (updateManager.IsInstalled && updateManager.CurrentVersion != null)
                 {

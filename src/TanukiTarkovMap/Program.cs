@@ -29,7 +29,6 @@ zombie Chrome processes when duplicate instance is detected.
 */
 public static class Program
 {
-    private const string GitHubRepoUrl = "https://github.com/Sia819/TanukiTarkovMap";
     private const string MutexName = "TanukiTarkovMapMutex";
     private const string MainWindowTitle = "TanukiTarkovMap";
 
