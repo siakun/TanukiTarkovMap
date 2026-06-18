@@ -97,7 +97,7 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 ## 설치
 
-1. [Releases 페이지](https://github.com/siakun/TanukiTarkovMap/releases/latest)에서 최신 설치 파일(`TanukiTarkovMap-Setup-x64.exe`)을 내려받습니다.
+1. [Releases 페이지](https://github.com/siakun/TanukiTarkovMap/releases/latest)에서 최신 Setup 설치 파일(`TanukiTarkovMap-Setup-<버전>-x64.exe`)을 내려받습니다.
 2. 실행해 설치하면 이후 업데이트는 자동으로 적용됩니다.
 
 > 요구 사항: Windows 10/11 (x64)
