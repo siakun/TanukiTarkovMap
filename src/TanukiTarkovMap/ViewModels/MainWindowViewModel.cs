@@ -36,7 +36,8 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<MapReceivedMessage>,
         IRecipient<PilotConnectedMessage>,
         IRecipient<TopBarHiddenChangedMessage>,
-        IRecipient<OpacitySliderDragMessage>
+        IRecipient<OpacitySliderDragMessage>,
+        IRecipient<UpdateReadyMessage>
     {
         private readonly WindowBoundsService _windowBoundsService;
         private readonly WindowStateManager _windowStateManager;
@@ -147,6 +148,12 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary> Browser 컨테이너 Visibility (CefSharp은 WPF 렌더링이므로 항상 표시) </summary>
         public Visibility BrowserContainerVisibility => Visibility.Visible;
+
+        /// <summary> 다운로드 완료되어 적용 대기 중인 업데이트가 있는지 여부 (TopBar 표시용) </summary>
+        [ObservableProperty] public partial bool IsUpdateReady { get; set; } = false;
+
+        /// <summary> 적용 대기 중인 업데이트 버전 문자열 </summary>
+        [ObservableProperty] public partial string UpdateReadyVersion { get; set; } = string.Empty;
         #endregion
 
         #region Settings Properties
@@ -578,6 +585,33 @@ namespace TanukiTarkovMap.ViewModels
         public void Receive(OpacitySliderDragMessage message)
         {
             IsOpacitySliderDragging = message.Value;
+        }
+
+        /// <summary>
+        /// 업데이트 다운로드 완료 메시지 핸들러 (UpdateService → MainWindowViewModel)
+        /// 백그라운드 스레드에서 발행되므로 UI 스레드로 전환해 TopBar 표시를 켠다
+        /// </summary>
+        public void Receive(UpdateReadyMessage message)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                UpdateReadyVersion = message.Value;
+                IsUpdateReady = true;
+            });
+            Logger.SimpleLog($"[MainWindowViewModel] Update ready indicator shown: v{message.Value}");
+        }
+
+        #endregion
+
+        #region Update Commands
+
+        /// <summary>
+        /// 준비된 업데이트를 즉시 적용하고 재시작 (TopBar 업데이트 표시 클릭)
+        /// </summary>
+        [RelayCommand]
+        private void RestartToApplyUpdate()
+        {
+            ServiceLocator.UpdateService.ApplyAndRestartNow();
         }
 
         #endregion

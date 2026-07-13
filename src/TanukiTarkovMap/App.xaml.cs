@@ -23,13 +23,10 @@ namespace TanukiTarkovMap
     /// <summary> Interaction logic for App.xaml </summary>
     public partial class App : Application
     {
-        private const string GitHubRepoUrl = "https://github.com/siakun/TanukiTarkovMap";
-
         private TaskbarIcon? _trayIcon;
         private MainWindow? _mainWindow;
         private SplashWindow? _splashWindow;
         private bool _isExiting = false; // 중복 종료 방지 플래그
-        private bool _isUpdating = false; // 업데이트 중 빠른 종료 플래그
 
         //===================== Application Global State (from Env.cs) ============================
 
@@ -39,7 +36,7 @@ namespace TanukiTarkovMap
             try
             {
                 var updateManager = new Velopack.UpdateManager(
-                    new Velopack.Sources.GithubSource(GitHubRepoUrl, null, false));
+                    new Velopack.Sources.GithubSource(UpdateService.GitHubRepoUrl, null, false));
 
                 if (updateManager.IsInstalled && updateManager.CurrentVersion != null)
                 {
@@ -205,12 +202,7 @@ namespace TanukiTarkovMap
                 Logger.SimpleLog("Showing SplashWindow...");
                 _splashWindow.Show();
 
-                // 2. 업데이트 체크 (Velopack 설치 시에만)
-                Logger.SimpleLog("Starting CheckForUpdatesAsync...");
-                await CheckForUpdatesAsync();
-                Logger.SimpleLog("CheckForUpdatesAsync completed.");
-
-                // 3. CEF 초기화
+                // 2. CEF 초기화
                 Logger.SimpleLog("Initializing CEF...");
                 _splashWindow?.SetStatus("초기화 중...");
                 InitializeCef();
@@ -248,7 +240,7 @@ namespace TanukiTarkovMap
                 Logger.SimpleLog("Cleaning old log folders...");
                 Models.FileSystem.GameSessionCleaner.CleanOldLogFolders();
 
-                // 4. 스플래시 닫고 메인 창 표시
+                // 3. 스플래시 닫고 메인 창 표시
                 Logger.SimpleLog("Closing splash window...");
                 _splashWindow?.Close();
                 _splashWindow = null;
@@ -256,81 +248,15 @@ namespace TanukiTarkovMap
                 Logger.SimpleLog("Showing main window...");
                 ShowMainWindow();
                 Logger.SimpleLog("Main window shown successfully.");
+
+                // 4. 업데이트는 백그라운드에서 확인/다운로드하고 종료 시 적용한다 (시작을 막지 않음)
+                _ = ServiceLocator.UpdateService.CheckAndDownloadAsync();
             }
             catch (Exception ex)
             {
                 Logger.SimpleLog($"ERROR in Application_Startup: {ex}");
                 MessageBox.Show($"앱 시작 중 오류 발생:\n{ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
-            }
-        }
-
-        private async Task CheckForUpdatesAsync()
-        {
-            try
-            {
-                Logger.SimpleLog("=== Update Check Started ===");
-                Logger.SimpleLog($"Update Source: {GitHubRepoUrl}");
-                Logger.SimpleLog($"Current Version: {Version}");
-
-                var updateManager = new UpdateManager(new GithubSource(GitHubRepoUrl, null, false));
-
-                // Velopack으로 설치되지 않은 경우 (개발 모드) 스킵
-                Logger.SimpleLog($"IsInstalled: {updateManager.IsInstalled}");
-                if (!updateManager.IsInstalled)
-                {
-                    Logger.SimpleLog("Update Check: Skipped (Development mode - not installed via Velopack)");
-                    _splashWindow?.SetStatus("시작하는 중...");
-                    await Task.Delay(500); // 스플래시를 잠시 보여주기
-                    return;
-                }
-
-                _splashWindow?.SetStatus("업데이트 확인 중...");
-                Logger.SimpleLog("Update Check: Checking for updates from GitHub...");
-
-                // 업데이트 확인
-                var updateInfo = await updateManager.CheckForUpdatesAsync();
-
-                if (updateInfo == null)
-                {
-                    Logger.SimpleLog("Update Check: Already up to date (no updates available)");
-                    _splashWindow?.SetStatus("시작하는 중...");
-                    return;
-                }
-
-                // 업데이트 발견
-                var targetVersion = updateInfo.TargetFullRelease.Version.ToString();
-                Logger.SimpleLog($"Update Available: {Version} → v{targetVersion}");
-                Logger.SimpleLog($"Download URL: {updateInfo.TargetFullRelease.FileName}");
-
-                // 다운로드
-                _splashWindow?.SetStatus($"v{targetVersion} 다운로드 중...");
-                Logger.SimpleLog($"Update Download: Starting download of v{targetVersion}...");
-
-                await updateManager.DownloadUpdatesAsync(updateInfo, progress =>
-                {
-                    _splashWindow?.SetProgress(progress);
-                });
-
-                Logger.SimpleLog($"Update Download: Completed successfully");
-                _splashWindow?.SetStatus("업데이트 적용 중...");
-                _splashWindow?.SetProgress(100);
-
-                // 업데이트 적용 및 재시작 (silent 모드 - UI 없이)
-                Logger.SimpleLog($"Update Apply: Applying v{targetVersion} silently and restarting...");
-                _isUpdating = true; // 빠른 종료 플래그 설정
-                updateManager.WaitExitThenApplyUpdates(updateInfo.TargetFullRelease, silent: true, restart: true);
-
-                // 즉시 종료 (Update.exe가 프로세스 종료 대기 후 업데이트 적용)
-                Logger.SimpleLog("Update: Fast exit for update apply...");
-                Environment.Exit(0);
-            }
-            catch (Exception ex)
-            {
-                // 업데이트 실패해도 앱은 정상 실행
-                Logger.SimpleLog($"Update Check FAILED: {ex.Message}");
-                Logger.SimpleLog($"Update Error Details: {ex}");
-                _splashWindow?.SetStatus("시작하는 중...");
             }
         }
 
@@ -463,7 +389,10 @@ namespace TanukiTarkovMap
                     Cef.Shutdown();
                 }
 
-                // 4. Velopack 로그 파일 정리 (포터블 버전용)
+                // 4. 다운로드해 둔 업데이트가 있으면 종료 후 조용히 적용되도록 예약
+                ServiceLocator.UpdateService.ApplyOnExit();
+
+                // 5. Velopack 로그 파일 정리 (포터블 버전용)
                 CleanupVelopackLog();
 
                 Logger.SimpleLog("=== Application Exit Completed ===");
@@ -491,13 +420,6 @@ namespace TanukiTarkovMap
 
         private void Application_Exit(object sender, ExitEventArgs e)
         {
-            // 업데이트 중이면 빠른 종료 (정리 작업 스킵)
-            if (_isUpdating)
-            {
-                Logger.SimpleLog("Application_Exit: Fast exit for update (skipping cleanup)");
-                return;
-            }
-
             // ExitApplication에서 이미 처리되지 않은 경우만 처리
             if (!_isExiting)
             {
@@ -509,6 +431,9 @@ namespace TanukiTarkovMap
                 {
                     Cef.Shutdown();
                 }
+
+                // 다운로드해 둔 업데이트가 있으면 종료 후 적용 예약
+                ServiceLocator.UpdateService.ApplyOnExit();
             }
         }
 

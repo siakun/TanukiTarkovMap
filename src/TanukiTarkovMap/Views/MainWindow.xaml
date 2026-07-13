@@ -412,6 +412,42 @@
 
                     <!-- 오른쪽: 윈도우 컨트롤 버튼 -->
                     <StackPanel Grid.Column="4" Orientation="Horizontal">
+                        <!-- 업데이트 준비됨 표시 (백그라운드 다운로드 완료 시 표시, 클릭하면 재시작하여 적용) -->
+                        <Button x:Name="UpdateReadyButton"
+                                Height="20"
+                                Margin="0,0,6,0"
+                                Background="Transparent"
+                                BorderThickness="0"
+                                Foreground="#FF8BC34A"
+                                FontSize="11"
+                                Content="{Binding UpdateReadyVersion}"
+                                ContentStringFormat="v{0} 준비됨"
+                                ToolTip="새 버전 다운로드가 완료되었습니다. 클릭하면 재시작하고 적용합니다"
+                                Command="{Binding RestartToApplyUpdateCommand}"
+                                Visibility="{Binding IsUpdateReady, Converter={StaticResource BoolToVisibilityConverter}}"
+                                WindowChrome.IsHitTestVisibleInChrome="True">
+                            <Button.Style>
+                                <Style TargetType="Button">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border Background="{TemplateBinding Background}" CornerRadius="3">
+                                                    <ContentPresenter HorizontalAlignment="Center"
+                                                                    VerticalAlignment="Center"
+                                                                    Margin="8,0"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Background" Value="#FF3A3A3A"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </Button.Style>
+                        </Button>
+
                         <!-- 최소화 버튼 (제거됨) -->
                         <Button x:Name="MinimizeButton"
                                 Width="40" Height="25"

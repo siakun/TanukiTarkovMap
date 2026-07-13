@@ -42,6 +42,7 @@ graph TB
         MES[MapEventService]
         HKS[HotkeyService]
         GTS[GoonTrackerService]
+        UPS[UpdateService]
     end
 
     subgraph StaticServices["Static Services"]
@@ -100,6 +101,7 @@ graph TB
     SL --> MES
     SL --> HKS
     SL --> GTS
+    SL --> UPS
 
     SPVM --> SET
     WSM --> SET
@@ -222,6 +224,7 @@ graph LR
         MES[MapEventService]
         HKS[HotkeyService]
         GTS[GoonTrackerService]
+        UPS[UpdateService]
     end
 
     subgraph Static["Static Class"]
@@ -234,6 +237,7 @@ graph LR
     SL -->|Factory| MES
     SL -->|Factory| HKS
     SL -->|Factory| GTS
+    SL -->|Factory| UPS
 
     WSM -->|Load/Save| SET
     SET -->|JSON| FILE[settings.json]
@@ -314,6 +318,7 @@ ServiceLocator.MapEventService
 ServiceLocator.WindowStateManager
 ServiceLocator.HotkeyService
 ServiceLocator.GoonTrackerService
+ServiceLocator.UpdateService
 ```
 
 ### 주요 서비스
@@ -326,6 +331,7 @@ ServiceLocator.GoonTrackerService
 | `MapEventService` | 맵 변경 및 스크린샷 이벤트 발행 |
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
 | `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
+| `UpdateService` | Velopack 백그라운드 업데이트 (확인/다운로드 후 종료 시 적용) |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
 
 ### 서비스 생성자 규칙

@@ -93,4 +93,13 @@ namespace TanukiTarkovMap.Messages
     {
         public MonitorRefreshRateChangedMessage(int value) : base(value) { }
     }
+
+    /// <summary>
+    /// 업데이트 다운로드 완료 메시지 (UpdateService → MainWindowViewModel)
+    /// 값 = 적용 대기 중인 새 버전 문자열
+    /// </summary>
+    public class UpdateReadyMessage : ValueChangedMessage<string>
+    {
+        public UpdateReadyMessage(string value) : base(value) { }
+    }
 }

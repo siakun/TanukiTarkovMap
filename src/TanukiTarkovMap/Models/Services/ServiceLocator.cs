@@ -28,6 +28,7 @@ namespace TanukiTarkovMap.Models.Services
             services.AddSingleton(_ => new WindowStateManager());
             services.AddSingleton(_ => new HotkeyService());
             services.AddSingleton(_ => new GoonTrackerService());
+            services.AddSingleton(_ => new UpdateService());
 
             // ViewModels 등록
             services.AddTransient<MainWindowViewModel>();
@@ -76,6 +77,13 @@ namespace TanukiTarkovMap.Models.Services
         /// </summary>
         public static GoonTrackerService GoonTrackerService
             => _serviceProvider?.GetRequiredService<GoonTrackerService>()
+               ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
+
+        /// <summary>
+        /// UpdateService 싱글톤 인스턴스
+        /// </summary>
+        public static UpdateService UpdateService
+            => _serviceProvider?.GetRequiredService<UpdateService>()
                ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
         #endregion
 
