@@ -3,7 +3,7 @@
 ## 프로젝트 정보
 - **구조**: WPF MVVM 패턴
 - **타겟 프레임워크**: .NET 8.0
-- **주요 기술**: WPF, WebView2
+- **주요 기술**: WPF, CefSharp (CefSharp.Wpf.NETCore)
 - **솔루션 경로**: `src/TanukiTarkovMap.sln`
 
 ## 프로젝트 선호사항
@@ -45,12 +45,47 @@ Code-behind에 로직이 있는 파일을 발견하면:
 cd src && dotnet build
 ```
 
+## CefSharp 렌더링 디버깅 (CDP)
+
+Debug 빌드는 CDP(Chrome DevTools Protocol) 원격 디버깅 포트 9222를 연다
+(`App.xaml.cs`의 `InitializeCef()`, `#if DEBUG` 한정. Release 빌드는 열지 않는다).
+이 포트로 CefSharp가 렌더링한 페이지의 DOM, JavaScript, 스크린샷을 앱 밖에서 조회할 수 있다.
+주입 스크립트(`Models/JavaScript/Scripts/*.js`)가 실제로 적용됐는지 검증할 때 쓴다.
+
+### 절차
+1. 사용자에게 Debug 빌드 앱 실행을 요청한다 (Claude는 직접 실행하지 않는다)
+2. `node tools/cdp-debug.mjs targets`로 연결을 확인한다
+3. 아래 명령으로 검사한다 (Node 22+ 내장 기능만 사용, 의존성 설치 불필요)
+
+```bash
+node tools/cdp-debug.mjs targets                  # 디버깅 가능한 페이지 목록
+node tools/cdp-debug.mjs eval "document.title"    # 페이지 컨텍스트에서 JS 실행 (Promise는 await)
+node tools/cdp-debug.mjs html ".panel_left"       # 선택자의 outerHTML 출력 (생략 시 문서 전체)
+node tools/cdp-debug.mjs screenshot               # 렌더링 화면 PNG 캡처 (저장 경로 출력)
+```
+
+### 참고
+- 스크린샷으로 저장된 PNG를 Read 도구로 읽으면 렌더링 결과를 시각적으로 확인할 수 있다
+- F12는 사람용 DevTools 창(`ShowDevTools()`)을 연다. Claude는 읽을 수 없으므로 위 CDP 방식을 쓴다
+- 포트는 localhost 전용으로만 열린다. 포트 변경 시 스크립트는 `CDP_PORT` 환경변수로 맞춘다
+- 포트 9222는 앱 전용이다. 재현 실험용 별도 Chrome을 띄울 때는 반드시 다른 포트를 쓴다
+  (예: `--remote-debugging-port=9223` + `CDP_PORT=9223`).
+  앱이 9222를 점유한 상태에서 같은 포트로 Chrome을 띄우면 Chrome은 바인딩에 실패해도 조용히 떠 있고,
+  CDP 명령이 전부 실행 중인 앱으로 흘러 들어가 사용자가 보는 화면을 조작하게 된다 (실제 사고 사례)
+
 ## 체크리스트/문서 관리 원칙
 
 - 완료된 작업 항목은 체크리스트에서 제거할 것
 - 리스트가 제거될 때, 챕터 숫자 존재 시 오름차순으로 되도록 맞춰야 함
 - 히스토리 기록보다 현재 남은 작업에 집중
 - 불필요한 정보는 즉시 정리하여 문서를 간결하게 유지
+
+### PROJECT.md 동기화 (필수)
+
+PROJECT.md는 코드와 함께 유기적으로 갱신해야 하는 살아있는 설계 문서다.
+
+- 클래스/서비스의 추가, 개명, 삭제 같은 구조 변경 시 PROJECT.md의 다이어그램, 표, 코드 샘플을 같은 작업 안에서 함께 수정한다
+- 개명/삭제 후에는 옛 이름을 저장소 전체에서 검색해 잔여 참조를 제거한다
 
 # 사용자 선호사항
 - 중복되는 개념은 최대한 제외하고 싶음

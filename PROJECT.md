@@ -34,10 +34,12 @@ graph TB
 
     subgraph Services["Services (DI Singleton)"]
         SL[ServiceLocator]
-        WVUI[WebViewUIService]
+        BUI[BrowserUIService]
         WBS[WindowBoundsService]
         WSM[WindowStateManager]
         MES[MapEventService]
+        HKS[HotkeyService]
+        GTS[GoonTrackerService]
     end
 
     subgraph StaticServices["Static Services"]
@@ -45,7 +47,6 @@ graph TB
     end
 
     subgraph FileSystem["FileSystem Watchers"]
-        W[Watcher]
         LW[LogsWatcher]
         SW[ScreenshotsWatcher]
     end
@@ -88,29 +89,29 @@ graph TB
     MWVM --> SL
     WBVM --> SL
 
-    SL --> WVUI
+    SL --> BUI
     SL --> WBS
     SL --> WSM
     SL --> MES
+    SL --> HKS
+    SL --> GTS
 
     SPVM --> SET
     WSM --> SET
 
     APP -->|Initialize| SL
-    APP -->|Start| W
+    APP -->|Start| LW
+    APP -->|Start| SW
     APP -->|Start| SRV
     APP -->|Load| SET
     APP -->|Create| MW
-
-    W --> LW
-    W --> SW
 
     LW --> MES
     LW --> SRV
     SW --> MES
     MES --> MWVM
 
-    WVUI --> JSL
+    BUI --> JSL
     JSL --> WEC
     JSL --> PL
     JSL --> CD
@@ -210,24 +211,28 @@ graph LR
     end
 
     subgraph Services["Singleton Services"]
-        WVUI[WebViewUIService]
+        BUI[BrowserUIService]
         WBS[WindowBoundsService]
         WSM[WindowStateManager]
         MES[MapEventService]
+        HKS[HotkeyService]
+        GTS[GoonTrackerService]
     end
 
     subgraph Static["Static Class"]
         SET[Settings]
     end
 
-    SL -->|Factory| WVUI
+    SL -->|Factory| BUI
     SL -->|Factory| WBS
     SL -->|Factory| WSM
     SL -->|Factory| MES
+    SL -->|Factory| HKS
+    SL -->|Factory| GTS
 
     WSM -->|Load/Save| SET
     SET -->|JSON| FILE[settings.json]
-    WVUI -->|JavaScript| CEF[CefSharp]
+    BUI -->|JavaScript| CEF[CefSharp]
     WBS -->|Screen Info| WIN[System.Windows.Forms]
 ```
 
@@ -298,20 +303,24 @@ src/TanukiTarkovMap/
 
 ```csharp
 // 서비스 접근
-ServiceLocator.WebViewUIService
+ServiceLocator.BrowserUIService
 ServiceLocator.WindowBoundsService
 ServiceLocator.MapEventService
 ServiceLocator.WindowStateManager
+ServiceLocator.HotkeyService
+ServiceLocator.GoonTrackerService
 ```
 
 ### 주요 서비스
 
 | 서비스 | 역할 |
 |--------|------|
-| `WebViewUIService` | CefSharp UI 요소 가시성 제어 |
+| `BrowserUIService` | CefSharp UI 요소 가시성 제어 |
 | `WindowBoundsService` | 창 경계 체크 및 화면 내 위치 보정 |
 | `WindowStateManager` | 창 상태 저장/복원 |
 | `MapEventService` | 맵 변경 및 스크린샷 이벤트 발행 |
+| `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
+| `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
 
 ### 서비스 생성자 규칙
@@ -424,7 +433,7 @@ Models/JavaScript/
 **동작 원리:**
 1. `.js` 파일: IIFE 패턴으로 함수들을 `window` 객체에 등록
 2. `.js.cs` 파일: `JavaScriptLoader.Load()`로 스크립트 로드 + 함수 호출 상수 정의
-3. `WebViewUIService`: 초기화 스크립트 → 함수 호출 순서로 실행
+3. `BrowserUIService`: 초기화 스크립트 → 함수 호출 순서로 실행
 
 **예시 (WebElementsControl):**
 ```csharp
@@ -439,7 +448,7 @@ await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);  // "window.h
 
 - `Scripts/web-elements-control.js`: JavaScript 함수 정의 (IIFE)
 - `WebElementsControl.js.cs`: C# 래퍼 클래스 (INIT_SCRIPT, HIDE_* 상수)
-- `WebViewUIService.cs`: 브라우저에 스크립트 실행 서비스
+- `BrowserUIService.cs`: 브라우저에 스크립트 실행 서비스
 - `WebBrowserViewModel.cs`: 페이지 로드 시 `ApplyUIVisibilityAsync()` 호출
 - `JavaScriptLoader.cs`: Embedded Resource에서 .js 파일 로드
 
