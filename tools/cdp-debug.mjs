@@ -144,7 +144,14 @@ async function runScreenshot(savePath) {
     console.log(outputPath);
 }
 
-const [command, commandArg] = process.argv.slice(2);
+async function runCdpMethod(method, paramsJson) {
+    const { socket, call } = await connectToPage();
+    const result = await call(method, paramsJson ? JSON.parse(paramsJson) : {});
+    socket.close();
+    console.log(JSON.stringify(result, null, 1));
+}
+
+const [command, commandArg, commandArg2] = process.argv.slice(2);
 switch (command) {
     case "targets":
         await runTargets();
@@ -162,13 +169,21 @@ switch (command) {
     case "screenshot":
         await runScreenshot(commandArg);
         break;
+    case "cdp":
+        if (!commandArg) {
+            console.error('사용법: node tools/cdp-debug.mjs cdp <CDP메서드> [파라미터JSON]');
+            process.exit(1);
+        }
+        await runCdpMethod(commandArg, commandArg2);
+        break;
     default:
         console.error(
-            "사용법: node tools/cdp-debug.mjs <targets|eval|html|screenshot> [인자]\n" +
-            "  targets                디버깅 가능한 타겟 목록\n" +
-            '  eval "<JS 표현식>"     페이지 컨텍스트에서 JS 실행\n' +
-            "  html [CSS선택자]       선택자의 outerHTML 출력 (생략 시 문서 전체)\n" +
-            "  screenshot [저장경로]  렌더링 화면 PNG 캡처"
+            "사용법: node tools/cdp-debug.mjs <targets|eval|html|screenshot|cdp> [인자]\n" +
+            "  targets                    디버깅 가능한 타겟 목록\n" +
+            '  eval "<JS 표현식>"         페이지 컨텍스트에서 JS 실행\n' +
+            "  html [CSS선택자]           선택자의 outerHTML 출력 (생략 시 문서 전체)\n" +
+            "  screenshot [저장경로]      렌더링 화면 PNG 캡처\n" +
+            '  cdp <메서드> [파라미터]    CDP 메서드 직접 호출 (예: cdp Input.dispatchMouseEvent \'{"type":...}\')'
         );
         process.exit(1);
 }
