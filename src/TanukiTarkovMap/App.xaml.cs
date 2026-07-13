@@ -552,6 +552,12 @@ namespace TanukiTarkovMap
             // 자동 재생 정책
             settings.CefCommandLineArgs.Add("autoplay-policy", "no-user-gesture-required");
 
+#if DEBUG
+            // Debug 빌드 한정 CDP(Chrome DevTools Protocol) 원격 디버깅 포트 (localhost 전용)
+            // tools/cdp-debug.mjs로 렌더링된 페이지의 DOM/JavaScript/스크린샷을 앱 밖에서 조회한다
+            settings.RemoteDebuggingPort = 9222;
+#endif
+
             // CEF 초기화
             Cef.Initialize(settings, performDependencyCheck: true, browserProcessHandler: null);
         }
