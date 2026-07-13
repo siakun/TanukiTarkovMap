@@ -52,6 +52,11 @@ namespace TanukiTarkovMap.Views
             // about:blank로 초기화 (실제 URL은 이벤트 핸들러 등록 후 로드)
             _browser = new ChromiumWebBrowser("about:blank");
 
+            // CefSharp.Wpf는 OSR(오프스크린 렌더링) 방식이라 페인트 콜백이
+            // WindowlessFrameRate(기본 30fps)로 제한된다. 초기값 60으로 시작하고,
+            // 이후 MonitorRefreshRateBehavior가 창이 위치한 모니터의 주사율로 갱신한다
+            _browser.BrowserSettings.WindowlessFrameRate = 60;
+
             // 컨테이너에 브라우저 추가
             BrowserContainer.Children.Add(_browser);
         }

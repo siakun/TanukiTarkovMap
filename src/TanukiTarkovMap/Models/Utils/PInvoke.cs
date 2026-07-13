@@ -98,6 +98,28 @@ namespace TanukiTarkovMap.Models.Utils
 
         #endregion
 
+        #region User32.dll - 모니터 정보
+
+        /// <summary>
+        /// 지정된 윈도우가 표시된(또는 가장 가까운) 모니터의 핸들을 가져옵니다.
+        /// </summary>
+        [DllImport("user32.dll")]
+        internal static extern IntPtr MonitorFromWindow(IntPtr hwnd, uint dwFlags);
+
+        /// <summary>
+        /// 모니터의 상세 정보(장치명 포함)를 가져옵니다.
+        /// </summary>
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        internal static extern bool GetMonitorInfo(IntPtr hMonitor, ref MONITORINFOEX lpmi);
+
+        /// <summary>
+        /// 디스플레이 장치의 현재 설정(해상도, 주사율 등)을 가져옵니다.
+        /// </summary>
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        internal static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
+
+        #endregion
+
         #region User32.dll - 키보드 Hook
 
         /// <summary>
@@ -182,6 +204,10 @@ namespace TanukiTarkovMap.Models.Utils
         internal const int WS_EX_LAYERED = 0x80000;
         internal const int LWA_ALPHA = 0x2;
 
+        // 모니터 정보
+        internal const uint MONITOR_DEFAULTTONEAREST = 2;
+        internal const int ENUM_CURRENT_SETTINGS = -1;
+
         #endregion
     }
 
@@ -198,5 +224,61 @@ namespace TanukiTarkovMap.Models.Utils
 
         public int Width => Right - Left;
         public int Height => Bottom - Top;
+    }
+
+    /// <summary>
+    /// 모니터 정보 구조체 (GetMonitorInfo용, 장치명 포함)
+    /// 사용 전 cbSize에 구조체 크기를 설정해야 한다
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct MONITORINFOEX
+    {
+        public int cbSize;
+        public RECT rcMonitor;
+        public RECT rcWork;
+        public uint dwFlags;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string szDevice;
+    }
+
+    /// <summary>
+    /// 디스플레이 장치 설정 구조체 (EnumDisplaySettings용)
+    /// 사용 전 dmSize에 구조체 크기를 설정해야 한다
+    /// </summary>
+    [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+    internal struct DEVMODE
+    {
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string dmDeviceName;
+        public ushort dmSpecVersion;
+        public ushort dmDriverVersion;
+        public ushort dmSize;
+        public ushort dmDriverExtra;
+        public uint dmFields;
+        public int dmPositionX;
+        public int dmPositionY;
+        public uint dmDisplayOrientation;
+        public uint dmDisplayFixedOutput;
+        public short dmColor;
+        public short dmDuplex;
+        public short dmYResolution;
+        public short dmTTOption;
+        public short dmCollate;
+        [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
+        public string dmFormName;
+        public ushort dmLogPixels;
+        public uint dmBitsPerPel;
+        public uint dmPelsWidth;
+        public uint dmPelsHeight;
+        public uint dmDisplayFlags;
+        public uint dmDisplayFrequency;
+        public uint dmICMMethod;
+        public uint dmICMIntent;
+        public uint dmMediaType;
+        public uint dmDitherType;
+        public uint dmReserved1;
+        public uint dmReserved2;
+        public uint dmPanningWidth;
+        public uint dmPanningHeight;
     }
 }

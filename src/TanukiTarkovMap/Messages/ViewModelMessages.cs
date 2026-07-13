@@ -84,4 +84,13 @@ namespace TanukiTarkovMap.Messages
     {
         public NavigateToUrlMessage(string url) : base(url) { }
     }
+
+    /// <summary>
+    /// 모니터 주사율 변경 메시지 (MonitorRefreshRateBehavior → WebBrowserViewModel)
+    /// 값 = 창이 위치한 모니터의 현재 주사율(Hz)
+    /// </summary>
+    public class MonitorRefreshRateChangedMessage : ValueChangedMessage<int>
+    {
+        public MonitorRefreshRateChangedMessage(int value) : base(value) { }
+    }
 }

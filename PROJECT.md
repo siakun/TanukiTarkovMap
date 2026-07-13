@@ -24,6 +24,7 @@ graph TB
         WDB[WindowDragBehavior]
         WCB[WindowControlBehavior]
         HIB[HotkeyInputBehavior]
+        MRB[MonitorRefreshRateBehavior]
     end
 
     subgraph ViewModels["ViewModels"]
@@ -85,6 +86,8 @@ graph TB
     WDB -.-> MW
     WCB -.-> MW
     HIB -.-> SP
+    MRB -.-> MW
+    MRB -->|MonitorRefreshRateChangedMessage| WBVM
 
     MWVM --> SL
     WBVM --> SL

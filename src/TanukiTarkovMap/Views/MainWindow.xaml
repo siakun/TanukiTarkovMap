@@ -43,6 +43,8 @@
         <behaviors:WindowStateBehavior
             MainGridName="MainGrid"
             MaximizeRestoreButtonName="MaximizeRestoreButton"/>
+        <!-- 창이 위치한 모니터의 주사율 추적 Behavior (CefSharp OSR 프레임 상한 연동) -->
+        <behaviors:MonitorRefreshRateBehavior/>
     </i:Interaction.Behaviors>
 
     <Window.Resources>

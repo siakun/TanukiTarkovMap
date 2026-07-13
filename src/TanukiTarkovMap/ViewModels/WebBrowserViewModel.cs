@@ -23,6 +23,7 @@ Core Functionality:
 Message Flow:
   MainWindowViewModel → MapSelectionChangedMessage → NavigateToMap
   MainWindowViewModel → ZoomLevelChangedMessage → ApplyZoomLevel
+  MonitorRefreshRateBehavior → MonitorRefreshRateChangedMessage → ApplyWindowlessFrameRate
   JavaScript(pilot-connected) → PilotConnectedMessage → MainWindowViewModel
 */
 namespace TanukiTarkovMap.ViewModels
@@ -32,13 +33,17 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<HideWebElementsChangedMessage>,
         IRecipient<ZoomLevelChangedMessage>,
         IRecipient<ExtractionFilterChangedMessage>,
-        IRecipient<NavigateToUrlMessage>
+        IRecipient<NavigateToUrlMessage>,
+        IRecipient<MonitorRefreshRateChangedMessage>
     {
         private readonly BrowserUIService _browserUIService;
         private ChromiumWebBrowser? _browser;
 
         /// <summary> 디버그 모드 - 모든 JavaScript 주입 비활성화 </summary>
         private bool _isDebugMode = false;
+
+        /// <summary> OSR 페인트 상한 목표값 - 창이 위치한 모니터의 주사율 (기본 60) </summary>
+        private int _monitorRefreshRate = 60;
 
         #region Observable Properties
 
@@ -117,6 +122,9 @@ namespace TanukiTarkovMap.ViewModels
             System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
             {
                 IsLoading = false;
+
+                // 브라우저 초기화 전에 수신된 모니터 주사율을 반영 (이미 같은 값이면 CEF 내부에서 무시됨)
+                ApplyWindowlessFrameRate();
 
                 // 디버그 모드일 때는 모든 JavaScript 주입 스킵
                 if (_isDebugMode)
@@ -427,9 +435,44 @@ namespace TanukiTarkovMap.ViewModels
             Logger.SimpleLog($"[WebBrowserViewModel] Debug mode enabled - Navigate to: {message.Value}");
         }
 
+        /// <summary>
+        /// 모니터 주사율 변경 메시지 핸들러 (MonitorRefreshRateBehavior → WebBrowserViewModel)
+        /// OSR 페인트 상한을 창이 위치한 모니터의 주사율에 맞춘다
+        /// </summary>
+        public void Receive(MonitorRefreshRateChangedMessage message)
+        {
+            // 하한 30: 저주사율 모니터에서도 조작감 유지, 상한 240: 비정상 드라이버 값 방어
+            _monitorRefreshRate = Math.Clamp(message.Value, 30, 240);
+            ApplyWindowlessFrameRate();
+        }
+
         #endregion
 
         #region Private Methods
+
+        /// <summary>
+        /// CefSharp OSR 페인트 상한(WindowlessFrameRate)을 현재 모니터 주사율로 적용
+        /// 브라우저 초기화 전이면 보류되고, 첫 FrameLoadEnd에서 재적용된다
+        /// </summary>
+        private void ApplyWindowlessFrameRate()
+        {
+            if (_browser?.IsBrowserInitialized != true)
+                return;
+
+            try
+            {
+                var browserHost = _browser.GetBrowserHost();
+                if (browserHost != null)
+                {
+                    browserHost.WindowlessFrameRate = _monitorRefreshRate;
+                    Logger.SimpleLog($"[WebBrowserViewModel] WindowlessFrameRate applied: {_monitorRefreshRate}fps");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[WebBrowserViewModel] ApplyWindowlessFrameRate error", ex);
+            }
+        }
 
         /// <summary>
         /// Extraction 필터 적용 (PMC/SCAV)
