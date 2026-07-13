@@ -43,6 +43,17 @@ jobs:
     - name: Install Velopack
       run: dotnet tool install -g vpk
 
+    # delta 패키지 생성을 위해 이전 릴리스를 내려받는다.
+    # 이 단계가 없으면 매 릴리스가 full 패키지만 포함해 사용자가 전체를 다시 받는다.
+    # 첫 릴리스처럼 이전 릴리스가 없으면 실패해도 계속 진행한다 (full만 배포됨)
+    - name: Download previous release (for delta)
+      continue-on-error: true
+      run: |
+        vpk download github `
+          --repoUrl "https://github.com/siakun/TanukiTarkovMap" `
+          --token "${{ secrets.GITHUB_TOKEN }}" `
+          --outputDir "releases"
+
     - name: Pack with Velopack
       run: |
         vpk pack `
@@ -56,6 +67,12 @@ jobs:
       run: |
         Remove-Item -Path "releases/assets.win.json" -ErrorAction SilentlyContinue
         Remove-Item -Path "releases/RELEASES" -ErrorAction SilentlyContinue
+
+        # delta 생성용으로 내려받은 이전 버전 패키지는 새 릴리스에 재업로드하지 않도록 제거
+        $version = "${{ steps.version.outputs.version }}"
+        Get-ChildItem -Path "releases" -Filter "*.nupkg" |
+          Where-Object { $_.Name -notlike "*$version*" } |
+          Remove-Item
 
     - name: Rename release files (MS style)
       run: |
