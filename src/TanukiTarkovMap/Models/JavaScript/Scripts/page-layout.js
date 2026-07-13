@@ -29,8 +29,10 @@
             element.style.padding = '0';
         });
 
-        const contentWideElements = document.querySelectorAll('.content.wide');
-        contentWideElements.forEach(element => {
+        // 맵 페이지 컨테이너(.content.maps)는 좌우 padding 15px가 있어
+        // 맵을 아무리 확대해도 화면 양옆에 검은 띠가 남으므로 함께 제거한다
+        const contentElements = document.querySelectorAll('.content.wide, .content.maps');
+        contentElements.forEach(element => {
             element.style.margin = '0';
             element.style.padding = '0';
         });
@@ -50,6 +52,9 @@
         // body 마진/패딩 제거
         document.body.style.margin = '0';
         document.body.style.padding = '0';
+
+        // 컨테이너 크기 변경을 맵 뷰어와 마커 캔버스에 반영 (미반영 시 캔버스가 이전 폭으로 남음)
+        window.dispatchEvent(new Event('resize'));
 
         console.log('[Remove Margins] Page margins and paddings removed');
 
