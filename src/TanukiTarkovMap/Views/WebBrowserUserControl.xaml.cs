@@ -57,6 +57,11 @@ namespace TanukiTarkovMap.Views
             // 이후 MonitorRefreshRateBehavior가 창이 위치한 모니터의 주사율로 갱신한다
             _browser.BrowserSettings.WindowlessFrameRate = 60;
 
+            // 클릭 시 WPF가 만드는 이동량 0짜리 유령 MouseMove를 차단
+            // (맵 마커 좌클릭이 드래그로 오인되어 팝업이 열리지 않는 문제 방지)
+            Microsoft.Xaml.Behaviors.Interaction.GetBehaviors(_browser)
+                .Add(new Behaviors.DuplicateMouseMoveFilterBehavior());
+
             // 컨테이너에 브라우저 추가
             BrowserContainer.Children.Add(_browser);
         }

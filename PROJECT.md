@@ -25,6 +25,7 @@ graph TB
         WCB[WindowControlBehavior]
         HIB[HotkeyInputBehavior]
         MRB[MonitorRefreshRateBehavior]
+        DMF[DuplicateMouseMoveFilterBehavior]
     end
 
     subgraph ViewModels["ViewModels"]
@@ -88,6 +89,7 @@ graph TB
     HIB -.-> SP
     MRB -.-> MW
     MRB -->|MonitorRefreshRateChangedMessage| WBVM
+    DMF -.-> WBU
 
     MWVM --> SL
     WBVM --> SL
