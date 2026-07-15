@@ -1,16 +1,55 @@
 # TanukiTarkovMap
 
 <div align="center">
-<img src="src/TanukiTarkovMap/Resources/icon.png" alt="TanukiTarkovMap" width="120" />
-
-**Escape from Tarkov 인게임 GPS 스크린샷 좌표를 맵 위에 표시하는 데스크톱 오버레이 클라이언트**
-
+<img src="images/icon.png" alt="TanukiTarkovMap" width="120" />
 </div>
+
+> **Escape from Tarkov용 인게임 미니맵 오버레이 툴입니다.<br>스크린샷을 찍으면 좌표를 감지해 현재 위치를 미니맵에 표시합니다.**
 
 게임 위에 항상 떠 있는 창으로 [tarkov-market.com](https://tarkov-market.com/pilot)의 인터랙티브 맵을 띄우고, 인게임 스크린샷에 기록된 좌표로 현재 위치를 실시간 표시합니다. 알트탭 없이 단축키 한 번으로 맵을 확인할 수 있습니다.
 
-<!-- 스크린샷/GIF를 docs/ 폴더에 추가한 뒤 아래 주석을 해제하세요 -->
-<!-- ![실행 화면](docs/screenshot.png) -->
+![인게임 실행 화면: 게임 위에 항상 표시되는 맵 오버레이](images/screenshot.jpg)
+
+---
+
+## 설치
+
+1. [Releases 페이지](https://github.com/siakun/TanukiTarkovMap/releases/latest)에서 최신 Setup 설치 파일(`TanukiTarkovMap-Setup-<버전>-x64.exe`)을 내려받습니다.
+2. 실행해 설치하면 이후 업데이트는 자동으로 적용됩니다.
+
+설치 없이 쓰고 싶다면 같은 페이지의 포터블 버전(`TanukiTarkovMap-Portable-<버전>-x64.zip`)을 내려받아 압축을 풀고 실행합니다.
+
+> **요구 사항**: Windows 10/11 (x64)
+>
+> **안전성**: 게임 메모리를 읽거나 게임 프로세스에 개입하지 않습니다. 이 앱이 읽는 것은 스크린샷 파일명(이미지 내용이 아니라 이름에 담긴 좌표만)과 입장한 맵이 기록된 게임 로그 두 가지뿐이며, 게임 파일을 수정하지 않습니다. 자세한 원리는 [프로젝트 배경](#프로젝트-배경)을 참고하세요.
+
+---
+
+## 사용법
+
+1. TanukiTarkovMap을 실행합니다. 게임의 스크린샷 폴더는 자동으로 감지되며, 필요하면 설정 창에서 직접 지정할 수 있습니다.
+2. 게임을 시작하면 입장한 맵으로 자동 전환됩니다.
+3. 게임 중 단축키(기본 `F11`, 설정에서 변경 가능)로 맵 창을 켜고 끕니다.
+4. 인게임 스크린샷 키(기본 `PrtScn`)를 누르면 맵에 현재 위치가 표시됩니다. 스크린샷을 찍을 때마다 위치가 갱신됩니다.
+
+> **Steam 사용자 주의**: Steam의 `F12` 스크린샷은 Steam 오버레이 기능이라 좌표가 기록되지 않습니다. 반드시 게임 자체 설정(Controls)의 Screenshot 키를 써야 하며, 기본 `PrtScn`이 동작하지 않는다는 보고가 있으니 그 경우 다른 키로 재바인딩하세요.
+
+설정 창에서 단축키, 투명도, UI 표시 여부, 스크린샷 자동 정리를 바꿀 수 있습니다. 문제가 생기거나 건의할 내용이 있으면 [GitHub Issues](https://github.com/siakun/TanukiTarkovMap/issues)에 남겨 주세요.
+
+---
+
+## 주요 기능
+
+| 기능 | 설명 |
+|------|------|
+| 맵 오버레이 | 게임 위에 항상 표시되는 인터랙티브 맵 (Always-on-Top) |
+| 실시간 위치 추적 | 인게임 스크린샷을 찍으면 맵에 현재 위치를 자동 표시 |
+| 자동 맵 전환 | 게임 로그를 감지해 입장한 맵으로 자동 전환 |
+| 전역 단축키 토글 | 단축키(기본 `F11`) 한 번으로 맵 창 표시/숨김, 조합키와 특수키 지원 |
+| 투명도 조절 | 상단 바가 숨겨지면 창이 반투명해져 게임 시야 방해를 최소화 |
+| UI 정리 | 웹페이지의 불필요한 요소를 제거해 맵만 표시 |
+| Goons 트래커 | Goons가 출몰 중인 맵 정보 표시 |
+| 자동 업데이트 | 새 버전 출시 시 Velopack으로 자동 업데이트 |
 
 ---
 
@@ -29,18 +68,18 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 ---
 
-## 주요 기능
+## 기술 스택
 
-| 기능 | 설명 |
-|------|------|
-| 맵 오버레이 | 게임 위에 항상 표시되는 인터랙티브 맵 (Always-on-Top) |
-| 실시간 위치 추적 | 인게임 스크린샷을 찍으면 맵에 현재 위치를 자동 표시 |
-| 자동 맵 전환 | 게임 로그를 감지해 입장한 맵으로 자동 전환 |
-| 전역 단축키 토글 | 단축키(기본 `F11`) 한 번으로 맵 창 표시/숨김, 조합키와 특수키 지원 |
-| 투명도 조절 | 상단 바가 숨겨지면 창이 반투명해져 게임 시야 방해를 최소화 |
-| UI 정리 | 웹페이지의 불필요한 요소를 제거해 맵만 표시 |
-| Goons 트래커 | Goons가 출몰 중인 맵 정보 표시 |
-| 자동 업데이트 | 새 버전 출시 시 Velopack으로 자동 업데이트 |
+| 구분 | 사용 기술 |
+|------|-----------|
+| 언어, 런타임 | C#, .NET 8.0 |
+| UI | WPF, MVVM (CommunityToolkit.Mvvm), Microsoft.Xaml.Behaviors |
+| 웹뷰 | CefSharp.Wpf.NETCore (Chromium) |
+| 네이티브 제어 | P/Invoke (user32.dll) |
+| 통신 | ASP.NET Core Kestrel WebSocket (port 5123) |
+| DI | Microsoft.Extensions.DependencyInjection |
+| 트레이 | Hardcodet.NotifyIcon.Wpf |
+| 배포, 자동 업데이트 | Velopack, GitHub Actions |
 
 ---
 
@@ -66,68 +105,44 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 스크린샷 폴더를 `FileSystemWatcher`로 실시간 감시하다가 새 파일이 생기면, 파일명을 WebSocket으로 임베디드 웹 클라이언트에 전달합니다. 좌표 파싱과 맵 표시는 tarkov-market Pilot 클라이언트가 담당합니다. WebSocket 서버는 별도 프로세스가 아니라 앱 안에서 ASP.NET Core Kestrel로 직접 호스팅하며, 포트 `5123`은 tarkov-market.com이 로컬 헬퍼 앱을 감지하는 규약과 호환됩니다. 원조 TarkovPilot이 별도 트레이 헬퍼로 WebSocket을 띄우던 것과 달리, 같은 규약을 최신 ASP.NET Core 기반 인프로세스 서버로 다시 구현한 셈입니다. 게임 로그도 함께 감시(`LogsWatcher`)해 플레이어가 입장한 맵을 자동으로 전환합니다.
 
-### 4. CefSharp와 JavaScript 양방향 통신
+### 4. 게임 로그 파싱으로 자동 맵 전환
+
+게임은 실행할 때마다 게임 설치 폴더의 `Logs` 아래에 새 세션 폴더를 만들고 `application.log` 등에 상태를 기록합니다. 설치 폴더는 레지스트리에서 자동 감지하며(공식 런처 -> 스팀 순), 실패하면 설정에서 직접 지정할 수 있습니다.
+
+- **공식 런처**: `HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\EscapeFromTarkov`의 `InstallLocation` 값
+- **스팀**: `HKLM\SOFTWARE\WOW6432Node\Valve\Steam`의 `InstallPath` 값 아래 `steamapps\common\Escape from Tarkov`
+
+`LogsWatcher`는 가장 최근 세션 폴더를 골라 감시하고(새 폴더가 생기면 자동으로 갈아탐), 로그 파일이 갱신될 때마다 마지막으로 읽은 위치부터 새로 추가된 줄만 이어 읽습니다(`FileShare.ReadWrite`로 열어 게임의 쓰기와 충돌하지 않음). 앱 시작 시 이미 쌓여 있던 과거 로그는 파싱하지 않고 건너뛰어, 지난 판의 맵으로 잘못 전환되는 것을 막습니다.
+
+맵 판별은 로그 줄의 패턴 매칭으로 합니다.
+
+- **PVP**: 매치 생성 로그(`TRACE-NetworkGameCreate profileStatus`) 줄에서 `location: <맵이름>,`을 정규식으로 추출
+- **PVE**: 씬 로드 로그(`scene preset`) 줄에서 `path:maps/<맵이름>.bundle`의 맵 이름을 추출
+
+추출한 맵 이름은 WebSocket으로 tarkov-market 페이지에 전달되어 해당 맵으로 전환됩니다. 이 밖에 BattlEye 초기화 로그(`BEClient inited successfully`)는 레이드 경계 신호로 삼아 스크린샷 자동 정리를 트리거하고, `notifications.log`의 퀘스트 알림(JSON)을 파싱해 퀘스트 진행 상태도 페이지에 전달합니다.
+
+### 5. CefSharp와 JavaScript 양방향 통신
 
 웹 UI를 앱에 맞게 다듬는 로직은 JavaScript로 주입합니다. `.js` 파일을 Embedded Resource로 묶어 `JavaScriptLoader`로 읽고, 페이지 로드 후 `EvaluateScriptAsync`로 실행합니다(헤더와 푸터 제거, 패널 토글, 위치 마커에 방향 표시 추가 등). 반대로 웹에서 일어난 사건(맵 변경, 연결 상태)은 `postMessage`로 보내 `JavascriptMessageReceived`에서 받고, CommunityToolkit.Mvvm의 `WeakReferenceMessenger`로 ViewModel에 전달합니다. C#과 JS의 경계를 메시지로 느슨하게 연결했습니다.
 
-### 5. MVVM 아키텍처와 DI
+### 6. MVVM 아키텍처와 DI
 
 코드비하인드(`*.xaml.cs`)에는 로직을 두지 않는다는 원칙을 지켰습니다. UI 인터랙션은 Microsoft.Xaml.Behaviors 기반 Behavior로 분리하고(창 드래그, 트레이 최소화, 단축키 입력 캡처 등), 데이터와 비즈니스 로직은 ViewModel과 Service에 둡니다. 서비스는 Microsoft.Extensions.DependencyInjection으로 등록하고 `ServiceLocator`로 접근하며, ViewModel 사이 통신은 직접 참조 대신 Messenger로 처리해 결합도를 낮췄습니다.
 
-### 6. 릴리스 자동화 (GitHub Actions + Velopack)
+### 7. 릴리스 자동화 (GitHub Actions + Velopack)
 
 버전 태그(`v1.0.0` 또는 `0.1.0` 형태)를 push하면 GitHub Actions가 self-contained로 publish하고, Velopack(`vpk`)으로 설치 파일과 포터블 zip을 패키징해 GitHub Release에 자동 업로드합니다. 사용자 쪽에서는 앱 시작 시 Velopack `UpdateManager`가 새 버전을 확인하고 조용히 받아 다음 실행에 적용합니다. 빌드부터 배포, 자동 업데이트까지 태그 하나로 이어집니다.
 
 ---
 
-## 기술 스택
+## 개발 안내
 
-| 구분 | 사용 기술 |
-|------|-----------|
-| 언어, 런타임 | C#, .NET 8.0 |
-| UI | WPF, MVVM (CommunityToolkit.Mvvm), Microsoft.Xaml.Behaviors |
-| 웹뷰 | CefSharp.Wpf.NETCore (Chromium) |
-| 네이티브 제어 | P/Invoke (user32.dll) |
-| 통신 | ASP.NET Core Kestrel WebSocket (port 5123) |
-| DI | Microsoft.Extensions.DependencyInjection |
-| 트레이 | Hardcodet.NotifyIcon.Wpf |
-| 배포, 자동 업데이트 | Velopack, GitHub Actions |
+.NET 8 SDK 설치 후 `src` 폴더에서 `dotnet build`로 빌드할 수 있습니다. 아키텍처와 설계 등 개발 관련 내용은 [`PROJECT.md`](PROJECT.md)를 참고하세요.
 
 ---
 
-## 설치
-
-1. [Releases 페이지](https://github.com/siakun/TanukiTarkovMap/releases/latest)에서 최신 Setup 설치 파일(`TanukiTarkovMap-Setup-<버전>-x64.exe`)을 내려받습니다.
-2. 실행해 설치하면 이후 업데이트는 자동으로 적용됩니다.
-
-> 요구 사항: Windows 10/11 (x64)
-
----
-
-## 사용법
-
-1. TanukiTarkovMap을 실행합니다.
-2. 게임을 시작하면 입장한 맵으로 자동 전환됩니다.
-3. 게임 중 단축키(기본 `F11`, 설정에서 변경 가능)로 맵 창을 켜고 끕니다.
-4. 인게임에서 스크린샷을 찍으면 맵 위에 현재 위치가 표시됩니다.
-
-설정 창에서 단축키, 투명도, UI 표시 여부를 바꿀 수 있습니다.
-
----
-
-## 빌드 (개발자용)
-
-```bash
-cd src
-dotnet build
-```
-
-아키텍처와 설계 문서는 [`PROJECT.md`](PROJECT.md)에 정리되어 있습니다.
-
----
-
-## 라이선스
+## License
 
 [MIT License](LICENSE)
 
-> 이 프로젝트는 Battlestate Games 및 Tarkov Market과 제휴 관계가 없는 비공식 도구입니다. 게임 메모리나 프로세스에 접근하지 않고, 게임이 디스크에 남기는 파일(스크린샷, 로그)만 읽습니다.
+> 이 프로젝트는 Battlestate Games 및 Tarkov Market과 제휴 관계가 없는 비공식 도구입니다. 게임 메모리를 읽거나 게임 프로세스에 개입하지 않으며, 스크린샷 파일명(이미지 내용은 읽지 않음)과 맵 이름이 기록된 게임 로그만 읽습니다.
