@@ -56,12 +56,14 @@ namespace TanukiTarkovMap.Models.FileSystem
             // Check if LogsFolder is null or empty first
             if (string.IsNullOrEmpty(App.LogsFolder))
             {
-                // Game installation not found, cannot monitor logs
+                // 게임 설치 폴더 미탐지: 자동 맵 전환/스크린샷 정리/퀘스트 전송이 모두 비활성화된다
+                Logger.SimpleLog("[LogsWatcher] Game folder not found, log watching disabled");
                 return;
             }
 
             if (!Directory.Exists(App.LogsFolder))
             {
+                Logger.SimpleLog($"[LogsWatcher] Logs folder not found: {App.LogsFolder}");
                 return;
             }
 

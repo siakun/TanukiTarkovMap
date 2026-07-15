@@ -107,10 +107,10 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 ### 4. 게임 로그 파싱으로 자동 맵 전환
 
-게임은 실행할 때마다 게임 설치 폴더의 `Logs` 아래에 새 세션 폴더를 만들고 `application.log` 등에 상태를 기록합니다. 설치 폴더는 레지스트리에서 자동 감지하며(공식 런처 -> 스팀 순), 실패하면 설정에서 직접 지정할 수 있습니다.
+게임은 실행할 때마다 로그 폴더(공식 런처는 `게임 폴더\Logs`, 스팀판은 `게임 폴더\build\Logs`) 아래에 새 세션 폴더를 만들고 `application.log` 등에 상태를 기록합니다. 게임 폴더는 레지스트리에서 자동 감지하며(공식 런처 -> 스팀 순), 실패하면 설정에서 직접 지정할 수 있습니다.
 
-- **공식 런처**: `HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\EscapeFromTarkov`의 `InstallLocation` 값
-- **스팀**: `HKLM\SOFTWARE\WOW6432Node\Valve\Steam`의 `InstallPath` 값 아래 `steamapps\common\Escape from Tarkov`
+- **공식 런처**: `HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\EscapeFromTarkov`의 `InstallLocation` 값 (폴더가 실제 존재할 때만 채택)
+- **스팀**: `HKLM\SOFTWARE\WOW6432Node\Valve\Steam`의 `InstallPath`에서 `steamapps\libraryfolders.vdf`를 파싱해 얻은 모든 라이브러리 폴더의 `steamapps\common\Escape from Tarkov`를 확인
 
 `LogsWatcher`는 가장 최근 세션 폴더를 골라 감시하고(새 폴더가 생기면 자동으로 갈아탐), 로그 파일이 갱신될 때마다 마지막으로 읽은 위치부터 새로 추가된 줄만 이어 읽습니다(`FileShare.ReadWrite`로 열어 게임의 쓰기와 충돌하지 않음). 앱 시작 시 이미 쌓여 있던 과거 로그는 파싱하지 않고 건너뛰어, 지난 판의 맵으로 잘못 전환되는 것을 막습니다.
 
