@@ -165,15 +165,18 @@ flowchart LR
 sequenceDiagram
     participant TK as Tarkov Game
     participant LW as LogsWatcher
+    participant MC as MapConfiguration
     participant MES as MapEventService
     participant MWVM as MainWindowViewModel
 
     TK->>LW: 로그 파일 변경
-    LW->>LW: 맵 ID 파싱
-    LW->>MES: OnMapChanged(mapId)
+    LW->>LW: scene preset 파싱
+    LW->>MC: GetByScenePreset(preset)
+    MC-->>LW: MapInfo (미등록이면 null)
+    LW->>MES: OnMapChanged(mapInfo)
     MES->>MWVM: MapChanged Event
-    MWVM->>MWVM: ChangeMapCommand.Execute()
-    Note over MWVM: CurrentMap 속성 변경 (로깅만)
+    MWVM->>MWVM: SelectedMapInfo 대입
+    Note over MWVM: 이후는 수동 선택과 같은 경로
 ```
 
 #### 수동 맵 선택 (UI 드롭다운)
@@ -353,13 +356,15 @@ services.AddSingleton(_ => new ServiceName());
 ```
 타르코프 로그 파일 변경
        ↓
-  LogsWatcher 감지
+  LogsWatcher 감지 (scene preset 파싱)
        ↓
-  MapEventService.RaiseMapChanged()
+  MapConfiguration.GetByScenePreset() -> MapInfo
+       ↓
+  MapEventService.OnMapChanged(mapInfo)
        ↓
   MainWindowViewModel.OnMapEventReceived()
        ↓
-  ChangeMapCommand 실행
+  SelectedMapInfo 대입 -> MapSelectionChangedMessage
        ↓
   CefSharp URL 변경
 ```

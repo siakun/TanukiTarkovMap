@@ -20,7 +20,7 @@ Core Functionality:
 - 브라우저 줌: 배율 선택 및 WebBrowserViewModel로 메시지 전송
 
 Message Flow:
-  MapEventService.MapChanged → OnMapEventReceived → ChangeMapCommand
+  MapEventService.MapChanged → OnMapEventReceived → SelectedMapInfo 대입
   SelectedMapInfo 변경 → MapSelectionChangedMessage → WebBrowserViewModel
   WebBrowserViewModel → MapReceivedMessage/PilotConnectedMessage → 이 ViewModel
 
@@ -285,12 +285,10 @@ namespace TanukiTarkovMap.ViewModels
             // UI 스레드로 마샬링
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
-                Logger.SimpleLog($"[MainWindowViewModel] MapEvent received: {e.MapName}");
+                Logger.SimpleLog($"[MainWindowViewModel] Auto map switch: {e.Map.DisplayName}");
 
-                // CurrentMap 업데이트 (ChangeMapCommand 사용)
-                ChangeMapCommand.Execute(e.MapName);
-
-                Logger.SimpleLog($"[MainWindowViewModel] ChangeMapCommand executed for: {e.MapName}");
+                // SelectedMapInfo 변경이 MapSelectionChangedMessage를 통해 브라우저를 이동시킨다
+                SelectedMapInfo = e.Map;
             });
         }
 
@@ -402,13 +400,6 @@ namespace TanukiTarkovMap.ViewModels
         {
             Logger.SimpleLog($"TogglePinMode called. Current state: {IsAlwaysOnTop}");
             IsAlwaysOnTop = !IsAlwaysOnTop;
-        }
-
-        [RelayCommand]
-        private void ChangeMap(string mapName)
-        {
-            Logger.SimpleLog($"ChangeMap called: {mapName}");
-            CurrentMap = mapName;
         }
 
         [RelayCommand]

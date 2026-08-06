@@ -114,12 +114,11 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 `LogsWatcher`는 가장 최근 세션 폴더를 골라 감시하고(새 폴더가 생기면 자동으로 갈아탐), 로그 파일이 갱신될 때마다 마지막으로 읽은 위치부터 새로 추가된 줄만 이어 읽습니다(`FileShare.ReadWrite`로 열어 게임의 쓰기와 충돌하지 않음). 앱 시작 시 이미 쌓여 있던 과거 로그는 파싱하지 않고 건너뛰어, 지난 판의 맵으로 잘못 전환되는 것을 막습니다.
 
-맵 판별은 로그 줄의 패턴 매칭으로 합니다.
+맵 판별은 씬 로드 로그(`scene preset`) 줄에서 `path:maps/<프리셋>.bundle`의 프리셋 이름을 뽑아 합니다. 매치 생성 로그(`TRACE-NetworkGameCreate profileStatus`)의 `Location:` 값도 같은 정보를 담지만, 씬 로드 줄이 언제나 먼저 나오고 이쪽만 남는 레이드도 있어 씬 로드 줄 하나만 봅니다.
 
-- **PVP**: 매치 생성 로그(`TRACE-NetworkGameCreate profileStatus`) 줄에서 `location: <맵이름>,`을 정규식으로 추출
-- **PVE**: 씬 로드 로그(`scene preset`) 줄에서 `path:maps/<맵이름>.bundle`의 맵 이름을 추출
+뽑아낸 프리셋 이름은 `MapConfiguration`에서 맵으로 해석합니다. Ground Zero의 레벨 구간이나 Factory의 시간대처럼 한 맵에 프리셋이 여러 개인 경우가 있어, 맵 하나가 프리셋 여러 개를 갖는 형태로 대응합니다. 해석에 성공하면 드롭다운에서 직접 고른 것과 같은 경로로 브라우저가 그 맵으로 이동하고, 등록되지 않은 프리셋이면 앱 로그에 이름을 남기고 전환하지 않습니다. 프리셋 이름 자체는 WebSocket으로 tarkov-market 페이지에도 그대로 전달됩니다.
 
-추출한 맵 이름은 WebSocket으로 tarkov-market 페이지에 전달되어 해당 맵으로 전환됩니다. 이 밖에 BattlEye 초기화 로그(`BEClient inited successfully`)는 레이드 경계 신호로 삼아 스크린샷 자동 정리를 트리거하고, `notifications.log`의 퀘스트 알림(JSON)을 파싱해 퀘스트 진행 상태도 페이지에 전달합니다.
+이 밖에 BattlEye 초기화 로그(`BEClient inited successfully`)는 레이드 경계 신호로 삼아 스크린샷 자동 정리를 트리거하고, 알림 로그의 퀘스트 알림(JSON)을 파싱해 퀘스트 진행 상태도 페이지에 전달합니다.
 
 ### 5. CefSharp와 JavaScript 양방향 통신
 
