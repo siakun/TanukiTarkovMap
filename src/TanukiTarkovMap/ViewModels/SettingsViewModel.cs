@@ -21,6 +21,7 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool AutoDeleteLogs { get; set; } = false;
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
         [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool AutoMapSwitchEnabled { get; set; } = true;
         [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
 
         public string AppVersion => App.Version;
@@ -44,6 +45,7 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnAutoDeleteLogsChanged(bool value) => AutoSave();
         partial void OnAutoDeleteScreenshotsChanged(bool value) => AutoSave();
         partial void OnGoonTrackerEnabledChanged(bool value) => AutoSaveAndUpdateGoonTracker();
+        partial void OnAutoMapSwitchEnabledChanged(bool value) => AutoSave();
 
         private void AutoSave()
         {
@@ -103,6 +105,7 @@ namespace TanukiTarkovMap.ViewModels
             settings.autoDeleteLogs = AutoDeleteLogs;
             settings.autoDeleteScreenshots = AutoDeleteScreenshots;
             settings.GoonTrackerEnabled = GoonTrackerEnabled;
+            settings.AutoMapSwitchEnabled = AutoMapSwitchEnabled;
 
             App.SetSettings(settings);
             Models.Services.Settings.Save();
@@ -198,6 +201,7 @@ namespace TanukiTarkovMap.ViewModels
                 AutoDeleteLogs = settings.autoDeleteLogs;
                 AutoDeleteScreenshots = settings.autoDeleteScreenshots;
                 GoonTrackerEnabled = settings.GoonTrackerEnabled;
+                AutoMapSwitchEnabled = settings.AutoMapSwitchEnabled;
             }
             finally
             {

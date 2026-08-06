@@ -56,6 +56,9 @@ namespace TanukiTarkovMap.Models.Data
         // Goon Tracker 설정
         public bool GoonTrackerEnabled { get; set; } = true;        // Goon Tracker 사용 여부
 
+        // 자동 맵 전환 설정
+        public bool AutoMapSwitchEnabled { get; set; } = true;      // 레이드 진입 시 맵 자동 전환
+
         public override string ToString()
         {
             return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}'";
