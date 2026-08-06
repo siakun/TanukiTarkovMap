@@ -14,22 +14,4 @@
         public const string SETTINGS_UPDATE = "SETTINGS_UPDATE";    // 설정 업데이트 요청
         public const string SETTINGS_RESET = "SETTINGS_RESET";      // 설정 초기화 요청
     }
-
-    /// <summary>
-    /// 맵 표시 이름 상수
-    /// UI에 표시되는 맵 이름 (공백 포함)
-    /// </summary>
-    public static class MapName
-    {
-        public const string Ground_Zero = "Ground Zero";
-        public const string Factory = "Factory";
-        public const string Customs = "Customs";
-        public const string Woods = "Woods";
-        public const string Shoreline = "Shoreline";
-        public const string Interchange = "Interchange";
-        public const string Reserve = "Reserve";
-        public const string The_Lab = "The Lab";
-        public const string Lighthouse = "Lighthouse";
-        public const string Streets_of_Tarkov = "Streets of Tarkov";
-    }
 }
