@@ -1,4 +1,5 @@
 using System;
+using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.Models.Services
@@ -33,16 +34,11 @@ namespace TanukiTarkovMap.Models.Services
         /// <summary>
         /// 맵 변경 이벤트 발생
         /// </summary>
-        public void OnMapChanged(string mapName)
+        public void OnMapChanged(MapInfo map)
         {
-            Logger.SimpleLog($"[MapEventService] OnMapChanged called: {mapName}");
+            Logger.SimpleLog($"[MapEventService] OnMapChanged called: {map.DisplayName}");
 
-            var subscriberCount = MapChanged?.GetInvocationList().Length ?? 0;
-            Logger.SimpleLog($"[MapEventService] MapChanged event has {subscriberCount} subscriber(s)");
-
-            MapChanged?.Invoke(this, new MapChangedEventArgs(mapName));
-
-            Logger.SimpleLog($"[MapEventService] MapChanged event invoked for map: {mapName}");
+            MapChanged?.Invoke(this, new MapChangedEventArgs(map));
         }
 
         /// <summary>
@@ -66,11 +62,11 @@ namespace TanukiTarkovMap.Models.Services
     /// </summary>
     public class MapChangedEventArgs : EventArgs
     {
-        public string MapName { get; }
+        public MapInfo Map { get; }
 
-        public MapChangedEventArgs(string mapName)
+        public MapChangedEventArgs(MapInfo map)
         {
-            MapName = mapName;
+            Map = map;
         }
     }
 }

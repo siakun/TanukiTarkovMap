@@ -24,13 +24,10 @@ namespace TanukiTarkovMap.Models.Utils
 
         string TryGetFilePath()
         {
-            string[] files = Directory.GetFiles(folder, searchPattern);
-            if (files.Length > 0)
-            {
-                return Path.Combine(folder, files[0]);
-            }
-
-            return null;
+            // 로그가 롤오버되면 application_001.log 처럼 접미사가 커지므로 이름 역순 첫 파일이 최신이다
+            return Directory.GetFiles(folder, searchPattern)
+                .OrderByDescending(filePath => filePath, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
         }
 
         public void Start()

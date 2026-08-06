@@ -2,6 +2,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 using Newtonsoft.Json;
+using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
@@ -9,15 +10,13 @@ namespace TanukiTarkovMap.Models.FileSystem
 {
     public static class LogsWatcher
     {
-        // PVP Map change - application.log
-        static readonly string LOCATION_SUBSTRING = "application|TRACE-NetworkGameCreate profileStatus";
-        static readonly string LocationRe = @"location:\s*(?<loc>\S+),";
+        // Map change - application.log
+        // 씬 로드 줄은 PVP/PVE 모두에서 남고 매치 생성 줄(NetworkGameCreate)보다 먼저, 더 자주 나온다
+        static readonly string SCENE_PRESET_SUBSTRING = "application|scene preset";
+        static readonly string ScenePresetRe = @"path:maps\/(?<loc>\w+)\.bundle";
+
         static readonly string NOTIFICATION_SUBSTRING = "push-notifications|Got notification | ChatMessageReceived";
         static readonly string LINE_START_WITH_DATE = "^\\d{4}-\\d{2}-\\d{2} \\d{1,2}:\\d{1,2}:\\d{1,2}.\\d{3}";
-
-        // PVE Map change - application.log
-        static readonly string LOCATION_SUBSTRING2 = "application|scene preset";
-        static readonly string LocationRe2 = @"path:maps\/(?<loc>\w+)\.bundle";
 
         // BattlEye client initialization - application.log
         static readonly string BECLIENT_INIT_SUBSTRING = "BEClient inited successfully";
@@ -110,13 +109,13 @@ namespace TanukiTarkovMap.Models.FileSystem
             ClearLogsWatcher();
 
             // log file watcher
-            appLogFileWatcher = new LogFileWatcher(logsFolder, "*application.log");
+            appLogFileWatcher = new LogFileWatcher(logsFolder, "*application*.log");
             appLogFileWatcher.Created += OnLogFileChanged;
             appLogFileWatcher.Changed += OnLogFileChanged;
             appLogFileWatcher.Start();
 
             // log file watcher
-            notifLogFileWatcher = new LogFileWatcher(logsFolder, "*notifications.log");
+            notifLogFileWatcher = new LogFileWatcher(logsFolder, "*notifications*.log");
             notifLogFileWatcher.Created += OnLogFileChanged;
             notifLogFileWatcher.Changed += OnLogFileChanged;
             notifLogFileWatcher.Start();
@@ -209,30 +208,24 @@ namespace TanukiTarkovMap.Models.FileSystem
                                 continue;
                             }
 
-                            if (line.Contains(LOCATION_SUBSTRING))
+                            if (line.Contains(SCENE_PRESET_SUBSTRING))
                             {
-                                // parsing raw location name
-                                var map = ParseLoc(line, LocationRe);
-                                if (!String.IsNullOrEmpty(map))
+                                var scenePreset = ParseLoc(line, ScenePresetRe);
+                                if (!String.IsNullOrEmpty(scenePreset))
                                 {
-                                    // sending raw location name
-                                    Server.SendMap(map);
+                                    // 웹 페이지에는 로그에서 읽은 값을 그대로 넘긴다
+                                    Server.SendMap(scenePreset);
 
-                                    // 1차 트리거: 맵 변경 이벤트 발생
-                                    ServiceLocator.MapEventService.OnMapChanged(map);
-                                }
-                            }
-                            else if (line.Contains(LOCATION_SUBSTRING2))
-                            {
-                                // parsing raw location name
-                                var map = ParseLoc(line, LocationRe2);
-                                if (!String.IsNullOrEmpty(map))
-                                {
-                                    // sending raw location name
-                                    Server.SendMap(map);
-
-                                    // 1차 트리거: 맵 변경 이벤트 발생
-                                    ServiceLocator.MapEventService.OnMapChanged(map);
+                                    var mapInfo = MapConfiguration.GetByScenePreset(scenePreset);
+                                    if (mapInfo != null)
+                                    {
+                                        ServiceLocator.MapEventService.OnMapChanged(mapInfo);
+                                    }
+                                    else
+                                    {
+                                        // 새 맵이 추가되면 이 줄이 프리셋 등록의 단서가 된다
+                                        Logger.SimpleLog($"[LogsWatcher] Unknown scene preset: {scenePreset}");
+                                    }
                                 }
                             }
                             else if (line.Contains(BECLIENT_INIT_SUBSTRING))
