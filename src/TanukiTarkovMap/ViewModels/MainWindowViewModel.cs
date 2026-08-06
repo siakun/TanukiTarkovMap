@@ -282,6 +282,11 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnMapEventReceived(object sender, MapChangedEventArgs e)
         {
+            if (!App.GetSettings().AutoMapSwitchEnabled)
+            {
+                return;
+            }
+
             // UI 스레드로 마샬링
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
