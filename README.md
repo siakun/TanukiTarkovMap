@@ -34,7 +34,7 @@
 
 > **Steam 사용자 주의**: Steam의 `F12` 스크린샷은 Steam 오버레이 기능이라 좌표가 기록되지 않습니다. 반드시 게임 자체 설정(Controls)의 Screenshot 키를 써야 하며, 기본 `PrtScn`이 동작하지 않는다는 보고가 있으니 그 경우 다른 키로 재바인딩하세요.
 
-설정 창에서 단축키, 투명도, UI 표시 여부, 스크린샷 자동 정리를 바꿀 수 있습니다. 문제가 생기거나 건의할 내용이 있으면 [GitHub Issues](https://github.com/siakun/TanukiTarkovMap/issues)에 남겨 주세요.
+설정 창에서 단축키, 투명도, UI 표시 여부, 자동 맵 전환, 스크린샷 자동 정리를 바꿀 수 있습니다. 문제가 생기거나 건의할 내용이 있으면 [GitHub Issues](https://github.com/siakun/TanukiTarkovMap/issues)에 남겨 주세요.
 
 ---
 
@@ -116,7 +116,20 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 맵 판별은 씬 로드 로그(`scene preset`) 줄에서 `path:maps/<프리셋>.bundle`의 프리셋 이름을 뽑아 합니다. 매치 생성 로그(`TRACE-NetworkGameCreate profileStatus`)의 `Location:` 값도 같은 정보를 담지만, 씬 로드 줄이 언제나 먼저 나오고 이쪽만 남는 레이드도 있어 씬 로드 줄 하나만 봅니다.
 
-뽑아낸 프리셋 이름은 `MapConfiguration`에서 맵으로 해석합니다. Ground Zero의 레벨 구간이나 Factory의 시간대처럼 한 맵에 프리셋이 여러 개인 경우가 있어, 맵 하나가 프리셋 여러 개를 갖는 형태로 대응합니다. 해석에 성공하면 드롭다운에서 직접 고른 것과 같은 경로로 브라우저가 그 맵으로 이동하고, 등록되지 않은 프리셋이면 앱 로그에 이름을 남기고 전환하지 않습니다. 프리셋 이름 자체는 WebSocket으로 tarkov-market 페이지에도 그대로 전달됩니다.
+뽑아낸 프리셋 이름은 감지한 자리에서 곧바로 맵으로 해석합니다. 로그 문자열을 해석하는 코드를 `LogsWatcher` 한 곳에 묶어 두려는 것이고, 그 뒤 단계는 문자열이 아니라 맵 객체만 주고받습니다.
+
+```
+scene preset 줄 감지
+  -> LogsWatcher          프리셋 이름 추출, WebSocket으로 원본도 전달
+  -> MapConfiguration     프리셋을 맵으로 해석 (등록되지 않은 값이면 여기서 중단)
+  -> MapEventService      맵 변경 이벤트 발행
+  -> MainWindowViewModel  SelectedMapInfo 대입 (드롭다운 수동 선택이 합류하는 지점)
+  -> WebBrowserViewModel  CefSharp 주소 이동
+```
+
+맵과 프리셋의 관계는 1:N입니다. Ground Zero는 레벨 구간마다, Factory는 시간대마다 프리셋이 따로 있어서 맵 하나가 프리셋 목록을 갖는 형태로 `MapConfiguration`에 등록합니다. 목록에 없는 프리셋이 나오면 전환하지 않고 그 이름만 앱 로그에 남깁니다. 게임에 새 맵이 추가됐을 때 무엇을 등록해야 하는지 그 줄로 알 수 있습니다.
+
+자동 전환이 `SelectedMapInfo`를 거치는 것도 의도한 부분입니다. 사용자가 드롭다운에서 맵을 고를 때와 같은 지점으로 합류시키면, 주소를 바꾸고 스크립트를 다시 주입하는 코드가 한 벌만 남습니다. 자동 전환을 끄면 이 대입만 건너뛰므로 수동 선택은 그대로 동작합니다.
 
 이 밖에 BattlEye 초기화 로그(`BEClient inited successfully`)는 레이드 경계 신호로 삼아 스크린샷 자동 정리를 트리거하고, 알림 로그의 퀘스트 알림(JSON)을 파싱해 퀘스트 진행 상태도 페이지에 전달합니다.
 
