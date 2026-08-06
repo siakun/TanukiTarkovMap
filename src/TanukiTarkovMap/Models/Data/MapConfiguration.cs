@@ -10,8 +10,8 @@ namespace TanukiTarkovMap.Models.Data
         /// </summary>
         public static List<MapInfo> AvailableMaps { get; } = new()
         {
-            new MapInfo("ground-zero", "Ground Zero", "https://tarkov-market.com/maps/ground-zero", "sandbox_high_preset"),
-            new MapInfo("factory", "Factory", "https://tarkov-market.com/maps/factory", "factory_day_preset"),
+            new MapInfo("ground-zero", "Ground Zero", "https://tarkov-market.com/maps/ground-zero", "sandbox_high_preset", "sandbox_preset", "sandbox_start_preset"),
+            new MapInfo("factory", "Factory", "https://tarkov-market.com/maps/factory", "factory_day_preset", "factory_night_preset"),
             new MapInfo("customs", "Customs", "https://tarkov-market.com/maps/customs", "customs_preset"),
             new MapInfo("interchange", "Interchange", "https://tarkov-market.com/maps/interchange", "shopping_mall"),
             new MapInfo("woods", "Woods", "https://tarkov-market.com/maps/woods", "woods_preset"),
@@ -40,5 +40,12 @@ namespace TanukiTarkovMap.Models.Data
         /// </summary>
         public static MapInfo? GetByDisplayName(string displayName)
             => AvailableMaps.FirstOrDefault(m => m.DisplayName.Equals(displayName, StringComparison.OrdinalIgnoreCase));
+
+        /// <summary>
+        /// 게임 로그의 scene preset 값으로 MapInfo 조회
+        /// 한 맵에 프리셋이 여럿인 경우(Ground Zero 레벨 구간, Factory 시간대)를 모두 같은 맵으로 매핑한다
+        /// </summary>
+        public static MapInfo? GetByScenePreset(string scenePreset)
+            => AvailableMaps.FirstOrDefault(m => m.ScenePresets.Contains(scenePreset, StringComparer.OrdinalIgnoreCase));
     }
 }

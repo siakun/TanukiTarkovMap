@@ -26,12 +26,19 @@ namespace TanukiTarkovMap.Models.Data
         /// </summary>
         public string MapId { get; set; }
 
-        public MapInfo(string name, string displayName, string url, string mapId)
+        /// <summary>
+        /// 이 맵에 해당하는 게임 로그의 scene preset 값 목록
+        /// 첫 항목은 MapId이며, 같은 맵의 다른 프리셋(레벨 구간, 시간대)이 뒤에 붙는다
+        /// </summary>
+        public IReadOnlyList<string> ScenePresets { get; }
+
+        public MapInfo(string name, string displayName, string url, string mapId, params string[] extraScenePresets)
         {
             Name = name;
             DisplayName = displayName;
             Url = url;
             MapId = mapId;
+            ScenePresets = new[] { mapId }.Concat(extraScenePresets).ToArray();
         }
     }
 }

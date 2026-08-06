@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
-using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
@@ -77,11 +76,6 @@ namespace TanukiTarkovMap.Models.Services
 
             // ASP.NET Core 서버 시작
             StartServer();
-
-#if DEBUG
-            //var posTask = Task.Run(() => SendRandomPosition());
-            //await posTask;
-#endif
         }
 
         static void StartServer()
@@ -256,49 +250,6 @@ namespace TanukiTarkovMap.Models.Services
             catch (Exception ex)
             {
                 Utils.Logger.SimpleLog($"[WS Error] SendData: {ex.Message}");
-            }
-        }
-
-        static void SendRandomPosition()
-        {
-            while (!isClosing)
-            {
-                Random rnd = new Random();
-
-                var fields = typeof(MapName)
-                    .GetFields(BindingFlags.Public | BindingFlags.Static)
-                    .Where(f => f.FieldType == typeof(string))
-                    .Select(f => (string)f.GetValue(null))
-                    .ToArray();
-                var map = fields[rnd.Next(fields.Length)];
-
-                // waiting, to be sure messages order
-                SendMap(map);
-                Thread.Sleep(2000);
-
-                // lab 0,0 position fix
-                if (map == MapName.The_Lab)
-                {
-                    SendPosition(
-                        new Position(
-                            rnd.Next(10) * 10 - 340,
-                            rnd.Next(10) * 10 - 200,
-                            rnd.Next(10) * 10
-                        )
-                    );
-                }
-                else
-                {
-                    SendPosition(
-                        new Position(
-                            rnd.Next(10) * 10 - 0.3f,
-                            rnd.Next(10) * 10 + 0.3f,
-                            rnd.Next(10) * 10
-                        )
-                    );
-                }
-
-                Thread.Sleep(5000);
             }
         }
 
