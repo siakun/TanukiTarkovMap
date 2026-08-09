@@ -290,6 +290,13 @@ namespace TanukiTarkovMap.ViewModels
             // UI 스레드로 마샬링
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
+                // 이미 그 맵을 보고 있으면 아무것도 하지 않는다.
+                // 스크린샷을 찍을 때마다 보정 요청이 들어오므로 여기서 걸러야 로그도 조용하다
+                if (SelectedMapInfo?.Name == e.Map.Name)
+                {
+                    return;
+                }
+
                 Logger.SimpleLog($"[MainWindowViewModel] Auto map switch: {e.Map.DisplayName}");
 
                 // SelectedMapInfo 변경이 MapSelectionChangedMessage를 통해 브라우저를 이동시킨다

@@ -24,6 +24,12 @@ namespace TanukiTarkovMap.Models.FileSystem
         static string curLogFolder;
         static Dictionary<string, long> filePositions = new();
 
+        /// <summary>
+        /// 로그에서 마지막으로 확인한 맵. 초기 읽기 구간에서 감지한 것도 담긴다.
+        /// 레이드 도중 앱을 켜 실시간 감지를 놓쳤을 때 스크린샷 시점의 보정에 쓰인다
+        /// </summary>
+        public static MapInfo? LastDetectedMap { get; private set; }
+
         static FileSystemWatcher logsFoldersWatcher;
         static LogFileWatcher appLogFileWatcher;
         static LogFileWatcher notifLogFileWatcher;
@@ -46,6 +52,9 @@ namespace TanukiTarkovMap.Models.FileSystem
         {
             _initialLogsReadCount = 0;
             filePositions.Clear();
+
+            // 경로가 바뀌어 재시작하는 경우가 있어, 낡은 맵이 남지 않도록 비운다
+            LastDetectedMap = null;
         }
 
         public static void Start()
@@ -202,33 +211,47 @@ namespace TanukiTarkovMap.Models.FileSystem
                         string line;
                         while ((line = reader.ReadLine()) != null)
                         {
-                            // initial read - skipping processing
-                            if (!IsAllInitialLogsRead)
-                            {
-                                continue;
-                            }
-
+                            // 맵 감지만 초기 읽기 구간에서도 수행한다.
+                            // 레이드 도중 앱을 켜면 진입 로그가 이미 지나가 있어,
+                            // 여기서 기억해 두지 않으면 스크린샷 보정에 쓸 맵이 없다
                             if (line.Contains(SCENE_PRESET_SUBSTRING))
                             {
                                 var scenePreset = ParseLoc(line, ScenePresetRe);
                                 if (!String.IsNullOrEmpty(scenePreset))
                                 {
-                                    // 웹 페이지에는 로그에서 읽은 값을 그대로 넘긴다
-                                    Server.SendMap(scenePreset);
-
                                     var mapInfo = MapConfiguration.GetByScenePreset(scenePreset);
                                     if (mapInfo != null)
                                     {
-                                        ServiceLocator.MapEventService.OnMapChanged(mapInfo);
+                                        LastDetectedMap = mapInfo;
                                     }
                                     else
                                     {
                                         // 새 맵이 추가되면 이 줄이 프리셋 등록의 단서가 된다
                                         Logger.SimpleLog($"[LogsWatcher] Unknown scene preset: {scenePreset}");
                                     }
+
+                                    // 지난 판의 맵으로 화면이 바뀌지 않도록 전송과 전환은 초기 읽기 이후에만 한다
+                                    if (IsAllInitialLogsRead)
+                                    {
+                                        // 웹 페이지에는 로그에서 읽은 값을 그대로 넘긴다
+                                        Server.SendMap(scenePreset);
+
+                                        if (mapInfo != null)
+                                        {
+                                            ServiceLocator.MapEventService.OnMapChanged(mapInfo);
+                                        }
+                                    }
                                 }
+                                continue;
                             }
-                            else if (line.Contains(BECLIENT_INIT_SUBSTRING))
+
+                            // 나머지 신호는 지난 로그를 다시 처리하면 안 되므로 초기 읽기 구간에서 건너뛴다
+                            if (!IsAllInitialLogsRead)
+                            {
+                                continue;
+                            }
+
+                            if (line.Contains(BECLIENT_INIT_SUBSTRING))
                             {
                                 // BattlEye client initialized - game start or raid end
                                 GameSessionCleaner.CleanScreenshotFiles();
