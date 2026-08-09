@@ -160,6 +160,15 @@ namespace TanukiTarkovMap.Models.FileSystem
 
                     // 2차 트리거: 스크린샷 생성 이벤트 발생
                     ServiceLocator.MapEventService.OnScreenshotTaken();
+
+                    // 레이드 도중 앱을 켜면 진입 로그가 이미 지나가 맵이 전환되지 않는다.
+                    // 스크린샷은 인게임에서만 찍히므로, 이 시점의 마지막 감지 맵을 현재 맵으로 보고 보정한다.
+                    // 이미 그 맵을 보고 있으면 수신 측에서 걸러지므로 여기서는 비교하지 않는다
+                    var lastDetectedMap = LogsWatcher.LastDetectedMap;
+                    if (lastDetectedMap != null)
+                    {
+                        ServiceLocator.MapEventService.OnMapChanged(lastDetectedMap);
+                    }
                 }
             }
             catch (Exception ex)
