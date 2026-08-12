@@ -369,6 +369,25 @@ services.AddSingleton(_ => new ServiceName());
   CefSharp URL 변경
 ```
 
+### 맵 자동 전환 (스크린샷 보정)
+
+레이드 도중 앱을 켜면 진입 로그가 이미 지나가 위 경로가 발동하지 않는다.
+스크린샷은 인게임에서만 생성되므로 이를 신호로 삼아 보정한다.
+
+```
+스크린샷 파일 생성
+       ↓
+  ScreenshotsWatcher 감지
+       ↓
+  LogsWatcher.LastDetectedMap (초기 읽기 구간에서 기억해 둔 마지막 맵)
+       ↓
+  MapEventService.OnMapChanged(mapInfo)
+       ↓
+  MainWindowViewModel.OnMapEventReceived()
+       ↓
+  이미 같은 맵이면 중단, 아니면 위와 같은 경로로 전환
+```
+
 ---
 
 ## 설정 파일 구조
