@@ -40,6 +40,16 @@ Code-behind에 로직이 있는 파일을 발견하면:
 - `Behaviors/HotkeyInputBehavior.cs` - 키 입력 캡처 Behavior
 - `ViewModels/SettingsViewModel.cs` - 설정 페이지 ViewModel
 
+## 브랜치 전략: GitHub Flow
+
+이 저장소는 GitHub Flow를 씁니다. main은 항상 배포 가능한 상태로 두고, 모든 작업은 main에서 딴 작업 브랜치에서 합니다.
+
+전역 규칙의 develop 브랜치 운용은 이 저장소에 적용하지 않습니다. 이 절이 우선합니다. "기본 브랜치 직접 커밋 금지"는 그대로 지키되, 커밋할 곳은 develop이 아니라 그 작업의 브랜치입니다.
+
+작업마다 main에서 브랜치를 따고, 끝나면 PR로 main에 합친 뒤 브랜치를 지웁니다. 오래 사는 브랜치를 두지 않습니다.
+
+커밋 메시지 컨벤션, 작성자 표기, 푸시 정책은 전역 규칙을 그대로 따릅니다. push는 사용자가 직접 합니다.
+
 ## 빌드 방법
 ```bash
 cd src && dotnet build
