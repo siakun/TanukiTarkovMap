@@ -112,7 +112,7 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 - **공식 런처**: `HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\EscapeFromTarkov`의 `InstallLocation` 값 (폴더가 실제 존재할 때만 채택)
 - **스팀**: `HKLM\SOFTWARE\WOW6432Node\Valve\Steam`의 `InstallPath`에서 `steamapps\libraryfolders.vdf`를 파싱해 얻은 모든 라이브러리 폴더의 `steamapps\common\Escape from Tarkov`를 확인
 
-`LogsWatcher`는 가장 최근 세션 폴더를 골라 감시하고(새 폴더가 생기면 자동으로 갈아탐), 로그 파일이 갱신될 때마다 마지막으로 읽은 위치부터 새로 추가된 줄만 이어 읽습니다(`FileShare.ReadWrite`로 열어 게임의 쓰기와 충돌하지 않음). 앱 시작 시 이미 쌓여 있던 과거 로그는 파싱하지 않고 건너뛰어, 지난 판의 맵으로 잘못 전환되는 것을 막습니다.
+`LogsWatcher`는 가장 최근 세션 폴더를 골라 감시하고(새 폴더가 생기면 자동으로 갈아탐), 로그 파일이 갱신될 때마다 마지막으로 읽은 위치부터 새로 추가된 줄만 이어 읽습니다(`FileShare.ReadWrite`로 열어 게임의 쓰기와 충돌하지 않음). 앱 시작 전에 이미 쌓여 있던 과거 로그로는 화면을 전환하지 않아, 지난 판의 맵으로 잘못 바뀌는 것을 막습니다.
 
 맵 판별은 씬 로드 로그(`scene preset`) 줄에서 `path:maps/<프리셋>.bundle`의 프리셋 이름을 뽑아 합니다. 매치 생성 로그(`TRACE-NetworkGameCreate profileStatus`)의 `Location:` 값도 같은 정보를 담지만, 씬 로드 줄이 언제나 먼저 나오고 이쪽만 남는 레이드도 있어 씬 로드 줄 하나만 봅니다.
 
@@ -130,6 +130,8 @@ scene preset 줄 감지
 맵과 프리셋의 관계는 1:N입니다. Ground Zero는 레벨 구간마다, Factory는 시간대마다 프리셋이 따로 있어서 맵 하나가 프리셋 목록을 갖는 형태로 `MapConfiguration`에 등록합니다. 목록에 없는 프리셋이 나오면 전환하지 않고 그 이름만 앱 로그에 남깁니다. 게임에 새 맵이 추가됐을 때 무엇을 등록해야 하는지 그 줄로 알 수 있습니다.
 
 자동 전환이 `SelectedMapInfo`를 거치는 것도 의도한 부분입니다. 사용자가 드롭다운에서 맵을 고를 때와 같은 지점으로 합류시키면, 주소를 바꾸고 스크립트를 다시 주입하는 코드가 한 벌만 남습니다. 자동 전환을 끄면 이 대입만 건너뛰므로 수동 선택은 그대로 동작합니다.
+
+레이드에 들어간 뒤에 앱을 켜면 진입 로그가 이미 지나가 있어 실시간 감지가 걸리지 않습니다. 그래서 과거 로그에서도 맵 이름만은 읽어 마지막 값을 기억해 두고, 인게임에서만 찍히는 스크린샷을 신호로 삼아 그 맵으로 보정합니다. 이미 그 맵을 보고 있으면 아무 일도 일어나지 않으므로, 정상적으로 전환된 뒤에는 스크린샷을 찍어도 화면이 흔들리지 않습니다.
 
 이 밖에 BattlEye 초기화 로그(`BEClient inited successfully`)는 레이드 경계 신호로 삼아 스크린샷 자동 정리를 트리거하고, 알림 로그의 퀘스트 알림(JSON)을 파싱해 퀘스트 진행 상태도 페이지에 전달합니다.
 
