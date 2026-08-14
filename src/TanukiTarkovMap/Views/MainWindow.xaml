@@ -342,9 +342,7 @@
                             Width="30" Height="20"
                             Background="Transparent"
                             BorderThickness="0"
-                            Foreground="White"
-                            Content="⚙"
-                            FontSize="12"
+                            ToolTip="설정"
                             Command="{Binding ToggleSettingsCommand}"
                             WindowChrome.IsHitTestVisibleInChrome="True">
                         <Button.Style>
@@ -355,8 +353,15 @@
                                             <Border x:Name="BorderBackground"
                                                     Background="Transparent"
                                                     CornerRadius="3">
-                                                <ContentPresenter HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center"/>
+                                                <!-- 톱니 6개 기어와 가운데 구멍 (16x16 좌표계, 톱니 하나가 위를 향한다) -->
+                                                <Path x:Name="SettingsGlyph"
+                                                      Data="M6.65,1.64 L9.35,1.64 L9.33,3.91 L10.88,4.8 L12.83,3.65 L14.18,5.99 L12.21,7.11 L12.21,8.89 L14.18,10.01 L12.83,12.35 L10.88,11.2 L9.33,12.09 L9.35,14.36 L6.65,14.36 L6.67,12.09 L5.12,11.2 L3.17,12.35 L1.82,10.01 L3.79,8.89 L3.79,7.11 L1.82,5.99 L3.17,3.65 L5.12,4.8 L6.67,3.91 Z M8,6.1 A1.9,1.9 0 1 1 8,9.9 A1.9,1.9 0 1 1 8,6.1 Z"
+                                                      Stroke="White"
+                                                      StrokeThickness="1.15"
+                                                      StrokeLineJoin="Round"
+                                                      Width="16" Height="16"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
