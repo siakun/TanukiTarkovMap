@@ -40,6 +40,75 @@
     </Style>
 
     <!--
+    타이틀 바의 아이콘 버튼 (다운로드, 설정, 핀, 창 컨트롤).
+
+    다섯 개가 같은 템플릿을 저마다 인라인으로 들고 있었다. 아이콘 도형은 템플릿 안이 아니라
+    Content에 두어, 모양이 다른 버튼들이 한 스타일을 함께 쓰도록 한다.
+    도형 색은 Stroke를 Foreground에 묶어 버튼 쪽에서 정한다.
+
+    높이를 정하지 않는 것은 타이틀 바 높이를 그대로 채우게 하려는 것이다.
+    아래 테두리 1px을 뺀 값에 맞춰야 위아래로 자투리가 생기지 않는다.
+
+    모서리는 둥글리지 않는다. 닫기 버튼이 창 모서리를 채우는데 그 반경은 바깥 클리핑이 정하고
+    (메인 창은 ContentClipBorder, 설정 패널은 BorderClipBehavior), 가운데 버튼들도 같은 모양으로
+    두면 올렸을 때 배경이 나란히 이어진다. 덕분에 닫기 버튼이 템플릿을 새로 쓰지 않아도 된다.
+    -->
+    <Style x:Key="TitleBarIconButton" TargetType="Button">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="Foreground" Value="White"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Width" Value="30"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}">
+                        <ContentPresenter HorizontalAlignment="Center"
+                                          VerticalAlignment="Center"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <!--
+        배경을 템플릿 안에서 TargetName으로 바꾸지 않고 Button.Background로 바꾼다.
+        템플릿의 Border가 그 값을 TemplateBinding으로 받으므로 결과는 같으면서,
+        색만 다른 버튼이 템플릿을 새로 쓰지 않고 트리거만 덮어쓸 수 있다
+        -->
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#FF3A3A3A"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#FF4A4A4A"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- 업데이트 아이콘. 도형 색이 Foreground를 따르므로 올렸을 때 그 값만 밝게 바꾼다 -->
+    <Style x:Key="DownloadIconButton" TargetType="Button" BasedOn="{StaticResource TitleBarIconButton}">
+        <Setter Property="Foreground" Value="#FF3BA55D"/>
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Foreground" Value="#FF57D68D"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
+    창과 패널을 닫는 버튼. 다른 아이콘 버튼과 달리 올리면 빨갛게 물든다.
+    모서리를 다루지 않으므로 템플릿을 물려받고 색 트리거만 덮어쓴다.
+    -->
+    <Style x:Key="CloseIconButton" TargetType="Button" BasedOn="{StaticResource TitleBarIconButton}">
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="#FFE81123"/>
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+                <Setter Property="Background" Value="#FFC50F1F"/>
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <!--
     단축키를 눌러 지정하는 버튼.
     누르면 키 입력을 받는 자리라 입력 칸처럼 보이도록 테두리를 두고, 눌린 동안 배경을 어둡게 한다
     -->
