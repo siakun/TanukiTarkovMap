@@ -13,6 +13,37 @@
         <vm:SettingsViewModel/>
     </UserControl.DataContext>
 
+    <UserControl.Resources>
+        <!-- 설정 화면의 보조 버튼 (찾아보기, 새로고침 등)에 공통으로 쓰는 모양 -->
+        <Style x:Key="SettingsButton" TargetType="Button">
+            <Setter Property="Background" Value="#FF3A3A3A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}"
+                                CornerRadius="3"
+                                Padding="10,4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#FF5A5A5A"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter Property="Opacity" Value="0.4"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,8">
 
@@ -329,6 +360,150 @@
                                    FontSize="8"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- 업데이트 섹션 -->
+            <Border Background="#FF1A1A1A"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="업데이트"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,6"/>
+
+                    <!-- 자동 업데이트 -->
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,8">
+                        <CheckBox IsChecked="{Binding AutoUpdateEnabled}"
+                                  Content="자동 업데이트"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"/>
+                        <TextBlock Text="새 버전이 나오면 백그라운드로 받아 두고 프로그램을 닫을 때 적용합니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="18,2,0,0"/>
+                    </StackPanel>
+
+                    <!-- 버전 선택: 올리는 방향과 되돌리는 방향을 같은 목록에서 고른다 -->
+                    <StackPanel>
+                        <Grid Margin="0,4,0,4">
+                            <TextBlock Text="버전 선택"
+                                       FontSize="10"
+                                       FontWeight="SemiBold"
+                                       Foreground="White"
+                                       VerticalAlignment="Center"/>
+                            <Button Content="목록 새로고침"
+                                    Command="{Binding RefreshVersionsCommand}"
+                                    Style="{StaticResource SettingsButton}"
+                                    HorizontalAlignment="Right"/>
+                        </Grid>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <ComboBox Grid.Column="0"
+                                      ItemsSource="{Binding AvailableVersions}"
+                                      SelectedItem="{Binding SelectedVersion, Mode=TwoWay}"
+                                      DisplayMemberPath="DisplayName"
+                                      Style="{StaticResource DarkComboBox}"
+                                      Height="24"
+                                      FontSize="10"
+                                      Foreground="White">
+                                <ComboBox.ItemContainerStyle>
+                                    <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
+                                </ComboBox.ItemContainerStyle>
+                            </ComboBox>
+                            <Button Grid.Column="1"
+                                    Content="선택한 버전 설치"
+                                    Command="{Binding InstallSelectedVersionCommand}"
+                                    Style="{StaticResource SettingsButton}"
+                                    Margin="4,0,0,0"/>
+                        </Grid>
+
+                        <TextBlock Text="최신이 아닌 버전을 고르면 자동 업데이트가 함께 꺼집니다. 다만 이 설정이 없던 옛 버전에서는 그 버전이 스스로 최신을 받아 오므로 계속 머무를 수 없습니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="0,6,0,0"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="버전 전환은 전체 패키지를 받으므로 시간이 걸립니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="0,2,0,0"
+                                   TextWrapping="Wrap"/>
+
+                        <!-- 다운로드 진행 상황 (Velopack이 정수 퍼센트만 알려주므로 MB는 그 값으로 환산한 추정치다) -->
+                        <StackPanel Margin="0,6,0,0"
+                                    Visibility="{Binding IsInstalling, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <ProgressBar Height="6"
+                                         Minimum="0"
+                                         Maximum="100"
+                                         Value="{Binding InstallProgress}">
+                                <ProgressBar.Template>
+                                    <ControlTemplate TargetType="ProgressBar">
+                                        <Border Background="#FF2A2A2A"
+                                                BorderBrush="#FF3A3A3A"
+                                                BorderThickness="1"
+                                                CornerRadius="3">
+                                            <Grid>
+                                                <Rectangle x:Name="PART_Track"/>
+                                                <Rectangle x:Name="PART_Indicator"
+                                                           Fill="#FF4A90D9"
+                                                           RadiusX="3"
+                                                           RadiusY="3"
+                                                           HorizontalAlignment="Left"/>
+                                            </Grid>
+                                        </Border>
+                                    </ControlTemplate>
+                                </ProgressBar.Template>
+                            </ProgressBar>
+                            <TextBlock Text="{Binding InstallProgressText}"
+                                       Foreground="#FFAAAAAA"
+                                       FontSize="9"
+                                       Margin="0,4,0,0"/>
+                        </StackPanel>
+                    </StackPanel>
+
+                    <!-- 조회나 설치가 실패했을 때만 그 사정을 남긴다 -->
+                    <TextBlock Text="{Binding UpdateStatusMessage}"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="0,6,0,0"
+                               TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Visible"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding UpdateStatusMessage}" Value="">
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+
+                    <!-- 설치 관리자가 없는 실행 형태에서는 교체할 대상이 없다 -->
+                    <TextBlock Text="설치본에서만 버전을 바꿀 수 있습니다. 지금은 포터블이나 개발 빌드로 실행 중입니다"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="0,6,0,0"
+                               TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CanSwitchVersion}" Value="False">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
 

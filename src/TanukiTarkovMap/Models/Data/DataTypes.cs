@@ -59,6 +59,9 @@ namespace TanukiTarkovMap.Models.Data
         // 자동 맵 전환 설정
         public bool AutoMapSwitchEnabled { get; set; } = true;      // 레이드 진입 시 맵 자동 전환
 
+        // 업데이트 설정
+        public bool AutoUpdateEnabled { get; set; } = true;         // 새 버전 자동 확인/다운로드
+
         public override string ToString()
         {
             return $"gameFolder: '{GameFolder}' \nscreenshotsFolder: '{ScreenshotsFolder}'";
