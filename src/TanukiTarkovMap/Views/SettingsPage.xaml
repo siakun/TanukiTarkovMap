@@ -13,37 +13,6 @@
         <vm:SettingsViewModel/>
     </UserControl.DataContext>
 
-    <UserControl.Resources>
-        <!-- 설정 화면의 보조 버튼 (찾아보기, 새로고침 등)에 공통으로 쓰는 모양 -->
-        <Style x:Key="SettingsButton" TargetType="Button">
-            <Setter Property="Background" Value="#FF3A3A3A"/>
-            <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderThickness" Value="0"/>
-            <Setter Property="FontSize" Value="9"/>
-            <Setter Property="Height" Value="24"/>
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <Border Background="{TemplateBinding Background}"
-                                CornerRadius="3"
-                                Padding="10,4">
-                            <ContentPresenter HorizontalAlignment="Center"
-                                              VerticalAlignment="Center"/>
-                        </Border>
-                        <ControlTemplate.Triggers>
-                            <Trigger Property="IsMouseOver" Value="True">
-                                <Setter Property="Background" Value="#FF5A5A5A"/>
-                            </Trigger>
-                            <Trigger Property="IsEnabled" Value="False">
-                                <Setter Property="Opacity" Value="0.4"/>
-                            </Trigger>
-                        </ControlTemplate.Triggers>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-        </Style>
-    </UserControl.Resources>
-
     <ScrollViewer Style="{StaticResource OverlayScrollViewer}"
                   VerticalScrollBarVisibility="Auto"
                   HorizontalScrollBarVisibility="Disabled">
@@ -86,35 +55,9 @@
                             <Button Grid.Column="1"
                                     Content="찾아보기"
                                     Command="{Binding BrowseGameFolderCommand}"
+                                    Style="{StaticResource DarkButton}"
                                     Width="65"
-                                    Height="24"
-                                    Margin="4,0,0,0"
-                                    Background="#FF3A3A3A"
-                                    Foreground="White"
-                                    BorderThickness="0"
-                                    FontSize="9">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            CornerRadius="3"
-                                                            Padding="8,4">
-                                                        <ContentPresenter HorizontalAlignment="Center"
-                                                                        VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                    Margin="4,0,0,0"/>
                         </Grid>
                     </StackPanel>
 
@@ -143,35 +86,9 @@
                             <Button Grid.Column="1"
                                     Content="찾아보기"
                                     Command="{Binding BrowseScreenshotsFolderCommand}"
+                                    Style="{StaticResource DarkButton}"
                                     Width="65"
-                                    Height="24"
-                                    Margin="4,0,0,0"
-                                    Background="#FF3A3A3A"
-                                    Foreground="White"
-                                    BorderThickness="0"
-                                    FontSize="9">
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            CornerRadius="3"
-                                                            Padding="8,4">
-                                                        <ContentPresenter HorizontalAlignment="Center"
-                                                                        VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
-                            </Button>
+                                    Margin="4,0,0,0"/>
                         </Grid>
                     </StackPanel>
                 </StackPanel>
@@ -229,47 +146,15 @@
                                        VerticalAlignment="Center"
                                        FontSize="9"
                                        Margin="0,0,8,0"/>
-                            <Button Width="100"
-                                    Height="24"
-                                    Background="#FF3A3A3A"
-                                    Foreground="White"
-                                    BorderThickness="1"
-                                    BorderBrush="#FF555555"
-                                    Content="{Binding HotkeyKey}"
-                                    FontSize="9"
+                            <Button Content="{Binding HotkeyKey}"
+                                    Style="{StaticResource HotkeyCaptureButton}"
+                                    Width="100"
                                     Focusable="True"
                                     IsTabStop="True"
                                     KeyboardNavigation.AcceptsReturn="False">
                                 <i:Interaction.Behaviors>
                                     <behaviors:HotkeyInputBehavior Hotkey="{Binding HotkeyKey, Mode=TwoWay}"/>
                                 </i:Interaction.Behaviors>
-                                <Button.Style>
-                                    <Style TargetType="Button">
-                                        <Setter Property="Template">
-                                            <Setter.Value>
-                                                <ControlTemplate TargetType="Button">
-                                                    <Border Background="{TemplateBinding Background}"
-                                                            BorderBrush="{TemplateBinding BorderBrush}"
-                                                            BorderThickness="{TemplateBinding BorderThickness}"
-                                                            CornerRadius="3"
-                                                            Padding="6,3">
-                                                        <ContentPresenter HorizontalAlignment="Center"
-                                                                        VerticalAlignment="Center"/>
-                                                    </Border>
-                                                    <ControlTemplate.Triggers>
-                                                        <Trigger Property="IsMouseOver" Value="True">
-                                                            <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                            <Setter Property="BorderBrush" Value="#FF777777"/>
-                                                        </Trigger>
-                                                        <Trigger Property="IsPressed" Value="True">
-                                                            <Setter Property="Background" Value="#FF2A2A2A"/>
-                                                        </Trigger>
-                                                    </ControlTemplate.Triggers>
-                                                </ControlTemplate>
-                                            </Setter.Value>
-                                        </Setter>
-                                    </Style>
-                                </Button.Style>
                             </Button>
                         </StackPanel>
                         <TextBlock Text="(클릭 후 키를 눌러 설정하세요)"
@@ -394,7 +279,7 @@
                         <Button Grid.Column="1"
                                 Content="{Binding CacheResetButtonText}"
                                 Command="{Binding ToggleCacheResetCommand}"
-                                Style="{StaticResource SettingsButton}"/>
+                                Style="{StaticResource DarkButton}"/>
                     </Grid>
 
                     <TextBlock Text="맵 타일 이미지와 페이지 스크립트가 쌓인 자리입니다. 비워도 설정은 그대로이고, 맵을 다시 열 때 새로 받습니다"
@@ -463,7 +348,7 @@
                                        VerticalAlignment="Center"/>
                             <Button Content="목록 새로고침"
                                     Command="{Binding RefreshVersionsCommand}"
-                                    Style="{StaticResource SettingsButton}"
+                                    Style="{StaticResource DarkButton}"
                                     HorizontalAlignment="Right"/>
                         </Grid>
 
@@ -487,7 +372,7 @@
                             <Button Grid.Column="1"
                                     Content="선택한 버전 설치"
                                     Command="{Binding InstallSelectedVersionCommand}"
-                                    Style="{StaticResource SettingsButton}"
+                                    Style="{StaticResource DarkButton}"
                                     Margin="4,0,0,0"/>
                         </Grid>
 
@@ -619,35 +504,11 @@
                     <!-- Pilot 설정 페이지로 이동 -->
                     <Button Content="Tarkov Market 설정 페이지로 이동"
                             Command="{Binding NavigateToPilotCommand}"
+                            Style="{StaticResource DarkButton}"
                             Height="28"
-                            Background="#FF3A3A3A"
-                            Foreground="White"
-                            BorderThickness="0"
                             FontSize="10"
-                            HorizontalAlignment="Left"
-                            Padding="12,0">
-                        <Button.Style>
-                            <Style TargetType="Button">
-                                <Setter Property="Template">
-                                    <Setter.Value>
-                                        <ControlTemplate TargetType="Button">
-                                            <Border Background="{TemplateBinding Background}"
-                                                    CornerRadius="3"
-                                                    Padding="{TemplateBinding Padding}">
-                                                <ContentPresenter HorizontalAlignment="Center"
-                                                                VerticalAlignment="Center"/>
-                                            </Border>
-                                            <ControlTemplate.Triggers>
-                                                <Trigger Property="IsMouseOver" Value="True">
-                                                    <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                </Trigger>
-                                            </ControlTemplate.Triggers>
-                                        </ControlTemplate>
-                                    </Setter.Value>
-                                </Setter>
-                            </Style>
-                        </Button.Style>
-                    </Button>
+                            Padding="12,0"
+                            HorizontalAlignment="Left"/>
                     <TextBlock Text="tarkov-market.com/pilot 페이지를 표시합니다"
                                Foreground="#FF888888"
                                FontSize="8"
@@ -677,35 +538,9 @@
                         <Button Grid.Column="1"
                                 Content="이동"
                                 Command="{Binding NavigateToCustomUrlCommand}"
+                                Style="{StaticResource DarkButton}"
                                 Width="50"
-                                Height="24"
-                                Margin="4,0,0,0"
-                                Background="#FF3A3A3A"
-                                Foreground="White"
-                                BorderThickness="0"
-                                FontSize="9">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        CornerRadius="3"
-                                                        Padding="8,4">
-                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                                Margin="4,0,0,0"/>
                     </Grid>
                     <TextBlock Text="디버그 모드로 지정된 URL로 이동합니다 (JavaScript 비활성화)"
                                Foreground="#FF888888"
@@ -737,35 +572,9 @@
                         <Button Grid.Column="1"
                                 Content="폴더 열기"
                                 Command="{Binding OpenSettingsFolderCommand}"
+                                Style="{StaticResource DarkButton}"
                                 Width="60"
-                                Height="24"
-                                Margin="4,0,0,0"
-                                Background="#FF3A3A3A"
-                                Foreground="White"
-                                BorderThickness="0"
-                                FontSize="9">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        CornerRadius="3"
-                                                        Padding="8,4">
-                                                    <ContentPresenter HorizontalAlignment="Center"
-                                                                    VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter Property="Background" Value="#FF5A5A5A"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
+                                Margin="4,0,0,0"/>
                     </Grid>
                     <TextBlock Text="settings.json 파일이 저장된 폴더를 엽니다"
                                Foreground="#FF888888"

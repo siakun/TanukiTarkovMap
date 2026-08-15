@@ -9,6 +9,7 @@
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Resources/Styles/ButtonStyles.xaml"/>
                 <ResourceDictionary Source="Resources/Styles/ComboBoxStyles.xaml"/>
                 <ResourceDictionary Source="Resources/Styles/ScrollStyles.xaml"/>
             </ResourceDictionary.MergedDictionaries>
