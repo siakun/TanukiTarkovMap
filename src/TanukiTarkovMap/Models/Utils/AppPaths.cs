@@ -1,4 +1,6 @@
 using System.IO;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 /**
 AppPaths - 앱이 사용자 폴더에 두는 파일의 위치를 정하는 단일 출처
@@ -19,22 +21,23 @@ Core Functionality:
 - GetBrowserCacheSize() / DeleteBrowserCacheIfRequested(): 설정 화면의 캐시 표시와 비우기
 
 Method Flow:
-  앱 시작 -> PrepareOnStartup -> (설정 복사, 캐시 이동, 코드 캐시 정리) -> InitializeCef
+  앱 시작 -> PrepareOnStartup -> (설정 병합, 캐시 이전, 코드 캐시 정리) -> InitializeCef
   앱 종료 -> Cef.Shutdown -> DeleteBrowserCacheIfRequested
 
 Historical Context: 0.1.0까지는 두 폴더가 정반대였다. 설정이 Velopack 설치 폴더 안(Local)에
 있어 앱을 제거하면 맵별 창 위치까지 함께 사라졌고, 브라우저 캐시는 Roaming에 쌓여 제거한
 뒤에도 수백MB가 남았다. 로밍 프로필을 쓰는 환경에서는 그 캐시가 로그인마다 네트워크를 오갔다.
 
-Design Rationale: 설정은 옮기지 않고 복사한다. 이 앱에는 지난 버전으로 되돌리는 기능이 있고
-되돌아간 버전은 예전 위치만 보기 때문에, 원본을 지우면 다운그레이드한 사용자가 설정을 잃는다.
-캐시는 사이트가 저장한 쿠키와 IndexedDB까지 담고 있어 지우지 않고 통째로 옮긴다.
-두 폴더가 같은 볼륨(AppData 아래)이라 이동은 내용 복사 없이 끝난다.
+Design Rationale: 설정은 예전 파일을 남긴 채 현재 파일과 병합한다. 지난 버전은 예전 위치만
+보기 때문에 원본이 필요하고, 파일 전체를 덮어쓰면 지난 버전이 모르는 새 설정이 사라진다.
+캐시는 쿠키와 IndexedDB까지 담고 있어 같은 볼륨에서는 통째로 옮기고, 이동할 수 없으면
+임시 폴더에 완전히 복사한 뒤 새 위치로 전환한다. 버전을 내렸다가 돌아오면 두 프로필이 다시
+생길 수 있으므로, 두 폴더가 함께 있다는 이유만으로 어느 쪽도 지우거나 합치지 않는다.
 
 Critical Warnings: PrepareOnStartup()은 CEF 초기화 전에 불러야 한다.
 CEF가 캐시 폴더를 열고 나면 폴더를 옮기거나 지울 수 없어 조용히 실패한다.
 
-Last Updated: 2026-08-14 | .NET 8 | 설정과 캐시 폴더의 역할 교환
+Last Updated: 2026-08-15 | .NET 8 | 버전 왕복 시 설정과 브라우저 데이터 보존
 */
 namespace TanukiTarkovMap.Models.Utils
 {
@@ -56,8 +59,33 @@ namespace TanukiTarkovMap.Models.Utils
         /// <summary> 설정 폴더. 앱을 제거해도 남는다 </summary>
         public static string SettingsFolder => RoamingRoot;
 
-        /// <summary> settings.json 전체 경로 </summary>
+        /// <summary> settings.json 전체 경로. 저장은 언제나 이 자리에 한다 </summary>
         public static string SettingsFilePath => Path.Combine(SettingsFolder, "settings.json");
+
+        /// <summary>
+        /// 설정을 읽을 후보. 더 최근 파일을 먼저 읽고 실패하면 다른 위치를 시도한다.
+        /// 이전에 실패해 두 파일이 함께 남아도 최신 설정을 읽으며, 손상된 한 파일 때문에
+        /// 정상인 다른 파일까지 버리고 기본값을 만들지 않는다
+        /// </summary>
+        internal static IReadOnlyList<string> SettingsReadPaths
+        {
+            get
+            {
+                var current = new FileInfo(SettingsFilePath);
+                var legacy = new FileInfo(LegacySettingsFilePath);
+
+                if (current.Exists && legacy.Exists)
+                {
+                    return current.LastWriteTimeUtc >= legacy.LastWriteTimeUtc
+                        ? [current.FullName, legacy.FullName]
+                        : [legacy.FullName, current.FullName];
+                }
+
+                if (current.Exists) return [current.FullName];
+                if (legacy.Exists) return [legacy.FullName];
+                return [];
+            }
+        }
 
         /// <summary>
         /// CefSharp에 넘기는 프로필 폴더. 앱을 제거하면 함께 사라진다.
@@ -76,6 +104,12 @@ namespace TanukiTarkovMap.Models.Utils
 
         /// <summary> 0.1.0까지 캐시를 두던 자리 (Roaming) </summary>
         private static string LegacyBrowserCacheFolder => Path.Combine(RoamingRoot, "Cache");
+
+        /// <summary> 다른 볼륨에서 프로필을 복사할 때만 쓰는 새 위치의 임시 폴더 </summary>
+        private static string BrowserCacheMigrationFolder => Path.Combine(LocalRoot, "Cache.migrating");
+
+        /// <summary> 복사가 끝난 예전 프로필을 활성 경로 밖에서 정리하는 폴더 </summary>
+        private static string RetiredBrowserCacheFolder => Path.Combine(RoamingRoot, "Cache.migrated");
 
         /// <summary>
         /// 앱을 닫을 때 브라우저 캐시를 비울지 여부.
@@ -169,19 +203,93 @@ namespace TanukiTarkovMap.Models.Utils
         {
             try
             {
-                // 이미 넘어왔거나 넘길 것이 없으면 손대지 않는다
-                if (File.Exists(SettingsFilePath)) return;
-                if (!File.Exists(LegacySettingsFilePath)) return;
+                var legacy = new FileInfo(LegacySettingsFilePath);
+                if (!legacy.Exists) return;
 
-                Directory.CreateDirectory(SettingsFolder);
+                // 예전 위치를 지우지 않으므로 두 파일이 함께 남는다. 지난 버전으로 되돌리면 그 버전이
+                // 예전 파일을 고치고, 다시 올라오면 이 자리에서 그 변경을 가져와야 한다.
+                // 새 파일이 있다는 이유만으로 건너뛰면 버전을 오갈 때 설정이 두 갈래로 갈라진다
+                var current = new FileInfo(SettingsFilePath);
+                if (current.Exists && current.LastWriteTimeUtc >= legacy.LastWriteTimeUtc) return;
 
-                // 옮기지 않고 복사한다. 지난 버전으로 되돌리면 그 버전은 예전 위치만 보기 때문이다
-                File.Copy(LegacySettingsFilePath, SettingsFilePath, overwrite: false);
-                Logger.SimpleLog($"[AppPaths] Settings copied to {SettingsFilePath}");
+                var merged = current.Exists
+                    ? ReadSettingsObject(SettingsFilePath)
+                    : new JsonObject();
+                var legacySettings = ReadSettingsObject(LegacySettingsFilePath);
+
+                // 예전 버전이 아는 값만 최신 값으로 덮고, 그 버전에 없던 새 속성은 현재 파일에 남긴다.
+                // 중첩된 설정도 같은 규칙으로 합쳐 이후에 필드가 늘어도 되돌아간 버전이 지우지 않는다
+                MergeJsonObjects(merged, legacySettings);
+                WriteSettingsFile(merged.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                Logger.SimpleLog($"[AppPaths] Settings merged from {LegacySettingsFilePath} (newer)");
             }
             catch (Exception ex)
             {
+                // SettingsReadPaths가 더 최신인 예전 파일을 먼저 돌려주고, 그 파일까지 읽지 못하면
+                // 현재 파일을 다시 시도한다. 실패한 이전 때문에 곧바로 기본값을 만들지 않는다
                 Logger.SimpleLog($"[AppPaths] Settings migration failed: {ex.Message}");
+            }
+        }
+
+        internal static void WriteSettingsFile(string json)
+        {
+            Directory.CreateDirectory(SettingsFolder);
+
+            var temporaryPath = Path.Combine(
+                SettingsFolder,
+                $".{Path.GetFileName(SettingsFilePath)}.{Guid.NewGuid():N}.tmp");
+
+            try
+            {
+                File.WriteAllText(temporaryPath, json);
+                File.Move(temporaryPath, SettingsFilePath, overwrite: true);
+            }
+            finally
+            {
+                try
+                {
+                    File.Delete(temporaryPath);
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"[AppPaths] Temporary settings cleanup failed: {ex.Message}");
+                }
+            }
+        }
+
+        internal static void DeleteSettingsFiles()
+        {
+            foreach (var path in new[] { LegacySettingsFilePath, SettingsFilePath })
+            {
+                try
+                {
+                    File.Delete(path);
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"[AppPaths] Settings deletion failed for {path}: {ex.Message}");
+                }
+            }
+        }
+
+        private static JsonObject ReadSettingsObject(string path)
+        {
+            var root = JsonNode.Parse(File.ReadAllText(path));
+            return root as JsonObject
+                   ?? throw new InvalidDataException($"설정 파일의 최상위 값이 객체가 아닙니다: {path}");
+        }
+
+        private static void MergeJsonObjects(JsonObject current, JsonObject legacy)
+        {
+            foreach (var (name, legacyValue) in legacy)
+            {
+                if (legacyValue is JsonObject legacyObject && current[name] is JsonObject currentObject)
+                {
+                    MergeJsonObjects(currentObject, legacyObject);
+                    continue;
+                }
+
+                current[name] = legacyValue?.DeepClone();
             }
         }
 
@@ -189,20 +297,124 @@ namespace TanukiTarkovMap.Models.Utils
         {
             try
             {
-                if (Directory.Exists(BrowserCacheFolder)) return;
+                if (Directory.Exists(BrowserCacheFolder))
+                {
+                    DeleteRetiredBrowserCache();
+
+                    if (!Directory.Exists(LegacyBrowserCacheFolder)) return;
+
+                    // 지난 버전은 예전 경로를 사용하므로 버전을 내렸다가 돌아오면 두 폴더가 함께 생긴다.
+                    // Chromium 프로필은 안전하게 합칠 수 없고 쿠키와 IndexedDB도 들어 있으므로 보존한다
+                    return;
+                }
+
                 if (!Directory.Exists(LegacyBrowserCacheFolder)) return;
 
                 Directory.CreateDirectory(LocalRoot);
 
-                // 쿠키와 IndexedDB까지 들어 있어 버리지 않고 옮긴다.
-                // 같은 볼륨이라 수백MB여도 내용 복사 없이 끝난다
-                Directory.Move(LegacyBrowserCacheFolder, BrowserCacheFolder);
-                Logger.SimpleLog($"[AppPaths] Browser cache moved to {BrowserCacheFolder}");
+                try
+                {
+                    // 쿠키와 IndexedDB까지 들어 있어 버리지 않고 옮긴다.
+                    // 같은 볼륨이면 수백MB여도 내용 복사 없이 끝난다
+                    Directory.Move(LegacyBrowserCacheFolder, BrowserCacheFolder);
+                    Logger.SimpleLog($"[AppPaths] Browser cache moved to {BrowserCacheFolder}");
+                }
+                catch (IOException moveFailure)
+                {
+                    // 로밍 폴더가 다른 볼륨이나 네트워크 공유에 있으면 이동할 수 없다. 다른 I/O 오류도
+                    // 원본을 지울 근거가 아니므로, 임시 폴더에 완전히 복사한 뒤에만 새 위치를 쓴다
+                    Logger.SimpleLog($"[AppPaths] Browser cache move failed ({moveFailure.Message}), copying safely");
+                    CopyBrowserCacheTransactionally();
+                }
             }
             catch (Exception ex)
             {
-                // 옮기지 못하면 CEF가 새 위치에 프로필을 새로 만든다. 방문 기록만 잃고 동작은 이어진다
+                // 원본은 그대로 둔다. 새 위치가 만들어지지 않았으면 다음 실행에서 다시 시도한다
                 Logger.SimpleLog($"[AppPaths] Browser cache migration failed: {ex.Message}");
+            }
+        }
+
+        private static void CopyBrowserCacheTransactionally()
+        {
+            if (Directory.Exists(BrowserCacheMigrationFolder))
+            {
+                Directory.Delete(BrowserCacheMigrationFolder, recursive: true);
+            }
+
+            try
+            {
+                CopyDirectory(LegacyBrowserCacheFolder, BrowserCacheMigrationFolder);
+
+                // 임시 폴더와 최종 폴더는 같은 LocalRoot에 있어 이름 변경으로 한 번에 전환된다
+                Directory.Move(BrowserCacheMigrationFolder, BrowserCacheFolder);
+                Logger.SimpleLog($"[AppPaths] Browser cache copied to {BrowserCacheFolder}");
+            }
+            catch
+            {
+                try
+                {
+                    if (Directory.Exists(BrowserCacheMigrationFolder))
+                    {
+                        Directory.Delete(BrowserCacheMigrationFolder, recursive: true);
+                    }
+                }
+                catch (Exception cleanupFailure)
+                {
+                    Logger.SimpleLog($"[AppPaths] Partial browser cache cleanup failed: {cleanupFailure.Message}");
+                }
+
+                throw;
+            }
+
+            RetireLegacyBrowserCache();
+        }
+
+        private static void CopyDirectory(string sourcePath, string destinationPath)
+        {
+            Directory.CreateDirectory(destinationPath);
+
+            foreach (var filePath in Directory.EnumerateFiles(sourcePath))
+            {
+                var destinationFile = Path.Combine(destinationPath, Path.GetFileName(filePath));
+                File.Copy(filePath, destinationFile, overwrite: false);
+            }
+
+            foreach (var directoryPath in Directory.EnumerateDirectories(sourcePath))
+            {
+                var attributes = File.GetAttributes(directoryPath);
+                if ((attributes & FileAttributes.ReparsePoint) != 0)
+                {
+                    throw new IOException($"재분석 지점은 브라우저 프로필과 함께 복사할 수 없습니다: {directoryPath}");
+                }
+
+                var destinationDirectory = Path.Combine(destinationPath, Path.GetFileName(directoryPath));
+                CopyDirectory(directoryPath, destinationDirectory);
+            }
+        }
+
+        private static void RetireLegacyBrowserCache()
+        {
+            try
+            {
+                DeleteRetiredBrowserCache();
+
+                // 먼저 활성 경로 밖으로 이름을 바꾼다. 이후 삭제가 중단돼도 지난 버전은
+                // 반쯤 지워진 프로필 대신 새 프로필을 만든다
+                Directory.Move(LegacyBrowserCacheFolder, RetiredBrowserCacheFolder);
+                Directory.Delete(RetiredBrowserCacheFolder, recursive: true);
+            }
+            catch (Exception ex)
+            {
+                // 새 위치에는 완전한 복사본이 있다. 예전 복사본은 지우지 못한 상태로만 남긴다
+                Logger.SimpleLog($"[AppPaths] Old browser cache cleanup deferred: {ex.Message}");
+            }
+        }
+
+        private static void DeleteRetiredBrowserCache()
+        {
+            if (Directory.Exists(RetiredBrowserCacheFolder))
+            {
+                Directory.Delete(RetiredBrowserCacheFolder, recursive: true);
             }
         }
     }
