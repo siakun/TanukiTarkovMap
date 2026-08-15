@@ -58,7 +58,7 @@ namespace TanukiTarkovMap.Models.Services
     public class UpdateService
     {
         /// <summary> 업데이트 조회에 사용하는 GitHub 저장소 주소 (App의 버전 표시에도 사용) </summary>
-        internal const string GitHubRepoUrl = "https://github.com/Siakun/TanukiTarkovMap";
+        internal const string GitHubRepoUrl = "https://github.com/siakun/TanukiTarkovMap";
 
         private UpdateManager? _autoUpdateManager;
         private UpdateInfo? _pendingUpdate;
