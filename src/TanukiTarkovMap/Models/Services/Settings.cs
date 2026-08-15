@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Text.Json;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.Migrations;
 using TanukiTarkovMap.Models.Utils;
 
 /**
@@ -17,7 +18,8 @@ Core Functionality:
 - TarkovPathFinder로 게임/스크린샷 폴더 자동 탐지
 - 각 맵별 기본 창 위치/크기 설정값 생성
 
-파일 위치는 AppPaths가 정한다. 앱을 제거해도 설정이 남도록 Velopack 설치 폴더 밖에 둔다.
+현재 파일 위치는 AppPaths가 정하고, SettingsLocationMigration이 이전 실패 때 읽을 후보를 정한다.
+앱을 제거해도 설정이 남도록 Velopack 설치 폴더 밖에 둔다.
 */
 namespace TanukiTarkovMap.Models.Services
 {
@@ -38,7 +40,7 @@ namespace TanukiTarkovMap.Models.Services
         {
             // 더 최신인 위치부터 읽되 손상됐거나 접근할 수 없으면 다른 위치를 시도한다.
             // 한쪽 파일의 실패만으로 정상인 설정까지 버리고 기본값을 만들지 않는다
-            foreach (var readPath in AppPaths.SettingsReadPaths)
+            foreach (var readPath in SettingsLocationMigration.SettingsReadPaths)
             {
                 try
                 {

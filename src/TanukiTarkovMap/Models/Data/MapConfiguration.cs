@@ -7,6 +7,14 @@ namespace TanukiTarkovMap.Models.Data
     {
         /// <summary>
         /// 사용 가능한 타르코프 맵 목록
+        ///
+        /// scene preset 이름은 추측하지 말고 설치된 게임에서 확인한다.
+        /// EscapeFromTarkov_Data 아래 maps 폴더의 파일 이름이 그대로 로그의
+        /// "path:maps/{이름}.bundle"에 찍히며, LogsWatcher가 그 값으로 맵을 찾는다.
+        /// 이름 하나가 어긋나면 그 맵만 조용히 자동 전환되지 않는다.
+        ///
+        /// 목록에 넣으려면 열어 볼 맵 페이지가 함께 있어야 한다. 게임 번들에는 있지만
+        /// 볼 페이지가 없는 맵(개발용, Arena 등)은 여기 넣지 않는다.
         /// </summary>
         public static List<MapInfo> AvailableMaps { get; } = new()
         {
@@ -19,8 +27,11 @@ namespace TanukiTarkovMap.Models.Data
             new MapInfo("reserve", "Reserve", "https://tarkov-market.com/maps/reserve", "rezerv_base_preset"),
             new MapInfo("lighthouse", "Lighthouse", "https://tarkov-market.com/maps/lighthouse", "lighthouse_preset"),
             new MapInfo("streets", "Streets of Tarkov", "https://tarkov-market.com/maps/streets", "city_preset"),
-            new MapInfo("lab", "The Lab", "https://tarkov-market.com/maps/lab", "laboratory_preset"),
-            new MapInfo("labyrinth", "Labyrinth", "https://tarkov-market.com/maps/labyrinth", "labyrinth")
+            new MapInfo("lab", "The Lab", "https://tarkov-market.com/maps/lab", "laboratory_preset", "laboratory_dark_preset"),
+            // MapId는 맵별 창 크기와 위치를 저장하는 열쇠라 바꾸면 사용자의 저장값이 끊긴다.
+            // 실제 번들 이름은 labyrinth_preset이므로 MapId는 두고 프리셋만 덧붙인다
+            new MapInfo("labyrinth", "Labyrinth", "https://tarkov-market.com/maps/labyrinth", "labyrinth", "labyrinth_preset"),
+            new MapInfo("icebreaker", "Icebreaker", "https://tarkov-market.com/maps/icebreaker", "icebreaker")
         };
 
         /// <summary>
