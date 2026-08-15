@@ -425,7 +425,7 @@
                                 BorderThickness="0"
                                 ToolTip="{Binding UpdateReadyVersion, StringFormat='업데이트 준비 완료 (v{0})&#x0a;클릭하면 다시 시작하고 적용합니다'}"
                                 Command="{Binding RestartToApplyUpdateCommand}"
-                                Visibility="{Binding IsUpdateReady, Converter={StaticResource BoolToVisibilityConverter}}"
+                                Visibility="{Binding ShowUpdateIcon, Converter={StaticResource BoolToVisibilityConverter}}"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <Button.Style>
                                 <Style TargetType="Button">

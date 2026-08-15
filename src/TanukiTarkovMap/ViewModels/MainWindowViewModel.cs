@@ -37,7 +37,8 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<PilotConnectedMessage>,
         IRecipient<TopBarHiddenChangedMessage>,
         IRecipient<OpacitySliderDragMessage>,
-        IRecipient<UpdateReadyMessage>
+        IRecipient<UpdateReadyMessage>,
+        IRecipient<UpdateIconPreviewMessage>
     {
         private readonly WindowBoundsService _windowBoundsService;
         private readonly WindowStateManager _windowStateManager;
@@ -149,8 +150,21 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> Browser 컨테이너 Visibility (CefSharp은 WPF 렌더링이므로 항상 표시) </summary>
         public Visibility BrowserContainerVisibility => Visibility.Visible;
 
-        /// <summary> 다운로드 완료되어 적용 대기 중인 업데이트가 있는지 여부 (TopBar 표시용) </summary>
-        [ObservableProperty] public partial bool IsUpdateReady { get; set; } = false;
+        /// <summary> 다운로드 완료되어 적용 대기 중인 업데이트가 있는지 여부 </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowUpdateIcon))]
+        public partial bool IsUpdateReady { get; set; } = false;
+
+        /// <summary>
+        /// 개발자 도구에서 켠 아이콘 미리보기 여부.
+        /// 실제 대기 상태(IsUpdateReady)를 건드리지 않으려고 따로 둔다
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(ShowUpdateIcon))]
+        public partial bool IsUpdateIconForced { get; set; } = false;
+
+        /// <summary> 타이틀 바에 업데이트 아이콘을 보일지 여부 </summary>
+        public bool ShowUpdateIcon => IsUpdateReady || IsUpdateIconForced;
 
         /// <summary> 적용 대기 중인 업데이트 버전 문자열 </summary>
         [ObservableProperty] public partial string UpdateReadyVersion { get; set; } = string.Empty;
@@ -608,6 +622,24 @@ namespace TanukiTarkovMap.ViewModels
                 IsUpdateReady = true;
             });
             Logger.SimpleLog($"[MainWindowViewModel] Update ready indicator shown: v{message.Value}");
+        }
+
+        /// <summary>
+        /// 아이콘 미리보기 토글 핸들러 (개발자 도구 → MainWindowViewModel)
+        /// 실제 업데이트가 대기 중이면 미리보기를 꺼도 아이콘은 그대로 남는다
+        /// </summary>
+        public void Receive(UpdateIconPreviewMessage message)
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                // 실제 업데이트가 없을 때는 툴팁에 버전이 비어 보이므로 미리보기임을 적어 둔다
+                if (message.Value && string.IsNullOrEmpty(UpdateReadyVersion))
+                {
+                    UpdateReadyVersion = "미리보기";
+                }
+
+                IsUpdateIconForced = message.Value;
+            });
         }
 
         #endregion
