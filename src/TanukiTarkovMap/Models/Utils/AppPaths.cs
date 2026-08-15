@@ -13,39 +13,59 @@ Architecture: 설정과 브라우저 데이터의 수명을 경로와 제거 훅
   다시 설치하면 그대로 이어 쓴다
 - 활성 브라우저 데이터(Local): 앱을 지우면 함께 사라져야 한다. Velopack 설치 폴더 안이므로
   Update.exe --uninstall이 그 폴더를 지울 때 같이 정리된다
-- 호환용 브라우저 데이터(Roaming): 버전을 오갈 때는 보존하고, 앱을 제거할 때 훅으로 지운다
+- 이전 원본과 작업 사본(Roaming/임시): 완료를 확인하기 전에는 보존한다. 확정된 사본은
+  다음 시작에 정리하고, 별도 프로필은 사용자가 캐시를 비우거나 앱을 제거할 때 정리한다
 
 Core Functionality:
 - SettingsFilePath: settings.json의 위치
 - BrowserCacheFolder: CefSharp에 넘기는 프로필 폴더 (캐시뿐 아니라 쿠키와 IndexedDB도 들어간다)
-- PrepareOnStartup(): 예전 위치의 파일을 넘겨받고, 불어난 코드 캐시를 비운다
+- PrepareOnStartup(): 예전 위치의 파일을 넘겨받고 불어난 코드 캐시를 비운다
 - GetBrowserCacheSize() / DeleteBrowserCacheIfRequested(): 설정 화면의 캐시 표시와 비우기.
   지금 쓰는 자리뿐 아니라 예전 자리와 이전이 끊겨 남은 사본까지 함께 센다
 - DeleteRoamingBrowserDataOnUninstall(): 제거할 때 Roaming에 남은 브라우저 데이터만 지운다
+
+State Management:
+- _browserCacheFolderForCurrentRun: 이전 성공 시 Local, 실패 시 그 실행에서만 예전 원본 경로
+- BrowserCacheResetRequested: 실행 중 요청하고 Cef.Shutdown 뒤 한 번 처리하는 메모리 상태
+- Cache.migration-pending: 프로세스 중단 뒤 원본과 미확정 대상을 구분하는 디스크 표시
 
 Method Flow:
   앱 시작 -> PrepareOnStartup -> (설정 병합, 캐시 이전, 코드 캐시 정리) -> InitializeCef
   앱 종료 -> Cef.Shutdown -> DeleteBrowserCacheIfRequested
   앱 제거 -> Velopack 빠른 훅 -> DeleteRoamingBrowserDataOnUninstall
 
+Key Methods:
+- PrepareOnStartup(): CEF가 열리기 전에 설정과 브라우저 경로를 이전
+- WriteSettingsFile(json): 현재 설정을 임시 파일에서 원자적으로 교체
+- MigrateBrowserCache(): 원본을 이동하거나 완전 복사하고 실패하면 원본 경로로 되돌림
+- RecoverInterruptedBrowserMigration(): 중단 표시와 남은 폴더를 확인해 재시도 또는 완료 처리
+
+Dependencies:
+- System.Text.Json.Nodes: 예전 파일과 현재 파일의 설정 속성 재귀 병합
+- Logger: 이전과 정리 실패를 다음 실행에서 진단할 수 있게 기록
+
 Historical Context: 0.1.0까지는 두 폴더가 정반대였다. 설정이 Velopack 설치 폴더 안(Local)에
 있어 앱을 제거하면 맵별 창 위치까지 함께 사라졌고, 브라우저 캐시는 Roaming에 쌓여 제거한
 뒤에도 수백MB가 남았다. 로밍 프로필을 쓰는 환경에서는 그 캐시가 로그인마다 네트워크를 오갔다.
 
-Design Rationale: 설정은 예전 파일을 남긴 채 현재 파일과 병합한다. 지난 버전은 예전 위치만
-보기 때문에 원본이 필요하고, 파일 전체를 덮어쓰면 지난 버전이 모르는 새 설정이 사라진다.
+Design Rationale: 설정은 예전 파일을 남긴 채 현재 파일과 병합한다. 현재 파일을 쓰지 못해도
+SettingsReadPaths가 예전 파일을 읽어 실패한 이전 때문에 기본값으로 돌아가지 않게 한다.
 캐시는 쿠키와 IndexedDB까지 담고 있어 같은 볼륨에서는 통째로 옮기고, 이동할 수 없으면
-임시 폴더에 완전히 복사한 뒤 새 위치로 전환한다. 버전을 내렸다가 돌아오면 두 프로필이 다시
-생길 수 있으므로, 두 폴더가 함께 있다는 이유만으로 어느 쪽도 지우거나 합치지 않는다.
-대신 남은 자리를 크기 표시와 비우기가 함께 다뤄, 앱이 임의로 지우지 않으면서도 사용자가
-존재를 모르는 용량이 생기지 않게 한다. 앱을 제거할 때만 BrowserDataFolders에서 RoamingRoot
-아래 경로를 골라 지운다. RoamingRoot 자체는 지우지 않아 settings.json을 그대로 보존한다.
+임시 폴더에 완전히 복사한 뒤 새 위치로 전환한다. 이전이 실패하면 실패 중 생긴 Local 대상을
+지우고 그 실행에서는 원본 프로필을 계속 사용해, 빈 새 폴더가 다음 시작의 재시도를 막지 않게 한다.
+
+Edge Cases: 이전 도중 프로세스가 끊기면 Cache.migration-pending을 남긴다. 다음 시작에
+예전 원본이 있으면 미확정 Local 대상을 지우고 다시 이전하며, 원본 경로가 잠시 끊겼으면
+빈 프로필을 만들지 않고 그 경로가 돌아올 때까지 이전을 미룬다.
+
+Known Limitations: 중단 표시 없이 두 실제 Chromium 프로필이 함께 있으면 어느 쪽이 최신인지
+안전하게 판정하거나 합칠 수 없다. 시작할 때는 둘 다 보존하고 크기 표시와 캐시 비우기에서 다룬다.
 
 Critical Warnings: PrepareOnStartup()은 CEF 초기화 전에 불러야 한다.
 CEF가 캐시 폴더를 열고 나면 폴더를 옮기거나 지울 수 없어 조용히 실패한다.
 제거 훅은 30초 안에 끝나야 하므로 LocalRoot 정리는 Velopack에 맡기고 예외를 밖으로 던지지 않는다.
 
-Last Updated: 2026-08-15 | .NET 8 / Velopack 0.0.1298 | 제거 시 로밍 브라우저 데이터 정리
+Last Updated: 2026-08-15 | .NET 8 / Velopack 0.0.1298 | 브라우저 데이터 이전 실패 복구
 */
 namespace TanukiTarkovMap.Models.Utils
 {
@@ -63,6 +83,8 @@ namespace TanukiTarkovMap.Models.Utils
 
         private static string LocalRoot => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), AppFolderName);
+
+        private static string _browserCacheFolderForCurrentRun = CanonicalBrowserCacheFolder;
 
         /// <summary> 설정 폴더. 앱을 제거해도 남는다 </summary>
         public static string SettingsFolder => RoamingRoot;
@@ -96,10 +118,14 @@ namespace TanukiTarkovMap.Models.Utils
         }
 
         /// <summary>
-        /// CefSharp에 넘기는 프로필 폴더. 앱을 제거하면 함께 사라진다.
-        /// 이름은 캐시지만 쿠키와 IndexedDB 같은 사이트 데이터도 이 안에 들어간다
+        /// CefSharp에 넘기는 프로필 폴더. 정상 상태에서는 앱을 제거하면 함께 사라지는 Local 경로다.
+        /// 이전이 실패한 실행에서만 데이터 보존을 위해 예전 원본 경로를 돌려준다. 이름은 캐시지만
+        /// 쿠키와 IndexedDB 같은 사이트 데이터도 이 안에 들어간다
         /// </summary>
-        public static string BrowserCacheFolder => Path.Combine(LocalRoot, "Cache");
+        public static string BrowserCacheFolder => _browserCacheFolderForCurrentRun;
+
+        /// <summary> 현재 버전이 브라우저 프로필을 두는 실제 경로 </summary>
+        private static string CanonicalBrowserCacheFolder => Path.Combine(LocalRoot, "Cache");
 
         /// <summary>
         /// V8이 컴파일한 자바스크립트 바이트코드가 쌓이는 폴더.
@@ -120,18 +146,23 @@ namespace TanukiTarkovMap.Models.Utils
         private static string RetiredBrowserCacheFolder => Path.Combine(RoamingRoot, "Cache.migrated");
 
         /// <summary>
+        /// 원본을 정리하기 전에 프로세스가 끊겼음을 다음 시작에 알리는 표시.
+        /// 대상과 원본이 함께 있어도 어느 쪽이 이전 결과인지 추측하지 않게 한다
+        /// </summary>
+        private static string BrowserCacheMigrationMarkerPath => Path.Combine(LocalRoot, "Cache.migration-pending");
+
+        /// <summary>
         /// 브라우저 데이터가 놓일 수 있는 모든 자리. 크기를 재고 비울 때 함께 다룬다.
         ///
-        /// 지금 쓰는 자리 하나만 보면 안 된다. 버전을 내렸다가 돌아오면 예전 자리에도 프로필이
-        /// 살아 있고, 이전이 중간에 끊기면 정리 폴더나 복사 폴더에 사본이 남는다. 이 자리들은
+        /// 지금 쓰는 자리 하나만 보면 안 된다. 이전 구현이나 실패 때문에 예전 자리에 별도 프로필이
+        /// 남을 수 있고, 이전이 중간에 끊기면 정리 폴더나 복사 폴더에 사본이 생긴다. 이 자리들은
         /// 설정 화면에 잡히지 않아 사용자가 존재를 모르는 채로 수백MB가 쌓인다.
         ///
-        /// 예전 자리는 지난 버전이 지금도 쓰는 프로필이라 시작할 때 지우지 않고, 사용자가 비우기를
-        /// 눌렀을 때만 지운다. 정리 폴더와 복사 폴더는 내용이 새 자리에 이미 있는 사본이라
-        /// MigrateBrowserCache가 시작할 때 치운다
+        /// 예전 자리의 별도 프로필은 안전하게 합칠 수 없어 시작할 때 지우지 않고, 사용자가 비우기를
+        /// 눌렀을 때만 지운다. 정리 폴더와 복사 폴더는 현재 경로에 완전한 사본이 있음을 확인한 뒤 치운다
         /// </summary>
         private static IReadOnlyList<string> BrowserDataFolders =>
-            [BrowserCacheFolder, LegacyBrowserCacheFolder, RetiredBrowserCacheFolder, BrowserCacheMigrationFolder];
+            [CanonicalBrowserCacheFolder, LegacyBrowserCacheFolder, RetiredBrowserCacheFolder, BrowserCacheMigrationFolder];
 
         /// <summary>
         /// 앱을 닫을 때 브라우저 캐시를 비울지 여부.
@@ -179,10 +210,10 @@ namespace TanukiTarkovMap.Models.Utils
                 {
                     try
                     {
-                        if (!Directory.Exists(path)) continue;
-
-                        Directory.Delete(path, recursive: true);
-                        Logger.SimpleLog($"[AppPaths] Roaming browser data removed at {path}");
+                        if (DeleteBrowserDataDirectory(path))
+                        {
+                            Logger.SimpleLog($"[AppPaths] Roaming browser data removed at {path}");
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -212,16 +243,27 @@ namespace TanukiTarkovMap.Models.Utils
             {
                 try
                 {
-                    if (!Directory.Exists(path)) continue;
-
-                    Directory.Delete(path, recursive: true);
-                    Logger.SimpleLog($"[AppPaths] Browser data cleared at {path}");
+                    if (DeleteBrowserDataDirectory(path))
+                    {
+                        Logger.SimpleLog($"[AppPaths] Browser data cleared at {path}");
+                    }
                 }
                 catch (Exception ex)
                 {
                     Logger.SimpleLog($"[AppPaths] Browser data clear failed for {path}: {ex.Message}");
                 }
             }
+
+            try
+            {
+                File.Delete(BrowserCacheMigrationMarkerPath);
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[AppPaths] Browser migration marker cleanup failed: {ex.Message}");
+            }
+
+            _browserCacheFolderForCurrentRun = CanonicalBrowserCacheFolder;
         }
 
         /// <summary>
@@ -230,6 +272,7 @@ namespace TanukiTarkovMap.Models.Utils
         /// </summary>
         public static void PrepareOnStartup()
         {
+            _browserCacheFolderForCurrentRun = CanonicalBrowserCacheFolder;
             MigrateSettings();
             MigrateBrowserCache();
             TrimCodeCacheIfOversized();
@@ -271,9 +314,8 @@ namespace TanukiTarkovMap.Models.Utils
                 var legacy = new FileInfo(LegacySettingsFilePath);
                 if (!legacy.Exists) return;
 
-                // 예전 위치를 지우지 않으므로 두 파일이 함께 남는다. 지난 버전으로 되돌리면 그 버전이
-                // 예전 파일을 고치고, 다시 올라오면 이 자리에서 그 변경을 가져와야 한다.
-                // 새 파일이 있다는 이유만으로 건너뛰면 버전을 오갈 때 설정이 두 갈래로 갈라진다
+                // 예전 위치를 지우지 않으므로 이전에 실패하면 두 파일이 함께 남을 수 있다.
+                // 새 파일보다 예전 파일이 더 최근일 때만 병합해 오래된 값으로 덮지 않는다
                 var current = new FileInfo(SettingsFilePath);
                 if (current.Exists && current.LastWriteTimeUtc >= legacy.LastWriteTimeUtc) return;
 
@@ -282,8 +324,8 @@ namespace TanukiTarkovMap.Models.Utils
                     : new JsonObject();
                 var legacySettings = ReadSettingsObject(LegacySettingsFilePath);
 
-                // 예전 버전이 아는 값만 최신 값으로 덮고, 그 버전에 없던 새 속성은 현재 파일에 남긴다.
-                // 중첩된 설정도 같은 규칙으로 합쳐 이후에 필드가 늘어도 되돌아간 버전이 지우지 않는다
+                // 예전 파일의 값만 최신 값으로 덮고, 그 파일에 없던 새 속성은 현재 파일에 남긴다.
+                // 중첩된 설정도 같은 규칙으로 합쳐 이후에 필드가 늘어도 이전할 수 있게 한다
                 MergeJsonObjects(merged, legacySettings);
                 WriteSettingsFile(merged.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
                 Logger.SimpleLog($"[AppPaths] Settings merged from {LegacySettingsFilePath} (newer)");
@@ -360,13 +402,14 @@ namespace TanukiTarkovMap.Models.Utils
 
         private static void MigrateBrowserCache()
         {
+            if (!RecoverInterruptedBrowserMigration()) return;
+
+            var canonicalExistedAtStart = Directory.Exists(CanonicalBrowserCacheFolder);
+
             try
             {
-                if (Directory.Exists(BrowserCacheFolder))
+                if (canonicalExistedAtStart)
                 {
-                    // 지난 버전은 예전 경로를 사용하므로 버전을 내렸다가 돌아오면 두 폴더가 함께 생긴다.
-                    // Chromium 프로필은 안전하게 합칠 수 없고 쿠키와 IndexedDB도 들어 있으므로 보존한다.
-                    // 예전 자리에 남은 것은 GetBrowserCacheSize가 함께 세고 사용자가 비우기를 누르면 사라진다
                     DeleteMigrationLeftovers();
                     return;
                 }
@@ -374,13 +417,14 @@ namespace TanukiTarkovMap.Models.Utils
                 if (!Directory.Exists(LegacyBrowserCacheFolder)) return;
 
                 Directory.CreateDirectory(LocalRoot);
+                File.WriteAllText(BrowserCacheMigrationMarkerPath, string.Empty);
 
                 try
                 {
                     // 쿠키와 IndexedDB까지 들어 있어 버리지 않고 옮긴다.
                     // 같은 볼륨이면 수백MB여도 내용 복사 없이 끝난다
-                    Directory.Move(LegacyBrowserCacheFolder, BrowserCacheFolder);
-                    Logger.SimpleLog($"[AppPaths] Browser cache moved to {BrowserCacheFolder}");
+                    Directory.Move(LegacyBrowserCacheFolder, CanonicalBrowserCacheFolder);
+                    Logger.SimpleLog($"[AppPaths] Browser cache moved to {CanonicalBrowserCacheFolder}");
                 }
                 catch (IOException moveFailure)
                 {
@@ -389,11 +433,86 @@ namespace TanukiTarkovMap.Models.Utils
                     Logger.SimpleLog($"[AppPaths] Browser cache move failed ({moveFailure.Message}), copying safely");
                     CopyBrowserCacheTransactionally();
                 }
+
+                File.Delete(BrowserCacheMigrationMarkerPath);
             }
             catch (Exception ex)
             {
-                // 원본은 그대로 둔다. 새 위치가 만들어지지 않았으면 다음 실행에서 다시 시도한다
+                // 이번 시도에서 생긴 새 프로필은 원본이 남아 있을 때만 지운다. 그렇지 않으면 CEF가
+                // 빈 새 경로를 만들어 다음 실행부터 이전이 끝난 것으로 오인한다
+                if (!canonicalExistedAtStart
+                    && Directory.Exists(LegacyBrowserCacheFolder))
+                {
+                    try
+                    {
+                        DeleteBrowserDataDirectory(CanonicalBrowserCacheFolder);
+                    }
+                    catch (Exception cleanupFailure)
+                    {
+                        Logger.SimpleLog($"[AppPaths] Failed browser migration target cleanup failed: {cleanupFailure.Message}");
+                    }
+
+                    _browserCacheFolderForCurrentRun = LegacyBrowserCacheFolder;
+
+                    if (!Directory.Exists(CanonicalBrowserCacheFolder))
+                    {
+                        try
+                        {
+                            File.Delete(BrowserCacheMigrationMarkerPath);
+                        }
+                        catch (Exception markerCleanupFailure)
+                        {
+                            Logger.SimpleLog($"[AppPaths] Browser migration marker cleanup failed: {markerCleanupFailure.Message}");
+                        }
+                    }
+                }
+
+                // 원본을 이번 실행의 프로필로 골랐으므로 다음 실행에서도 이전을 다시 시도할 수 있다
                 Logger.SimpleLog($"[AppPaths] Browser cache migration failed: {ex.Message}");
+            }
+        }
+
+        private static bool RecoverInterruptedBrowserMigration()
+        {
+            if (!File.Exists(BrowserCacheMigrationMarkerPath)) return true;
+
+            try
+            {
+                var canonicalExists = Directory.Exists(CanonicalBrowserCacheFolder);
+                var legacyExists = Directory.Exists(LegacyBrowserCacheFolder);
+
+                if (!canonicalExists && !legacyExists)
+                {
+                    // 로밍 경로가 잠시 끊긴 경우 원본이 없다고 단정해 빈 프로필을 만들지 않는다.
+                    // 표시를 남겨 다음 시작에서 원본이나 확정된 대상을 다시 확인한다
+                    _browserCacheFolderForCurrentRun = LegacyBrowserCacheFolder;
+                    Logger.SimpleLog("[AppPaths] Interrupted browser migration deferred until the legacy profile is accessible");
+                    return false;
+                }
+
+                if (legacyExists)
+                {
+                    // 표시가 있는 동안 대상과 원본이 함께 남았다면 대상은 복사 뒤 아직 확정하지 못한
+                    // 결과다. 원본만 보존하고 대상을 치운 뒤 처음부터 다시 이전한다
+                    DeleteBrowserDataDirectory(CanonicalBrowserCacheFolder);
+                    DeleteBrowserDataDirectory(BrowserCacheMigrationFolder);
+                }
+
+                File.Delete(BrowserCacheMigrationMarkerPath);
+                Logger.SimpleLog("[AppPaths] Interrupted browser cache migration recovered");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                // 원본이 남아 있으면 이번 실행도 원본을 사용한다. 표시와 실패한 대상은 그대로 두어
+                // 다음 시작에서 어느 쪽을 보존해야 하는지 다시 추측하지 않게 한다
+                if (Directory.Exists(LegacyBrowserCacheFolder))
+                {
+                    _browserCacheFolderForCurrentRun = LegacyBrowserCacheFolder;
+                }
+
+                Logger.SimpleLog($"[AppPaths] Interrupted browser cache migration recovery failed: {ex.Message}");
+                return false;
             }
         }
 
@@ -401,7 +520,7 @@ namespace TanukiTarkovMap.Models.Utils
         {
             if (Directory.Exists(BrowserCacheMigrationFolder))
             {
-                Directory.Delete(BrowserCacheMigrationFolder, recursive: true);
+                DeleteBrowserDataDirectory(BrowserCacheMigrationFolder);
             }
 
             try
@@ -409,8 +528,11 @@ namespace TanukiTarkovMap.Models.Utils
                 CopyDirectory(LegacyBrowserCacheFolder, BrowserCacheMigrationFolder);
 
                 // 임시 폴더와 최종 폴더는 같은 LocalRoot에 있어 이름 변경으로 한 번에 전환된다
-                Directory.Move(BrowserCacheMigrationFolder, BrowserCacheFolder);
-                Logger.SimpleLog($"[AppPaths] Browser cache copied to {BrowserCacheFolder}");
+                Directory.Move(BrowserCacheMigrationFolder, CanonicalBrowserCacheFolder);
+                Logger.SimpleLog($"[AppPaths] Browser cache copied to {CanonicalBrowserCacheFolder}");
+
+                // 실제 데이터가 새 경로에 완전히 복사된 뒤에만 원본을 정리한다
+                RetireLegacyBrowserCache();
             }
             catch
             {
@@ -418,7 +540,7 @@ namespace TanukiTarkovMap.Models.Utils
                 {
                     if (Directory.Exists(BrowserCacheMigrationFolder))
                     {
-                        Directory.Delete(BrowserCacheMigrationFolder, recursive: true);
+                        DeleteBrowserDataDirectory(BrowserCacheMigrationFolder);
                     }
                 }
                 catch (Exception cleanupFailure)
@@ -428,8 +550,6 @@ namespace TanukiTarkovMap.Models.Utils
 
                 throw;
             }
-
-            RetireLegacyBrowserCache();
         }
 
         private static void CopyDirectory(string sourcePath, string destinationPath)
@@ -457,18 +577,19 @@ namespace TanukiTarkovMap.Models.Utils
 
         private static void RetireLegacyBrowserCache()
         {
+            DeleteMigrationLeftovers();
+
+            // 먼저 활성 경로 밖으로 이름을 바꾼다. 이후 삭제가 중단돼도 완전한 새 프로필을 쓰고,
+            // 남은 사본은 다음 시작에서 이전 찌꺼기로 판별해 정리할 수 있다
+            Directory.Move(LegacyBrowserCacheFolder, RetiredBrowserCacheFolder);
+
             try
             {
-                DeleteMigrationLeftovers();
-
-                // 먼저 활성 경로 밖으로 이름을 바꾼다. 이후 삭제가 중단돼도 지난 버전은
-                // 반쯤 지워진 프로필 대신 새 프로필을 만든다
-                Directory.Move(LegacyBrowserCacheFolder, RetiredBrowserCacheFolder);
-                Directory.Delete(RetiredBrowserCacheFolder, recursive: true);
+                DeleteBrowserDataDirectory(RetiredBrowserCacheFolder);
             }
             catch (Exception ex)
             {
-                // 새 위치에는 완전한 복사본이 있다. 예전 복사본은 지우지 못한 상태로만 남긴다
+                // 새 위치에는 완전한 복사본이 있다. 정리 사본만 다음 시작까지 남긴다
                 Logger.SimpleLog($"[AppPaths] Old browser cache cleanup deferred: {ex.Message}");
             }
         }
@@ -483,9 +604,17 @@ namespace TanukiTarkovMap.Models.Utils
             {
                 if (Directory.Exists(path))
                 {
-                    Directory.Delete(path, recursive: true);
+                    DeleteBrowserDataDirectory(path);
                 }
             }
+        }
+
+        private static bool DeleteBrowserDataDirectory(string path)
+        {
+            if (!Directory.Exists(path)) return false;
+
+            Directory.Delete(path, recursive: true);
+            return true;
         }
 
         private static bool IsUnderRoamingRoot(string path)

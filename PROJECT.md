@@ -413,6 +413,8 @@ services.AddSingleton(_ => new ServiceName());
 
 0.1.0까지는 두 폴더가 반대였다. `AppPaths.PrepareOnStartup()`이 앱 시작 때 예전 위치의 파일을 넘겨받고 불어난 코드 캐시를 비운다. CEF가 캐시 폴더를 여는 순간 손댈 수 없으므로 `InitializeCef()`보다 먼저 호출해야 한다.
 
+브라우저 프로필 이전이 실패하면 그 실행의 `BrowserCacheFolder`는 예전 원본 경로를 가리킨다. 실패 중 생긴 Local 대상은 지워 다음 시작에서 이전을 다시 시도하며, 빈 Local 폴더가 이전 완료 표시처럼 남지 않게 한다.
+
 ### 브라우저 캐시 관리
 
 캐시는 두 갈래로 쌓이고 성질이 달라 다르게 다룬다. 실측한 값은 맵 하나를 처음 열 때 HTTP 캐시 21MB, 맵을 열 때마다 코드 캐시 0.8MB다.
