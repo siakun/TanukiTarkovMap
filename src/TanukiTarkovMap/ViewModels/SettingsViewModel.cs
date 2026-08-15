@@ -83,17 +83,36 @@ namespace TanukiTarkovMap.ViewModels
         }
         #endregion
 
+        #region Browser Cache Properties
+        /// <summary> 브라우저 캐시가 차지하는 크기 (예: 620.5 MB) </summary>
+        [ObservableProperty] public partial string BrowserCacheSizeText { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 앱을 닫을 때 캐시를 비우도록 예약했는지 여부.
+        /// 실행 중에는 CEF가 프로필 파일을 붙들고 있어 그 자리에서 지울 수 없다
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CacheResetButtonText))]
+        public partial bool CacheResetScheduled { get; set; } = false;
+
+        public string CacheResetButtonText => CacheResetScheduled ? "비우기 취소" : "캐시 비우기";
+
+        /// <summary> 코드 캐시 자동 정리 안내. 기준 값은 AppPaths가 정하므로 여기서 다시 적지 않는다 </summary>
+        public string CodeCacheLimitNotice =>
+            $"페이지 스크립트 캐시가 {AppPaths.CodeCacheLimitMegabytes}MB를 넘으면 시작할 때 자동으로 정리합니다. 맵 타일은 그대로 두므로 느려지지 않습니다";
+        #endregion
+
         public string AppVersion => App.Version;
 
-        public string SettingsFilePath => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "TanukiTarkovMap",
-            "settings.json"
-        );
+        public string SettingsFilePath => AppPaths.SettingsFilePath;
 
         public SettingsViewModel()
         {
             LoadCurrentSettings();
+
+            // 설정 창을 닫았다 열어도 예약 상태가 그대로 보이도록 실제 값에서 읽는다
+            CacheResetScheduled = AppPaths.BrowserCacheResetRequested;
+
             WeakReferenceMessenger.Default.RegisterAll(this);
         }
 
@@ -258,10 +277,40 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public void Receive(SettingsOpenedMessage message)
         {
+            // 캐시는 쓰는 동안 계속 불어나므로 열 때마다 다시 잰다
+            _ = RefreshCacheSizeCommand.ExecuteAsync(null);
+
             if (_versionListLoaded) return;
 
             _versionListLoaded = true;
             _ = RefreshVersionsCommand.ExecuteAsync(null);
+        }
+
+        /// <summary>
+        /// 브라우저 캐시 크기를 다시 잰다. 파일 수천 개를 훑으므로 백그라운드에서 돈다
+        /// </summary>
+        [RelayCommand]
+        private async Task RefreshCacheSize()
+        {
+            BrowserCacheSizeText = "확인 중...";
+
+            var sizeInBytes = await Task.Run(AppPaths.GetBrowserCacheSize);
+            BrowserCacheSizeText = sizeInBytes > 0
+                ? $"{sizeInBytes / 1024d / 1024d:N1} MB"
+                : "비어 있음";
+        }
+
+        /// <summary>
+        /// 캐시 비우기를 예약하거나 되돌린다.
+        /// 실행 중에는 지울 수 없어 실제 삭제는 앱을 닫을 때 일어난다
+        /// </summary>
+        [RelayCommand]
+        private void ToggleCacheReset()
+        {
+            CacheResetScheduled = !CacheResetScheduled;
+            AppPaths.BrowserCacheResetRequested = CacheResetScheduled;
+
+            Logger.SimpleLog($"[SettingsViewModel] Browser cache reset scheduled: {CacheResetScheduled}");
         }
 
         private bool CanRefreshVersions() => !IsVersionListLoading && !IsInstalling;

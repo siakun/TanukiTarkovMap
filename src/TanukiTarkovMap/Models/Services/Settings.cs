@@ -16,16 +16,15 @@ Core Functionality:
 첫 실행 시:
 - TarkovPathFinder로 게임/스크린샷 폴더 자동 탐지
 - 각 맵별 기본 창 위치/크기 설정값 생성
+
+파일 위치는 AppPaths가 정한다. 앱을 제거해도 설정이 남도록 Velopack 설치 폴더 밖에 둔다.
 */
 namespace TanukiTarkovMap.Models.Services
 {
     public class Settings
     {
-        private static readonly string SettingsFolder = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "TanukiTarkovMap"
-        );
-        private static readonly string SettingsFilePath = Path.Combine(SettingsFolder, "settings.json");
+        private static string SettingsFolder => AppPaths.SettingsFolder;
+        private static string SettingsFilePath => AppPaths.SettingsFilePath;
 
         public static void Save()
         {

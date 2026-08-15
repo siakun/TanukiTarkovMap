@@ -363,6 +363,69 @@
                 </StackPanel>
             </Border>
 
+            <!-- 저장 공간 섹션 -->
+            <Border Background="#FF1A1A1A"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="저장 공간"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,6"/>
+
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0"
+                                   FontSize="10"
+                                   Foreground="White"
+                                   VerticalAlignment="Center">
+                            <Run Text="브라우저 캐시"/>
+                            <Run Text="{Binding BrowserCacheSizeText, Mode=OneWay}"
+                                 Foreground="#FF4A90D9"
+                                 FontWeight="SemiBold"/>
+                        </TextBlock>
+                        <Button Grid.Column="1"
+                                Content="{Binding CacheResetButtonText}"
+                                Command="{Binding ToggleCacheResetCommand}"
+                                Style="{StaticResource SettingsButton}"/>
+                    </Grid>
+
+                    <TextBlock Text="맵 타일 이미지와 페이지 스크립트가 쌓인 자리입니다. 비워도 설정은 그대로이고, 맵을 다시 열 때 새로 받습니다"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="0,4,0,0"
+                               TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding CodeCacheLimitNotice}"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="0,2,0,0"
+                               TextWrapping="Wrap"/>
+
+                    <!-- 실행 중에는 CEF가 파일을 붙들고 있어 지울 수 없으므로 언제 지워지는지 알린다 -->
+                    <TextBlock Text="프로그램을 닫을 때 비웁니다"
+                               Foreground="#FFD9A54A"
+                               FontSize="8"
+                               Margin="0,2,0,0"
+                               TextWrapping="Wrap">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding CacheResetScheduled}" Value="True">
+                                        <Setter Property="Visibility" Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
             <!-- 업데이트 섹션 -->
             <Border Background="#FF1A1A1A"
                     CornerRadius="4"
