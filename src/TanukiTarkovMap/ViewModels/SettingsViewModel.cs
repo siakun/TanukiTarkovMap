@@ -491,7 +491,8 @@ namespace TanukiTarkovMap.ViewModels
             }
             catch (Exception ex)
             {
-                // 성공하면 프로세스가 교체되므로, 여기로 오는 것은 실패했다는 뜻이다
+                // 성공하면 UpdateService가 App의 정상 종료를 요청한다. 여기서는 다운로드나
+                // 패키지 준비가 실패했을 때만 설치 상태를 되돌린다
                 InstallProgress = 0;
                 InstallProgressText = string.Empty;
                 IsInstalling = false;
