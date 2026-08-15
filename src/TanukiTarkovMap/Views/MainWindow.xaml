@@ -34,7 +34,6 @@
     <i:Interaction.Behaviors>
         <!-- TopBar 애니메이션 Behavior -->
         <behaviors:TopBarAnimationBehavior
-            IsAlwaysOnTop="{Binding IsAlwaysOnTop}"
             TopBarTransformName="TopBarTransform"
             BrowserContainerName="BrowserContainer"/>
         <!-- 트레이 창 표시/숨김 Behavior -->
@@ -64,6 +63,7 @@
     <Grid x:Name="MainGrid">
         <!-- Border로 감싸서 리사이즈 시 부드러운 효과 + 둥근 모서리 -->
         <Border x:Name="ContentBorder"
+                Style="{StaticResource WindowContentBorder}"
                 Background="#FF1A1A1A"
                 BorderThickness="1"
                 CornerRadius="8"
@@ -71,24 +71,6 @@
                 Opacity="{Binding ActualWindowOpacity}"
                 SnapsToDevicePixels="True"
                 UseLayoutRounding="True">
-            <Border.Style>
-                <Style TargetType="Border">
-                    <Setter Property="BorderBrush">
-                        <Setter.Value>
-                            <SolidColorBrush Color="{StaticResource InactiveBorderColor}"/>
-                        </Setter.Value>
-                    </Setter>
-                    <Style.Triggers>
-                        <DataTrigger Binding="{Binding IsActive, RelativeSource={RelativeSource AncestorType=Window}}" Value="True">
-                            <Setter Property="BorderBrush">
-                                <Setter.Value>
-                                    <SolidColorBrush Color="{StaticResource ActiveBorderColor}"/>
-                                </Setter.Value>
-                            </Setter>
-                        </DataTrigger>
-                    </Style.Triggers>
-                </Style>
-            </Border.Style>
             <Border.Effect>
                 <DropShadowEffect Color="Black"
                                   Direction="270"
