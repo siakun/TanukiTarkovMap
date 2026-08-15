@@ -66,6 +66,12 @@ namespace TanukiTarkovMap.ViewModels
 
         public string AppVersion => App.Version;
 
+        /// <summary>
+        /// 저장소 주소. 업데이트가 바라보는 곳과 화면에 보여 주는 곳이 갈라지지 않도록
+        /// UpdateService가 쓰는 상수를 그대로 읽는다
+        /// </summary>
+        public string RepositoryUrl => UpdateService.GitHubRepoUrl;
+
         public string SettingsFilePath => AppPaths.SettingsFilePath;
 
         public SettingsViewModel()
@@ -555,6 +561,27 @@ namespace TanukiTarkovMap.ViewModels
             if (!string.IsNullOrWhiteSpace(CustomUrl))
             {
                 WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(CustomUrl));
+            }
+        }
+
+        /// <summary>
+        /// 저장소를 기본 브라우저로 연다. 앱 안의 CefSharp로 열면 맵 자리를 빼앗기므로
+        /// 바깥 브라우저에 넘긴다
+        /// </summary>
+        [RelayCommand]
+        private void OpenRepository()
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = RepositoryUrl,
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[SettingsViewModel] Failed to open repository: {ex.Message}");
             }
         }
 
