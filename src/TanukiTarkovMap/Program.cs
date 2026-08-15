@@ -13,15 +13,17 @@ Architecture: Entry point that handles mutex checks, Velopack lifecycle hooks, u
               and application startup
 
 Core Functionality:
+- Initializes Velopack and removes preserved browser data before uninstall
 - Single instance check via Mutex (before CEF initialization)
 - Brings existing window to front if already running
-- Initializes Velopack and removes preserved browser data before uninstall
 - Checks for updates from GitHub Releases
 
 Method Flow:
-  Main() -> [Mutex Check] -> Build() -> Register Uninstall Hook -> Run()
+  Main() -> Build() -> Register Uninstall Hook -> Run()
     -> [Uninstall] DeleteRoamingBrowserDataOnUninstall() -> Exit
-    -> [Normal Start] App.Run() -> CheckForUpdates()
+    -> [Normal Start] Mutex Check
+      -> [Duplicate] BringExistingInstanceToFront() -> Exit
+      -> [First Instance] App.Run() -> CheckForUpdates()
 
 Dependencies:
 - Velopack: Auto-update framework
@@ -29,8 +31,9 @@ Dependencies:
 - GithubSource: Update source from GitHub Releases
 - Win32 API: For finding and focusing existing window
 
-Design Rationale: Mutex check must happen BEFORE CEF initialization to prevent
-zombie Chrome processes when duplicate instance is detected.
+Design Rationale: Velopack lifecycle dispatch must precede the mutex because hook processes can run
+while the app owns that mutex. Hook paths exit inside Run(), while normal startup continues to the
+mutex before App initializes CEF, preventing zombie Chrome processes from duplicate instances.
 */
 public static class Program
 {
@@ -56,7 +59,13 @@ public static class Program
     [STAThread]
     public static void Main(string[] args)
     {
-        // 1. 중복 실행 체크 (CEF 초기화 전에 반드시 먼저!)
+        // 1. 제거 훅 프로세스가 앱 뮤텍스에 막히지 않도록 Velopack 수명주기 분기를 가장 먼저 처리한다.
+        // 훅 경로는 Run() 안에서 종료되고 정상 시작만 아래 단일 인스턴스 검사로 이어진다
+        VelopackApp.Build()
+            .OnBeforeUninstallFastCallback(_ => AppPaths.DeleteRoamingBrowserDataOnUninstall())
+            .Run();
+
+        // 2. 정상 시작의 중복 실행 체크 (App에서 CEF를 초기화하기 전에 반드시 처리)
         using var mutex = new Mutex(true, MutexName, out bool createdNew);
 
         if (!createdNew)
@@ -65,11 +74,6 @@ public static class Program
             BringExistingInstanceToFront();
             return;
         }
-
-        // 2. Velopack 초기화와 제거 전 로밍 브라우저 데이터 정리 훅 등록
-        VelopackApp.Build()
-            .OnBeforeUninstallFastCallback(_ => AppPaths.DeleteRoamingBrowserDataOnUninstall())
-            .Run();
 
         // 3. WPF 앱 시작
         var app = new App();
