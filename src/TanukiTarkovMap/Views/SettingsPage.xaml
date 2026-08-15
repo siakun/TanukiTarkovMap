@@ -623,33 +623,43 @@
                     CornerRadius="4"
                     Padding="10"
                     Margin="0,0,0,8">
-                <StackPanel HorizontalAlignment="Center">
-                    <Image Source="/Resources/icon.png"
-                           Width="56"
-                           Height="56"
-                           HorizontalAlignment="Center"/>
-                    <TextBlock Text="TanukiTarkovMap"
-                               FontSize="12"
-                               FontWeight="SemiBold"
-                               Foreground="White"
-                               HorizontalAlignment="Center"
-                               Margin="0,6,0,0"/>
-                    <TextBlock Text="{Binding AppVersion}"
-                               FontSize="10"
-                               Foreground="#FF888888"
-                               HorizontalAlignment="Center"
-                               Margin="0,2,0,0"/>
-                    <Button Content="GitHub에서 보기"
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+
+                    <Image Grid.Column="0"
+                           Source="/Resources/icon.png"
+                           Width="44"
+                           Height="44"
+                           VerticalAlignment="Center"/>
+
+                    <StackPanel Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Margin="10,0,8,0">
+                        <TextBlock Text="TanukiTarkovMap"
+                                   FontSize="12"
+                                   FontWeight="SemiBold"
+                                   Foreground="White"/>
+                        <TextBlock Text="{Binding AppVersion}"
+                                   FontSize="9"
+                                   Foreground="#FF888888"
+                                   Margin="0,1,0,0"/>
+                        <TextBlock Text="{Binding RepositoryUrl, Mode=OneWay}"
+                                   FontSize="8"
+                                   Foreground="#FF666666"
+                                   TextTrimming="CharacterEllipsis"
+                                   Margin="0,2,0,0"/>
+                    </StackPanel>
+
+                    <Button Grid.Column="2"
+                            Content="GitHub에서 보기"
                             Command="{Binding OpenRepositoryCommand}"
                             Style="{StaticResource DarkButton}"
-                            HorizontalAlignment="Center"
-                            Margin="0,8,0,0"/>
-                    <TextBlock Text="{Binding RepositoryUrl, Mode=OneWay}"
-                               FontSize="8"
-                               Foreground="#FF666666"
-                               HorizontalAlignment="Center"
-                               Margin="0,4,0,0"/>
-                </StackPanel>
+                            VerticalAlignment="Center"/>
+                </Grid>
             </Border>
         </StackPanel>
     </ScrollViewer>
