@@ -61,6 +61,7 @@ namespace TanukiTarkovMap.Models.Data
 
         // 업데이트 설정
         public bool AutoUpdateEnabled { get; set; } = true;         // 새 버전 자동 확인/다운로드
+        public bool PrereleaseEnabled { get; set; } = false;        // 베타(프리릴리스) 버전까지 받기
 
         public override string ToString()
         {

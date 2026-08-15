@@ -570,6 +570,38 @@
                 </StackPanel>
             </Border>
 
+            <!-- 실험적 기능 섹션 -->
+            <Border Background="#FF1A1A1A"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="실험적 기능"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,6"/>
+
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,4">
+                        <CheckBox IsChecked="{Binding PrereleaseEnabled}"
+                                  Content="베타 버전 받기"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"/>
+                        <TextBlock Text="v0.1.1-beta처럼 정식 출시 전 버전을 버전 목록과 자동 업데이트 대상에 넣습니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="18,2,0,0"
+                                   TextWrapping="Wrap"/>
+                        <TextBlock Text="시험 중인 빌드라 문제가 있을 수 있습니다. 되돌리려면 이 항목을 끄고 버전 목록에서 정식 버전을 골라 설치하세요"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="18,2,0,0"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+                </StackPanel>
+            </Border>
+
             <!-- 개발자 도구 섹션 -->
             <Border Background="#FF1A1A1A"
                     CornerRadius="4"

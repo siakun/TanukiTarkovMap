@@ -13,7 +13,8 @@ Purpose: 업데이트 확인/다운로드가 앱 시작을 막지 않도록 백�
 설정에서 원하는 버전을 직접 골라 설치하는 경로도 함께 제공한다.
 
 Architecture: 두 경로가 서로 다른 업데이트 소스를 쓴다.
-- 자동 갱신: GithubSource + CheckForUpdatesAsync. 최신 릴리스만 보는 대신 delta를 받는다
+- 자동 갱신: GithubSource + CheckForUpdatesAsync. 최신 릴리스만 보는 대신 delta를 받는다.
+  베타를 켜면 GithubSource가 프리릴리스까지 조회 대상에 넣는다
 - 버전 전환: GitHubReleaseSource + 직접 조립한 UpdateInfo. 임의 태그를 설치할 수 있는 대신
   full 패키지를 받는다
 
@@ -62,6 +63,9 @@ namespace TanukiTarkovMap.Models.Services
         private UpdateManager? _autoUpdateManager;
         private UpdateInfo? _pendingUpdate;
 
+        /// <summary> _autoUpdateManager를 만들 때 쓴 베타 수신 여부 (설정이 바뀌면 다시 만들어야 한다) </summary>
+        private bool _managerAcceptsPrerelease;
+
         /// <summary>
         /// DI 컨테이너 전용 생성자 - 외부에서 new 사용 금지
         /// ServiceLocator.CreateInstance()를 통해서만 생성
@@ -95,10 +99,23 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// 자동 갱신용 UpdateManager. 생성 자체는 로컬 정보만 읽으므로 네트워크를 타지 않는다
+        /// 자동 갱신용 UpdateManager. 생성 자체는 로컬 정보만 읽으므로 네트워크를 타지 않는다.
+        /// 베타 수신 여부가 소스의 조회 대상을 바꾸므로, 설정이 달라지면 다시 만든다
         /// </summary>
         private UpdateManager AutoUpdateManager
-            => _autoUpdateManager ??= new UpdateManager(new GithubSource(GitHubRepoUrl, null, false));
+        {
+            get
+            {
+                var acceptPrerelease = App.GetSettings().PrereleaseEnabled;
+                if (_autoUpdateManager == null || _managerAcceptsPrerelease != acceptPrerelease)
+                {
+                    _autoUpdateManager = new UpdateManager(new GithubSource(GitHubRepoUrl, null, acceptPrerelease));
+                    _managerAcceptsPrerelease = acceptPrerelease;
+                }
+
+                return _autoUpdateManager;
+            }
+        }
 
         /// <summary>
         /// 백그라운드에서 업데이트를 확인하고 있으면 다운로드까지 마친다.
@@ -160,10 +177,16 @@ namespace TanukiTarkovMap.Models.Services
 
         /// <summary>
         /// 설치할 수 있는 버전 목록을 최신 순으로 가져온다 (설정 화면의 버전 목록).
-        /// 네트워크 실패는 호출 측에서 사용자에게 알린다
+        /// 베타를 켜지 않았으면 프리릴리스를 빼서, 목록에 보이는 것과 자동 갱신이 따라가는 대상을
+        /// 같게 맞춘다. 네트워크 실패는 호출 측에서 사용자에게 알린다
         /// </summary>
-        public Task<IReadOnlyList<ReleaseVersion>> GetAvailableVersionsAsync(CancellationToken cancelToken = default)
-            => GitHubReleaseSource.FetchVersionsAsync(GitHubRepoUrl, cancelToken);
+        public async Task<IReadOnlyList<ReleaseVersion>> GetAvailableVersionsAsync(CancellationToken cancelToken = default)
+        {
+            var releases = await GitHubReleaseSource.FetchVersionsAsync(GitHubRepoUrl, cancelToken);
+            if (App.GetSettings().PrereleaseEnabled) return releases;
+
+            return releases.Where(release => !release.IsPrerelease).ToArray();
+        }
 
         /// <summary>
         /// 지정한 버전을 내려받아 즉시 재시작으로 적용한다. 다운그레이드도 이 경로를 쓴다.

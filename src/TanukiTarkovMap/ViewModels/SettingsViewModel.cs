@@ -1,6 +1,8 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net;
+using System.Net.Http;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -29,6 +31,9 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> 설치 중인 패키지 크기(byte). 진행률을 MB로 환산할 때 쓴다 </summary>
         private long _installTargetBytes = 0;
 
+        /// <summary> 목록을 읽는 동안 다시 요청이 들어왔는지 (다 읽은 뒤 한 번만 더 읽는다) </summary>
+        private bool _versionRefreshRequested = false;
+
         [ObservableProperty] public partial string GameFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial string ScreenshotsFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
@@ -38,6 +43,7 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
         [ObservableProperty] public partial bool AutoMapSwitchEnabled { get; set; } = true;
         [ObservableProperty] public partial bool AutoUpdateEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool PrereleaseEnabled { get; set; } = false;
         [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
 
         #region Version Switching Properties
@@ -127,6 +133,15 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnAutoMapSwitchEnabledChanged(bool value) => AutoSave();
         partial void OnAutoUpdateEnabledChanged(bool value) => AutoSave();
 
+        partial void OnPrereleaseEnabledChanged(bool value)
+        {
+            if (_isLoading) return;
+            Save();
+
+            // 목록에 베타가 나타나거나 사라져야 하므로 다시 읽는다
+            _ = RefreshVersionsCommand.ExecuteAsync(null);
+        }
+
         private void AutoSave()
         {
             if (_isLoading) return;
@@ -187,6 +202,7 @@ namespace TanukiTarkovMap.ViewModels
             settings.GoonTrackerEnabled = GoonTrackerEnabled;
             settings.AutoMapSwitchEnabled = AutoMapSwitchEnabled;
             settings.AutoUpdateEnabled = AutoUpdateEnabled;
+            settings.PrereleaseEnabled = PrereleaseEnabled;
 
             App.SetSettings(settings);
             Models.Services.Settings.Save();
@@ -315,20 +331,55 @@ namespace TanukiTarkovMap.ViewModels
 
         private bool CanRefreshVersions() => !IsVersionListLoading && !IsInstalling;
 
+        /// <summary>
+        /// 버전 목록을 다시 읽는다.
+        ///
+        /// CanExecute는 버튼을 비활성화할 뿐, 설정이 바뀔 때처럼 코드에서 ExecuteAsync를 직접
+        /// 부르는 길은 막지 못한다. 베타 체크박스를 연달아 누르면 누른 횟수만큼 요청이 나가
+        /// GitHub의 시간당 한도(인증 없이 IP당 60회)를 넘긴다. 이미 읽는 중이면 표시만 남기고
+        /// 물러났다가, 끝난 뒤 마지막 설정으로 한 번만 더 읽는다
+        /// </summary>
         [RelayCommand(CanExecute = nameof(CanRefreshVersions))]
         private async Task RefreshVersions()
         {
-            IsVersionListLoading = true;
-            UpdateStatusMessage = "버전 목록을 불러오는 중...";
+            if (IsVersionListLoading)
+            {
+                _versionRefreshRequested = true;
+                return;
+            }
 
+            IsVersionListLoading = true;
+            try
+            {
+                do
+                {
+                    _versionRefreshRequested = false;
+                    await LoadVersionListAsync();
+                }
+                while (_versionRefreshRequested);
+            }
+            finally
+            {
+                IsVersionListLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// 목록을 한 번 읽어 화면에 채운다.
+        /// 읽는 동안에는 상태 문구를 바꾸지 않는다. 그 문구가 나타났다 사라지면서
+        /// 설정 패널 높이가 늘었다 줄어 화면이 덜컥거리기 때문이다
+        /// </summary>
+        private async Task LoadVersionListAsync()
+        {
             try
             {
                 var updateService = ServiceLocator.UpdateService;
                 var releases = await updateService.GetAvailableVersionsAsync();
                 var installedVersion = updateService.CurrentVersion;
 
-                // 자동 업데이트가 따라가는 대상은 정식 릴리스 중 가장 높은 버전이다
-                var latestRelease = releases.FirstOrDefault(release => !release.IsPrerelease);
+                // 자동 업데이트가 따라가는 대상은 목록의 첫 항목이다.
+                // 베타를 끄면 서비스가 프리릴리스를 이미 빼고 주므로 여기서 또 거르지 않는다
+                var latestRelease = releases.FirstOrDefault();
 
                 AvailableVersions.Clear();
                 foreach (var release in releases)
@@ -352,14 +403,17 @@ namespace TanukiTarkovMap.ViewModels
                     ? string.Empty
                     : "설치할 수 있는 버전이 없습니다";
             }
+            catch (HttpRequestException ex) when (
+                ex.StatusCode == HttpStatusCode.Forbidden || ex.StatusCode == HttpStatusCode.TooManyRequests)
+            {
+                // 인증 없이 쓰는 GitHub API는 IP마다 시간당 60회로 묶여 있다. 연결 문제와 구분해서 알린다
+                UpdateStatusMessage = "GitHub 요청 한도를 넘었습니다. 한 시간쯤 뒤에 다시 시도하세요";
+                Logger.SimpleLog($"[SettingsViewModel] Version list rate limited: {ex.Message}");
+            }
             catch (Exception ex)
             {
                 UpdateStatusMessage = "버전 목록을 가져오지 못했습니다. 연결을 확인하고 다시 시도하세요";
                 Logger.SimpleLog($"[SettingsViewModel] Version list load failed: {ex.Message}");
-            }
-            finally
-            {
-                IsVersionListLoading = false;
             }
         }
 
@@ -424,7 +478,7 @@ namespace TanukiTarkovMap.ViewModels
             var labels = new List<string>();
             if (isCurrent) labels.Add("현재");
             if (isLatest) labels.Add("최신");
-            if (release.IsPrerelease) labels.Add("프리릴리스");
+            if (release.IsPrerelease) labels.Add("베타");
 
             return labels.Count == 0
                 ? release.Version.ToString()
@@ -448,6 +502,7 @@ namespace TanukiTarkovMap.ViewModels
                 GoonTrackerEnabled = settings.GoonTrackerEnabled;
                 AutoMapSwitchEnabled = settings.AutoMapSwitchEnabled;
                 AutoUpdateEnabled = settings.AutoUpdateEnabled;
+                PrereleaseEnabled = settings.PrereleaseEnabled;
             }
             finally
             {
