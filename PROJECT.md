@@ -234,6 +234,11 @@ graph LR
         SET[Settings]
     end
 
+    subgraph UpdateSources["Update Sources (DI 등록 없음)"]
+        GHS[GithubSource - Velopack 제공]
+        GRS[GitHubReleaseSource - 태그 고정]
+    end
+
     SL -->|Factory| BUI
     SL -->|Factory| WBS
     SL -->|Factory| WSM
@@ -241,6 +246,9 @@ graph LR
     SL -->|Factory| HKS
     SL -->|Factory| GTS
     SL -->|Factory| UPS
+
+    UPS -->|자동 갱신, delta| GHS
+    UPS -->|버전 선택, full| GRS
 
     WSM -->|Load/Save| SET
     SET -->|JSON| FILE[settings.json]
@@ -334,8 +342,10 @@ ServiceLocator.UpdateService
 | `MapEventService` | 맵 변경 및 스크린샷 이벤트 발행 |
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
 | `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
-| `UpdateService` | Velopack 백그라운드 업데이트 (확인/다운로드 후 종료 시 적용) |
+| `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
+
+`UpdateService`는 두 경로를 함께 다룬다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 쓴다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#8-버전-선택과-되돌리기)에 적어 두었다.
 
 ### 서비스 생성자 규칙
 
@@ -392,7 +402,7 @@ services.AddSingleton(_ => new ServiceName());
 
 ## 설정 파일 구조
 
-`settings.json` 위치: 실행 파일과 동일 디렉토리
+`settings.json` 위치: `%LOCALAPPDATA%\TanukiTarkovMap\settings.json` (`Settings.SettingsFolder`가 만든다)
 
 ```json
 {

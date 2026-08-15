@@ -1,18 +1,33 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Win32;
+using NuGet.Versioning;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
+using TanukiTarkovMap.Models.Utils;
 
 namespace TanukiTarkovMap.ViewModels
 {
-    public partial class SettingsViewModel : ObservableObject
+    /// <summary>
+    /// 설정 화면의 버전 목록 항목.
+    /// 표시 이름과 상태 판정을 미리 계산해 XAML에서 컨버터 없이 쓴다
+    /// </summary>
+    public sealed record VersionItem(ReleaseVersion Release, string DisplayName, bool IsCurrent, bool IsLatest);
+
+    public partial class SettingsViewModel : ObservableObject, IRecipient<SettingsOpenedMessage>
     {
         private bool _isLoading = false;
+
+        /// <summary> 버전 목록을 한 번이라도 채웠는지 여부 (설정을 열 때마다 GitHub을 부르지 않으려고 둔다) </summary>
+        private bool _versionListLoaded = false;
+
+        /// <summary> 설치 중인 패키지 크기(byte). 진행률을 MB로 환산할 때 쓴다 </summary>
+        private long _installTargetBytes = 0;
 
         [ObservableProperty] public partial string GameFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial string ScreenshotsFolder { get; set; } = string.Empty;
@@ -22,7 +37,51 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
         [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
         [ObservableProperty] public partial bool AutoMapSwitchEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool AutoUpdateEnabled { get; set; } = true;
         [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
+
+        #region Version Switching Properties
+        /// <summary> 설치할 수 있는 버전 목록 (최신 순) </summary>
+        public ObservableCollection<VersionItem> AvailableVersions { get; } = new();
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(InstallSelectedVersionCommand))]
+        public partial VersionItem? SelectedVersion { get; set; }
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(RefreshVersionsCommand))]
+        public partial bool IsVersionListLoading { get; set; } = false;
+
+        /// <summary>
+        /// 목록 조회나 설치가 뜻대로 되지 않았을 때 그 사정을 알리는 문구 (정상이면 빈 문자열).
+        /// 진행률 표시는 설치가 끝나면 사라지므로 실패는 계속 남는 이 자리에 적는다
+        /// </summary>
+        [ObservableProperty] public partial string UpdateStatusMessage { get; set; } = string.Empty;
+
+        [ObservableProperty]
+        [NotifyCanExecuteChangedFor(nameof(InstallSelectedVersionCommand))]
+        [NotifyCanExecuteChangedFor(nameof(RefreshVersionsCommand))]
+        public partial bool IsInstalling { get; set; } = false;
+
+        /// <summary> 다운로드 진행률 (0~100). Velopack이 정수 퍼센트만 알려준다 </summary>
+        [ObservableProperty] public partial int InstallProgress { get; set; } = 0;
+
+        /// <summary> 진행 상황 문구 (예: 52% (133.2 / 253.9 MB)) </summary>
+        [ObservableProperty] public partial string InstallProgressText { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 버전을 바꿀 수 있는 설치인지 여부.
+        /// 포터블 압축본과 개발 빌드는 설치 관리자가 없어 교체할 수 없다
+        /// </summary>
+        public bool CanSwitchVersion
+        {
+            get
+            {
+                try { return ServiceLocator.UpdateService.IsManagedInstall; }
+                catch { return false; }
+            }
+        }
+        #endregion
 
         public string AppVersion => App.Version;
 
@@ -35,6 +94,7 @@ namespace TanukiTarkovMap.ViewModels
         public SettingsViewModel()
         {
             LoadCurrentSettings();
+            WeakReferenceMessenger.Default.RegisterAll(this);
         }
 
         // 속성 변경 시 자동 저장 (partial 메서드)
@@ -46,6 +106,7 @@ namespace TanukiTarkovMap.ViewModels
         partial void OnAutoDeleteScreenshotsChanged(bool value) => AutoSave();
         partial void OnGoonTrackerEnabledChanged(bool value) => AutoSaveAndUpdateGoonTracker();
         partial void OnAutoMapSwitchEnabledChanged(bool value) => AutoSave();
+        partial void OnAutoUpdateEnabledChanged(bool value) => AutoSave();
 
         private void AutoSave()
         {
@@ -106,6 +167,7 @@ namespace TanukiTarkovMap.ViewModels
             settings.autoDeleteScreenshots = AutoDeleteScreenshots;
             settings.GoonTrackerEnabled = GoonTrackerEnabled;
             settings.AutoMapSwitchEnabled = AutoMapSwitchEnabled;
+            settings.AutoUpdateEnabled = AutoUpdateEnabled;
 
             App.SetSettings(settings);
             Models.Services.Settings.Save();
@@ -187,6 +249,140 @@ namespace TanukiTarkovMap.ViewModels
             }
         }
 
+        #region Version Switching Commands
+        /// <summary>
+        /// 설정 화면이 열릴 때 버전 목록을 처음 한 번 채운다.
+        /// 이후 새 릴리스는 사용자가 새로고침으로 다시 읽는다.
+        /// 목록 조회는 GitHub API만 쓰므로 설치 형태와 무관하게 채운다.
+        /// 포터블이나 개발 빌드에서도 어떤 버전이 있는지는 볼 수 있어야 하고, 설치만 막으면 된다
+        /// </summary>
+        public void Receive(SettingsOpenedMessage message)
+        {
+            if (_versionListLoaded) return;
+
+            _versionListLoaded = true;
+            _ = RefreshVersionsCommand.ExecuteAsync(null);
+        }
+
+        private bool CanRefreshVersions() => !IsVersionListLoading && !IsInstalling;
+
+        [RelayCommand(CanExecute = nameof(CanRefreshVersions))]
+        private async Task RefreshVersions()
+        {
+            IsVersionListLoading = true;
+            UpdateStatusMessage = "버전 목록을 불러오는 중...";
+
+            try
+            {
+                var updateService = ServiceLocator.UpdateService;
+                var releases = await updateService.GetAvailableVersionsAsync();
+                var installedVersion = updateService.CurrentVersion;
+
+                // 자동 업데이트가 따라가는 대상은 정식 릴리스 중 가장 높은 버전이다
+                var latestRelease = releases.FirstOrDefault(release => !release.IsPrerelease);
+
+                AvailableVersions.Clear();
+                foreach (var release in releases)
+                {
+                    var isCurrent = installedVersion != null
+                                    && release.Version.CompareTo(installedVersion) == 0;
+                    var isLatest = latestRelease != null
+                                   && release.Version.CompareTo(latestRelease.Version) == 0;
+
+                    AvailableVersions.Add(new VersionItem(
+                        release,
+                        BuildDisplayName(release, isCurrent, isLatest),
+                        isCurrent,
+                        isLatest));
+                }
+
+                // 설치 버전을 기본으로 두고, 그 버전을 목록에서 찾지 못하면(포터블/개발 빌드) 최신을 보여준다
+                SelectedVersion = AvailableVersions.FirstOrDefault(item => item.IsCurrent)
+                                  ?? AvailableVersions.FirstOrDefault();
+                UpdateStatusMessage = AvailableVersions.Count > 0
+                    ? string.Empty
+                    : "설치할 수 있는 버전이 없습니다";
+            }
+            catch (Exception ex)
+            {
+                UpdateStatusMessage = "버전 목록을 가져오지 못했습니다. 연결을 확인하고 다시 시도하세요";
+                Logger.SimpleLog($"[SettingsViewModel] Version list load failed: {ex.Message}");
+            }
+            finally
+            {
+                IsVersionListLoading = false;
+            }
+        }
+
+        private bool CanInstallSelectedVersion()
+            => CanSwitchVersion && !IsInstalling && SelectedVersion != null && !SelectedVersion.IsCurrent;
+
+        [RelayCommand(CanExecute = nameof(CanInstallSelectedVersion))]
+        private async Task InstallSelectedVersion()
+        {
+            var selected = SelectedVersion;
+            if (selected == null) return;
+
+            // 최신이 아닌 버전을 골랐다면 자동 업데이트를 꺼야 한다.
+            // 켜둔 채로 두면 다음 실행에서 곧바로 최신으로 되돌아가 선택이 사라진다
+            if (!selected.IsLatest && AutoUpdateEnabled)
+            {
+                AutoUpdateEnabled = false;
+            }
+
+            IsInstalling = true;
+            UpdateStatusMessage = string.Empty;
+            _installTargetBytes = selected.Release.PackageSize;
+            ReportInstallProgress(0);
+
+            try
+            {
+                // Progress<T>는 만들어진 스레드의 컨텍스트로 보고를 돌려주므로 UI 스레드 마샬링이 필요 없다
+                var reporter = new Progress<int>(ReportInstallProgress);
+                await ServiceLocator.UpdateService.InstallVersionAsync(
+                    selected.Release,
+                    ((IProgress<int>)reporter).Report);
+            }
+            catch (Exception ex)
+            {
+                // 성공하면 프로세스가 교체되므로, 여기로 오는 것은 실패했다는 뜻이다
+                InstallProgress = 0;
+                InstallProgressText = string.Empty;
+                IsInstalling = false;
+                UpdateStatusMessage = $"v{selected.Release.Version} 설치에 실패했습니다: {ex.Message}";
+                Logger.SimpleLog($"[SettingsViewModel] Version install failed: {ex}");
+            }
+        }
+
+        private void ReportInstallProgress(int percent)
+        {
+            InstallProgress = percent;
+
+            if (percent >= 100)
+            {
+                // 내려받은 뒤에도 검증과 압축 해제가 남아 있어 100%에서 잠시 멈춘 것처럼 보인다
+                InstallProgressText = "설치하는 중입니다. 곧 다시 시작합니다";
+                return;
+            }
+
+            var totalMegabytes = _installTargetBytes / 1024d / 1024d;
+            var receivedMegabytes = totalMegabytes * percent / 100d;
+            InstallProgressText = $"{percent}% ({receivedMegabytes:F1} / {totalMegabytes:F1} MB)";
+        }
+
+        private static string BuildDisplayName(ReleaseVersion release, bool isCurrent, bool isLatest)
+        {
+            var labels = new List<string>();
+            if (isCurrent) labels.Add("현재");
+            if (isLatest) labels.Add("최신");
+            if (release.IsPrerelease) labels.Add("프리릴리스");
+
+            return labels.Count == 0
+                ? release.Version.ToString()
+                : $"{release.Version}   ({string.Join(", ", labels)})";
+        }
+        #endregion
+
         private void LoadCurrentSettings()
         {
             _isLoading = true;
@@ -202,6 +398,7 @@ namespace TanukiTarkovMap.ViewModels
                 AutoDeleteScreenshots = settings.autoDeleteScreenshots;
                 GoonTrackerEnabled = settings.GoonTrackerEnabled;
                 AutoMapSwitchEnabled = settings.AutoMapSwitchEnabled;
+                AutoUpdateEnabled = settings.AutoUpdateEnabled;
             }
             finally
             {

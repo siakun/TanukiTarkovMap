@@ -102,4 +102,12 @@ namespace TanukiTarkovMap.Messages
     {
         public UpdateReadyMessage(string value) : base(value) { }
     }
+
+    /// <summary>
+    /// 설정 오버레이 열림 메시지 (MainWindowViewModel → SettingsViewModel)
+    /// 버전 목록처럼 화면을 볼 때만 필요한 네트워크 조회를 이 시점으로 미룬다
+    /// </summary>
+    public class SettingsOpenedMessage
+    {
+    }
 }

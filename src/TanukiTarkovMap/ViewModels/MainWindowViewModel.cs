@@ -522,6 +522,12 @@ namespace TanukiTarkovMap.ViewModels
         {
             OnPropertyChanged(nameof(SettingsOverlayVisibility));
             OnPropertyChanged(nameof(BrowserContainerVisibility));
+
+            // 설정 화면에서만 필요한 조회(버전 목록)를 화면이 열릴 때로 미룬다
+            if (value)
+            {
+                WeakReferenceMessenger.Default.Send(new SettingsOpenedMessage());
+            }
         }
 
         #endregion

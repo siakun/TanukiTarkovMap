@@ -50,7 +50,7 @@ jobs:
       continue-on-error: true
       run: |
         vpk download github `
-          --repoUrl "https://github.com/siakun/TanukiTarkovMap" `
+          --repoUrl "https://github.com/Siakun/TanukiTarkovMap" `
           --token "${{ secrets.GITHUB_TOKEN }}" `
           --outputDir "releases"
 
