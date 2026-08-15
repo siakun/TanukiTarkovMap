@@ -2,8 +2,8 @@
 
 ## 개요
 
-Escape from Tarkov 게임을 위한 인터랙티브 맵 뷰어 애플리케이션.
-CefSharp를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감시를 통한 자동 맵 전환 기능을 제공.
+Escape from Tarkov 게임을 위한 인터랙티브 맵 뷰어 애플리케이션입니다.
+CefSharp를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감시를 통한 자동 맵 전환 기능을 제공합니다.
 
 ---
 
@@ -319,7 +319,7 @@ src/TanukiTarkovMap/
 
 ### ServiceLocator 패턴
 
-모든 서비스는 `ServiceLocator`를 통해 DI 컨테이너로 관리됨.
+모든 서비스는 `ServiceLocator`를 통해 DI 컨테이너로 관리합니다.
 
 ```csharp
 // 서비스 접근
@@ -345,7 +345,11 @@ ServiceLocator.UpdateService
 | `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
 
-`UpdateService`는 두 경로를 함께 다룬다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 쓴다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#8-버전-선택과-되돌리기)에 적어 두었다. Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않는다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `WaitExitThenApplyUpdates`로만 적용한다.
+`UpdateService`는 두 경로를 함께 다룹니다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 씁니다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#8-버전-선택과-되돌리기)에 적어 두었습니다. Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `WaitExitThenApplyUpdates`로만 적용합니다.
+
+업데이트 확인은 메인 창을 띄운 **뒤에** 시작합니다. 시작을 막지 않는 것이 이 앱에서는
+다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은
+[시작 속도와 업데이트 시점](docs/startup-speed-and-updates.md)에 적어 두었습니다.
 
 ### 서비스 생성자 규칙
 
@@ -381,8 +385,8 @@ services.AddSingleton(_ => new ServiceName());
 
 ### 맵 자동 전환 (스크린샷 보정)
 
-레이드 도중 앱을 켜면 진입 로그가 이미 지나가 위 경로가 발동하지 않는다.
-스크린샷은 인게임에서만 생성되므로 이를 신호로 삼아 보정한다.
+레이드 도중 앱을 켜면 진입 로그가 이미 지나가 위 경로가 발동하지 않습니다.
+스크린샷은 인게임에서만 생성되므로 이를 신호로 삼아 보정합니다.
 
 ```
 스크린샷 파일 생성
@@ -404,27 +408,27 @@ services.AddSingleton(_ => new ServiceName());
 
 `settings.json` 위치: `%APPDATA%\TanukiTarkovMap\settings.json`
 
-사용자 폴더 경로는 모두 `AppPaths`가 정한다. 설정과 브라우저 캐시는 생명주기가 반대라 서로 다른 폴더에 둔다.
+사용자 폴더 경로는 모두 `AppPaths`가 정합니다. 설정과 브라우저 캐시는 생명주기가 반대라 서로 다른 폴더에 둡니다.
 
 | 대상 | 폴더 | 이유 |
 |------|------|------|
-| 설정 | `%APPDATA%`(Roaming) | Velopack 설치 폴더 밖이라 앱을 제거해도 남고, 다시 설치하면 이어 쓴다 |
-| 브라우저 캐시 | `%LOCALAPPDATA%\TanukiTarkovMap\Cache` | Velopack 설치 폴더 안이라 `Update.exe --uninstall`이 지울 때 함께 정리된다 |
+| 설정 | `%APPDATA%`(Roaming) | Velopack 설치 폴더 밖이라 앱을 제거해도 남고, 다시 설치하면 이어 씁니다 |
+| 브라우저 캐시 | `%LOCALAPPDATA%\TanukiTarkovMap\Cache` | Velopack 설치 폴더 안이라 `Update.exe --uninstall`이 지울 때 함께 정리됩니다 |
 
-0.1.0까지는 두 폴더가 반대였다. 예전 설정을 Local에서 Roaming으로 넘기는 규칙은 `SettingsLocationMigration`, 브라우저 프로필을 Roaming에서 Local로 넘기는 규칙은 `BrowserCacheLocationMigration`이 맡는다. `AppPaths.PrepareOnStartup()`은 두 이전을 차례로 호출한 뒤 불어난 코드 캐시를 비운다. CEF가 캐시 폴더를 여는 순간 손댈 수 없으므로 `InitializeCef()`보다 먼저 호출해야 한다.
+0.1.0까지는 두 폴더가 반대였습니다. 예전 설정을 Local에서 Roaming으로 넘기는 규칙은 `SettingsLocationMigration`, 브라우저 프로필을 Roaming에서 Local로 넘기는 규칙은 `BrowserCacheLocationMigration`이 맡습니다. `AppPaths.PrepareOnStartup()`은 두 이전을 차례로 호출한 뒤 불어난 코드 캐시를 비웁니다. CEF가 캐시 폴더를 여는 순간 손댈 수 없으므로 `InitializeCef()`보다 먼저 호출해야 합니다.
 
-브라우저 프로필 이전이 실패하면 그 실행의 `BrowserCacheFolder`는 예전 원본 경로를 가리킨다. 실패 중 생긴 Local 대상은 지워 다음 시작에서 이전을 다시 시도하며, 빈 Local 폴더가 이전 완료 표시처럼 남지 않게 한다.
+브라우저 프로필 이전이 실패하면 그 실행의 `BrowserCacheFolder`는 예전 원본 경로를 가리킵니다. 실패 중 생긴 Local 대상은 지워 다음 시작에서 이전을 다시 시도하며, 빈 Local 폴더가 이전 완료 표시처럼 남지 않게 합니다.
 
 ### 브라우저 캐시 관리
 
-캐시는 두 갈래로 쌓이고 성질이 달라 다르게 다룬다. 실측한 값은 맵 하나를 처음 열 때 HTTP 캐시 21MB, 맵을 열 때마다 코드 캐시 0.8MB다.
+캐시는 두 갈래로 쌓이고 성질이 달라 다르게 다룹니다. 실측한 값은 맵 하나를 처음 열 때 HTTP 캐시 21MB, 맵을 열 때마다 코드 캐시 0.8MB입니다.
 
 | 갈래 | 쌓이는 방식 | 처리 |
 |------|-------------|------|
-| HTTP 캐시 (맵 타일) | 맵 종류만큼만 쌓여 스스로 포화 (11종 약 230MB) | 상한을 걸지 않는다. 걸면 타일이 밀려나 매번 다시 받는다 |
-| 코드 캐시 (JS 바이트코드) | 맵을 열 때마다 늘어 상한이 없다 | `AppPaths.CodeCacheLimitMegabytes`를 넘으면 시작할 때 그 폴더만 비운다 |
+| HTTP 캐시 (맵 타일) | 맵 종류만큼만 쌓여 스스로 포화 (11종 약 230MB) | 상한을 걸지 않습니다. 걸면 타일이 밀려나 매번 다시 받습니다 |
+| 코드 캐시 (JS 바이트코드) | 맵을 열 때마다 늘어 상한이 없음 | `AppPaths.CodeCacheLimitMegabytes`를 넘으면 시작할 때 그 폴더만 비웁니다 |
 
-사용자가 설정에서 캐시 전체를 비울 수도 있다. 실행 중에는 CEF가 프로필 파일을 붙들고 있어 지울 수 없으므로, 예약해 두었다가 `Cef.Shutdown()` 뒤에 지운다.
+사용자가 설정에서 캐시 전체를 비울 수도 있습니다. 실행 중에는 CEF가 프로필 파일을 붙들고 있어 지울 수 없으므로, 예약해 두었다가 `Cef.Shutdown()` 뒤에 지웁니다.
 
 ```json
 {
@@ -445,7 +449,7 @@ services.AddSingleton(_ => new ServiceName());
 
 ### 개념
 
-tarkov-market.com 웹페이지의 UI 요소들을 JavaScript로 제어하여 맵만 깔끔하게 표시.
+tarkov-market.com 웹페이지의 UI 요소를 JavaScript로 제어해 맵만 깔끔하게 표시합니다.
 
 ### 요소 분류
 
@@ -500,7 +504,7 @@ Models/JavaScript/
 **동작 원리:**
 1. `.js` 파일: IIFE 패턴으로 함수들을 `window` 객체에 등록
 2. `.js.cs` 파일: `JavaScriptLoader.Load()`로 스크립트 로드 + 함수 호출 상수 정의
-3. `BrowserUIService`: 초기화 스크립트 → 함수 호출 순서로 실행
+3. `BrowserUIService`: 초기화 스크립트 -> 함수 호출 순서로 실행
 
 **예시 (WebElementsControl):**
 ```csharp
@@ -525,8 +529,8 @@ await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);  // "window.h
 
 ### 개요
 
-핀 모드(IsAlwaysOnTop) 활성화 시, TopBar가 자동으로 숨겨지는 기능.
-마우스가 창을 떠나거나 창이 비활성화되면 2.5초 후 TopBar가 숨겨짐.
+핀 모드(IsAlwaysOnTop)를 켜면 TopBar가 자동으로 숨겨집니다.
+마우스가 창을 떠나거나 창이 비활성화되면 2.5초 뒤에 숨깁니다.
 
 ### 동작 흐름
 
@@ -552,7 +556,7 @@ flowchart TD
 
 ### 투명도 연동
 
-TopBar 상태에 따라 창 투명도가 자동 조절됨:
+TopBar 상태에 따라 창 투명도를 자동으로 조절합니다.
 
 ```
 TopBar 표시 → ActualWindowOpacity = 1.0 (불투명)
