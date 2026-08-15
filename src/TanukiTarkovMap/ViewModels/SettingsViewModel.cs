@@ -108,6 +108,15 @@ namespace TanukiTarkovMap.ViewModels
             $"페이지 스크립트 캐시가 {AppPaths.CodeCacheLimitMegabytes}MB를 넘으면 시작할 때 자동으로 정리합니다. 맵 타일은 그대로 두므로 느려지지 않습니다";
         #endregion
 
+        #region Developer Tools Properties
+        /// <summary>
+        /// 타이틀 바 업데이트 아이콘을 강제로 켤지 여부.
+        /// 개발 빌드에서는 Velopack 업데이트가 잡히지 않아 아이콘이 뜰 일이 없다.
+        /// 켜 둔 채 배포본을 쓰면 가짜 아이콘이 남으므로 설정 파일에 저장하지 않는다
+        /// </summary>
+        [ObservableProperty] public partial bool UpdateIconAlwaysVisible { get; set; } = false;
+        #endregion
+
         public string AppVersion => App.Version;
 
         public string SettingsFilePath => AppPaths.SettingsFilePath;
@@ -267,6 +276,41 @@ namespace TanukiTarkovMap.ViewModels
             if (!string.IsNullOrWhiteSpace(CustomUrl))
             {
                 WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(CustomUrl));
+            }
+        }
+
+        partial void OnUpdateIconAlwaysVisibleChanged(bool value)
+            => WeakReferenceMessenger.Default.Send(new UpdateIconPreviewMessage(value));
+
+        /// <summary>
+        /// 다운로드 진행률 표시를 실제 설치 없이 재생한다.
+        /// 254MB짜리 패키지를 받아 보지 않고도 진행 문구와 막대를 확인할 수 있다
+        /// </summary>
+        [RelayCommand]
+        private async Task PreviewDownloadProgress()
+        {
+            if (IsInstalling) return;
+
+            IsInstalling = true;
+            UpdateStatusMessage = string.Empty;
+            _installTargetBytes = 253_893_613;   // v0.1.0 전체 패키지 크기
+
+            try
+            {
+                for (var percent = 0; percent <= 100; percent += 2)
+                {
+                    ReportInstallProgress(percent);
+                    await Task.Delay(60);
+                }
+
+                // 100%에 도달한 뒤 검증과 압축 해제 문구가 보이는 구간까지 재현한다
+                await Task.Delay(1500);
+            }
+            finally
+            {
+                IsInstalling = false;
+                InstallProgress = 0;
+                InstallProgressText = string.Empty;
             }
         }
 

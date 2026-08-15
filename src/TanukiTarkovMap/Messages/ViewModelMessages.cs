@@ -110,4 +110,13 @@ namespace TanukiTarkovMap.Messages
     public class SettingsOpenedMessage
     {
     }
+
+    /// <summary>
+    /// 타이틀 바 업데이트 아이콘을 강제로 켜는 메시지 (SettingsViewModel → MainWindowViewModel)
+    /// 개발 빌드에서는 Velopack 업데이트가 잡히지 않아 아이콘이 뜰 일이 없어, 모양을 확인할 길을 둔다
+    /// </summary>
+    public class UpdateIconPreviewMessage : ValueChangedMessage<bool>
+    {
+        public UpdateIconPreviewMessage(bool value) : base(value) { }
+    }
 }

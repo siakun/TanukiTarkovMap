@@ -501,6 +501,37 @@
                                Foreground="White"
                                Margin="0,0,0,6"/>
 
+                    <!-- 업데이트 UI 확인: 개발 빌드에서는 실제 업데이트가 잡히지 않아 볼 방법이 없다 -->
+                    <TextBlock Text="업데이트 UI 확인"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="White"
+                               Margin="0,3,0,4"/>
+
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,6">
+                        <CheckBox IsChecked="{Binding UpdateIconAlwaysVisible}"
+                                  Content="타이틀 바 다운로드 아이콘 항상 표시"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"/>
+                        <TextBlock Text="설정 파일에 저장하지 않으므로 프로그램을 다시 켜면 꺼집니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   Margin="18,2,0,0"
+                                   TextWrapping="Wrap"/>
+                    </StackPanel>
+
+                    <Button Content="다운로드 진행률 미리보기"
+                            Command="{Binding PreviewDownloadProgressCommand}"
+                            Style="{StaticResource DarkButton}"
+                            HorizontalAlignment="Left"
+                            Margin="12,0,0,0"/>
+                    <TextBlock Text="위쪽 업데이트 섹션의 진행률 막대를 실제 설치 없이 재생합니다. 눌러 두고 그쪽으로 올려서 보세요"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="12,4,0,10"
+                               TextWrapping="Wrap"/>
+
                     <!-- Pilot 설정 페이지로 이동 -->
                     <Button Content="Tarkov Market 설정 페이지로 이동"
                             Command="{Binding NavigateToPilotCommand}"
