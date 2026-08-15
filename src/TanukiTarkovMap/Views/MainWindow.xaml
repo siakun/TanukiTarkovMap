@@ -447,8 +447,6 @@
                     VerticalAlignment="Center">
                 <i:Interaction.Behaviors>
                     <behaviors:BlockMouseEventBehavior/>
-                    <!-- 타이틀 바 닫기 버튼이 모서리까지 닿아도 패널 반경대로 잘리게 한다 -->
-                    <behaviors:BorderClipBehavior/>
                 </i:Interaction.Behaviors>
                 <Border.Effect>
                     <DropShadowEffect Color="Black"
@@ -457,6 +455,17 @@
                                       BlurRadius="12"
                                       Opacity="0.5"/>
                 </Border.Effect>
+
+                <!--
+                콘텐츠 클리핑용 Border (메인 창의 ContentClipBorder와 같은 방식).
+                테두리가 있는 Border에 직접 걸면 자식이 1px 안쪽에서 시작하는데 클리핑은
+                바깥 반경으로 잘라, 닫기 버튼 모서리가 1px밖에 깎이지 않아 각져 보인다.
+                테두리 두께를 뺀 반경으로 안쪽에서 자른다
+                -->
+                <Border CornerRadius="5">
+                    <i:Interaction.Behaviors>
+                        <behaviors:BorderClipBehavior/>
+                    </i:Interaction.Behaviors>
 
                 <!-- 설정 패널 내용 영역 -->
                 <Grid>
@@ -495,6 +504,7 @@
                         <views:SettingsPage/>
                     </Border>
                 </Grid>
+                </Border>
             </Border>
             </Grid>
         </Border>
