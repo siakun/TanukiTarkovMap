@@ -44,7 +44,9 @@
         </Style>
     </UserControl.Resources>
 
-    <ScrollViewer VerticalScrollBarVisibility="Hidden" HorizontalScrollBarVisibility="Disabled">
+    <ScrollViewer Style="{StaticResource OverlayScrollViewer}"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,8">
 
             <!-- 타르코프 경로 설정 섹션 -->
