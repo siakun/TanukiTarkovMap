@@ -47,9 +47,9 @@ namespace TanukiTarkovMap.ViewModels
 
         #region Observable Properties
 
-        /// <summary> 현재 URL </summary>
+        /// <summary> 현재 URL. 처음 값은 지난번에 보던 맵이며, 없으면 pilot 페이지다 </summary>
         [ObservableProperty]
-        private string _address = App.WebsiteUrl;
+        private string _address = App.StartupUrl;
 
         /// <summary> 페이지 로딩 중 여부 </summary>
         [ObservableProperty]
@@ -259,12 +259,21 @@ namespace TanukiTarkovMap.ViewModels
         [RelayCommand]
         public void Navigate(string url)
         {
-            if (_browser != null && !string.IsNullOrEmpty(url))
+            if (_browser == null || string.IsNullOrEmpty(url)) return;
+
+            // 이미 그 주소에 있으면 다시 받지 않는다. 시작할 때 맵 페이지로 바로 들어가면
+            // pilot 연결 직후 같은 맵으로 이동 요청이 한 번 더 오는데, 그대로 두면 페이지를
+            // 두 번 그려서 없애려던 덜컥임이 그대로 남는다.
+            // 페이지를 다시 받아야 할 때는 Refresh()가 따로 있다
+            if (string.Equals(Address, url, StringComparison.OrdinalIgnoreCase))
             {
-                IsLoading = true;
-                _browser.LoadUrl(url);
-                Logger.SimpleLog($"[WebBrowserViewModel] Navigating to: {url}");
+                Logger.SimpleLog($"[WebBrowserViewModel] Already at {url}, skipping navigation");
+                return;
             }
+
+            IsLoading = true;
+            _browser.LoadUrl(url);
+            Logger.SimpleLog($"[WebBrowserViewModel] Navigating to: {url}");
         }
 
         /// <summary>

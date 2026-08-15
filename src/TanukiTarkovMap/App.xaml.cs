@@ -65,6 +65,28 @@ namespace TanukiTarkovMap
         public static string WebsiteUrl { get; } = "https://tarkov-market.com/pilot";
 
         /// <summary>
+        /// 앱을 켰을 때 브라우저가 처음 여는 주소. 지난번에 보던 맵이 있으면 그 맵으로 바로 간다.
+        ///
+        /// pilot 페이지는 웹소켓 핸드셰이크를 맺는 착지점일 뿐이다. 거기 들렀다가 맵으로 옮겨가면
+        /// 시작할 때 페이지를 두 번 그려서 화면이 덜컥거린다. 맵 페이지도 같은 핸드셰이크를 하므로
+        /// 처음부터 그리로 가면 한 번으로 끝난다. 저장된 맵이 없는 첫 실행에만 pilot으로 간다.
+        ///
+        /// Settings.Load()가 끝난 뒤에 읽어야 한다. 창을 만들기 전에 설정을 불러오므로
+        /// 브라우저 뷰모델이 생성될 시점에는 이미 값이 들어와 있다
+        /// </summary>
+        public static string StartupUrl
+        {
+            get
+            {
+                var savedMapId = GetSettings().SelectedMapId;
+                if (string.IsNullOrEmpty(savedMapId)) return WebsiteUrl;
+
+                var savedMap = AvailableMaps.FirstOrDefault(map => map.MapId == savedMapId);
+                return savedMap?.Url ?? WebsiteUrl;
+            }
+        }
+
+        /// <summary>
         /// 사용 가능한 타르코프 맵 목록 (MapConfiguration으로 위임)
         /// </summary>
         public static List<MapInfo> AvailableMaps => MapConfiguration.AvailableMaps;
