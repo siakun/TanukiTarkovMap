@@ -1,7 +1,9 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
+using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Xaml.Behaviors;
+using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.ViewModels;
 
@@ -107,11 +109,18 @@ namespace TanukiTarkovMap.Behaviors
                     Logger.SimpleLog("[TrayWindowBehavior] TopMost set without stealing focus");
                 }
 
-                // 4. 핀 모드가 활성화된 경우 TopBar를 숨긴 상태로 시작
-                if (_viewModel?.IsAlwaysOnTop == true && _topBarTransform != null && _browserContainer != null)
+                // 4. TopBar를 숨긴 상태로 시작한다.
+                //    트레이에서 돌아올 때는 포커스를 가져가지 않아 창 활성화도 마우스 진입도
+                //    일어나지 않으므로, TopBarAnimationBehavior가 숨겨 줄 기회가 없다.
+                //    마우스를 올리면 그쪽이 다시 보여 준다
+                if (_topBarTransform != null && _browserContainer != null)
                 {
                     _topBarTransform.Y = -20;
                     _browserContainer.Margin = new Thickness(0, 0, 0, 0);
+
+                    // 창 투명도가 이 상태에 걸려 있어(ActualWindowOpacity) 함께 알려야 한다.
+                    // 여기서는 애니메이션 없이 값을 넣으므로 메시지도 직접 보낸다
+                    WeakReferenceMessenger.Default.Send(new TopBarHiddenChangedMessage(true));
                 }
 
                 Logger.SimpleLog("[TrayWindowBehavior] Window shown without stealing focus");
