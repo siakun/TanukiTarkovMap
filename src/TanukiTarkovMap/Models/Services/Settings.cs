@@ -23,43 +23,30 @@ namespace TanukiTarkovMap.Models.Services
 {
     public class Settings
     {
-        private static string SettingsFolder => AppPaths.SettingsFolder;
-        private static string SettingsFilePath => AppPaths.SettingsFilePath;
-
         public static void Save()
         {
             AppSettings settings = App.GetSettings();
-
-            // 설정 폴더가 없으면 생성
-            if (!Directory.Exists(SettingsFolder))
-            {
-                Directory.CreateDirectory(SettingsFolder);
-            }
 
             var json = JsonSerializer.Serialize(
                 settings,
                 new JsonSerializerOptions { WriteIndented = true }
             );
-            File.WriteAllText(SettingsFilePath, json);
+            AppPaths.WriteSettingsFile(json);
         }
 
         public static void Load()
         {
-            if (!File.Exists(SettingsFilePath))
+            // 더 최신인 위치부터 읽되 손상됐거나 접근할 수 없으면 다른 위치를 시도한다.
+            // 한쪽 파일의 실패만으로 정상인 설정까지 버리고 기본값을 만들지 않는다
+            foreach (var readPath in AppPaths.SettingsReadPaths)
             {
-                // 설정 파일이 없으면 기본값으로 생성
-                CreateDefaultSettings();
-                return;
-            }
-
-            try
-            {
-                var json = File.ReadAllText(SettingsFilePath);
-                var settings = JsonSerializer.Deserialize<AppSettings>(json);
-
-                // 경로에 {0} 플레이스홀더가 있으면 현재 사용자 이름으로 치환
-                if (settings != null)
+                try
                 {
+                    var json = File.ReadAllText(readPath);
+                    var settings = JsonSerializer.Deserialize<AppSettings>(json)
+                                   ?? throw new InvalidDataException($"설정 파일이 비어 있습니다: {readPath}");
+
+                    // 경로에 {0} 플레이스홀더가 있으면 현재 사용자 이름으로 치환
                     if (!string.IsNullOrEmpty(settings.GameFolder) && settings.GameFolder.Contains("{0}"))
                     {
                         settings.GameFolder = string.Format(settings.GameFolder, Environment.UserName);
@@ -69,15 +56,18 @@ namespace TanukiTarkovMap.Models.Services
                     {
                         settings.ScreenshotsFolder = string.Format(settings.ScreenshotsFolder, Environment.UserName);
                     }
-                }
 
-                App.SetSettings(settings);
+                    App.SetSettings(settings);
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"[Settings] Failed to load {readPath}: {ex.Message}");
+                }
             }
-            catch (Exception)
-            {
-                // 파일 읽기 실패 시 기본값으로 생성
-                CreateDefaultSettings();
-            }
+
+            // 두 위치가 모두 없거나 읽지 못했을 때만 기본값을 만든다
+            CreateDefaultSettings();
         }
 
         private static void CreateDefaultSettings()
@@ -215,14 +205,8 @@ namespace TanukiTarkovMap.Models.Services
 
         public static void Delete()
         {
-            try
-            {
-                if (!File.Exists(SettingsFilePath))
-                    return;
-
-                File.Delete(SettingsFilePath);
-            }
-            catch (Exception) { }
+            // 한쪽만 지우면 다음 실행에서 남은 파일이 다시 병합돼 초기화가 되돌아간다
+            AppPaths.DeleteSettingsFiles();
         }
     }
 }
