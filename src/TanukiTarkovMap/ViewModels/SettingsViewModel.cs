@@ -13,6 +13,36 @@ using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
+/**
+SettingsViewModel - 설정 화면의 모든 값과 동작
+
+Purpose: settings.json에 담기는 값을 화면에 잇고, 값이 바뀌는 즉시 저장한다.
+설정 화면에만 있는 작업(캐시 비우기, 버전 전환, 개발자 도구)도 여기서 처리한다.
+
+Architecture: 구획을 설정 화면의 섹션 순서와 맞춰 두었다. 한 기능의 속성과 커맨드가
+한자리에 모여 있어야 그 기능만 보고 고칠 수 있다. 예전에는 속성이 파일 앞머리에 모두
+몰려 있고 커맨드는 뒤쪽에 흩어져 있어, 버전 전환 하나를 보려 해도 파일 양 끝을 오가야 했다.
+
+Core Functionality:
+- 값 저장: 속성이 바뀌면 partial 메서드가 Save()를 불러 그 자리에서 파일에 쓴다
+- 브라우저 캐시: 크기 표시와 비우기 예약
+- 업데이트: 자동 갱신 스위치, 베타 수신, 버전 목록과 설치
+- 개발자 도구: 주소 이동, 업데이트 UI 미리보기
+
+State Management:
+- _isLoading: 불러오는 중에는 자동 저장을 멈춘다. 값을 채우다가 파일을 덮어쓰면 안 된다
+- _versionListLoaded: 설정을 열 때마다 GitHub을 부르지 않도록 첫 조회만 표시해 둔다
+- _versionRefreshRequested: 목록을 읽는 동안 또 요청이 오면 끝난 뒤 한 번만 더 읽는다
+- _installTargetBytes: 진행률을 MB로 환산할 때 쓰는 대상 패키지 크기
+
+Dependencies:
+- App/Settings: 설정 값의 실제 저장소
+- AppPaths: 설정 파일과 브라우저 캐시의 위치, 캐시 크기 조회와 비우기
+- UpdateService: 설치 가능한 버전 목록과 버전 설치
+- WeakReferenceMessenger: 화면이 열렸다는 신호를 받고, 핫키와 아이콘 변경을 알린다
+
+Last Updated: 2026-08-15 | .NET 8 | 구획을 기능 단위로 재배치
+*/
 namespace TanukiTarkovMap.ViewModels
 {
     /// <summary>
@@ -28,25 +58,268 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> 버전 목록을 한 번이라도 채웠는지 여부 (설정을 열 때마다 GitHub을 부르지 않으려고 둔다) </summary>
         private bool _versionListLoaded = false;
 
-        /// <summary> 설치 중인 패키지 크기(byte). 진행률을 MB로 환산할 때 쓴다 </summary>
-        private long _installTargetBytes = 0;
-
         /// <summary> 목록을 읽는 동안 다시 요청이 들어왔는지 (다 읽은 뒤 한 번만 더 읽는다) </summary>
         private bool _versionRefreshRequested = false;
 
+        /// <summary> 설치 중인 패키지 크기(byte). 진행률을 MB로 환산할 때 쓴다 </summary>
+        private long _installTargetBytes = 0;
+
+        public string AppVersion => App.Version;
+
+        public string SettingsFilePath => AppPaths.SettingsFilePath;
+
+        public SettingsViewModel()
+        {
+            LoadCurrentSettings();
+
+            // 설정 창을 닫았다 열어도 예약 상태가 그대로 보이도록 실제 값에서 읽는다
+            CacheResetScheduled = AppPaths.BrowserCacheResetRequested;
+
+            WeakReferenceMessenger.Default.RegisterAll(this);
+        }
+
+        /// <summary>
+        /// 설정 화면이 열릴 때 화면을 볼 때만 필요한 값을 채운다.
+        ///
+        /// 버전 목록은 처음 한 번만 읽고, 이후 새 릴리스는 사용자가 새로고침으로 다시 읽는다.
+        /// 조회는 GitHub API만 쓰므로 설치 형태와 무관하게 채운다. 포터블이나 개발 빌드에서도
+        /// 어떤 버전이 있는지는 볼 수 있어야 하고, 설치만 막으면 된다
+        /// </summary>
+        public void Receive(SettingsOpenedMessage message)
+        {
+            // 캐시는 쓰는 동안 계속 불어나므로 열 때마다 다시 잰다
+            _ = RefreshCacheSizeCommand.ExecuteAsync(null);
+
+            if (_versionListLoaded) return;
+
+            _versionListLoaded = true;
+            _ = RefreshVersionsCommand.ExecuteAsync(null);
+        }
+
+        #region 저장과 불러오기
+        /// <summary>
+        /// 화면의 값을 settings.json에 쓴다.
+        /// 속성이 바뀔 때마다 partial 메서드를 거쳐 불리므로 확인 버튼이 따로 없다
+        /// </summary>
+        [RelayCommand]
+        private void Save()
+        {
+            // 경로 설정 저장
+            App.GameFolder = GameFolder;
+            App.ScreenshotsFolder = ScreenshotsFolder;
+
+            var settings = App.GetSettings();
+            settings.GameFolder = GameFolder;
+            settings.ScreenshotsFolder = ScreenshotsFolder;
+            settings.HotkeyEnabled = HotkeyEnabled;
+            settings.HotkeyKey = HotkeyKey;
+            settings.autoDeleteLogs = AutoDeleteLogs;
+            settings.autoDeleteScreenshots = AutoDeleteScreenshots;
+            settings.GoonTrackerEnabled = GoonTrackerEnabled;
+            settings.AutoMapSwitchEnabled = AutoMapSwitchEnabled;
+            settings.AutoUpdateEnabled = AutoUpdateEnabled;
+            settings.PrereleaseEnabled = PrereleaseEnabled;
+
+            App.SetSettings(settings);
+            Models.Services.Settings.Save();
+        }
+
+        [RelayCommand]
+        private void Cancel()
+        {
+            // Cancel logic - reload from current settings
+            LoadCurrentSettings();
+        }
+
+        [RelayCommand]
+        private void ResetSettings()
+        {
+            // Reset to default settings
+            App.ResetSettings();
+            LoadCurrentSettings();
+        }
+
+        private void LoadCurrentSettings()
+        {
+            _isLoading = true;
+            try
+            {
+                GameFolder = App.GameFolder ?? string.Empty;
+                ScreenshotsFolder = App.ScreenshotsFolder ?? string.Empty;
+
+                var settings = App.GetSettings();
+                HotkeyEnabled = settings.HotkeyEnabled;
+                HotkeyKey = settings.HotkeyKey ?? AppSettings.DefaultHotkeyKey;
+                AutoDeleteLogs = settings.autoDeleteLogs;
+                AutoDeleteScreenshots = settings.autoDeleteScreenshots;
+                GoonTrackerEnabled = settings.GoonTrackerEnabled;
+                AutoMapSwitchEnabled = settings.AutoMapSwitchEnabled;
+                AutoUpdateEnabled = settings.AutoUpdateEnabled;
+                PrereleaseEnabled = settings.PrereleaseEnabled;
+            }
+            finally
+            {
+                _isLoading = false;
+            }
+        }
+
+        /// <summary>
+        /// 값을 불러오는 중에는 저장하지 않는다.
+        /// 채우는 도중에 파일을 쓰면 아직 못 채운 값이 기본값으로 덮인다
+        /// </summary>
+        private void AutoSave()
+        {
+            if (_isLoading) return;
+            Save();
+        }
+        #endregion
+
+        #region 타르코프 경로
         [ObservableProperty] public partial string GameFolder { get; set; } = string.Empty;
         [ObservableProperty] public partial string ScreenshotsFolder { get; set; } = string.Empty;
+
+        partial void OnGameFolderChanged(string value) => AutoSaveAndRestartLogWatcher();
+        partial void OnScreenshotsFolderChanged(string value) => AutoSaveAndRestartScreenshotWatcher();
+
+        private void AutoSaveAndRestartLogWatcher()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // 게임 폴더 변경 시 LogsWatcher 재시작
+            Models.FileSystem.LogsWatcher.Restart();
+        }
+
+        private void AutoSaveAndRestartScreenshotWatcher()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // 스크린샷 폴더 변경 시 ScreenshotsWatcher 재시작
+            Models.FileSystem.ScreenshotsWatcher.Restart();
+        }
+
+        [RelayCommand]
+        private void BrowseGameFolder()
+        {
+            var dialog = new OpenFolderDialog
+            {
+                Title = "Select Escape From Tarkov game folder",
+                InitialDirectory = !string.IsNullOrEmpty(GameFolder) ? GameFolder : null,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                GameFolder = dialog.FolderName;
+            }
+        }
+
+        [RelayCommand]
+        private void BrowseScreenshotsFolder()
+        {
+            var dialog = new OpenFolderDialog
+            {
+                Title = "Select Screenshots folder",
+                InitialDirectory = !string.IsNullOrEmpty(ScreenshotsFolder) ? ScreenshotsFolder : null,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog() == true)
+            {
+                ScreenshotsFolder = dialog.FolderName;
+            }
+        }
+        #endregion
+
+        #region 단축키와 파일 자동 정리
         [ObservableProperty] public partial bool HotkeyEnabled { get; set; } = true;
         [ObservableProperty] public partial string HotkeyKey { get; set; } = AppSettings.DefaultHotkeyKey;
         [ObservableProperty] public partial bool AutoDeleteLogs { get; set; } = false;
         [ObservableProperty] public partial bool AutoDeleteScreenshots { get; set; } = false;
-        [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
+
+        partial void OnHotkeyEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
+        partial void OnHotkeyKeyChanged(string value) => AutoSaveAndUpdateHotkey();
+        partial void OnAutoDeleteLogsChanged(bool value) => AutoSave();
+        partial void OnAutoDeleteScreenshotsChanged(bool value) => AutoSave();
+
+        private void AutoSaveAndUpdateHotkey()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // 핫키 설정 변경 메시지 발송 (MainWindow에서 수신하여 핫키 재등록)
+            WeakReferenceMessenger.Default.Send(new HotkeySettingsChangedMessage());
+        }
+        #endregion
+
+        #region 자동 맵 전환과 Goon Tracker
         [ObservableProperty] public partial bool AutoMapSwitchEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
+
+        partial void OnAutoMapSwitchEnabledChanged(bool value) => AutoSave();
+        partial void OnGoonTrackerEnabledChanged(bool value) => AutoSaveAndUpdateGoonTracker();
+
+        private void AutoSaveAndUpdateGoonTracker()
+        {
+            if (_isLoading) return;
+            Save();
+
+            // GoonTrackerService 활성화/비활성화
+            ServiceLocator.GoonTrackerService.Enabled = GoonTrackerEnabled;
+        }
+        #endregion
+
+        #region 브라우저 캐시
+        /// <summary> 브라우저 캐시가 차지하는 크기 (예: 620.5 MB) </summary>
+        [ObservableProperty] public partial string BrowserCacheSizeText { get; set; } = string.Empty;
+
+        /// <summary>
+        /// 앱을 닫을 때 캐시를 비우도록 예약했는지 여부.
+        /// 실행 중에는 CEF가 프로필 파일을 붙들고 있어 그 자리에서 지울 수 없다
+        /// </summary>
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(CacheResetButtonText))]
+        public partial bool CacheResetScheduled { get; set; } = false;
+
+        public string CacheResetButtonText => CacheResetScheduled ? "비우기 취소" : "캐시 비우기";
+
+        /// <summary> 코드 캐시 자동 정리 안내. 기준 값은 AppPaths가 정하므로 여기서 다시 적지 않는다 </summary>
+        public string CodeCacheLimitNotice =>
+            $"페이지 스크립트 캐시가 {AppPaths.CodeCacheLimitMegabytes}MB를 넘으면 시작할 때 자동으로 정리합니다. 맵 타일은 그대로 두므로 느려지지 않습니다";
+
+        /// <summary>
+        /// 브라우저 캐시 크기를 다시 잰다. 파일 수천 개를 훑으므로 백그라운드에서 돈다
+        /// </summary>
+        [RelayCommand]
+        private async Task RefreshCacheSize()
+        {
+            BrowserCacheSizeText = "확인 중...";
+
+            var sizeInBytes = await Task.Run(AppPaths.GetBrowserCacheSize);
+            BrowserCacheSizeText = sizeInBytes > 0
+                ? $"{sizeInBytes / 1024d / 1024d:N1} MB"
+                : "비어 있음";
+        }
+
+        /// <summary>
+        /// 캐시 비우기를 예약하거나 되돌린다.
+        /// 실행 중에는 지울 수 없어 실제 삭제는 앱을 닫을 때 일어난다
+        /// </summary>
+        [RelayCommand]
+        private void ToggleCacheReset()
+        {
+            CacheResetScheduled = !CacheResetScheduled;
+            AppPaths.BrowserCacheResetRequested = CacheResetScheduled;
+
+            Logger.SimpleLog($"[SettingsViewModel] Browser cache reset scheduled: {CacheResetScheduled}");
+        }
+        #endregion
+
+        #region 업데이트와 버전 전환
         [ObservableProperty] public partial bool AutoUpdateEnabled { get; set; } = true;
         [ObservableProperty] public partial bool PrereleaseEnabled { get; set; } = false;
-        [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
 
-        #region Version Switching Properties
         /// <summary> 설치할 수 있는 버전 목록 (최신 순) </summary>
         public ObservableCollection<VersionItem> AvailableVersions { get; } = new();
 
@@ -87,59 +360,7 @@ namespace TanukiTarkovMap.ViewModels
                 catch { return false; }
             }
         }
-        #endregion
 
-        #region Browser Cache Properties
-        /// <summary> 브라우저 캐시가 차지하는 크기 (예: 620.5 MB) </summary>
-        [ObservableProperty] public partial string BrowserCacheSizeText { get; set; } = string.Empty;
-
-        /// <summary>
-        /// 앱을 닫을 때 캐시를 비우도록 예약했는지 여부.
-        /// 실행 중에는 CEF가 프로필 파일을 붙들고 있어 그 자리에서 지울 수 없다
-        /// </summary>
-        [ObservableProperty]
-        [NotifyPropertyChangedFor(nameof(CacheResetButtonText))]
-        public partial bool CacheResetScheduled { get; set; } = false;
-
-        public string CacheResetButtonText => CacheResetScheduled ? "비우기 취소" : "캐시 비우기";
-
-        /// <summary> 코드 캐시 자동 정리 안내. 기준 값은 AppPaths가 정하므로 여기서 다시 적지 않는다 </summary>
-        public string CodeCacheLimitNotice =>
-            $"페이지 스크립트 캐시가 {AppPaths.CodeCacheLimitMegabytes}MB를 넘으면 시작할 때 자동으로 정리합니다. 맵 타일은 그대로 두므로 느려지지 않습니다";
-        #endregion
-
-        #region Developer Tools Properties
-        /// <summary>
-        /// 타이틀 바 업데이트 아이콘을 강제로 켤지 여부.
-        /// 개발 빌드에서는 Velopack 업데이트가 잡히지 않아 아이콘이 뜰 일이 없다.
-        /// 켜 둔 채 배포본을 쓰면 가짜 아이콘이 남으므로 설정 파일에 저장하지 않는다
-        /// </summary>
-        [ObservableProperty] public partial bool UpdateIconAlwaysVisible { get; set; } = false;
-        #endregion
-
-        public string AppVersion => App.Version;
-
-        public string SettingsFilePath => AppPaths.SettingsFilePath;
-
-        public SettingsViewModel()
-        {
-            LoadCurrentSettings();
-
-            // 설정 창을 닫았다 열어도 예약 상태가 그대로 보이도록 실제 값에서 읽는다
-            CacheResetScheduled = AppPaths.BrowserCacheResetRequested;
-
-            WeakReferenceMessenger.Default.RegisterAll(this);
-        }
-
-        // 속성 변경 시 자동 저장 (partial 메서드)
-        partial void OnGameFolderChanged(string value) => AutoSaveAndRestartLogWatcher();
-        partial void OnScreenshotsFolderChanged(string value) => AutoSaveAndRestartScreenshotWatcher();
-        partial void OnHotkeyEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
-        partial void OnHotkeyKeyChanged(string value) => AutoSaveAndUpdateHotkey();
-        partial void OnAutoDeleteLogsChanged(bool value) => AutoSave();
-        partial void OnAutoDeleteScreenshotsChanged(bool value) => AutoSave();
-        partial void OnGoonTrackerEnabledChanged(bool value) => AutoSaveAndUpdateGoonTracker();
-        partial void OnAutoMapSwitchEnabledChanged(bool value) => AutoSave();
         partial void OnAutoUpdateEnabledChanged(bool value) => AutoSave();
 
         partial void OnPrereleaseEnabledChanged(bool value)
@@ -149,228 +370,6 @@ namespace TanukiTarkovMap.ViewModels
 
             // 목록에 베타가 나타나거나 사라져야 하므로 다시 읽는다
             _ = RefreshVersionsCommand.ExecuteAsync(null);
-        }
-
-        private void AutoSave()
-        {
-            if (_isLoading) return;
-            Save();
-        }
-
-        private void AutoSaveAndRestartLogWatcher()
-        {
-            if (_isLoading) return;
-            Save();
-
-            // 게임 폴더 변경 시 LogsWatcher 재시작
-            Models.FileSystem.LogsWatcher.Restart();
-        }
-
-        private void AutoSaveAndRestartScreenshotWatcher()
-        {
-            if (_isLoading) return;
-            Save();
-
-            // 스크린샷 폴더 변경 시 ScreenshotsWatcher 재시작
-            Models.FileSystem.ScreenshotsWatcher.Restart();
-        }
-
-        private void AutoSaveAndUpdateHotkey()
-        {
-            if (_isLoading) return;
-            Save();
-
-            // 핫키 설정 변경 메시지 발송 (MainWindow에서 수신하여 핫키 재등록)
-            WeakReferenceMessenger.Default.Send(new HotkeySettingsChangedMessage());
-        }
-
-        private void AutoSaveAndUpdateGoonTracker()
-        {
-            if (_isLoading) return;
-            Save();
-
-            // GoonTrackerService 활성화/비활성화
-            ServiceLocator.GoonTrackerService.Enabled = GoonTrackerEnabled;
-        }
-
-        // Commands
-        [RelayCommand]
-        private void Save()
-        {
-            // 경로 설정 저장
-            App.GameFolder = GameFolder;
-            App.ScreenshotsFolder = ScreenshotsFolder;
-
-            var settings = App.GetSettings();
-            settings.GameFolder = GameFolder;
-            settings.ScreenshotsFolder = ScreenshotsFolder;
-            settings.HotkeyEnabled = HotkeyEnabled;
-            settings.HotkeyKey = HotkeyKey;
-            settings.autoDeleteLogs = AutoDeleteLogs;
-            settings.autoDeleteScreenshots = AutoDeleteScreenshots;
-            settings.GoonTrackerEnabled = GoonTrackerEnabled;
-            settings.AutoMapSwitchEnabled = AutoMapSwitchEnabled;
-            settings.AutoUpdateEnabled = AutoUpdateEnabled;
-            settings.PrereleaseEnabled = PrereleaseEnabled;
-
-            App.SetSettings(settings);
-            Models.Services.Settings.Save();
-        }
-
-        [RelayCommand]
-        private void Cancel()
-        {
-            // Cancel logic - reload from current settings
-            LoadCurrentSettings();
-        }
-
-        [RelayCommand]
-        private void BrowseGameFolder()
-        {
-            var dialog = new OpenFolderDialog
-            {
-                Title = "Select Escape From Tarkov game folder",
-                InitialDirectory = !string.IsNullOrEmpty(GameFolder) ? GameFolder : null,
-                Multiselect = false
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                GameFolder = dialog.FolderName;
-            }
-        }
-
-        [RelayCommand]
-        private void BrowseScreenshotsFolder()
-        {
-            var dialog = new OpenFolderDialog
-            {
-                Title = "Select Screenshots folder",
-                InitialDirectory = !string.IsNullOrEmpty(ScreenshotsFolder) ? ScreenshotsFolder : null,
-                Multiselect = false
-            };
-
-            if (dialog.ShowDialog() == true)
-            {
-                ScreenshotsFolder = dialog.FolderName;
-            }
-        }
-
-        [RelayCommand]
-        private void ResetSettings()
-        {
-            // Reset to default settings
-            App.ResetSettings();
-            LoadCurrentSettings();
-        }
-
-        [RelayCommand]
-        private void NavigateToPilot()
-        {
-            WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(App.WebsiteUrl));
-        }
-
-        [RelayCommand]
-        private void NavigateToCustomUrl()
-        {
-            if (!string.IsNullOrWhiteSpace(CustomUrl))
-            {
-                WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(CustomUrl));
-            }
-        }
-
-        partial void OnUpdateIconAlwaysVisibleChanged(bool value)
-            => WeakReferenceMessenger.Default.Send(new UpdateIconPreviewMessage(value));
-
-        /// <summary>
-        /// 다운로드 진행률 표시를 실제 설치 없이 재생한다.
-        /// 254MB짜리 패키지를 받아 보지 않고도 진행 문구와 막대를 확인할 수 있다
-        /// </summary>
-        [RelayCommand]
-        private async Task PreviewDownloadProgress()
-        {
-            if (IsInstalling) return;
-
-            IsInstalling = true;
-            UpdateStatusMessage = string.Empty;
-            _installTargetBytes = 253_893_613;   // v0.1.0 전체 패키지 크기
-
-            try
-            {
-                for (var percent = 0; percent <= 100; percent += 2)
-                {
-                    ReportInstallProgress(percent);
-                    await Task.Delay(60);
-                }
-
-                // 100%에 도달한 뒤 검증과 압축 해제 문구가 보이는 구간까지 재현한다
-                await Task.Delay(1500);
-            }
-            finally
-            {
-                IsInstalling = false;
-                InstallProgress = 0;
-                InstallProgressText = string.Empty;
-            }
-        }
-
-        [RelayCommand]
-        private void OpenSettingsFolder()
-        {
-            var folder = Path.GetDirectoryName(SettingsFilePath);
-            if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
-            {
-                Process.Start(new ProcessStartInfo
-                {
-                    FileName = folder,
-                    UseShellExecute = true
-                });
-            }
-        }
-
-        #region Version Switching Commands
-        /// <summary>
-        /// 설정 화면이 열릴 때 버전 목록을 처음 한 번 채운다.
-        /// 이후 새 릴리스는 사용자가 새로고침으로 다시 읽는다.
-        /// 목록 조회는 GitHub API만 쓰므로 설치 형태와 무관하게 채운다.
-        /// 포터블이나 개발 빌드에서도 어떤 버전이 있는지는 볼 수 있어야 하고, 설치만 막으면 된다
-        /// </summary>
-        public void Receive(SettingsOpenedMessage message)
-        {
-            // 캐시는 쓰는 동안 계속 불어나므로 열 때마다 다시 잰다
-            _ = RefreshCacheSizeCommand.ExecuteAsync(null);
-
-            if (_versionListLoaded) return;
-
-            _versionListLoaded = true;
-            _ = RefreshVersionsCommand.ExecuteAsync(null);
-        }
-
-        /// <summary>
-        /// 브라우저 캐시 크기를 다시 잰다. 파일 수천 개를 훑으므로 백그라운드에서 돈다
-        /// </summary>
-        [RelayCommand]
-        private async Task RefreshCacheSize()
-        {
-            BrowserCacheSizeText = "확인 중...";
-
-            var sizeInBytes = await Task.Run(AppPaths.GetBrowserCacheSize);
-            BrowserCacheSizeText = sizeInBytes > 0
-                ? $"{sizeInBytes / 1024d / 1024d:N1} MB"
-                : "비어 있음";
-        }
-
-        /// <summary>
-        /// 캐시 비우기를 예약하거나 되돌린다.
-        /// 실행 중에는 지울 수 없어 실제 삭제는 앱을 닫을 때 일어난다
-        /// </summary>
-        [RelayCommand]
-        private void ToggleCacheReset()
-        {
-            CacheResetScheduled = !CacheResetScheduled;
-            AppPaths.BrowserCacheResetRequested = CacheResetScheduled;
-
-            Logger.SimpleLog($"[SettingsViewModel] Browser cache reset scheduled: {CacheResetScheduled}");
         }
 
         private bool CanRefreshVersions() => !IsVersionListLoading && !IsInstalling;
@@ -530,28 +529,79 @@ namespace TanukiTarkovMap.ViewModels
         }
         #endregion
 
-        private void LoadCurrentSettings()
+        #region 개발자 도구
+        [ObservableProperty] public partial string CustomUrl { get; set; } = "https://tarkov-market.com/pilot";
+
+        /// <summary>
+        /// 타이틀 바 업데이트 아이콘을 강제로 켤지 여부.
+        /// 개발 빌드에서는 Velopack 업데이트가 잡히지 않아 아이콘이 뜰 일이 없다.
+        /// 켜 둔 채 배포본을 쓰면 가짜 아이콘이 남으므로 설정 파일에 저장하지 않는다
+        /// </summary>
+        [ObservableProperty] public partial bool UpdateIconAlwaysVisible { get; set; } = false;
+
+        partial void OnUpdateIconAlwaysVisibleChanged(bool value)
+            => WeakReferenceMessenger.Default.Send(new UpdateIconPreviewMessage(value));
+
+        [RelayCommand]
+        private void NavigateToPilot()
         {
-            _isLoading = true;
+            WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(App.WebsiteUrl));
+        }
+
+        [RelayCommand]
+        private void NavigateToCustomUrl()
+        {
+            if (!string.IsNullOrWhiteSpace(CustomUrl))
+            {
+                WeakReferenceMessenger.Default.Send(new NavigateToUrlMessage(CustomUrl));
+            }
+        }
+
+        [RelayCommand]
+        private void OpenSettingsFolder()
+        {
+            var folder = Path.GetDirectoryName(SettingsFilePath);
+            if (!string.IsNullOrEmpty(folder) && Directory.Exists(folder))
+            {
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true
+                });
+            }
+        }
+
+        /// <summary>
+        /// 다운로드 진행률 표시를 실제 설치 없이 재생한다.
+        /// 254MB짜리 패키지를 받아 보지 않고도 진행 문구와 막대를 확인할 수 있다
+        /// </summary>
+        [RelayCommand]
+        private async Task PreviewDownloadProgress()
+        {
+            if (IsInstalling) return;
+
+            IsInstalling = true;
+            UpdateStatusMessage = string.Empty;
+            _installTargetBytes = 253_893_613;   // v0.1.0 전체 패키지 크기
+
             try
             {
-                GameFolder = App.GameFolder ?? string.Empty;
-                ScreenshotsFolder = App.ScreenshotsFolder ?? string.Empty;
+                for (var percent = 0; percent <= 100; percent += 2)
+                {
+                    ReportInstallProgress(percent);
+                    await Task.Delay(60);
+                }
 
-                var settings = App.GetSettings();
-                HotkeyEnabled = settings.HotkeyEnabled;
-                HotkeyKey = settings.HotkeyKey ?? AppSettings.DefaultHotkeyKey;
-                AutoDeleteLogs = settings.autoDeleteLogs;
-                AutoDeleteScreenshots = settings.autoDeleteScreenshots;
-                GoonTrackerEnabled = settings.GoonTrackerEnabled;
-                AutoMapSwitchEnabled = settings.AutoMapSwitchEnabled;
-                AutoUpdateEnabled = settings.AutoUpdateEnabled;
-                PrereleaseEnabled = settings.PrereleaseEnabled;
+                // 100%에 도달한 뒤 검증과 압축 해제 문구가 보이는 구간까지 재현한다
+                await Task.Delay(1500);
             }
             finally
             {
-                _isLoading = false;
+                IsInstalling = false;
+                InstallProgress = 0;
+                InstallProgressText = string.Empty;
             }
         }
+        #endregion
     }
 }
