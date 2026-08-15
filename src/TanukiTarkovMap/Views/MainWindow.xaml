@@ -156,9 +156,10 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
+                        <!-- 업데이트 아이콘 자리. 받을 것이 없으면 숨겨져 폭이 0이 된다 -->
+                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="30"/>
                         <ColumnDefinition Width="30"/>
-                        <!-- 업데이트 아이콘이 나타나면 버튼이 둘로 늘어나므로 내용에 맞춘다 -->
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
 
@@ -337,9 +338,55 @@
                         </Slider>
                     </StackPanel>
 
+                    <!-- 업데이트 준비됨 표시 (백그라운드 다운로드 완료 시 나타나고, 클릭하면 재시작하여 적용) -->
+                    <Button x:Name="UpdateReadyButton"
+                            Grid.Column="2"
+                            Width="30"
+                            Background="Transparent"
+                            BorderThickness="0"
+                            ToolTip="{Binding UpdateReadyVersion, StringFormat='업데이트 준비 완료 (v{0})&#x0a;클릭하면 다시 시작하고 적용합니다'}"
+                            Command="{Binding RestartToApplyUpdateCommand}"
+                            Visibility="{Binding ShowUpdateIcon, Converter={StaticResource BoolToVisibilityConverter}}"
+                            WindowChrome.IsHitTestVisibleInChrome="True">
+                        <Button.Style>
+                            <Style TargetType="Button">
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="Button">
+                                            <Border x:Name="BorderBackground"
+                                                    Background="Transparent"
+                                                    CornerRadius="3">
+                                                <!-- 받침선으로 떨어지는 아래 화살표 (16x16 좌표계에 그린다) -->
+                                                <Path x:Name="DownloadGlyph"
+                                                      Data="M8,2.5 L8,9.5 M4.5,6.5 L8,10 L11.5,6.5 M3.5,13 L12.5,13"
+                                                      Stroke="#FF3BA55D"
+                                                      StrokeThickness="1.6"
+                                                      StrokeStartLineCap="Round"
+                                                      StrokeEndLineCap="Round"
+                                                      StrokeLineJoin="Round"
+                                                      Width="16" Height="16"
+                                                      HorizontalAlignment="Center"
+                                                      VerticalAlignment="Center"/>
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="BorderBackground" Property="Background" Value="#FF3A3A3A"/>
+                                                    <Setter TargetName="DownloadGlyph" Property="Stroke" Value="#FF57D68D"/>
+                                                </Trigger>
+                                                <Trigger Property="IsPressed" Value="True">
+                                                    <Setter TargetName="BorderBackground" Property="Background" Value="#FF4A4A4A"/>
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+
                     <!-- 설정 버튼 -->
                     <Button x:Name="SettingsButton"
-                            Grid.Column="2"
+                            Grid.Column="3"
                             Width="30"
                             Background="Transparent"
                             BorderThickness="0"
@@ -381,7 +428,7 @@
 
                     <!-- 고정 핀 버튼 -->
                     <Button x:Name="PinButton"
-                            Grid.Column="3"
+                            Grid.Column="4"
                             Width="30"
                             Background="Transparent"
                             BorderThickness="0"
@@ -417,52 +464,7 @@
                     </Button>
 
                     <!-- 오른쪽: 윈도우 컨트롤 버튼 -->
-                    <StackPanel Grid.Column="4" Orientation="Horizontal">
-                        <!-- 업데이트 준비됨 표시 (백그라운드 다운로드 완료 시 나타나고, 클릭하면 재시작하여 적용) -->
-                        <Button x:Name="UpdateReadyButton"
-                                Width="30"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                ToolTip="{Binding UpdateReadyVersion, StringFormat='업데이트 준비 완료 (v{0})&#x0a;클릭하면 다시 시작하고 적용합니다'}"
-                                Command="{Binding RestartToApplyUpdateCommand}"
-                                Visibility="{Binding ShowUpdateIcon, Converter={StaticResource BoolToVisibilityConverter}}"
-                                WindowChrome.IsHitTestVisibleInChrome="True">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border x:Name="BorderBackground"
-                                                        Background="Transparent"
-                                                        CornerRadius="3">
-                                                    <!-- 받침선으로 떨어지는 아래 화살표 (16x16 좌표계에 그린다) -->
-                                                    <Path x:Name="DownloadGlyph"
-                                                          Data="M8,2.5 L8,9.5 M4.5,6.5 L8,10 L11.5,6.5 M3.5,13 L12.5,13"
-                                                          Stroke="#FF3BA55D"
-                                                          StrokeThickness="1.6"
-                                                          StrokeStartLineCap="Round"
-                                                          StrokeEndLineCap="Round"
-                                                          StrokeLineJoin="Round"
-                                                          Width="16" Height="16"
-                                                          HorizontalAlignment="Center"
-                                                          VerticalAlignment="Center"/>
-                                                </Border>
-                                                <ControlTemplate.Triggers>
-                                                    <Trigger Property="IsMouseOver" Value="True">
-                                                        <Setter TargetName="BorderBackground" Property="Background" Value="#FF3A3A3A"/>
-                                                        <Setter TargetName="DownloadGlyph" Property="Stroke" Value="#FF57D68D"/>
-                                                    </Trigger>
-                                                    <Trigger Property="IsPressed" Value="True">
-                                                        <Setter TargetName="BorderBackground" Property="Background" Value="#FF4A4A4A"/>
-                                                    </Trigger>
-                                                </ControlTemplate.Triggers>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
-                                </Style>
-                            </Button.Style>
-                        </Button>
-
+                    <StackPanel Grid.Column="5" Orientation="Horizontal">
                         <!-- 최소화 버튼 (제거됨) -->
                         <Button x:Name="MinimizeButton"
                                 Width="40" Height="25"
@@ -534,7 +536,6 @@
 
                         <!-- 닫기 버튼 -->
                         <Button x:Name="CloseButton"
-                                Grid.Column="3"
                                 Width="30"
                                 Background="Transparent"
                                 BorderThickness="0"
