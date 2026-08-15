@@ -14,7 +14,7 @@
 
 ## 설치
 
-1. [Releases 페이지](https://github.com/Siakun/TanukiTarkovMap/releases/latest)에서 최신 Setup 설치 파일(`TanukiTarkovMap-Setup-<버전>-x64.exe`)을 내려받습니다.
+1. [Releases 페이지](https://github.com/siakun/TanukiTarkovMap/releases/latest)에서 최신 Setup 설치 파일(`TanukiTarkovMap-Setup-<버전>-x64.exe`)을 내려받습니다.
 2. 실행해 설치하면 이후 업데이트는 자동으로 적용됩니다. 설정에서 자동 업데이트를 끄거나 원하는 버전으로 되돌릴 수도 있습니다.
 
 설치 없이 쓰고 싶다면 같은 페이지의 포터블 버전(`TanukiTarkovMap-Portable-<버전>-x64.zip`)을 내려받아 압축을 풀고 실행합니다.
@@ -34,7 +34,7 @@
 
 > **Steam 사용자 주의**: Steam의 `F12` 스크린샷은 Steam 오버레이 기능이라 좌표가 기록되지 않습니다. 반드시 게임 자체 설정(Controls)의 Screenshot 키를 써야 하며, 기본 `PrtScn`이 동작하지 않는다는 보고가 있으니 그 경우 다른 키로 재바인딩하세요.
 
-설정 창에서 단축키, 투명도, UI 표시 여부, 자동 맵 전환, 스크린샷 자동 정리, 업데이트 방식을 바꿀 수 있습니다. 맵 타일이 쌓이는 브라우저 캐시가 얼마나 되는지 확인하고 비우는 것도 같은 창에서 합니다. 문제가 생기거나 건의할 내용이 있으면 [GitHub Issues](https://github.com/Siakun/TanukiTarkovMap/issues)에 남겨 주세요.
+설정 창에서 단축키, 투명도, UI 표시 여부, 자동 맵 전환, 스크린샷 자동 정리, 업데이트 방식을 바꿀 수 있습니다. 맵 타일이 쌓이는 브라우저 캐시가 얼마나 되는지 확인하고 비우는 것도 같은 창에서 합니다. 문제가 생기거나 건의할 내용이 있으면 [GitHub Issues](https://github.com/siakun/TanukiTarkovMap/issues)에 남겨 주세요.
 
 ---
 
