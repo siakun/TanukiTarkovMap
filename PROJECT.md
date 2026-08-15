@@ -402,7 +402,27 @@ services.AddSingleton(_ => new ServiceName());
 
 ## 설정 파일 구조
 
-`settings.json` 위치: `%LOCALAPPDATA%\TanukiTarkovMap\settings.json` (`Settings.SettingsFolder`가 만든다)
+`settings.json` 위치: `%APPDATA%\TanukiTarkovMap\settings.json`
+
+사용자 폴더 경로는 모두 `AppPaths`가 정한다. 설정과 브라우저 캐시는 생명주기가 반대라 서로 다른 폴더에 둔다.
+
+| 대상 | 폴더 | 이유 |
+|------|------|------|
+| 설정 | `%APPDATA%`(Roaming) | Velopack 설치 폴더 밖이라 앱을 제거해도 남고, 다시 설치하면 이어 쓴다 |
+| 브라우저 캐시 | `%LOCALAPPDATA%\TanukiTarkovMap\Cache` | Velopack 설치 폴더 안이라 `Update.exe --uninstall`이 지울 때 함께 정리된다 |
+
+0.1.0까지는 두 폴더가 반대였다. `AppPaths.PrepareOnStartup()`이 앱 시작 때 예전 위치의 파일을 넘겨받고 불어난 코드 캐시를 비운다. CEF가 캐시 폴더를 여는 순간 손댈 수 없으므로 `InitializeCef()`보다 먼저 호출해야 한다.
+
+### 브라우저 캐시 관리
+
+캐시는 두 갈래로 쌓이고 성질이 달라 다르게 다룬다. 실측한 값은 맵 하나를 처음 열 때 HTTP 캐시 21MB, 맵을 열 때마다 코드 캐시 0.8MB다.
+
+| 갈래 | 쌓이는 방식 | 처리 |
+|------|-------------|------|
+| HTTP 캐시 (맵 타일) | 맵 종류만큼만 쌓여 스스로 포화 (11종 약 230MB) | 상한을 걸지 않는다. 걸면 타일이 밀려나 매번 다시 받는다 |
+| 코드 캐시 (JS 바이트코드) | 맵을 열 때마다 늘어 상한이 없다 | `AppPaths.CodeCacheLimitMegabytes`를 넘으면 시작할 때 그 폴더만 비운다 |
+
+사용자가 설정에서 캐시 전체를 비울 수도 있다. 실행 중에는 CEF가 프로필 파일을 붙들고 있어 지울 수 없으므로, 예약해 두었다가 `Cef.Shutdown()` 뒤에 지운다.
 
 ```json
 {

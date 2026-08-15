@@ -196,6 +196,10 @@ namespace TanukiTarkovMap
 
             try
             {
+                // 0. 사용자 폴더 정돈 (예전 위치에서 넘겨받기, 불어난 코드 캐시 비우기).
+                //    CEF가 캐시 폴더를 열고 나면 손댈 수 없으므로 InitializeCef보다 먼저 한다
+                AppPaths.PrepareOnStartup();
+
                 // 1. 스플래시 창 먼저 표시
                 Logger.SimpleLog("Creating SplashWindow...");
                 _splashWindow = new SplashWindow();
@@ -389,7 +393,11 @@ namespace TanukiTarkovMap
                     Cef.Shutdown();
                 }
 
-                // 4. 다운로드해 둔 업데이트가 있으면 종료 후 조용히 적용되도록 예약
+                // 4. 설정에서 캐시 비우기를 예약했으면 지금 지운다.
+                //    CEF가 프로필 파일을 놓은 뒤라야 삭제할 수 있다
+                AppPaths.DeleteBrowserCacheIfRequested();
+
+                // 5. 다운로드해 둔 업데이트가 있으면 종료 후 조용히 적용되도록 예약
                 ServiceLocator.UpdateService.ApplyOnExit();
 
                 // 5. Velopack 로그 파일 정리 (포터블 버전용)
@@ -432,7 +440,8 @@ namespace TanukiTarkovMap
                     Cef.Shutdown();
                 }
 
-                // 다운로드해 둔 업데이트가 있으면 종료 후 적용 예약
+                // 예약된 캐시 비우기와 업데이트 적용은 ExitApplication을 거치지 않은 종료에서도 처리한다
+                AppPaths.DeleteBrowserCacheIfRequested();
                 ServiceLocator.UpdateService.ApplyOnExit();
             }
         }
@@ -454,11 +463,8 @@ namespace TanukiTarkovMap
 
             var settings = new CefSettings
             {
-                // 캐시 경로 설정
-                CachePath = Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "TanukiTarkovMap",
-                    "Cache"),
+                // 프로필 경로 (AppPaths가 정한다. 앱을 제거하면 함께 사라지는 자리다)
+                CachePath = AppPaths.BrowserCacheFolder,
 
                 // 로그 비활성화 (프로덕션용)
                 LogSeverity = LogSeverity.Disable,
