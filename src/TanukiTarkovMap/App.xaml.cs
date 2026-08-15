@@ -211,8 +211,41 @@ namespace TanukiTarkovMap
 
         //===================== End of Application Global State ============================
 
+        /// <summary>
+        /// 시작이 이만큼을 넘겨야 스플래시를 띄운다. 넘기지 않으면 아예 뜨지 않는다
+        /// </summary>
+        private static readonly TimeSpan SplashDelay = TimeSpan.FromMilliseconds(500);
+
+        private readonly Stopwatch _startupWatch = new();
+
+        /// <summary>
+        /// 시작이 느릴 때만 스플래시를 띄우고, 이미 떠 있으면 진행 상황만 갱신한다.
+        ///
+        /// 처음부터 띄우면 대부분의 실행에서 0.2초 만에 사라져 정보를 주지 못한 채 화면만 튄다.
+        /// 사용자는 그것을 결함으로 읽는다. 그렇다고 억지로 오래 띄우면 시작이 느려지는데,
+        /// 이 앱에서 시작 속도는 미관보다 앞선다(docs/startup-speed-and-updates.md).
+        ///
+        /// 그래서 시간을 재서 느린 실행에만 띄운다. 단계 사이에서 불러야 한다.
+        /// CEF 초기화 같은 긴 작업은 UI 스레드를 붙잡으므로 타이머로는 그 도중에 띄울 수 없고,
+        /// 그 작업이 끝난 직후가 띄울 수 있는 가장 이른 시점이다
+        /// </summary>
+        private void ShowSplashIfStartupIsSlow(string status)
+        {
+            if (_startupWatch.Elapsed < SplashDelay) return;
+
+            if (_splashWindow == null)
+            {
+                Logger.SimpleLog($"Startup is slow ({_startupWatch.ElapsedMilliseconds}ms), showing splash");
+                _splashWindow = new SplashWindow();
+                _splashWindow.Show();
+            }
+
+            _splashWindow.SetStatus(status);
+        }
+
         private async void Application_Startup(object sender, StartupEventArgs e)
         {
+            _startupWatch.Start();
             SetCulture();
 
             Logger.SimpleLog("=== Application_Startup Begin ===");
@@ -223,17 +256,11 @@ namespace TanukiTarkovMap
                 //    CEF가 캐시 폴더를 열고 나면 손댈 수 없으므로 InitializeCef보다 먼저 한다
                 AppPaths.PrepareOnStartup();
 
-                // 1. 스플래시 창 먼저 표시
-                Logger.SimpleLog("Creating SplashWindow...");
-                _splashWindow = new SplashWindow();
-                Logger.SimpleLog("Showing SplashWindow...");
-                _splashWindow.Show();
-
-                // 2. CEF 초기화
+                // 1. CEF 초기화. 시작에서 가장 오래 걸리는 단계다
                 Logger.SimpleLog("Initializing CEF...");
-                _splashWindow?.SetStatus("초기화 중...");
                 InitializeCef();
                 Logger.SimpleLog("CEF initialized.");
+                ShowSplashIfStartupIsSlow("초기화 중...");
 
                 // DI 컨테이너 초기화
                 ServiceLocator.Initialize();
@@ -251,6 +278,7 @@ namespace TanukiTarkovMap
 
                 // 설정 로드
                 Logger.SimpleLog("Loading settings...");
+                ShowSplashIfStartupIsSlow("설정을 불러오는 중...");
                 Settings.Load();
 
                 // GoonTracker 설정 적용
@@ -262,6 +290,7 @@ namespace TanukiTarkovMap
 
                 // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
                 Logger.SimpleLog("Starting file watchers...");
+                ShowSplashIfStartupIsSlow("감시를 시작하는 중...");
                 ScreenshotsWatcher.Start();
                 LogsWatcher.Start();
 
@@ -269,10 +298,13 @@ namespace TanukiTarkovMap
                 Logger.SimpleLog("Cleaning old log folders...");
                 Models.FileSystem.GameSessionCleaner.CleanOldLogFolders();
 
-                // 3. 스플래시 닫고 메인 창 표시
-                Logger.SimpleLog("Closing splash window...");
-                _splashWindow?.Close();
-                _splashWindow = null;
+                // 3. 스플래시가 떠 있었으면 닫고 메인 창 표시
+                if (_splashWindow != null)
+                {
+                    Logger.SimpleLog($"Closing splash window (startup took {_startupWatch.ElapsedMilliseconds}ms)");
+                    _splashWindow.Close();
+                    _splashWindow = null;
+                }
 
                 Logger.SimpleLog("Showing main window...");
                 ShowMainWindow();
@@ -283,6 +315,11 @@ namespace TanukiTarkovMap
             }
             catch (Exception ex)
             {
+                // 스플래시가 떠 있으면 먼저 치운다. 항상 위에 뜨는 창이라 그대로 두면
+                // 오류 대화상자를 가리고 사용자는 멈춘 것으로 본다
+                _splashWindow?.Close();
+                _splashWindow = null;
+
                 Logger.SimpleLog($"ERROR in Application_Startup: {ex}");
                 MessageBox.Show($"앱 시작 중 오류 발생:\n{ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();

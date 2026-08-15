@@ -22,7 +22,6 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Logo and Title -->
@@ -48,18 +47,6 @@
                       HorizontalAlignment="Center"
                       Margin="0,0,0,18"/>
 
-            <!-- Progress Bar (다운로드 시에만 표시) -->
-            <Grid x:Name="ProgressBarContainer" Grid.Row="2" Height="4" Visibility="Collapsed">
-                <Border Background="#2a2a4e" CornerRadius="2"/>
-                <Border x:Name="ProgressFill" CornerRadius="2" Width="0" HorizontalAlignment="Left">
-                    <Border.Background>
-                        <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
-                            <GradientStop Color="#6366f1" Offset="0"/>
-                            <GradientStop Color="#8b5cf6" Offset="1"/>
-                        </LinearGradientBrush>
-                    </Border.Background>
-                </Border>
-            </Grid>
         </Grid>
     </Border>
 </Window>
