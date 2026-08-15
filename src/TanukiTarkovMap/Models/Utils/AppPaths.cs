@@ -8,21 +8,25 @@ AppPaths - 앱이 사용자 폴더에 두는 파일의 위치를 정하는 단�
 Purpose: 설정과 브라우저 캐시를 어느 폴더에 둘지, 예전 위치에 남은 파일을 어떻게 옮길지
 한 곳에서 정한다. 이전에는 같은 경로 계산이 Settings, SettingsViewModel, App에 흩어져 있었다.
 
-Architecture: 두 폴더의 역할이 서로 반대다.
+Architecture: 설정과 브라우저 데이터의 수명을 경로와 제거 훅으로 나눈다.
 - 설정(Roaming): 앱을 지워도 남아야 한다. Velopack 설치 폴더 밖이라 제거 대상이 아니고,
   다시 설치하면 그대로 이어 쓴다
-- 브라우저 캐시(Local): 앱을 지우면 함께 사라져야 한다. Velopack 설치 폴더 안이므로
+- 활성 브라우저 데이터(Local): 앱을 지우면 함께 사라져야 한다. Velopack 설치 폴더 안이므로
   Update.exe --uninstall이 그 폴더를 지울 때 같이 정리된다
+- 호환용 브라우저 데이터(Roaming): 버전을 오갈 때는 보존하고, 앱을 제거할 때 훅으로 지운다
 
 Core Functionality:
 - SettingsFilePath: settings.json의 위치
 - BrowserCacheFolder: CefSharp에 넘기는 프로필 폴더 (캐시뿐 아니라 쿠키와 IndexedDB도 들어간다)
 - PrepareOnStartup(): 예전 위치의 파일을 넘겨받고, 불어난 코드 캐시를 비운다
-- GetBrowserCacheSize() / DeleteBrowserCacheIfRequested(): 설정 화면의 캐시 표시와 비우기
+- GetBrowserCacheSize() / DeleteBrowserCacheIfRequested(): 설정 화면의 캐시 표시와 비우기.
+  지금 쓰는 자리뿐 아니라 예전 자리와 이전이 끊겨 남은 사본까지 함께 센다
+- DeleteRoamingBrowserDataOnUninstall(): 제거할 때 Roaming에 남은 브라우저 데이터만 지운다
 
 Method Flow:
   앱 시작 -> PrepareOnStartup -> (설정 병합, 캐시 이전, 코드 캐시 정리) -> InitializeCef
   앱 종료 -> Cef.Shutdown -> DeleteBrowserCacheIfRequested
+  앱 제거 -> Velopack 빠른 훅 -> DeleteRoamingBrowserDataOnUninstall
 
 Historical Context: 0.1.0까지는 두 폴더가 정반대였다. 설정이 Velopack 설치 폴더 안(Local)에
 있어 앱을 제거하면 맵별 창 위치까지 함께 사라졌고, 브라우저 캐시는 Roaming에 쌓여 제거한
@@ -33,11 +37,15 @@ Design Rationale: 설정은 예전 파일을 남긴 채 현재 파일과 병합�
 캐시는 쿠키와 IndexedDB까지 담고 있어 같은 볼륨에서는 통째로 옮기고, 이동할 수 없으면
 임시 폴더에 완전히 복사한 뒤 새 위치로 전환한다. 버전을 내렸다가 돌아오면 두 프로필이 다시
 생길 수 있으므로, 두 폴더가 함께 있다는 이유만으로 어느 쪽도 지우거나 합치지 않는다.
+대신 남은 자리를 크기 표시와 비우기가 함께 다뤄, 앱이 임의로 지우지 않으면서도 사용자가
+존재를 모르는 용량이 생기지 않게 한다. 앱을 제거할 때만 BrowserDataFolders에서 RoamingRoot
+아래 경로를 골라 지운다. RoamingRoot 자체는 지우지 않아 settings.json을 그대로 보존한다.
 
 Critical Warnings: PrepareOnStartup()은 CEF 초기화 전에 불러야 한다.
 CEF가 캐시 폴더를 열고 나면 폴더를 옮기거나 지울 수 없어 조용히 실패한다.
+제거 훅은 30초 안에 끝나야 하므로 LocalRoot 정리는 Velopack에 맡기고 예외를 밖으로 던지지 않는다.
 
-Last Updated: 2026-08-15 | .NET 8 | 버전 왕복 시 설정과 브라우저 데이터 보존
+Last Updated: 2026-08-15 | .NET 8 / Velopack 0.0.1298 | 제거 시 로밍 브라우저 데이터 정리
 */
 namespace TanukiTarkovMap.Models.Utils
 {
@@ -112,50 +120,107 @@ namespace TanukiTarkovMap.Models.Utils
         private static string RetiredBrowserCacheFolder => Path.Combine(RoamingRoot, "Cache.migrated");
 
         /// <summary>
+        /// 브라우저 데이터가 놓일 수 있는 모든 자리. 크기를 재고 비울 때 함께 다룬다.
+        ///
+        /// 지금 쓰는 자리 하나만 보면 안 된다. 버전을 내렸다가 돌아오면 예전 자리에도 프로필이
+        /// 살아 있고, 이전이 중간에 끊기면 정리 폴더나 복사 폴더에 사본이 남는다. 이 자리들은
+        /// 설정 화면에 잡히지 않아 사용자가 존재를 모르는 채로 수백MB가 쌓인다.
+        ///
+        /// 예전 자리는 지난 버전이 지금도 쓰는 프로필이라 시작할 때 지우지 않고, 사용자가 비우기를
+        /// 눌렀을 때만 지운다. 정리 폴더와 복사 폴더는 내용이 새 자리에 이미 있는 사본이라
+        /// MigrateBrowserCache가 시작할 때 치운다
+        /// </summary>
+        private static IReadOnlyList<string> BrowserDataFolders =>
+            [BrowserCacheFolder, LegacyBrowserCacheFolder, RetiredBrowserCacheFolder, BrowserCacheMigrationFolder];
+
+        /// <summary>
         /// 앱을 닫을 때 브라우저 캐시를 비울지 여부.
         /// 실행 중에는 CEF가 프로필 파일을 붙들고 있어 그 자리에서 지울 수 없다
         /// </summary>
         public static bool BrowserCacheResetRequested { get; set; }
 
         /// <summary>
-        /// 브라우저 캐시 폴더가 지금 차지하는 크기(byte). 폴더가 없으면 0.
+        /// 브라우저 데이터가 지금 차지하는 크기(byte). 어느 자리에도 없으면 0.
         /// 파일 수천 개를 훑으므로 UI 스레드에서 직접 부르지 않는다
         /// </summary>
         public static long GetBrowserCacheSize()
         {
+            long totalBytes = 0;
+
+            // 한 자리가 실패해도 나머지는 센다. 0을 돌려주면 사용자는 쌓인 것이 없다고 읽는다
+            foreach (var path in BrowserDataFolders)
+            {
+                try
+                {
+                    var folder = new DirectoryInfo(path);
+                    if (!folder.Exists) continue;
+
+                    totalBytes += folder.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length);
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"[AppPaths] Browser data size check failed for {path}: {ex.Message}");
+                }
+            }
+
+            return totalBytes;
+        }
+
+        /// <summary>
+        /// 앱을 제거하기 전에 Roaming에 보존된 브라우저 데이터만 지운다.
+        /// 설정도 같은 루트에 있으므로 RoamingRoot 자체는 절대 지우지 않는다.
+        /// Velopack 제거를 막지 않도록 모든 실패를 내부에서 처리한다
+        /// </summary>
+        public static void DeleteRoamingBrowserDataOnUninstall()
+        {
             try
             {
-                var folder = new DirectoryInfo(BrowserCacheFolder);
-                if (!folder.Exists) return 0;
+                foreach (var path in BrowserDataFolders.Where(IsUnderRoamingRoot))
+                {
+                    try
+                    {
+                        if (!Directory.Exists(path)) continue;
 
-                return folder.EnumerateFiles("*", SearchOption.AllDirectories).Sum(file => file.Length);
+                        Directory.Delete(path, recursive: true);
+                        Logger.SimpleLog($"[AppPaths] Roaming browser data removed at {path}");
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.SimpleLog($"[AppPaths] Roaming browser data removal failed for {path}: {ex.Message}");
+                    }
+                }
             }
             catch (Exception ex)
             {
-                Logger.SimpleLog($"[AppPaths] Browser cache size check failed: {ex.Message}");
-                return 0;
+                Logger.SimpleLog($"[AppPaths] Roaming browser data cleanup failed: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// 예약돼 있으면 브라우저 캐시를 지운다. Cef.Shutdown() 뒤에 호출해야 파일이 풀려 있다.
-        /// 지우지 못해도 다음에 다시 예약하면 되므로 예외를 밖으로 던지지 않는다
+        /// 예약돼 있으면 브라우저 데이터를 지운다. Cef.Shutdown() 뒤에 호출해야 파일이 풀려 있다.
+        /// 지우지 못해도 다음에 다시 예약하면 되므로 예외를 밖으로 던지지 않는다.
+        ///
+        /// 지금 쓰는 자리만 지우면 예전 자리에 남은 프로필은 크기 표시에만 잡히고 사라지지 않아,
+        /// 사용자가 비우기를 눌러도 숫자가 그대로인 것처럼 보인다
         /// </summary>
         public static void DeleteBrowserCacheIfRequested()
         {
             if (!BrowserCacheResetRequested) return;
             BrowserCacheResetRequested = false;
 
-            try
+            foreach (var path in BrowserDataFolders)
             {
-                if (!Directory.Exists(BrowserCacheFolder)) return;
+                try
+                {
+                    if (!Directory.Exists(path)) continue;
 
-                Directory.Delete(BrowserCacheFolder, recursive: true);
-                Logger.SimpleLog("[AppPaths] Browser cache cleared");
-            }
-            catch (Exception ex)
-            {
-                Logger.SimpleLog($"[AppPaths] Browser cache clear failed: {ex.Message}");
+                    Directory.Delete(path, recursive: true);
+                    Logger.SimpleLog($"[AppPaths] Browser data cleared at {path}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"[AppPaths] Browser data clear failed for {path}: {ex.Message}");
+                }
             }
         }
 
@@ -299,12 +364,10 @@ namespace TanukiTarkovMap.Models.Utils
             {
                 if (Directory.Exists(BrowserCacheFolder))
                 {
-                    DeleteRetiredBrowserCache();
-
-                    if (!Directory.Exists(LegacyBrowserCacheFolder)) return;
-
                     // 지난 버전은 예전 경로를 사용하므로 버전을 내렸다가 돌아오면 두 폴더가 함께 생긴다.
-                    // Chromium 프로필은 안전하게 합칠 수 없고 쿠키와 IndexedDB도 들어 있으므로 보존한다
+                    // Chromium 프로필은 안전하게 합칠 수 없고 쿠키와 IndexedDB도 들어 있으므로 보존한다.
+                    // 예전 자리에 남은 것은 GetBrowserCacheSize가 함께 세고 사용자가 비우기를 누르면 사라진다
+                    DeleteMigrationLeftovers();
                     return;
                 }
 
@@ -396,7 +459,7 @@ namespace TanukiTarkovMap.Models.Utils
         {
             try
             {
-                DeleteRetiredBrowserCache();
+                DeleteMigrationLeftovers();
 
                 // 먼저 활성 경로 밖으로 이름을 바꾼다. 이후 삭제가 중단돼도 지난 버전은
                 // 반쯤 지워진 프로필 대신 새 프로필을 만든다
@@ -410,12 +473,29 @@ namespace TanukiTarkovMap.Models.Utils
             }
         }
 
-        private static void DeleteRetiredBrowserCache()
+        /// <summary>
+        /// 이전이 중간에 끊겨 남은 사본을 치운다. 두 폴더 모두 내용이 새 위치에 이미 있으므로
+        /// 지워도 잃는 것이 없다. 남겨 두면 복사본 하나만큼의 용량이 계속 붙어 있다
+        /// </summary>
+        private static void DeleteMigrationLeftovers()
         {
-            if (Directory.Exists(RetiredBrowserCacheFolder))
+            foreach (var path in new[] { RetiredBrowserCacheFolder, BrowserCacheMigrationFolder })
             {
-                Directory.Delete(RetiredBrowserCacheFolder, recursive: true);
+                if (Directory.Exists(path))
+                {
+                    Directory.Delete(path, recursive: true);
+                }
             }
+        }
+
+        private static bool IsUnderRoamingRoot(string path)
+        {
+            var relativePath = Path.GetRelativePath(RoamingRoot, path);
+
+            return relativePath != "."
+                   && !relativePath.Equals("..", StringComparison.Ordinal)
+                   && !relativePath.StartsWith($"..{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                   && !Path.IsPathRooted(relativePath);
         }
     }
 }

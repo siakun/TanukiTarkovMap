@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using TanukiTarkovMap.Models.Utils;
 using Velopack;
 
 namespace TanukiTarkovMap;
@@ -6,21 +7,25 @@ namespace TanukiTarkovMap;
 /**
 Program - Application entry point with Velopack auto-update and single instance management
 
-Purpose: Ensures single instance execution, initializes Velopack for automatic updates,
-         and starts the WPF application
-Architecture: Entry point that handles mutex check, update checking, and application startup
+Purpose: Ensures single instance execution, registers uninstall cleanup for preserved browser data,
+         initializes Velopack for automatic updates, and starts the WPF application
+Architecture: Entry point that handles mutex checks, Velopack lifecycle hooks, update checking,
+              and application startup
 
 Core Functionality:
 - Single instance check via Mutex (before CEF initialization)
 - Brings existing window to front if already running
-- Initializes Velopack framework on startup
+- Initializes Velopack and removes preserved browser data before uninstall
 - Checks for updates from GitHub Releases
 
 Method Flow:
-  Main() → [Mutex Check] → VelopackApp.Build().Run() → App.Run() → CheckForUpdates()
+  Main() -> [Mutex Check] -> Build() -> Register Uninstall Hook -> Run()
+    -> [Uninstall] DeleteRoamingBrowserDataOnUninstall() -> Exit
+    -> [Normal Start] App.Run() -> CheckForUpdates()
 
 Dependencies:
 - Velopack: Auto-update framework
+- AppPaths: Removes browser data preserved outside the install folder before uninstall
 - GithubSource: Update source from GitHub Releases
 - Win32 API: For finding and focusing existing window
 
@@ -61,8 +66,10 @@ public static class Program
             return;
         }
 
-        // 2. Velopack 초기화 (설치/제거/업데이트 훅 처리)
-        VelopackApp.Build().Run();
+        // 2. Velopack 초기화와 제거 전 로밍 브라우저 데이터 정리 훅 등록
+        VelopackApp.Build()
+            .OnBeforeUninstallFastCallback(_ => AppPaths.DeleteRoamingBrowserDataOnUninstall())
+            .Run();
 
         // 3. WPF 앱 시작
         var app = new App();
