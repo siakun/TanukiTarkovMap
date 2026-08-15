@@ -207,7 +207,7 @@ namespace TanukiTarkovMap.Models.Services
                 throw new InvalidOperationException("Velopack으로 설치된 실행 파일에서만 버전을 바꿀 수 있습니다.");
             }
 
-            var asset = await source.GetTargetAssetAsync();
+            var asset = await source.GetTargetAssetAsync(cancelToken);
             var isDowngrade = manager.CurrentVersion != null
                               && target.Version.CompareTo(manager.CurrentVersion) < 0;
 

@@ -90,6 +90,13 @@ namespace TanukiTarkovMap.Models.Services
         private static string FeedFileName =>
             $"releases.{VelopackRuntimeInfo.GetOsShortName(VelopackRuntimeInfo.SystemOs)}.json";
 
+        /// <summary>
+        /// 내려받는 도중 이만큼 한 바이트도 오지 않으면 멈춘 것으로 보고 중단한다.
+        /// HttpClient.Timeout이 본문에는 걸리지 않아, 이것이 없으면 연결이 조용히 끊겼을 때
+        /// 설치가 끝나지 않는 상태로 남는다
+        /// </summary>
+        private static readonly TimeSpan StallTimeout = TimeSpan.FromMinutes(2);
+
         private readonly ReleaseVersion _target;
         private VelopackAssetFeed? _cachedFeed;
 
@@ -106,8 +113,10 @@ namespace TanukiTarkovMap.Models.Services
             client.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("TanukiTarkovMap", "1.0"));
             client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 
-            // 전체 패키지가 254MB라 기본 100초로는 회선이 느릴 때 끊긴다
-            client.Timeout = TimeSpan.FromMinutes(30);
+            // ResponseHeadersRead로 받으면 이 제한은 응답 헤더까지만 걸린다.
+            // 본문이 아무리 길어도 여기서 끊기지 않으므로 헤더를 기다리는 시간만 넉넉히 둔다.
+            // 내려받는 도중 멈추는 것은 StallTimeout이 따로 잡는다
+            client.Timeout = TimeSpan.FromMinutes(2);
             return client;
         }
 
@@ -159,9 +168,9 @@ namespace TanukiTarkovMap.Models.Services
         /// 이 소스가 가리키는 릴리스의 설치 대상 패키지.
         /// Velopack에 넘길 UpdateInfo를 만들 때 쓴다
         /// </summary>
-        public async Task<VelopackAsset> GetTargetAssetAsync()
+        public async Task<VelopackAsset> GetTargetAssetAsync(CancellationToken cancelToken = default)
         {
-            var feed = await LoadFeedAsync();
+            var feed = await LoadFeedAsync(cancelToken);
             return feed.Assets[0];
         }
 
@@ -172,8 +181,9 @@ namespace TanukiTarkovMap.Models.Services
             Guid? stagingId = null,
             VelopackAsset? latestLocalRelease = null)
         {
-            // 이 소스는 릴리스 하나에 고정돼 있어 채널과 스테이징 인자가 대상을 바꾸지 않는다
-            return LoadFeedAsync();
+            // 이 소스는 릴리스 하나에 고정돼 있어 채널과 스테이징 인자가 대상을 바꾸지 않는다.
+            // 이 시그니처에는 취소 토큰이 없으므로 피드 조회는 HttpClient.Timeout에만 기댄다
+            return LoadFeedAsync(CancellationToken.None);
         }
 
         public async Task DownloadReleaseEntry(
@@ -193,11 +203,11 @@ namespace TanukiTarkovMap.Models.Services
             await DownloadFileAsync(_target.PackageUrl, localFile, progress, cancelToken);
         }
 
-        private async Task<VelopackAssetFeed> LoadFeedAsync()
+        private async Task<VelopackAssetFeed> LoadFeedAsync(CancellationToken cancelToken)
         {
             if (_cachedFeed != null) return _cachedFeed;
 
-            var json = await Http.GetStringAsync(_target.FeedUrl);
+            var json = await Http.GetStringAsync(_target.FeedUrl, cancelToken);
             var feed = VelopackAssetFeed.FromJson(json);
 
             // 릴리스의 피드에는 delta를 만들려고 함께 넣은 직전 버전도 들어 있다.
@@ -227,13 +237,20 @@ namespace TanukiTarkovMap.Models.Services
             using var source = await response.Content.ReadAsStreamAsync(cancelToken);
             using var destination = File.Create(localFile);
 
+            // 한 번 읽을 때마다 시한을 다시 건다. 데이터가 계속 오면 시한도 계속 밀리고,
+            // 조용히 멈추면 StallTimeout 뒤에 취소되어 설치가 끝나지 않는 상태로 남지 않는다
+            using var stallWatch = CancellationTokenSource.CreateLinkedTokenSource(cancelToken);
+            stallWatch.CancelAfter(StallTimeout);
+
             var buffer = new byte[81920];
             long receivedBytes = 0;
             var lastPercent = -1;
             int read;
 
-            while ((read = await source.ReadAsync(buffer, cancelToken)) > 0)
+            while ((read = await source.ReadAsync(buffer, stallWatch.Token)) > 0)
             {
+                stallWatch.CancelAfter(StallTimeout);
+
                 await destination.WriteAsync(buffer.AsMemory(0, read), cancelToken);
                 receivedBytes += read;
 
