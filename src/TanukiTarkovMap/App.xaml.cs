@@ -26,6 +26,7 @@ namespace TanukiTarkovMap
         private TaskbarIcon? _trayIcon;
         private MainWindow? _mainWindow;
         private SplashWindow? _splashWindow;
+        private UpdateService? _updateService;
         private bool _isExiting = false; // 중복 종료 방지 플래그
 
         //===================== Application Global State (from Env.cs) ============================
@@ -214,6 +215,8 @@ namespace TanukiTarkovMap
 
                 // DI 컨테이너 초기화
                 ServiceLocator.Initialize();
+                _updateService = ServiceLocator.UpdateService;
+                _updateService.RestartRequested += UpdateService_RestartRequested;
 
                 // 애플리케이션 시작 로깅
                 Logger.SimpleLog("=== Application Starting ===");
@@ -368,6 +371,8 @@ namespace TanukiTarkovMap
 
             Logger.SimpleLog("=== Application Exit Started ===");
 
+            // 한 단계의 실패가 CEF 종료와 업데이트 예약을 건너뛰게 해서는 안 된다. 특히 Velopack은
+            // 프로세스가 끝나는 즉시 파일을 바꾸므로, CEF가 프로필을 놓는 단계까지 반드시 진행한다
             try
             {
                 // 1. 서비스 정리 (병렬 처리로 빠른 종료)
@@ -380,37 +385,64 @@ namespace TanukiTarkovMap
                     Task.Run(() => Server.Stop()),
                 };
                 Task.WaitAll(cleanupTasks.ToArray(), 300); // 최대 300ms 대기
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"Service cleanup error: {ex.Message}");
+            }
 
+            try
+            {
                 // 2. UI 정리
                 Logger.SimpleLog("Closing UI...");
                 _mainWindow?.Close();
                 _trayIcon?.Dispose();
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"UI cleanup error: {ex.Message}");
+            }
 
+            try
+            {
                 // 3. CEF 종료 (UI 스레드에서 실행 필요)
                 Logger.SimpleLog("Shutting down CEF...");
                 if (Cef.IsInitialized == true)
                 {
                     Cef.Shutdown();
                 }
-
-                // 4. 설정에서 캐시 비우기를 예약했으면 지금 지운다.
-                //    CEF가 프로필 파일을 놓은 뒤라야 삭제할 수 있다
-                AppPaths.DeleteBrowserCacheIfRequested();
-
-                // 5. 다운로드해 둔 업데이트가 있으면 종료 후 조용히 적용되도록 예약
-                ServiceLocator.UpdateService.ApplyOnExit();
-
-                // 5. Velopack 로그 파일 정리 (포터블 버전용)
-                CleanupVelopackLog();
-
-                Logger.SimpleLog("=== Application Exit Completed ===");
             }
             catch (Exception ex)
             {
-                Logger.SimpleLog($"Exit error: {ex.Message}");
+                Logger.SimpleLog($"CEF shutdown error: {ex.Message}");
             }
 
+            try
+            {
+                // 4. 설정에서 캐시 비우기를 예약했으면 지금 지운다.
+                //    CEF가 프로필 파일을 놓은 뒤라야 삭제할 수 있다
+                AppPaths.DeleteBrowserCacheIfRequested();
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"Browser cache cleanup error: {ex.Message}");
+            }
+
+            // 5. 다운로드해 둔 업데이트가 있으면 현재 프로세스가 끝난 뒤 적용되도록 예약
+            _updateService?.ApplyOnExit();
+
+            // 6. Velopack 로그 파일 정리 (포터블 버전용)
+            CleanupVelopackLog();
+
+            Logger.SimpleLog("=== Application Exit Completed ===");
+
             Shutdown();
+        }
+
+        private void UpdateService_RestartRequested(object? sender, EventArgs e)
+        {
+            // 다운로드 완료 콜백이 어느 스레드에서 와도 WPF와 CEF 종료는 UI 스레드에서 실행한다
+            Dispatcher.BeginInvoke(ExitApplication);
         }
 
         private void CleanupVelopackLog()
@@ -432,17 +464,39 @@ namespace TanukiTarkovMap
             if (!_isExiting)
             {
                 Logger.SimpleLog("Application_Exit: Cleanup not done by ExitApplication");
-                _trayIcon?.Dispose();
+                try
+                {
+                    _trayIcon?.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"Application_Exit UI cleanup error: {ex.Message}");
+                }
 
                 // CEF 종료
-                if (Cef.IsInitialized == true)
+                try
                 {
-                    Cef.Shutdown();
+                    if (Cef.IsInitialized == true)
+                    {
+                        Cef.Shutdown();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"Application_Exit CEF shutdown error: {ex.Message}");
                 }
 
                 // 예약된 캐시 비우기와 업데이트 적용은 ExitApplication을 거치지 않은 종료에서도 처리한다
-                AppPaths.DeleteBrowserCacheIfRequested();
-                ServiceLocator.UpdateService.ApplyOnExit();
+                try
+                {
+                    AppPaths.DeleteBrowserCacheIfRequested();
+                }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"Application_Exit browser cache cleanup error: {ex.Message}");
+                }
+
+                _updateService?.ApplyOnExit();
             }
         }
 
@@ -463,7 +517,7 @@ namespace TanukiTarkovMap
 
             var settings = new CefSettings
             {
-                // 프로필 경로 (AppPaths가 정한다. 앱을 제거하면 함께 사라지는 자리다)
+                // 프로필 경로 (AppPaths가 이전 결과와 실패 여부를 보고 정한다)
                 CachePath = AppPaths.BrowserCacheFolder,
 
                 // 로그 비활성화 (프로덕션용)
