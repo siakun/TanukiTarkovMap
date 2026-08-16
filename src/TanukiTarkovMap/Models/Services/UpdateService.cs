@@ -15,8 +15,8 @@ Purpose: 업데이트 확인/다운로드가 앱 시작을 막지 않도록 백�
 Architecture: 두 경로가 서로 다른 업데이트 소스를 쓴다.
 - 자동 갱신: GithubSource + CheckForUpdatesAsync. 최신 릴리스만 보는 대신 delta를 받는다.
   베타를 켜면 GithubSource가 프리릴리스까지 조회 대상에 넣는다
-- 버전 전환: GitHubReleaseSource + 직접 조립한 UpdateInfo. 임의 태그를 설치할 수 있는 대신
-  full 패키지를 받는다
+- 버전 전환: GitHubReleaseSource + 직접 조립한 UpdateInfo. 임의 태그를 설치할 수 있다.
+  올라가는 방향이고 사슬이 이어지면 delta를 이어 붙이고, 아니면 full을 받는다
 
 Core Functionality:
 - CheckAndDownloadAsync: 앱 시작 후 fire-and-forget. 설정에서 자동 업데이트를 끄면 건너뛴다.
@@ -40,7 +40,8 @@ Method Flow:
 
 Key Methods:
 - CheckAndDownloadAsync(): 자동 업데이트를 확인하고 적용 대기 상태로 저장
-- InstallVersionAsync(target, progress, cancelToken): 선택한 태그의 full 패키지를 받고 정상 종료 요청
+- InstallVersionAsync(target, progress, onDownloadSizeResolved, cancelToken): 고른 태그를 받고 정상 종료 요청.
+  올라가는 방향이고 사슬이 이어지면 delta로, 아니면 full로 받는다
 - ApplyAndRestartNow(): 준비된 자동 업데이트를 재시작 적용으로 전환
 - ApplyOnExit(): 저장된 UpdateManager와 자산으로 종료 대기 updater 프로세스 예약
 
@@ -58,7 +59,9 @@ Historical Context: 이전에는 시작 시 스플래시에서 확인/다운로�
 즉시 강제 재시작했다. 업데이트가 없어도 GitHub API 왕복만큼 시작이 늦어지고,
 있으면 다운로드 전체를 기다려야 해서 백그라운드 방식으로 전환했다 (2026-07).
 
-Critical Warnings: 최신이 아닌 버전을 설치할 때는 호출 측에서 자동 업데이트를 꺼야 한다.
+Critical Warnings: UpdateInfo.BaseRelease를 null로 두면 Velopack이 delta를 통째로 건너뛴다.
+문서에는 null일 때 설치된 버전에서 시도한다고 적혀 있지만 구현은 그렇지 않다.
+최신이 아닌 버전을 설치할 때는 호출 측에서 자동 업데이트를 꺼야 한다.
 켜둔 채로 두면 다음 실행에서 곧바로 최신으로 되돌아가 사용자가 고른 버전이 사라진다.
 ApplyUpdatesAndRestart는 Environment.Exit을 호출해 Cef.Shutdown을 건너뛰므로 사용하지 않는다.
 Program의 Velopack 시작 시 자동 적용도 끄고, 모든 적용을 ApplyOnExit 한 경로로 모은다.
@@ -71,7 +74,7 @@ AutoUpdateEnabled를 모르는 옛 버전으로 내려가면 그 버전의 업�
 Edge Cases: 수동 패키지를 받는 도중 앱을 닫으면 이전 자동 업데이트를 대신 적용하지 않는다.
 수동 전환이 끝나거나 실패하기 전까지 자동 다운로드 결과도 적용 대상을 덮지 못한다.
 
-Last Updated: 2026-08-15 | .NET 8 / Velopack 0.0.1298 | 정상 종료 뒤 버전 적용
+Last Updated: 2026-08-16 | .NET 8 / Velopack 0.0.1298 | 버전 전환에 delta 사슬 적용
 */
 namespace TanukiTarkovMap.Models.Services
 {
@@ -249,6 +252,7 @@ namespace TanukiTarkovMap.Models.Services
         public async Task InstallVersionAsync(
             ReleaseVersion target,
             Action<int>? progress = null,
+            Action<long>? onDownloadSizeResolved = null,
             CancellationToken cancelToken = default)
         {
             lock (_pendingUpdateLock)
@@ -263,23 +267,59 @@ namespace TanukiTarkovMap.Models.Services
 
             try
             {
-                var source = new GitHubReleaseSource(target);
+                // 사슬을 뒤로 따라갈 때 기준 버전에 해당하는 릴리스를 목록에서 찾아야 한다.
+                // delta로 갈지는 피드를 읽어 봐야 알 수 있으므로 여기서는 재료만 준비한다
+                var versions = await FetchVersionsSafelyAsync(cancelToken);
+
+                var source = new GitHubReleaseSource(target, versions);
+                if (onDownloadSizeResolved != null)
+                {
+                    // Velopack이 delta를 포기하고 full로 돌아서면 화면의 총량도 함께 바꾼다
+                    source.FullFallbackStarted += onDownloadSizeResolved;
+                }
 
                 // 낮은 버전 설치는 UpdateOptions로 명시해야 Velopack이 막지 않는다
-                var manager = new UpdateManager(source, new UpdateOptions { AllowVersionDowngrade = true });
+                var manager = new LocalPackageAwareUpdateManager(
+                    source, new UpdateOptions { AllowVersionDowngrade = true });
 
                 if (!manager.IsInstalled)
                 {
                     throw new InvalidOperationException("Velopack으로 설치된 실행 파일에서만 버전을 바꿀 수 있습니다.");
                 }
 
-                var asset = await source.GetTargetAssetAsync(cancelToken);
                 var isDowngrade = manager.CurrentVersion != null
                                   && target.Version.CompareTo(manager.CurrentVersion) < 0;
 
-                Logger.SimpleLog($"[UpdateService] Installing v{target.Version} (downgrade: {isDowngrade})");
+                // delta를 붙일 기준은 지금 설치된 패키지다. 그 파일이 없으면(포터블 설치 등)
+                // 붙일 대상이 없으므로 full로 받는다
+                var baseRelease = manager.GetLocalBasePackage();
+                if (baseRelease != null && manager.CurrentVersion != null
+                    && baseRelease.Version.CompareTo(manager.CurrentVersion) != 0)
+                {
+                    // 지난 실행에서 받아 둔 더 새 패키지가 남아 있으면 사슬의 출발점과 어긋난다
+                    Logger.SimpleLog(
+                        $"[UpdateService] Local package v{baseRelease.Version} differs from running v{manager.CurrentVersion}, skipping deltas");
+                    baseRelease = null;
+                }
 
-                var updateInfo = new UpdateInfo(asset, isDowngrade);
+                // 다운그레이드에는 delta가 없다. 헛되이 피드를 훑지 않도록 여기서 끊는다
+                var plan = await source.ResolvePlanAsync(isDowngrade ? null : baseRelease, cancelToken);
+
+                Logger.SimpleLog(
+                    $"[UpdateService] Installing v{target.Version} (downgrade: {isDowngrade}, deltas: {plan.Deltas.Length})");
+
+                // BaseRelease가 null이면 Velopack은 delta를 통째로 건너뛴다. 문서에는 null일 때
+                // 설치된 버전에서 시도한다고 적혀 있지만 구현은 그렇지 않다
+                var updateInfo = baseRelease != null && plan.Deltas.Length > 0
+                    ? new UpdateInfo(plan.TargetFull, isDowngrade, baseRelease, plan.Deltas)
+                    : new UpdateInfo(plan.TargetFull, isDowngrade);
+
+                // 실제로 받을 크기가 정해진 뒤에 알린다. 사슬을 못 쓰게 되면 full 크기다
+                onDownloadSizeResolved?.Invoke(
+                    updateInfo.DeltasToTarget.Length > 0
+                        ? updateInfo.DeltasToTarget.Sum(delta => delta.Size)
+                        : target.PackageSize);
+
                 await manager.DownloadUpdatesAsync(updateInfo, progress, cancelToken);
 
                 Logger.SimpleLog($"[UpdateService] v{target.Version} downloaded, restarting to apply");
@@ -294,6 +334,56 @@ namespace TanukiTarkovMap.Models.Services
             {
                 lock (_pendingUpdateLock) _manualVersionSwitchInProgress = false;
                 throw;
+            }
+        }
+
+        /// <summary>
+        /// Velopack이 protected로 감춘 Locator에 닿기 위한 최소한의 상속.
+        ///
+        /// delta를 적용하려면 UpdateInfo.BaseRelease에 로컬 패키지를 넣어야 하는데, 그 값을
+        /// 얻는 통로가 Locator뿐이다. UpdateManager를 통째로 대신하려는 것이 아니라 이 한
+        /// 가지만 열어 준다
+        /// </summary>
+        private sealed class LocalPackageAwareUpdateManager : UpdateManager
+        {
+            public LocalPackageAwareUpdateManager(IUpdateSource source, UpdateOptions options)
+                : base(source, options) { }
+
+            /// <summary> 패키지 폴더에 있는 가장 최신 full 패키지. 없으면 null </summary>
+            public VelopackAsset? GetLocalBasePackage()
+            {
+                try { return Locator.GetLatestLocalFullPackage(); }
+                catch (Exception ex)
+                {
+                    Logger.SimpleLog($"[UpdateService] Local base package lookup failed: {ex.Message}");
+                    return null;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 설치된 버전에서 대상까지의 delta 사슬을 만든다. 쓸 수 없으면 빈 목록.
+        ///
+        /// 목록 조회가 실패해도 설치를 막지 않는다. 사슬이 없으면 full로 받으면 되고,
+        /// 그것이 이 기능이 없던 때의 동작이다
+        /// </summary>
+        private static async Task<IReadOnlyList<ReleaseVersion>> FetchVersionsSafelyAsync(CancellationToken cancelToken)
+        {
+            try
+            {
+                return await GitHubReleaseSource.FetchVersionsAsync(GitHubRepoUrl, cancelToken);
+            }
+            catch (OperationCanceledException) when (cancelToken.IsCancellationRequested)
+            {
+                // 토큰을 함께 본다. HttpClient는 자기 Timeout이 지나도 같은 예외를 던지는데,
+                // 그것은 사용자의 취소가 아니라 조회 실패다
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // 목록이 없으면 사슬을 못 만들 뿐이다. full로 받으면 되고 그것이 이전 동작이다
+                Logger.SimpleLog($"[UpdateService] Version list lookup failed ({ex.Message}), using full package");
+                return [];
             }
         }
 
