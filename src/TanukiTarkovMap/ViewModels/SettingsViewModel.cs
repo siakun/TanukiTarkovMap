@@ -484,6 +484,8 @@ namespace TanukiTarkovMap.ViewModels
 
             IsInstalling = true;
             UpdateStatusMessage = string.Empty;
+
+            // delta로 받을지는 서비스가 정하므로 처음에는 full 크기로 두고, 정해지면 갱신한다
             _installTargetBytes = selected.Release.PackageSize;
             ReportInstallProgress(0);
 
@@ -491,9 +493,12 @@ namespace TanukiTarkovMap.ViewModels
             {
                 // Progress<T>는 만들어진 스레드의 컨텍스트로 보고를 돌려주므로 UI 스레드 마샬링이 필요 없다
                 var reporter = new Progress<int>(ReportInstallProgress);
+                var sizeReporter = new Progress<long>(bytes => _installTargetBytes = bytes);
+
                 await ServiceLocator.UpdateService.InstallVersionAsync(
                     selected.Release,
-                    ((IProgress<int>)reporter).Report);
+                    ((IProgress<int>)reporter).Report,
+                    ((IProgress<long>)sizeReporter).Report);
             }
             catch (Exception ex)
             {
