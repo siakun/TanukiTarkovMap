@@ -351,6 +351,10 @@ ServiceLocator.UpdateService
 다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은
 [시작 속도와 업데이트 시점](docs/startup-speed-and-updates.md)에 적어 두었습니다.
 
+full과 delta 중 무엇을 받을지, 배포 구조가 그 판단을 어떻게 제약하는지, 데이터
+마이그레이션과 다운그레이드가 어떻게 얽히는지는 [업데이트 전달 설계](docs/update-delivery-design.md)에
+정리해 두었습니다. 구현을 바꾸기 전에 그 문서의 결정 표와 전환 신호를 먼저 봅니다.
+
 ### 서비스 생성자 규칙
 
 ```csharp
