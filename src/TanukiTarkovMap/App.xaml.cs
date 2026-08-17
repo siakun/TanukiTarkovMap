@@ -67,9 +67,9 @@ namespace TanukiTarkovMap
         /// <summary>
         /// 앱을 켰을 때 브라우저가 처음 여는 주소. 지난번에 보던 맵이 있으면 그 맵으로 바로 간다.
         ///
-        /// pilot 페이지는 웹소켓 핸드셰이크를 맺는 착지점일 뿐이다. 거기 들렀다가 맵으로 옮겨가면
-        /// 시작할 때 페이지를 두 번 그려서 화면이 덜컥거린다. 맵 페이지도 같은 핸드셰이크를 하므로
-        /// 처음부터 그리로 가면 한 번으로 끝난다. 저장된 맵이 없는 첫 실행에만 pilot으로 간다.
+        /// 저장된 맵이 없는 첫 실행에는 목록의 첫 맵으로 간다. 예전에는 pilot 페이지에 들러
+        /// 사이트가 앱에 접속하기를 기다렸지만, Pilot v2부터는 어느 페이지에나 window.pilot이
+        /// 열려 있어 기다릴 것이 없다. 들렀다 옮겨가면 시작할 때 페이지를 두 번 그려 덜컥거린다.
         ///
         /// Settings.Load()가 끝난 뒤에 읽어야 한다. 창을 만들기 전에 설정을 불러오므로
         /// 브라우저 뷰모델이 생성될 시점에는 이미 값이 들어와 있다
@@ -79,10 +79,9 @@ namespace TanukiTarkovMap
             get
             {
                 var savedMapId = GetSettings().SelectedMapId;
-                if (string.IsNullOrEmpty(savedMapId)) return WebsiteUrl;
-
                 var savedMap = AvailableMaps.FirstOrDefault(map => map.MapId == savedMapId);
-                return savedMap?.Url ?? WebsiteUrl;
+
+                return savedMap?.Url ?? AvailableMaps.FirstOrDefault()?.Url ?? WebsiteUrl;
             }
         }
 

@@ -62,7 +62,6 @@ graph TB
         JSL[JavaScriptLoader]
         WEC[WebElementsControl]
         PL[PageLayout]
-        CD[ConnectionDetector]
         UIC[UICustomization]
         MM[MapMarkers]
         PB[PilotBridge]
@@ -117,7 +116,6 @@ graph TB
     BUI --> JSL
     JSL --> WEC
     JSL --> PL
-    JSL --> CD
     JSL --> UIC
     JSL --> MM
     JSL --> PB
@@ -519,11 +517,11 @@ Models/JavaScript/
 ├── Scripts/                      # 실제 JavaScript 파일 (Embedded Resource)
 │   ├── web-elements-control.js   # UI 요소 제어 함수 정의
 │   ├── page-layout.js            # 마진/패딩 제거
-│   ├── connection-detector.js    # 연결 상태 감지
+│   ├── pilot-bridge.js           # window.pilot 호출 통로 등록
 │   └── ...
 ├── WebElementsControl.js.cs      # C# 래퍼 (함수 호출용 상수)
 ├── PageLayout.js.cs              # C# 래퍼
-├── ConnectionDetector.js.cs      # C# 래퍼
+├── PilotBridge.js.cs             # C# 래퍼
 └── JavaScriptLoader.cs           # Embedded Resource 로더
 ```
 

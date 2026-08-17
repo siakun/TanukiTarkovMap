@@ -25,7 +25,6 @@ Message Flow:
   MainWindowViewModel → MapSelectionChangedMessage → NavigateToMap
   MainWindowViewModel → ZoomLevelChangedMessage → ApplyZoomLevel
   MonitorRefreshRateBehavior → MonitorRefreshRateChangedMessage → ApplyWindowlessFrameRate
-  JavaScript(pilot-connected) → PilotConnectedMessage → MainWindowViewModel
   MapEventService(ScreenshotTaken/QuestCompleted) → SendToPilot → window.pilot
 */
 namespace TanukiTarkovMap.ViewModels
@@ -169,13 +168,6 @@ namespace TanukiTarkovMap.ViewModels
                         {
                             await ApplyExtractionFilterAsync(IsPmcExtraction, waitForDom: true);
                         }
-
-                        // "/pilot" 페이지에서 Connected 상태 감지 시작
-                        if (_browser.Address.Contains("/pilot"))
-                        {
-                            await ExecuteScriptAsync(ConnectionDetector.DETECT_CONNECTION_STATUS);
-                            Logger.SimpleLog("[WebBrowserViewModel] Connection detection script injected");
-                        }
                     }
 
                     Logger.SimpleLog($"[WebBrowserViewModel] Frame load completed: {e.Url}");
@@ -240,15 +232,6 @@ namespace TanukiTarkovMap.ViewModels
 
                 switch (messageType)
                 {
-                    case "pilot-connected":
-                        Logger.SimpleLog("[WebBrowserViewModel] Pilot connected detected!");
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            // Messenger로 MainWindowViewModel에 전달
-                            WeakReferenceMessenger.Default.Send(new PilotConnectedMessage());
-                        });
-                        break;
-
                     case "margins-removed":
                     case "ui-elements-removed":
                         Logger.SimpleLog($"[WebBrowserViewModel] {messageType}");
