@@ -50,7 +50,7 @@ Design Rationale: VelopackAsset을 직접 조립하지 않고 릴리스가 이�
 
 이 사슬 구성은 배포 구조에서 나온 우회책이다. 릴리스마다 자기 피드를 두는 구조라 피드 하나가
 자기 delta와 그 기준까지, 곧 한 단계만 기술한다. 중앙 피드로 옮기면 Velopack이 알아서 사슬을 잇고 이 코드는 필요
-없어진다. 판단 근거는 docs/update-delivery-design.md에 있다.
+없어진다. 판단 근거는 docs/20260816-update-delivery-design.md에 있다.
 
 Critical Warnings: Velopack은 delta로 조립한 결과를 대상 해시로 다시 검증하지 않는다.
 기준을 잘못 짚으면 틀린 내용이 조용히 남으므로, 사슬을 이을 때 버전만 보지 말고 해시까지 본다.

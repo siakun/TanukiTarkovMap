@@ -345,10 +345,10 @@ ServiceLocator.UpdateService
 
 업데이트 확인은 메인 창을 띄운 **뒤에** 시작합니다. 시작을 막지 않는 것이 이 앱에서는
 다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은
-[시작 속도와 업데이트 시점](docs/startup-speed-and-updates.md)에 적어 두었습니다.
+[시작 속도와 업데이트 시점](docs/20260816-startup-speed-and-updates.md)에 적어 두었습니다.
 
 full과 delta 중 무엇을 받을지, 배포 구조가 그 판단을 어떻게 제약하는지, 데이터
-마이그레이션과 다운그레이드가 어떻게 얽히는지는 [업데이트 전달 설계](docs/update-delivery-design.md)에
+마이그레이션과 다운그레이드가 어떻게 얽히는지는 [업데이트 전달 설계](docs/20260816-update-delivery-design.md)에
 정리해 두었습니다. 구현을 바꾸기 전에 그 문서의 결정 표와 전환 신호를 먼저 봅니다.
 
 ### 서비스 생성자 규칙
@@ -424,7 +424,7 @@ services.AddSingleton(_ => new ServiceName());
 `window.tanukiPilot`은 페이지가 로드될 때마다 `PilotBridge.INIT_SCRIPT`로 다시 등록합니다.
 2026-08-17 Pilot v2 이전에는 포트 5123의 WebSocket 서버로 같은 사건을 넘겼으나, 사이트가
 로컬 앱에 접속하지 않게 되어 이 경로로 옮겼습니다. 무엇이 깨졌고 어떤 대안을 버렸는지,
-사이트가 또 바꿨을 때 어떻게 알아차리는지는 [Pilot 연동과 위치 전달 경로](docs/pilot-bridge.md)에
+사이트가 또 바꿨을 때 어떻게 알아차리는지는 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에
 정리해 두었습니다. 이 경로를 고치기 전에 그 문서의 대안 비교와 전환 신호를 먼저 봅니다.
 
 ---

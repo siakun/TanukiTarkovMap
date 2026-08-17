@@ -107,7 +107,7 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 전달 통로는 tarkov-market이 페이지마다 열어 두는 `window.pilot`입니다. 스크린샷이 생기면 `PilotBridge`가 만든 호출문을 CefSharp로 실행해 `window.pilot.positionFromScreenshot(파일명)`을 부릅니다. 사이트에 로그인하지 않아도 이 경로로 위치가 찍힙니다.
 
-2026-08-17까지는 앱 안에서 ASP.NET Core Kestrel로 포트 `5123`에 WebSocket 서버를 띄우고, 사이트가 그 서버에 접속해 파일명을 받아 갔습니다. 같은 날 tarkov-market이 Pilot v2를 배포하면서 사이트가 로컬 앱 대신 자기 서버(`wss://tarkov-market.com/ws/pilot`)로만 붙게 바뀌어, 서버를 띄워도 접속하는 클라이언트가 없어졌습니다. 서버 중계 규약을 따라가려면 계정 인증까지 구현해야 하는데 `window.pilot`은 그것 없이 같은 일을 하므로, WebSocket 서버와 ASP.NET Core 의존을 걷어내고 브리지 호출로 갈아탔습니다. 진단 근거와 버린 대안, 사이트 변경을 알아차리는 방법은 [Pilot 연동과 위치 전달 경로](docs/pilot-bridge.md)에 정리했습니다.
+2026-08-17까지는 앱 안에서 ASP.NET Core Kestrel로 포트 `5123`에 WebSocket 서버를 띄우고, 사이트가 그 서버에 접속해 파일명을 받아 갔습니다. 같은 날 tarkov-market이 Pilot v2를 배포하면서 사이트가 로컬 앱 대신 자기 서버(`wss://tarkov-market.com/ws/pilot`)로만 붙게 바뀌어, 서버를 띄워도 접속하는 클라이언트가 없어졌습니다. 서버 중계 규약을 따라가려면 계정 인증까지 구현해야 하는데 `window.pilot`은 그것 없이 같은 일을 하므로, WebSocket 서버와 ASP.NET Core 의존을 걷어내고 브리지 호출로 갈아탔습니다. 진단 근거와 버린 대안, 사이트 변경을 알아차리는 방법은 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에 정리했습니다.
 
 ### 4. 게임 로그 파싱으로 자동 맵 전환
 
