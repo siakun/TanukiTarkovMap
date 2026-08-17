@@ -34,6 +34,9 @@
         style.textContent =
             // 헤더와 푸터는 언제나 숨긴다 (복원 대상이 아니다)
             'header, .footer-wrap { display: none !important; }' +
+            // 쿠키 안내 줄도 숨긴다. 화면에서만 가리는 것이고 동의를 누르지는 않는다.
+            // position: fixed로 지도 아래쪽을 덮고 있어, 이 창에서는 지도를 가리는 방해물이다
+            '.cookie-consent { display: none !important; }' +
             // 패널은 <html>의 클래스로 켜고 끈다
             'html.' + PANEL_HIDDEN_CLASS + ' .panel_left,' +
             'html.' + PANEL_HIDDEN_CLASS + ' .panel_right,' +
