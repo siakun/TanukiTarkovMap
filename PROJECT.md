@@ -482,6 +482,7 @@ tarkov-market.com 웹페이지의 UI 요소를 JavaScript로 제어해 맵만 �
 |------|-----------| ----------|
 | **헤더 (header)** | 항상 숨김 | X |
 | **푸터 (footer-wrap)** | 항상 숨김 | X |
+| **쿠키 안내 (cookie-consent)** | 항상 숨김 | X |
 | **좌측 패널 (panel_left)** | 체크 시 숨김 | O |
 | **우측 패널 (panel_right)** | 체크 시 숨김 | O |
 | **상단 패널 (panel_top)** | 체크 시 숨김 | O |
