@@ -423,8 +423,9 @@ services.AddSingleton(_ => new ServiceName());
 
 `window.tanukiPilot`은 페이지가 로드될 때마다 `PilotBridge.INIT_SCRIPT`로 다시 등록합니다.
 2026-08-17 Pilot v2 이전에는 포트 5123의 WebSocket 서버로 같은 사건을 넘겼으나, 사이트가
-로컬 앱에 접속하지 않게 되어 이 경로로 옮겼습니다. 자세한 배경은
-[README의 실시간 좌표 동기화](README.md#3-실시간-좌표-동기화-filesystemwatcher--windowpilot-브리지)에 적어 두었습니다.
+로컬 앱에 접속하지 않게 되어 이 경로로 옮겼습니다. 무엇이 깨졌고 어떤 대안을 버렸는지,
+사이트가 또 바꿨을 때 어떻게 알아차리는지는 [Pilot 연동과 위치 전달 경로](docs/pilot-bridge.md)에
+정리해 두었습니다. 이 경로를 고치기 전에 그 문서의 대안 비교와 전환 신호를 먼저 봅니다.
 
 ---
 
