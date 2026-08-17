@@ -32,9 +32,11 @@ namespace TanukiTarkovMap.Models.Services
         {
             Logger.SimpleLog($"[BrowserUIService] ApplyUIVisibilityAsync called for map ID: {mapId}, hideElements: {hideElements}");
 
-            if (browser?.IsBrowserInitialized != true)
+            // IsBrowserInitialized는 WPF DependencyProperty여서 CEF의 실제 상태보다 늦게 채워진다.
+            // 페이지 로드 직후에 그 값으로 판정하면 숨김이 조용히 건너뛰어지므로 BrowserCore를 본다
+            if (browser?.BrowserCore is not { IsDisposed: false })
             {
-                Logger.SimpleLog("[BrowserUIService] Browser is null or not initialized, aborting");
+                Logger.SimpleLog("[BrowserUIService] Browser is null or not created, aborting");
                 return;
             }
 
@@ -65,36 +67,6 @@ namespace TanukiTarkovMap.Models.Services
             catch (System.Exception ex)
             {
                 Logger.Error("[BrowserUIService] ApplyUIVisibilityAsync error", ex);
-            }
-        }
-
-        /// <summary>
-        /// ChromiumWebBrowser의 모든 UI 요소를 복원합니다.
-        /// </summary>
-        /// <param name="browser">대상 ChromiumWebBrowser 컨트롤</param>
-        public async Task RestoreUIElementsAsync(ChromiumWebBrowser browser)
-        {
-            Logger.SimpleLog("[BrowserUIService] RestoreUIElementsAsync called");
-
-            if (browser?.IsBrowserInitialized != true)
-            {
-                Logger.SimpleLog("[BrowserUIService] Browser is null or not initialized, aborting");
-                return;
-            }
-
-            try
-            {
-                // 함수들을 window 객체에 등록 (최초 1회)
-                await browser.EvaluateScriptAsync(WebElementsControl.INIT_SCRIPT);
-
-                Logger.SimpleLog("[BrowserUIService] Restoring all UI elements");
-                await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_PANELS);
-
-                Logger.SimpleLog("[BrowserUIService] Successfully restored all UI elements");
-            }
-            catch (System.Exception ex)
-            {
-                Logger.Error("[BrowserUIService] RestoreUIElementsAsync error", ex);
             }
         }
     }
