@@ -136,11 +136,19 @@ window.pilot = {
 | 로그 | 뜻 |
 |------|-----|
 | `[PilotBridge] Sent (...)` | 앱이 넘겼고 사이트가 받았습니다 |
-| `[PilotBridge] Not delivered (...): window.pilot unavailable` | 사이트에 진입점이 없습니다. 페이지 로드 직후이거나 사이트가 바꿨습니다 |
+| `[PilotBridge] Not delivered (...): window.pilot unavailable` | 페이지에 통로가 없습니다. 사이트가 진입점을 바꿨거나, 페이지 로드 후처리가 건너뛰어져 통로 등록이 안 된 경우입니다 |
 | `[PilotBridge] Skipped (...)` | 다른 사이트를 보고 있어 넘길 곳이 없습니다 |
 
-`Not delivered`가 이어지면 사이트 번들에서 `window.pilot` 등록 지점이 남아 있는지 먼저
-확인합니다. 사라졌다면 위의 세 가지 길을 다시 비교할 때입니다.
+`Not delivered`가 이어지면 같은 실행의 로그에 `Page setup skipped, browser not ready`가 있는지
+먼저 봅니다. 있으면 사이트가 아니라 앱 쪽에서 통로 등록이 빠진 것입니다. 없으면 사이트 번들에서
+`window.pilot` 등록 지점이 남아 있는지 확인합니다. 사라졌다면 위의 세 가지 길을 다시 비교할
+때입니다.
+
+통로 등록은 페이지 로드가 끝날 때 하는데, 이 시점 판정을 `ChromiumWebBrowser`의
+`IsBrowserInitialized`나 `Address`로 하면 안 됩니다. 둘 다 WPF DependencyProperty여서 CEF가
+UI 스레드에 따로 게시해 갱신하고, 릴리즈 빌드에서는 첫 페이지 로드가 그 갱신을 앞질러
+등록이 통째로 빠집니다(0.2.3에서 실제로 겪은 일). 주소는 이벤트가 준 값을 쓰고, 준비 상태는
+`BrowserCore`로 봅니다.
 
 ## 다시 뒤집을 조건
 

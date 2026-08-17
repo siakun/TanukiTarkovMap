@@ -47,6 +47,18 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> OSR 페인트 상한 목표값 - 창이 위치한 모니터의 주사율 (기본 60) </summary>
         private int _monitorRefreshRate = 60;
 
+        /// <summary>
+        /// 스크립트와 설정을 넣을 수 있는 상태의 브라우저. 아직 준비되지 않았으면 null.
+        ///
+        /// ChromiumWebBrowser의 IsBrowserInitialized와 Address는 WPF DependencyProperty라서
+        /// CEF가 UI 스레드에 따로 게시해 갱신한다. 릴리즈 빌드에서는 첫 페이지 로드가 그 갱신보다
+        /// 먼저 처리되는 일이 생겨, 그 값으로 판정하면 페이지 로드 후처리가 통째로 조용히 건너뛰어진다
+        /// (0.2.3에서 UI 숨김과 위치 표시가 릴리즈에서만 동작하지 않던 원인).
+        /// BrowserCore는 CEF가 만든 실제 인스턴스라 그 지연이 없다
+        /// </summary>
+        private ChromiumWebBrowser? ReadyBrowser =>
+            _browser?.BrowserCore is { IsDisposed: false } ? _browser : null;
+
         #region Observable Properties
 
         /// <summary> 현재 URL. 처음 값은 지난번에 보던 맵이며, 없으면 pilot 페이지다 </summary>
@@ -125,10 +137,18 @@ namespace TanukiTarkovMap.ViewModels
             if (!e.Frame.IsMain)
                 return;
 
+            // 이벤트가 준 주소를 쓴다. CEF가 넘긴 값이므로 UI 스레드로 넘어간 뒤에도 확실하다.
+            // IFrame은 이 핸들러가 끝나면 정리되므로 문자열만 들고 간다
+            var loadedUrl = e.Url ?? string.Empty;
+
             // CEF 스레드에서 호출되므로 UI 스레드로 전환
             System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
             {
                 IsLoading = false;
+
+                // 브라우저의 Address DependencyProperty보다 이쪽이 먼저 도착할 수 있으므로
+                // 뷰모델이 아는 주소를 여기서 맞춘다. 이후 판정은 모두 이 값으로 한다
+                Address = loadedUrl;
 
                 // 브라우저 초기화 전에 수신된 모니터 주사율을 반영 (이미 같은 값이면 CEF 내부에서 무시됨)
                 ApplyWindowlessFrameRate();
@@ -136,7 +156,15 @@ namespace TanukiTarkovMap.ViewModels
                 // 디버그 모드일 때는 모든 JavaScript 주입 스킵
                 if (_isDebugMode)
                 {
-                    Logger.SimpleLog($"[WebBrowserViewModel] Debug mode - skipping all scripts: {e.Url}");
+                    Logger.SimpleLog($"[WebBrowserViewModel] Debug mode - skipping all scripts: {loadedUrl}");
+                    return;
+                }
+
+                // 준비되지 않았으면 아래 주입이 전부 빈 호출이 된다.
+                // 그 상태를 조용히 넘기면 화면만 이상해지고 로그에는 아무 단서가 남지 않는다
+                if (ReadyBrowser == null)
+                {
+                    Logger.SimpleLog($"[WebBrowserViewModel] Page setup skipped, browser not ready: {loadedUrl}");
                     return;
                 }
 
@@ -152,7 +180,7 @@ namespace TanukiTarkovMap.ViewModels
                     ApplyZoomLevel();
 
                     // Tarkov Market 전용 처리
-                    if (_browser?.Address?.Contains("tarkov-market.com") == true)
+                    if (loadedUrl.Contains("tarkov-market.com"))
                     {
                         // 게임 사건을 넘길 통로 등록 (페이지마다 다시 만들어야 한다)
                         await ExecuteScriptAsync(PilotBridge.INIT_SCRIPT);
@@ -164,13 +192,13 @@ namespace TanukiTarkovMap.ViewModels
                         await ApplyUIVisibilityAsync();
 
                         // 맵 페이지에서 Extraction 필터 적용 (맵 이동 직후이므로 DOM 대기 필요)
-                        if (_browser.Address.Contains("/maps/"))
+                        if (loadedUrl.Contains("/maps/"))
                         {
                             await ApplyExtractionFilterAsync(IsPmcExtraction, waitForDom: true);
                         }
                     }
 
-                    Logger.SimpleLog($"[WebBrowserViewModel] Frame load completed: {e.Url}");
+                    Logger.SimpleLog($"[WebBrowserViewModel] Frame load completed: {loadedUrl}");
                 }
                 catch (Exception ex)
                 {
@@ -323,12 +351,14 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public async Task<JavascriptResponse?> ExecuteScriptAsync(string script)
         {
-            if (_browser?.IsBrowserInitialized != true)
+            var browser = ReadyBrowser;
+
+            if (browser == null)
                 return null;
 
             try
             {
-                return await _browser.EvaluateScriptAsync(script);
+                return await browser.EvaluateScriptAsync(script);
             }
             catch (Exception ex)
             {
@@ -342,7 +372,9 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public void ApplyZoomLevel()
         {
-            if (_browser?.IsBrowserInitialized != true)
+            var browser = ReadyBrowser;
+
+            if (browser == null)
                 return;
 
             try
@@ -351,7 +383,7 @@ namespace TanukiTarkovMap.ViewModels
                 // 백분율을 로그 스케일로 변환
                 double zoomFactor = ZoomLevel / 100.0;
                 double zoomLevelLog = Math.Log(zoomFactor) / Math.Log(1.2);
-                _browser.ZoomLevel = zoomLevelLog;
+                browser.ZoomLevel = zoomLevelLog;
 
                 Logger.SimpleLog($"[WebBrowserViewModel] Zoom level set to {ZoomLevel}% (log: {zoomLevelLog:F2})");
             }
@@ -483,7 +515,7 @@ namespace TanukiTarkovMap.ViewModels
             System.Windows.Application.Current?.Dispatcher.InvokeAsync(async () =>
             {
                 // 다른 사이트를 보고 있으면 넘길 곳이 없다
-                if (_browser?.Address?.Contains("tarkov-market.com") != true)
+                if (Address?.Contains("tarkov-market.com") != true)
                 {
                     Logger.SimpleLog($"[PilotBridge] Skipped ({description}): not on tarkov-market.com");
                     return;
@@ -509,12 +541,14 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void ApplyWindowlessFrameRate()
         {
-            if (_browser?.IsBrowserInitialized != true)
+            var browser = ReadyBrowser;
+
+            if (browser == null)
                 return;
 
             try
             {
-                var browserHost = _browser.GetBrowserHost();
+                var browserHost = browser.GetBrowserHost();
                 if (browserHost != null)
                 {
                     browserHost.WindowlessFrameRate = _monitorRefreshRate;
@@ -534,11 +568,11 @@ namespace TanukiTarkovMap.ViewModels
         /// <param name="waitForDom">true = 맵 이동 직후 DOM 대기 필요</param>
         private async Task ApplyExtractionFilterAsync(bool isPmc, bool waitForDom = false)
         {
-            if (_browser?.IsBrowserInitialized != true)
+            if (ReadyBrowser == null)
                 return;
 
             // tarkov-market.com 맵 페이지에서만 동작
-            if (_browser.Address?.Contains("tarkov-market.com/maps/") != true)
+            if (Address?.Contains("tarkov-market.com/maps/") != true)
                 return;
 
             try
