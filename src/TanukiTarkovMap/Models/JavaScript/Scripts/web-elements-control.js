@@ -13,30 +13,44 @@
     'use strict';
 
     // ============================================================
+    // 숨김 규칙 (스타일시트 한 장으로 관리)
+    //
+    // 요소마다 style.display를 넣지 않고 규칙을 쓴다. 인라인 방식은 두 가지에 약하다.
+    // 나중에 만들어진 요소는 놓치고, 다른 스크립트가 style.cssText를 대입하면 함께 지워진다.
+    // 실제로 ui-customization.js가 헤더의 cssText를 덮어써 숨김이 풀리는 문제가 있었다.
+    // !important를 붙인 규칙은 인라인 스타일보다 우선하므로 그 두 경우를 모두 막는다
+    // ============================================================
+    var STYLE_ID = 'tanuki-visibility-rules';
+    var PANEL_HIDDEN_CLASS = 'tanuki-panels-hidden';
+
+    /**
+     * 숨김 규칙을 문서에 한 번만 넣는다
+     */
+    function ensureRules() {
+        if (document.getElementById(STYLE_ID)) return;
+
+        var style = document.createElement('style');
+        style.id = STYLE_ID;
+        style.textContent =
+            // 헤더와 푸터는 언제나 숨긴다 (복원 대상이 아니다)
+            'header, .footer-wrap { display: none !important; }' +
+            // 패널은 <html>의 클래스로 켜고 끈다
+            'html.' + PANEL_HIDDEN_CLASS + ' .panel_left,' +
+            'html.' + PANEL_HIDDEN_CLASS + ' .panel_right,' +
+            'html.' + PANEL_HIDDEN_CLASS + ' .panel_top { display: none !important; }';
+
+        (document.head || document.documentElement).appendChild(style);
+    }
+
+    // ============================================================
     // 헤더 숨기기 (항상 숨김 유지)
     // ============================================================
     window.hideHeader = function() {
         try {
-            function hideAllHeaders() {
-                // 맵 페이지 header
-                var header = document.querySelector('#__nuxt > div > div > header');
-                if (header) header.style.display = 'none';
+            ensureRules();
 
-                // 모든 header 태그 숨기기 (pilot 페이지 포함)
-                var headers = document.querySelectorAll('header');
-                headers.forEach(function(h) { h.style.display = 'none'; });
-
-                // 레이아웃 재계산을 위해 resize 이벤트 발생
-                window.dispatchEvent(new Event('resize'));
-            }
-
-            // 즉시 실행
-            hideAllHeaders();
-
-            // 동적 로딩을 위해 지연 실행
-            setTimeout(hideAllHeaders, 300);
-            setTimeout(hideAllHeaders, 600);
-            setTimeout(hideAllHeaders, 1000);
+            // 숨김으로 빈 자리가 생기므로 지도 쪽 레이아웃을 다시 계산하게 한다
+            window.dispatchEvent(new Event('resize'));
         } catch (e) {
             console.error('[WebElements] hideHeader error:', e);
         }
@@ -47,10 +61,7 @@
     // ============================================================
     window.hideFooter = function() {
         try {
-            var footerWrap = document.querySelector('#__nuxt > div > div > div.footer-wrap');
-            if (footerWrap) footerWrap.style.display = 'none';
-
-            // 레이아웃 재계산을 위해 resize 이벤트 발생
+            ensureRules();
             window.dispatchEvent(new Event('resize'));
 
             // UI 제거 완료 후 C#에 메시지 전송
@@ -68,64 +79,31 @@
 
     // ============================================================
     // 패널 숨기기 (UI 요소 숨기기 체크 시)
+    //
+    // 좌/우/상단을 따로 호출하는 C# 쪽 순서를 그대로 두되, 실제로는 한 클래스가 셋을 함께
+    // 다룬다. 세 패널이 늘 같이 사라지고 같이 돌아오므로 상태를 셋으로 나눌 이유가 없다
     // ============================================================
-    window.hidePanelLeft = function() {
+    function hidePanels() {
         try {
-            var panel = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-            if (panel) panel.style.display = 'none';
-        } catch (e) {}
-    };
+            ensureRules();
+            document.documentElement.classList.add(PANEL_HIDDEN_CLASS);
+        } catch (e) {
+            console.error('[WebElements] hidePanels error:', e);
+        }
+    }
 
-    window.hidePanelRight = function() {
-        try {
-            var panel = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-            if (panel) panel.style.display = 'none';
-        } catch (e) {}
-    };
-
-    window.hidePanelTop = function() {
-        try {
-            var panel = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
-            if (panel) panel.style.display = 'none';
-        } catch (e) {}
-    };
+    window.hidePanelLeft = hidePanels;
+    window.hidePanelRight = hidePanels;
+    window.hidePanelTop = hidePanels;
 
     // ============================================================
     // 패널 복원 (UI 요소 숨기기 해제 시) - 헤더/푸터는 복원하지 않음
     // ============================================================
     window.restorePanels = function() {
         try {
-            var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-            if (panelLeft) panelLeft.style.display = '';
-
-            var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-            if (panelRight) panelRight.style.display = '';
-
-            var panelTop = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_top');
-            if (panelTop) panelTop.style.display = '';
-
-            // 헤더와 푸터는 복원하지 않음 (항상 숨김 유지)
+            document.documentElement.classList.remove(PANEL_HIDDEN_CLASS);
         } catch (e) {
             console.error('[WebElements] restorePanels error:', e);
-        }
-    };
-
-    // ============================================================
-    // 요소 표시 상태 확인 (디버깅용)
-    // ============================================================
-    window.checkElementsVisibility = function() {
-        try {
-            var panelLeft = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_left');
-            var panelRight = document.querySelector('#__nuxt > div > div > div.page-content > div > div > div.panel_right');
-            var header = document.querySelector('#__nuxt > div > div > header');
-
-            return JSON.stringify({
-                panelLeftVisible: panelLeft ? (panelLeft.style.display !== 'none') : false,
-                panelRightVisible: panelRight ? (panelRight.style.display !== 'none') : false,
-                headerVisible: header ? (header.style.display !== 'none') : false
-            });
-        } catch (e) {
-            return '{}';
         }
     };
 

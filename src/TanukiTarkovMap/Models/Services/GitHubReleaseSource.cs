@@ -24,7 +24,8 @@ GithubSource로는 두 버전(최신과 그 직전)까지만 보이고 그보다
 
 Core Functionality:
 - FetchVersionsAsync(): GitHub Releases API로 설치 가능한 버전 목록을 만든다. Velopack 산출물
-  (full nupkg + releases.{os}.json)이 둘 다 있는 릴리스만 남기며, 자산 크기도 함께 담는다
+  (full nupkg + releases.{os}.json)이 둘 다 있는 릴리스만 남기며, 자산 크기도 함께 담는다.
+  목록이 비어 돌아오면 태그와 피드로 다시 만든다
 - ResolvePlanAsync(): 대상에서 뒤로 따라가며 로컬 패키지에 닿는 delta 사슬을 찾아 받을 것을 확정한다
 - GetReleaseFeed(): 확정된 자산 목록을 Velopack에 돌려준다
 - DownloadReleaseEntry(): 요청된 자산을 스트리밍으로 받으며 진행률을 알린다
@@ -138,6 +139,12 @@ namespace TanukiTarkovMap.Models.Services
         private const int MaximumDeltaChainLength = 10;
 
         /// <summary>
+        /// 태그로 목록을 다시 만들 때 한꺼번에 받을 피드 수.
+        /// 태그가 많은 저장소에서 왕복이 한꺼번에 몰리지 않게 묶는다
+        /// </summary>
+        private const int TagFeedConcurrency = 6;
+
+        /// <summary>
         /// delta 합이 full의 이 분의 1을 넘으면 full로 받는다.
         /// delta를 적용하려면 full 패키지를 통째로 풀고 다시 조립해야 하므로, 전송량이 조금
         /// 줄어드는 정도로는 그 고정 비용을 갚지 못한다
@@ -188,10 +195,39 @@ namespace TanukiTarkovMap.Models.Services
         /// <summary>
         /// 저장소의 릴리스를 조회해 설치할 수 있는 버전 목록을 최신 순으로 돌려준다.
         /// 네트워크 실패는 호출자가 처리한다
+        ///
+        /// 목록이 비어 돌아오면 태그로 다시 만든다. 2026-08-17 GitHub 장애 때 릴리스 목록
+        /// 엔드포인트가 오류 없이 빈 배열을 돌려주어, 되돌리기가 통째로 막히고 화면에는
+        /// "설치할 수 있는 버전이 없습니다"만 남았다. 되돌리기는 이 앱의 안전장치이므로
+        /// 엔드포인트 하나에 묶어 두지 않는다.
+        ///
+        /// 조회가 예외로 끝나는 경우(한도 초과, 연결 실패)는 폴백하지 않는다. 태그 조회도 같은
+        /// API라 같은 이유로 실패하고, 그 사정은 호출 측이 이미 구분해 알린다
         /// </summary>
         public static async Task<IReadOnlyList<ReleaseVersion>> FetchVersionsAsync(string repoUrl, CancellationToken cancelToken = default)
         {
             var (owner, repo) = ParseRepoUrl(repoUrl);
+
+            var versions = await FetchFromReleaseListAsync(owner, repo, cancelToken);
+            if (versions.Count > 0)
+            {
+                Logger.SimpleLog($"[GitHubReleaseSource] Fetched {versions.Count} installable version(s)");
+                return versions;
+            }
+
+            Logger.SimpleLog("[GitHubReleaseSource] Release list came back empty, rebuilding from tags");
+
+            versions = await FetchFromTagsAsync(owner, repo, cancelToken);
+            Logger.SimpleLog($"[GitHubReleaseSource] Fetched {versions.Count} installable version(s) from tags");
+            return versions;
+        }
+
+        /// <summary>
+        /// 릴리스 목록 엔드포인트로 버전 목록을 만든다 (기본 경로, API 요청 한 번)
+        /// </summary>
+        private static async Task<List<ReleaseVersion>> FetchFromReleaseListAsync(
+            string owner, string repo, CancellationToken cancelToken)
+        {
             var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases?per_page=100";
 
             var json = await Http.GetStringAsync(apiUrl, cancelToken);
@@ -232,9 +268,110 @@ namespace TanukiTarkovMap.Models.Services
             }
 
             versions.Sort((left, right) => right.Version.CompareTo(left.Version));
-            Logger.SimpleLog($"[GitHubReleaseSource] Fetched {versions.Count} installable version(s)");
             return versions;
         }
+
+        /// <summary>
+        /// 태그와 릴리스 자산으로 버전 목록을 다시 만든다 (목록 엔드포인트 우회).
+        ///
+        /// 자산 주소는 태그와 파일명으로 정해지므로(releases/download 아래) 자산 목록을 API에
+        /// 묻지 않아도 된다. 파일명과 크기는 그 릴리스의 피드에 적혀 있어 피드 하나만 받으면
+        /// 채울 수 있고, 그 다운로드는 API가 아니라 시간당 한도와도 무관하다.
+        /// 그래서 이 경로가 쓰는 API 요청은 태그 조회 한 번뿐이다
+        /// </summary>
+        private static async Task<List<ReleaseVersion>> FetchFromTagsAsync(
+            string owner, string repo, CancellationToken cancelToken)
+        {
+            var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/tags?per_page=100";
+
+            var json = await Http.GetStringAsync(apiUrl, cancelToken);
+            var tags = JsonSerializer.Deserialize<GitHubTag[]>(json) ?? [];
+
+            using var limiter = new SemaphoreSlim(TagFeedConcurrency);
+            var lookups = new List<Task<ReleaseVersion?>>();
+
+            foreach (var tag in tags)
+            {
+                if (!SemanticVersion.TryParse(tag.Name.TrimStart('v', 'V'), out var version)) continue;
+
+                lookups.Add(LoadVersionFromTagAsync(owner, repo, tag.Name, version, limiter, cancelToken));
+            }
+
+            var versions = (await Task.WhenAll(lookups)).OfType<ReleaseVersion>().ToList();
+            versions.Sort((left, right) => right.Version.CompareTo(left.Version));
+            return versions;
+        }
+
+        /// <summary>
+        /// 태그 하나의 피드를 받아 릴리스를 복원한다.
+        ///
+        /// 릴리스가 없는 태그나 Velopack 산출물이 없는 태그는 null이다. 그런 태그가 섞여 있다고
+        /// 목록 전체를 버릴 이유가 없으므로 건너뛴 사정만 로그에 남긴다.
+        ///
+        /// 프리릴리스 여부는 GitHub 릴리스의 표시가 아니라 태그의 시맨틱 버전으로 판정한다.
+        /// 이 경로에서는 그 표시를 알 수 없고, 이 저장소는 v0.1.1-beta처럼 버전에 남기고 있다
+        /// </summary>
+        private static async Task<ReleaseVersion?> LoadVersionFromTagAsync(
+            string owner,
+            string repo,
+            string tag,
+            SemanticVersion version,
+            SemaphoreSlim limiter,
+            CancellationToken cancelToken)
+        {
+            await limiter.WaitAsync(cancelToken);
+
+            try
+            {
+                var feedUrl = AssetUrl(owner, repo, tag, FeedFileName);
+                var json = await Http.GetStringAsync(feedUrl, cancelToken);
+                var feed = VelopackAssetFeed.FromJson(json);
+
+                // 피드에는 delta의 기준이 된 다른 버전의 full도 적혀 있어 버전까지 대조한다
+                var package = feed.Assets.FirstOrDefault(
+                    asset => asset.Type == VelopackAssetType.Full
+                             && asset.Version.CompareTo(version) == 0);
+
+                if (package == null) return null;
+
+                var delta = feed.Assets.FirstOrDefault(
+                    asset => asset.Type == VelopackAssetType.Delta
+                             && asset.Version.CompareTo(version) == 0);
+
+                return new ReleaseVersion
+                {
+                    Tag = tag,
+                    Version = version,
+                    IsPrerelease = version.IsPrerelease,
+                    PackageFileName = package.FileName,
+                    PackageUrl = AssetUrl(owner, repo, tag, package.FileName),
+                    FeedUrl = feedUrl,
+                    PackageSize = package.Size,
+                    DeltaFileName = delta?.FileName,
+                    DeltaUrl = delta == null ? null : AssetUrl(owner, repo, tag, delta.FileName),
+                    DeltaSize = delta?.Size ?? 0,
+                };
+            }
+            catch (OperationCanceledException) when (cancelToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[GitHubReleaseSource] {tag} has no installable release ({ex.Message})");
+                return null;
+            }
+            finally
+            {
+                limiter.Release();
+            }
+        }
+
+        /// <summary>
+        /// 릴리스 자산의 다운로드 주소. GitHub이 정한 고정 형식이라 API를 거치지 않고 만든다
+        /// </summary>
+        private static string AssetUrl(string owner, string repo, string tag, string fileName) =>
+            $"https://github.com/{owner}/{repo}/releases/download/{Uri.EscapeDataString(tag)}/{Uri.EscapeDataString(fileName)}";
 
         /// <summary>
         /// 이번 설치에서 실제로 받을 것을 정한다.
@@ -606,6 +743,11 @@ namespace TanukiTarkovMap.Models.Services
             [JsonPropertyName("prerelease")] public bool Prerelease { get; set; }
             [JsonPropertyName("draft")] public bool Draft { get; set; }
             [JsonPropertyName("assets")] public GitHubAsset[] Assets { get; set; } = [];
+        }
+
+        private sealed class GitHubTag
+        {
+            [JsonPropertyName("name")] public string Name { get; set; } = "";
         }
 
         private sealed class GitHubAsset

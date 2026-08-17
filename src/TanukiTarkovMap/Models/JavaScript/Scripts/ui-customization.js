@@ -111,65 +111,15 @@
             }
 
             // ========================================
-            // Step 4: 브랜딩 변경 - "Tarkov Client" 추가
+            // Step 4: 사이트가 띄우는 Pilot 안내 줄 숨기기
+            //
+            // 헤더에는 손대지 않는다. 헤더는 BrowserUIService가 페이지마다 항상 숨기므로
+            // 여기서 스타일을 넣으면 보이지 않는 것을 꾸미는 셈이고, style.cssText로 넣으면
+            // 그 숨김까지 지워 헤더가 되살아난다 (0.2.4에서 상단 바가 다시 보인 원인)
             // ========================================
             var tarkovPilotElement = document.querySelector('.p-relative a');
-            var brandContainer = document.querySelector('#__nuxt > div > div > header > div.brand');
-
-            if (brandContainer) {
-                var originalTitle = brandContainer.querySelector('div.title > a');
-
-                // 이미 커스터마이징되었는지 확인 (중복 방지)
-                if (!brandContainer.querySelector('.tarkov-client-separator')) {
-                    // 구분자 생성
-                    var separator = document.createElement('span');
-                    separator.className = 'tarkov-client-separator';
-                    separator.textContent = ' | ';
-                    separator.style.cssText = 'color: inherit; margin: 0 8px; opacity: 1; font-weight: normal; display: inline;';
-
-                    // "Tarkov Client" 링크 생성
-                    var clientLink = document.createElement('a');
-                    clientLink.className = 'tarkov-client-link';
-                    clientLink.href = '/pilot';
-                    clientLink.textContent = 'Tarkov Client';
-                    clientLink.style.cssText = 'font-family: inherit; font-size: inherit; font-weight: inherit; color: inherit; text-decoration: none; white-space: nowrap;';
-
-                    if (originalTitle) {
-                        // window.getComputedStyle: 요소의 실제 적용된 CSS 스타일 가져오기
-                        var computedStyle = window.getComputedStyle(originalTitle);
-                        clientLink.style.fontFamily = computedStyle.fontFamily;
-                        clientLink.style.fontSize = computedStyle.fontSize;
-                        clientLink.style.fontWeight = computedStyle.fontWeight;
-                        clientLink.style.color = computedStyle.color;
-
-                        separator.style.fontFamily = computedStyle.fontFamily;
-                        separator.style.fontSize = computedStyle.fontSize;
-                        separator.style.color = computedStyle.color;
-                    }
-
-                    brandContainer.style.cssText = 'display: flex; align-items: center; flex-wrap: nowrap; max-width: 45%; width: auto; overflow: visible; box-sizing: border-box; flex-shrink: 1;';
-
-                    var titleDiv = brandContainer.querySelector('div.title');
-                    if (titleDiv) {
-                        titleDiv.style.cssText = 'display: flex; align-items: center; flex-wrap: nowrap; overflow: visible;';
-                        // appendChild: 자식 요소로 추가
-                        titleDiv.appendChild(separator);
-                        titleDiv.appendChild(clientLink);
-                    }
-                }
-
-                var headerContainer = document.querySelector('#__nuxt > div > div > header');
-                if (headerContainer) {
-                    headerContainer.style.cssText = 'display: flex; justify-content: space-between; align-items: center; width: 100%; box-sizing: border-box; overflow: visible; padding: 0 20px; position: relative;';
-                }
-
-                // closest(): 가장 가까운 부모 요소 찾기
-                if (tarkovPilotElement) {
-                    var pRelativeContainer = tarkovPilotElement.closest('.p-relative');
-                    if (pRelativeContainer) {
-                        tarkovPilotElement.style.display = 'none';
-                    }
-                }
+            if (tarkovPilotElement) {
+                tarkovPilotElement.style.display = 'none';
             }
 
             // ========================================

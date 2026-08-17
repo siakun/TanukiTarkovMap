@@ -13,6 +13,10 @@ namespace TanukiTarkovMap.Models.JavaScript
     /// - 헤더/푸터: 항상 숨김 (복원 불가)
     /// - 패널(좌/우/상단): "UI 요소 숨기기" 체크박스에 따라 토글
     ///
+    /// 숨김은 요소의 style.display가 아니라 스타일시트 규칙으로 겁니다.
+    /// 인라인 방식은 나중에 만들어진 요소를 놓치고, 다른 스크립트가 style.cssText를 대입하면
+    /// 함께 지워집니다. 실제로 ui-customization.js가 헤더의 cssText를 덮어써 숨김이 풀렸습니다
+    ///
     /// JavaScript 파일 위치: Models/JavaScript/Scripts/web-elements-control.js
     /// </summary>
     public static class WebElementsControl
@@ -51,11 +55,6 @@ namespace TanukiTarkovMap.Models.JavaScript
         /// 패널 복원 (헤더/푸터는 숨김 유지)
         /// </summary>
         public const string RESTORE_PANELS = "window.restorePanels();";
-
-        /// <summary>
-        /// 요소 표시 상태 확인 (디버깅용)
-        /// </summary>
-        public const string CHECK_ELEMENTS_VISIBILITY_STATUS = "window.checkElementsVisibility();";
 
         /// <summary>
         /// PMC Extraction 필터 클릭
