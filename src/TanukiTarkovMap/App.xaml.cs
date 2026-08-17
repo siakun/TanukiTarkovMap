@@ -67,9 +67,9 @@ namespace TanukiTarkovMap
         /// <summary>
         /// 앱을 켰을 때 브라우저가 처음 여는 주소. 지난번에 보던 맵이 있으면 그 맵으로 바로 간다.
         ///
-        /// pilot 페이지는 웹소켓 핸드셰이크를 맺는 착지점일 뿐이다. 거기 들렀다가 맵으로 옮겨가면
-        /// 시작할 때 페이지를 두 번 그려서 화면이 덜컥거린다. 맵 페이지도 같은 핸드셰이크를 하므로
-        /// 처음부터 그리로 가면 한 번으로 끝난다. 저장된 맵이 없는 첫 실행에만 pilot으로 간다.
+        /// 저장된 맵이 없는 첫 실행에는 목록의 첫 맵으로 간다. 예전에는 pilot 페이지에 들러
+        /// 사이트가 앱에 접속하기를 기다렸지만, Pilot v2부터는 어느 페이지에나 window.pilot이
+        /// 열려 있어 기다릴 것이 없다. 들렀다 옮겨가면 시작할 때 페이지를 두 번 그려 덜컥거린다.
         ///
         /// Settings.Load()가 끝난 뒤에 읽어야 한다. 창을 만들기 전에 설정을 불러오므로
         /// 브라우저 뷰모델이 생성될 시점에는 이미 값이 들어와 있다
@@ -79,10 +79,9 @@ namespace TanukiTarkovMap
             get
             {
                 var savedMapId = GetSettings().SelectedMapId;
-                if (string.IsNullOrEmpty(savedMapId)) return WebsiteUrl;
-
                 var savedMap = AvailableMaps.FirstOrDefault(map => map.MapId == savedMapId);
-                return savedMap?.Url ?? WebsiteUrl;
+
+                return savedMap?.Url ?? AvailableMaps.FirstOrDefault()?.Url ?? WebsiteUrl;
             }
         }
 
@@ -223,7 +222,7 @@ namespace TanukiTarkovMap
         ///
         /// 처음부터 띄우면 대부분의 실행에서 0.2초 만에 사라져 정보를 주지 못한 채 화면만 튄다.
         /// 사용자는 그것을 결함으로 읽는다. 그렇다고 억지로 오래 띄우면 시작이 느려지는데,
-        /// 이 앱에서 시작 속도는 미관보다 앞선다(docs/startup-speed-and-updates.md).
+        /// 이 앱에서 시작 속도는 미관보다 앞선다(docs/20260816-startup-speed-and-updates.md).
         ///
         /// 그래서 시간을 재서 느린 실행에만 띄운다. 단계 사이에서 불러야 한다.
         /// CEF 초기화 같은 긴 작업은 UI 스레드를 붙잡으므로 타이머로는 그 도중에 띄울 수 없고,
@@ -283,10 +282,6 @@ namespace TanukiTarkovMap
 
                 // GoonTracker 설정 적용
                 ServiceLocator.GoonTrackerService.Enabled = GetSettings().GoonTrackerEnabled;
-
-                // 서버 시작
-                Logger.SimpleLog("Starting WebSocket server...");
-                Server.Start();
 
                 // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
                 Logger.SimpleLog("Starting file watchers...");
@@ -441,7 +436,6 @@ namespace TanukiTarkovMap
                     Task.Run(() => ServiceLocator.GoonTrackerService.Dispose()),
                     Task.Run(() => ServiceLocator.HotkeyService.Dispose()),
                     Task.Run(() => { ScreenshotsWatcher.Stop(); LogsWatcher.Stop(); }),
-                    Task.Run(() => Server.Stop()),
                 };
                 Task.WaitAll(cleanupTasks.ToArray(), 300); // 최대 300ms 대기
             }

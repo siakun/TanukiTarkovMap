@@ -18,13 +18,14 @@ Core Functionality:
 - 브라우저 초기화: SetBrowser()로 ChromiumWebBrowser 인스턴스 연결
 - 페이지 로드 후처리: UI 요소 제거, 마진 제거, 줌 적용
 - JavaScript 통신: CefSharp.PostMessage로 맵 정보/연결 상태 수신
+- Pilot 브리지: 게임 사건을 웹 페이지의 window.pilot으로 전달
 - Messenger 수신: MainWindowViewModel에서 맵 선택/줌/UI 숨김 설정 수신
 
 Message Flow:
   MainWindowViewModel → MapSelectionChangedMessage → NavigateToMap
   MainWindowViewModel → ZoomLevelChangedMessage → ApplyZoomLevel
   MonitorRefreshRateBehavior → MonitorRefreshRateChangedMessage → ApplyWindowlessFrameRate
-  JavaScript(pilot-connected) → PilotConnectedMessage → MainWindowViewModel
+  MapEventService(ScreenshotTaken/QuestCompleted) → SendToPilot → window.pilot
 */
 namespace TanukiTarkovMap.ViewModels
 {
@@ -37,6 +38,7 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<MonitorRefreshRateChangedMessage>
     {
         private readonly BrowserUIService _browserUIService;
+        private readonly MapEventService _mapEventService;
         private ChromiumWebBrowser? _browser;
 
         /// <summary> 디버그 모드 - 모든 JavaScript 주입 비활성화 </summary>
@@ -76,6 +78,11 @@ namespace TanukiTarkovMap.ViewModels
         public WebBrowserViewModel()
         {
             _browserUIService = ServiceLocator.BrowserUIService;
+            _mapEventService = ServiceLocator.MapEventService;
+
+            // 게임 사건 구독 (감시자 -> 웹 페이지의 window.pilot)
+            _mapEventService.ScreenshotTaken += OnScreenshotTaken;
+            _mapEventService.QuestCompleted += OnQuestCompleted;
 
             // Messenger 등록 (MainWindowViewModel로부터 메시지 수신)
             WeakReferenceMessenger.Default.RegisterAll(this);
@@ -147,6 +154,9 @@ namespace TanukiTarkovMap.ViewModels
                     // Tarkov Market 전용 처리
                     if (_browser?.Address?.Contains("tarkov-market.com") == true)
                     {
+                        // 게임 사건을 넘길 통로 등록 (페이지마다 다시 만들어야 한다)
+                        await ExecuteScriptAsync(PilotBridge.INIT_SCRIPT);
+
                         // 방향 표시기 추가
                         await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT);
 
@@ -157,13 +167,6 @@ namespace TanukiTarkovMap.ViewModels
                         if (_browser.Address.Contains("/maps/"))
                         {
                             await ApplyExtractionFilterAsync(IsPmcExtraction, waitForDom: true);
-                        }
-
-                        // "/pilot" 페이지에서 Connected 상태 감지 시작
-                        if (_browser.Address.Contains("/pilot"))
-                        {
-                            await ExecuteScriptAsync(ConnectionDetector.DETECT_CONNECTION_STATUS);
-                            Logger.SimpleLog("[WebBrowserViewModel] Connection detection script injected");
                         }
                     }
 
@@ -229,15 +232,6 @@ namespace TanukiTarkovMap.ViewModels
 
                 switch (messageType)
                 {
-                    case "pilot-connected":
-                        Logger.SimpleLog("[WebBrowserViewModel] Pilot connected detected!");
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
-                        {
-                            // Messenger로 MainWindowViewModel에 전달
-                            WeakReferenceMessenger.Default.Send(new PilotConnectedMessage());
-                        });
-                        break;
-
                     case "margins-removed":
                     case "ui-elements-removed":
                         Logger.SimpleLog($"[WebBrowserViewModel] {messageType}");
@@ -458,6 +452,56 @@ namespace TanukiTarkovMap.ViewModels
         #endregion
 
         #region Private Methods
+
+        /// <summary>
+        /// 스크린샷 생성 이벤트 처리 (ScreenshotsWatcher -> MapEventService)
+        /// </summary>
+        private void OnScreenshotTaken(object? sender, ScreenshotTakenEventArgs e)
+        {
+            SendToPilot(PilotBridge.SendScreenshot(e.Filename), $"screenshot: {e.Filename}");
+        }
+
+        /// <summary>
+        /// 퀘스트 완료 이벤트 처리 (LogsWatcher -> MapEventService)
+        /// </summary>
+        private void OnQuestCompleted(object? sender, QuestCompletedEventArgs e)
+        {
+            SendToPilot(PilotBridge.CompleteQuest(e.QuestId), $"quest complete: {e.QuestId}");
+        }
+
+        /// <summary>
+        /// 게임 사건을 웹 페이지의 window.pilot으로 전달
+        ///
+        /// 파일 감시 스레드에서 불리므로 UI 스레드로 넘겨 실행한다.
+        /// 전달 결과를 로그에 남기는 이유: 사이트가 브리지를 거두면 위치가 조용히 멈추는데,
+        /// 그때 앱과 사이트 중 어느 쪽이 끊겼는지 로그만으로 가릴 수 있어야 한다
+        /// </summary>
+        /// <param name="script">PilotBridge가 만든 호출문</param>
+        /// <param name="description">로그에 남길 사건 설명</param>
+        private void SendToPilot(string script, string description)
+        {
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(async () =>
+            {
+                // 다른 사이트를 보고 있으면 넘길 곳이 없다
+                if (_browser?.Address?.Contains("tarkov-market.com") != true)
+                {
+                    Logger.SimpleLog($"[PilotBridge] Skipped ({description}): not on tarkov-market.com");
+                    return;
+                }
+
+                var response = await ExecuteScriptAsync(script);
+                bool delivered = response?.Result as bool? ?? false;
+
+                if (delivered)
+                {
+                    Logger.SimpleLog($"[PilotBridge] Sent ({description})");
+                }
+                else
+                {
+                    Logger.SimpleLog($"[PilotBridge] Not delivered ({description}): window.pilot unavailable");
+                }
+            });
+        }
 
         /// <summary>
         /// CefSharp OSR 페인트 상한(WindowlessFrameRate)을 현재 모니터 주사율로 적용

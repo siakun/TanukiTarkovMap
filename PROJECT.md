@@ -54,10 +54,6 @@ graph TB
         SW[ScreenshotsWatcher]
     end
 
-    subgraph Network["Network"]
-        SRV[Server - WebSocket]
-    end
-
     subgraph Application["Application"]
         APP[App.xaml.cs]
     end
@@ -66,9 +62,9 @@ graph TB
         JSL[JavaScriptLoader]
         WEC[WebElementsControl]
         PL[PageLayout]
-        CD[ConnectionDetector]
         UIC[UICustomization]
         MM[MapMarkers]
+        PB[PilotBridge]
     end
 
     subgraph External["External"]
@@ -109,21 +105,21 @@ graph TB
     APP -->|Initialize| SL
     APP -->|Start| LW
     APP -->|Start| SW
-    APP -->|Start| SRV
     APP -->|Load| SET
     APP -->|Create| MW
 
     LW --> MES
-    LW --> SRV
     SW --> MES
     MES --> MWVM
+    MES -->|ScreenshotTaken/QuestCompleted| WBVM
 
     BUI --> JSL
     JSL --> WEC
     JSL --> PL
-    JSL --> CD
     JSL --> UIC
     JSL --> MM
+    JSL --> PB
+    WBVM --> PB
 
     WBVM --> CEF
     CEF --> TM
@@ -339,7 +335,7 @@ ServiceLocator.UpdateService
 | `BrowserUIService` | CefSharp UI 요소 가시성 제어 |
 | `WindowBoundsService` | 창 경계 체크 및 화면 내 위치 보정 |
 | `WindowStateManager` | 창 상태 저장/복원 |
-| `MapEventService` | 맵 변경 및 스크린샷 이벤트 발행 |
+| `MapEventService` | 맵 변경, 스크린샷, 퀘스트 완료 이벤트 발행 |
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
 | `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
 | `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
@@ -349,10 +345,10 @@ ServiceLocator.UpdateService
 
 업데이트 확인은 메인 창을 띄운 **뒤에** 시작합니다. 시작을 막지 않는 것이 이 앱에서는
 다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은
-[시작 속도와 업데이트 시점](docs/startup-speed-and-updates.md)에 적어 두었습니다.
+[시작 속도와 업데이트 시점](docs/20260816-startup-speed-and-updates.md)에 적어 두었습니다.
 
 full과 delta 중 무엇을 받을지, 배포 구조가 그 판단을 어떻게 제약하는지, 데이터
-마이그레이션과 다운그레이드가 어떻게 얽히는지는 [업데이트 전달 설계](docs/update-delivery-design.md)에
+마이그레이션과 다운그레이드가 어떻게 얽히는지는 [업데이트 전달 설계](docs/20260816-update-delivery-design.md)에
 정리해 두었습니다. 구현을 바꾸기 전에 그 문서의 결정 표와 전환 신호를 먼저 봅니다.
 
 ### 서비스 생성자 규칙
@@ -405,6 +401,31 @@ services.AddSingleton(_ => new ServiceName());
        ↓
   이미 같은 맵이면 중단, 아니면 위와 같은 경로로 전환
 ```
+
+### 스크린샷 위치 표시와 퀘스트 완료 (window.pilot 브리지)
+
+좌표 파싱과 마커 표시는 tarkov-market이 하므로, 앱은 사건만 웹 페이지로 넘깁니다.
+넘기는 통로는 사이트가 페이지마다 열어 두는 `window.pilot`입니다.
+
+```
+스크린샷 파일 생성 / 퀘스트 완료 알림 로그
+       ↓
+  ScreenshotsWatcher / LogsWatcher 감지
+       ↓
+  MapEventService.OnScreenshotTaken(filename) / OnQuestCompleted(questId)
+       ↓
+  WebBrowserViewModel.SendToPilot() (UI 스레드로 마샬링)
+       ↓
+  PilotBridge 호출문 -> CefSharp EvaluateScriptAsync
+       ↓
+  window.tanukiPilot -> window.pilot.positionFromScreenshot / questComplete
+```
+
+`window.tanukiPilot`은 페이지가 로드될 때마다 `PilotBridge.INIT_SCRIPT`로 다시 등록합니다.
+2026-08-17 Pilot v2 이전에는 포트 5123의 WebSocket 서버로 같은 사건을 넘겼으나, 사이트가
+로컬 앱에 접속하지 않게 되어 이 경로로 옮겼습니다. 무엇이 깨졌고 어떤 대안을 버렸는지,
+사이트가 또 바꿨을 때 어떻게 알아차리는지는 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에
+정리해 두었습니다. 이 경로를 고치기 전에 그 문서의 대안 비교와 전환 신호를 먼저 봅니다.
 
 ---
 
@@ -497,11 +518,11 @@ Models/JavaScript/
 ├── Scripts/                      # 실제 JavaScript 파일 (Embedded Resource)
 │   ├── web-elements-control.js   # UI 요소 제어 함수 정의
 │   ├── page-layout.js            # 마진/패딩 제거
-│   ├── connection-detector.js    # 연결 상태 감지
+│   ├── pilot-bridge.js           # window.pilot 호출 통로 등록
 │   └── ...
 ├── WebElementsControl.js.cs      # C# 래퍼 (함수 호출용 상수)
 ├── PageLayout.js.cs              # C# 래퍼
-├── ConnectionDetector.js.cs      # C# 래퍼
+├── PilotBridge.js.cs             # C# 래퍼
 └── JavaScriptLoader.cs           # Embedded Resource 로더
 ```
 
@@ -598,3 +619,4 @@ sequenceDiagram
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
 | **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
 | **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |
+| **Pilot 브리지** | 게임 사건을 tarkov-market의 `window.pilot`으로 넘기는 통로 |

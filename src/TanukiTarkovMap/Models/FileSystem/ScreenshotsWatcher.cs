@@ -7,7 +7,7 @@ namespace TanukiTarkovMap.Models.FileSystem
     /**
     ScreenshotsWatcher - 타르코프 스크린샷 폴더 감시
 
-    Purpose: Screenshots 폴더의 새 파일 생성을 감지하여 tarkov-market에 전송
+    Purpose: Screenshots 폴더의 새 파일 생성을 감지하여 tarkov-market 페이지에 전달
 
     Core Functionality:
     - Start(): 스크린샷 폴더 감시 시작, 폴더 미존재 시 부모 폴더 감시
@@ -156,10 +156,8 @@ namespace TanukiTarkovMap.Models.FileSystem
 
                     Logger.SimpleLog($"[Screenshot] {filename} | Path: {fullPath}{fileInfo}");
 
-                    Server.SendFilename(filename);
-
-                    // 2차 트리거: 스크린샷 생성 이벤트 발생
-                    ServiceLocator.MapEventService.OnScreenshotTaken();
+                    // 파일명을 웹 페이지의 window.pilot으로 넘겨 위치 마커를 옮긴다
+                    ServiceLocator.MapEventService.OnScreenshotTaken(filename);
 
                     // 레이드 도중 앱을 켜면 진입 로그가 이미 지나가 맵이 전환되지 않는다.
                     // 스크린샷은 인게임에서만 찍히므로, 이 시점의 마지막 감지 맵을 현재 맵으로 보고 보정한다.

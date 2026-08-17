@@ -76,7 +76,7 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 | UI | WPF, MVVM (CommunityToolkit.Mvvm), Microsoft.Xaml.Behaviors |
 | 웹뷰 | CefSharp.Wpf.NETCore (Chromium) |
 | 네이티브 제어 | P/Invoke (user32.dll) |
-| 통신 | ASP.NET Core Kestrel WebSocket (port 5123) |
+| 웹 연동 | CefSharp JavaScript 주입 (window.pilot 브리지) |
 | DI | Microsoft.Extensions.DependencyInjection |
 | 트레이 | Hardcodet.NotifyIcon.Wpf |
 | 배포, 자동 업데이트 | Velopack, GitHub Actions |
@@ -101,9 +101,13 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 모든 Win32 호출은 `PInvoke.cs` 한 곳에 모아 선언하고, `WindowTopmost`와 `WindowTransparency` 같은 의도 단위 래퍼로 감싸 호출부가 플래그를 직접 다루지 않도록 했습니다.
 
-### 3. 실시간 좌표 동기화 (FileSystemWatcher + 인프로세스 WebSocket)
+### 3. 실시간 좌표 동기화 (FileSystemWatcher + window.pilot 브리지)
 
-스크린샷 폴더를 `FileSystemWatcher`로 실시간 감시하다가 새 파일이 생기면, 파일명을 WebSocket으로 임베디드 웹 클라이언트에 전달합니다. 좌표 파싱과 맵 표시는 tarkov-market Pilot 클라이언트가 담당합니다. WebSocket 서버는 별도 프로세스가 아니라 앱 안에서 ASP.NET Core Kestrel로 직접 호스팅하며, 포트 `5123`은 tarkov-market.com이 로컬 헬퍼 앱을 감지하는 규약과 호환됩니다. 원조 TarkovPilot이 별도 트레이 헬퍼로 WebSocket을 띄우던 것과 달리, 같은 규약을 최신 ASP.NET Core 기반 인프로세스 서버로 다시 구현한 셈입니다. 게임 로그도 함께 감시(`LogsWatcher`)해 플레이어가 입장한 맵을 자동으로 전환합니다.
+스크린샷 폴더를 `FileSystemWatcher`로 실시간 감시하다가 새 파일이 생기면, 파일명을 임베디드 웹 클라이언트에 전달합니다. 좌표 파싱과 맵 표시는 tarkov-market이 담당하므로 앱은 파일명을 그대로 넘깁니다. 게임 로그도 함께 감시(`LogsWatcher`)해 플레이어가 입장한 맵을 자동으로 전환합니다.
+
+전달 통로는 tarkov-market이 페이지마다 열어 두는 `window.pilot`입니다. 스크린샷이 생기면 `PilotBridge`가 만든 호출문을 CefSharp로 실행해 `window.pilot.positionFromScreenshot(파일명)`을 부릅니다. 사이트에 로그인하지 않아도 이 경로로 위치가 찍힙니다.
+
+2026-08-17까지는 앱 안에서 ASP.NET Core Kestrel로 포트 `5123`에 WebSocket 서버를 띄우고, 사이트가 그 서버에 접속해 파일명을 받아 갔습니다. 같은 날 tarkov-market이 Pilot v2를 배포하면서 사이트가 로컬 앱 대신 자기 서버(`wss://tarkov-market.com/ws/pilot`)로만 붙게 바뀌어, 서버를 띄워도 접속하는 클라이언트가 없어졌습니다. 서버 중계 규약을 따라가려면 계정 인증까지 구현해야 하는데 `window.pilot`은 그것 없이 같은 일을 하므로, WebSocket 서버와 ASP.NET Core 의존을 걷어내고 브리지 호출로 갈아탔습니다. 진단 근거와 버린 대안, 사이트 변경을 알아차리는 방법은 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에 정리했습니다.
 
 ### 4. 게임 로그 파싱으로 자동 맵 전환
 
@@ -120,7 +124,7 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 ```
 scene preset 줄 감지
-  -> LogsWatcher          프리셋 이름 추출, WebSocket으로 원본도 전달
+  -> LogsWatcher          프리셋 이름 추출
   -> MapConfiguration     프리셋을 맵으로 해석 (등록되지 않은 값이면 여기서 중단)
   -> MapEventService      맵 변경 이벤트 발행
   -> MainWindowViewModel  SelectedMapInfo 대입 (드롭다운 수동 선택이 합류하는 지점)

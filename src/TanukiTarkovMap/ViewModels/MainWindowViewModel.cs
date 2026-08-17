@@ -22,7 +22,7 @@ Core Functionality:
 Message Flow:
   MapEventService.MapChanged → OnMapEventReceived → SelectedMapInfo 대입
   SelectedMapInfo 변경 → MapSelectionChangedMessage → WebBrowserViewModel
-  WebBrowserViewModel → MapReceivedMessage/PilotConnectedMessage → 이 ViewModel
+  WebBrowserViewModel → MapReceivedMessage → 이 ViewModel
 
 Dependencies:
 - WindowBoundsService: 창 위치/크기 저장소
@@ -34,7 +34,6 @@ namespace TanukiTarkovMap.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject,
         IRecipient<MapReceivedMessage>,
-        IRecipient<PilotConnectedMessage>,
         IRecipient<TopBarHiddenChangedMessage>,
         IRecipient<OpacitySliderDragMessage>,
         IRecipient<UpdateReadyMessage>,
@@ -254,7 +253,6 @@ namespace TanukiTarkovMap.ViewModels
             Logger.SimpleLog("[MainWindowViewModel] Subscribing to MapEventService events");
 
             _mapEventService.MapChanged += OnMapEventReceived;
-            _mapEventService.ScreenshotTaken += OnScreenshotEventReceived;
 
             Logger.SimpleLog("[MainWindowViewModel] Successfully subscribed to MapEventService events");
         }
@@ -318,18 +316,6 @@ namespace TanukiTarkovMap.ViewModels
             });
         }
 
-        /// <summary>
-        /// 스크린샷 이벤트 처리
-        /// </summary>
-        private void OnScreenshotEventReceived(object sender, EventArgs e)
-        {
-            // UI 스레드로 마샬링
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                Logger.SimpleLog("[MainWindowViewModel] Screenshot event received");
-            });
-        }
-
         public void LoadSettings()
         {
             _settings = App.GetSettings();
@@ -355,13 +341,13 @@ namespace TanukiTarkovMap.ViewModels
             OnPropertyChanged(nameof(WindowOpacity));
 
             // Load last selected map
-            if (!string.IsNullOrEmpty(_settings.SelectedMapId))
+            // 저장된 맵이 없으면 첫 맵을 고른다. App.StartupUrl도 같은 맵을 열므로
+            // 첫 실행에서 브라우저와 드롭다운이 서로 다른 맵을 가리키지 않는다
+            var savedMap = AvailableMaps.FirstOrDefault(m => m.MapId == _settings.SelectedMapId)
+                           ?? AvailableMaps.FirstOrDefault();
+            if (savedMap != null)
             {
-                var savedMap = AvailableMaps.FirstOrDefault(m => m.MapId == _settings.SelectedMapId);
-                if (savedMap != null)
-                {
-                    SelectedMapInfo = savedMap;
-                }
+                SelectedMapInfo = savedMap;
             }
 
             // Initialize window properties with normal mode
@@ -568,30 +554,6 @@ namespace TanukiTarkovMap.ViewModels
         {
             CurrentMap = message.Value;
             Logger.SimpleLog($"[MainWindowViewModel] MapReceived via Messenger: {message.Value}");
-        }
-
-        /// <summary>
-        /// Pilot 연결 메시지 핸들러 (WebBrowserViewModel → MainWindowViewModel)
-        /// </summary>
-        public void Receive(PilotConnectedMessage message)
-        {
-            Logger.SimpleLog("[MainWindowViewModel] PilotConnected via Messenger");
-
-            if (SelectedMapInfo == null)
-            {
-                // 맵이 선택되어 있지 않으면 기본 맵으로 이동
-                var defaultMap = App.AvailableMaps.FirstOrDefault();
-                if (defaultMap != null)
-                {
-                    SelectedMapInfo = defaultMap;
-                    Logger.SimpleLog($"[MainWindowViewModel] Auto-navigating to default map: {defaultMap.DisplayName}");
-                }
-            }
-            else
-            {
-                // 이미 선택된 맵이 있으면 해당 맵으로 네비게이션 메시지 전송
-                WeakReferenceMessenger.Default.Send(new MapSelectionChangedMessage(SelectedMapInfo));
-            }
         }
 
         /// <summary>

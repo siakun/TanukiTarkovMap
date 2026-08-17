@@ -17,7 +17,7 @@ Design Rationale: 단순한 창이라 별도 ViewModel 없이 직접 메서드�
 
 Historical Context: 처음에는 이 창이 업데이트를 관리하기로 했다. Discord처럼 확인과
 다운로드를 끝낸 뒤 메인 창을 여는 구조였고 진행바도 그래서 있었다. 그 설계를 버린 이유는
-docs/startup-speed-and-updates.md에 적어 두었다. 요지는 이 앱이 목적지가 아니라 레이드
+docs/20260816-startup-speed-and-updates.md에 적어 두었다. 요지는 이 앱이 목적지가 아니라 레이드
 중에 위치를 확인하는 보조 도구라, 시작 앞에 30초짜리 관문을 두면 앱이 존재하는 이유를
 스스로 막는다는 것이다. 업데이트는 메인 창이 열린 뒤 백그라운드로 받는다.
 진행바(SetProgress, HideProgress)는 그 설계와 함께 지웠다.

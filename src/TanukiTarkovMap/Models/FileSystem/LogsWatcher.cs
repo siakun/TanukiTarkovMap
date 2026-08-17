@@ -21,6 +21,10 @@ namespace TanukiTarkovMap.Models.FileSystem
         // BattlEye client initialization - application.log
         static readonly string BECLIENT_INIT_SUBSTRING = "BEClient inited successfully";
 
+        // 알림 로그의 종류 값. 예전에는 값을 그대로 웹에 넘겨 사이트가 걸렀지만,
+        // window.pilot.questComplete에는 완료만 넘길 수 있어 여기서 가린다 (10 시작, 11 실패, 12 완료)
+        static readonly string QUEST_COMPLETE_NOTIFICATION_TYPE = "12";
+
         static string curLogFolder;
         static Dictionary<string, long> filePositions = new();
 
@@ -230,16 +234,10 @@ namespace TanukiTarkovMap.Models.FileSystem
                                         Logger.SimpleLog($"[LogsWatcher] Unknown scene preset: {scenePreset}");
                                     }
 
-                                    // 지난 판의 맵으로 화면이 바뀌지 않도록 전송과 전환은 초기 읽기 이후에만 한다
-                                    if (IsAllInitialLogsRead)
+                                    // 지난 판의 맵으로 화면이 바뀌지 않도록 전환은 초기 읽기 이후에만 한다
+                                    if (IsAllInitialLogsRead && mapInfo != null)
                                     {
-                                        // 웹 페이지에는 로그에서 읽은 값을 그대로 넘긴다
-                                        Server.SendMap(scenePreset);
-
-                                        if (mapInfo != null)
-                                        {
-                                            ServiceLocator.MapEventService.OnMapChanged(mapInfo);
-                                        }
+                                        ServiceLocator.MapEventService.OnMapChanged(mapInfo);
                                     }
                                 }
                                 continue;
@@ -307,10 +305,10 @@ namespace TanukiTarkovMap.Models.FileSystem
                                             if (parts.Length > 0)
                                             {
                                                 var questId = parts[0];
-                                                if (!string.IsNullOrEmpty(questId))
+                                                if (!string.IsNullOrEmpty(questId)
+                                                    && status == QUEST_COMPLETE_NOTIFICATION_TYPE)
                                                 {
-                                                    // 퀘스트 업데이트 전송
-                                                    Server.SendQuestUpdate(questId, status);
+                                                    ServiceLocator.MapEventService.OnQuestCompleted(questId);
                                                 }
                                             }
                                         }
