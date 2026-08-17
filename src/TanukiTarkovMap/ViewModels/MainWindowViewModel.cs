@@ -254,7 +254,6 @@ namespace TanukiTarkovMap.ViewModels
             Logger.SimpleLog("[MainWindowViewModel] Subscribing to MapEventService events");
 
             _mapEventService.MapChanged += OnMapEventReceived;
-            _mapEventService.ScreenshotTaken += OnScreenshotEventReceived;
 
             Logger.SimpleLog("[MainWindowViewModel] Successfully subscribed to MapEventService events");
         }
@@ -315,18 +314,6 @@ namespace TanukiTarkovMap.ViewModels
 
                 // SelectedMapInfo 변경이 MapSelectionChangedMessage를 통해 브라우저를 이동시킨다
                 SelectedMapInfo = e.Map;
-            });
-        }
-
-        /// <summary>
-        /// 스크린샷 이벤트 처리
-        /// </summary>
-        private void OnScreenshotEventReceived(object sender, EventArgs e)
-        {
-            // UI 스레드로 마샬링
-            System.Windows.Application.Current.Dispatcher.Invoke(() =>
-            {
-                Logger.SimpleLog("[MainWindowViewModel] Screenshot event received");
             });
         }
 

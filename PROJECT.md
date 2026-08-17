@@ -54,10 +54,6 @@ graph TB
         SW[ScreenshotsWatcher]
     end
 
-    subgraph Network["Network"]
-        SRV[Server - WebSocket]
-    end
-
     subgraph Application["Application"]
         APP[App.xaml.cs]
     end
@@ -69,6 +65,7 @@ graph TB
         CD[ConnectionDetector]
         UIC[UICustomization]
         MM[MapMarkers]
+        PB[PilotBridge]
     end
 
     subgraph External["External"]
@@ -109,14 +106,13 @@ graph TB
     APP -->|Initialize| SL
     APP -->|Start| LW
     APP -->|Start| SW
-    APP -->|Start| SRV
     APP -->|Load| SET
     APP -->|Create| MW
 
     LW --> MES
-    LW --> SRV
     SW --> MES
     MES --> MWVM
+    MES -->|ScreenshotTaken/QuestCompleted| WBVM
 
     BUI --> JSL
     JSL --> WEC
@@ -124,6 +120,8 @@ graph TB
     JSL --> CD
     JSL --> UIC
     JSL --> MM
+    JSL --> PB
+    WBVM --> PB
 
     WBVM --> CEF
     CEF --> TM
@@ -339,7 +337,7 @@ ServiceLocator.UpdateService
 | `BrowserUIService` | CefSharp UI 요소 가시성 제어 |
 | `WindowBoundsService` | 창 경계 체크 및 화면 내 위치 보정 |
 | `WindowStateManager` | 창 상태 저장/복원 |
-| `MapEventService` | 맵 변경 및 스크린샷 이벤트 발행 |
+| `MapEventService` | 맵 변경, 스크린샷, 퀘스트 완료 이벤트 발행 |
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
 | `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
 | `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
@@ -405,6 +403,30 @@ services.AddSingleton(_ => new ServiceName());
        ↓
   이미 같은 맵이면 중단, 아니면 위와 같은 경로로 전환
 ```
+
+### 스크린샷 위치 표시와 퀘스트 완료 (window.pilot 브리지)
+
+좌표 파싱과 마커 표시는 tarkov-market이 하므로, 앱은 사건만 웹 페이지로 넘깁니다.
+넘기는 통로는 사이트가 페이지마다 열어 두는 `window.pilot`입니다.
+
+```
+스크린샷 파일 생성 / 퀘스트 완료 알림 로그
+       ↓
+  ScreenshotsWatcher / LogsWatcher 감지
+       ↓
+  MapEventService.OnScreenshotTaken(filename) / OnQuestCompleted(questId)
+       ↓
+  WebBrowserViewModel.SendToPilot() (UI 스레드로 마샬링)
+       ↓
+  PilotBridge 호출문 -> CefSharp EvaluateScriptAsync
+       ↓
+  window.tanukiPilot -> window.pilot.positionFromScreenshot / questComplete
+```
+
+`window.tanukiPilot`은 페이지가 로드될 때마다 `PilotBridge.INIT_SCRIPT`로 다시 등록합니다.
+2026-08-17 Pilot v2 이전에는 포트 5123의 WebSocket 서버로 같은 사건을 넘겼으나, 사이트가
+로컬 앱에 접속하지 않게 되어 이 경로로 옮겼습니다. 자세한 배경은
+[README의 실시간 좌표 동기화](README.md#3-실시간-좌표-동기화-filesystemwatcher--windowpilot-브리지)에 적어 두었습니다.
 
 ---
 
@@ -598,3 +620,4 @@ sequenceDiagram
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
 | **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
 | **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |
+| **Pilot 브리지** | 게임 사건을 tarkov-market의 `window.pilot`으로 넘기는 통로 |

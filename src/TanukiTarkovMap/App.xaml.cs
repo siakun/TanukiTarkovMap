@@ -284,10 +284,6 @@ namespace TanukiTarkovMap
                 // GoonTracker 설정 적용
                 ServiceLocator.GoonTrackerService.Enabled = GetSettings().GoonTrackerEnabled;
 
-                // 서버 시작
-                Logger.SimpleLog("Starting WebSocket server...");
-                Server.Start();
-
                 // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
                 Logger.SimpleLog("Starting file watchers...");
                 ShowSplashIfStartupIsSlow("감시를 시작하는 중...");
@@ -441,7 +437,6 @@ namespace TanukiTarkovMap
                     Task.Run(() => ServiceLocator.GoonTrackerService.Dispose()),
                     Task.Run(() => ServiceLocator.HotkeyService.Dispose()),
                     Task.Run(() => { ScreenshotsWatcher.Stop(); LogsWatcher.Stop(); }),
-                    Task.Run(() => Server.Stop()),
                 };
                 Task.WaitAll(cleanupTasks.ToArray(), 300); // 최대 300ms 대기
             }
