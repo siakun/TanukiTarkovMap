@@ -115,6 +115,7 @@ namespace TanukiTarkovMap.ViewModels
             _browser = browser;
 
             // 이벤트 핸들러 등록
+            _browser.FrameLoadStart += OnFrameLoadStart;
             _browser.FrameLoadEnd += OnFrameLoadEnd;
             _browser.AddressChanged += OnAddressChanged;
 
@@ -136,6 +137,26 @@ namespace TanukiTarkovMap.ViewModels
             {
                 Address = e.NewValue?.ToString() ?? string.Empty;
             });
+        }
+
+        /// <summary>
+        /// 페이지 로드 시작 이벤트
+        ///
+        /// 여기서는 상태 보고 스크립트만 넣는다. 로딩 중에 난 자원 실패와 스크립트 오류를 잡으려면
+        /// 자원을 받기 전에 들어가 있어야 하므로, 다른 스크립트와 달리 로드가 끝나기를 기다리지 않는다
+        /// </summary>
+        private void OnFrameLoadStart(object? sender, FrameLoadStartEventArgs e)
+        {
+            if (!e.Frame.IsMain || _isDebugMode) return;
+
+            try
+            {
+                e.Frame.ExecuteJavaScriptAsync(PageHealth.INIT_SCRIPT);
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[WebBrowserViewModel] Page health inject skipped: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -277,6 +298,20 @@ namespace TanukiTarkovMap.ViewModels
                     case "ui-elements-removed":
                         Logger.SimpleLog($"[WebBrowserViewModel] {messageType}");
                         // CefSharp은 자동으로 리사이즈를 처리하므로 별도 작업 불필요
+                        break;
+
+                    // 페이지가 낸 오류. 앱 안에서만 나는 렌더 실패의 단서가 여기에 남는다
+                    case "page-error":
+                        Logger.SimpleLog($"[PageHealth] {json.RootElement.GetProperty("kind").GetString()}: " +
+                            $"{json.RootElement.GetProperty("detail").GetString()}");
+                        break;
+
+                    // 맵이 그려졌는지. 바닥 맵이 없으면 그 자체가 증상이므로 눈에 띄게 남긴다
+                    case "page-health":
+                        var baseMap = json.RootElement.GetProperty("baseMap").GetBoolean();
+                        Logger.SimpleLog($"[PageHealth] {json.RootElement.GetProperty("path").GetString()} " +
+                            $"baseMap={baseMap}, markerLayer={json.RootElement.GetProperty("markerLayer").GetBoolean()}" +
+                            (baseMap ? string.Empty : " <- 바닥 맵이 그려지지 않았다"));
                         break;
                 }
             }

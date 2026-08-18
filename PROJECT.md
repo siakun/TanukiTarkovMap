@@ -546,6 +546,10 @@ Models/JavaScript/
 2. `.js.cs` 파일: `JavaScriptLoader.Load()`로 스크립트 로드 + 함수 호출 상수 정의
 3. `BrowserUIService`: 초기화 스크립트 -> 함수 호출 순서로 실행
 
+주입 시점은 `FrameLoadEnd`가 기본입니다. 예외는 `page-health.js` 하나로, 로딩 중에 난 자원
+실패와 스크립트 오류를 잡아야 해서 `FrameLoadStart`에 넣습니다. 이 스크립트가 보낸 오류와
+맵 렌더 여부는 앱 로그에 `[PageHealth]`로 남습니다.
+
 **예시 (WebElementsControl):**
 ```csharp
 // 1. 함수 등록 (INIT_SCRIPT)
