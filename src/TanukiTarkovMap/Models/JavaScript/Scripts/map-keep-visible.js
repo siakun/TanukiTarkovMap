@@ -1,7 +1,10 @@
 /**
- * 맵 이동 제한 스크립트
+ * 맵을 화면에 붙잡아 두는 스크립트
  *
- * 목적: 맵을 끌다가 화면에서 놓치지 않게 한다.
+ * 두 가지를 한다. 맵을 열 때 그림을 창에 맞추고, 끄는 동안 그림이 화면 가운데를 벗어나지
+ * 못하게 막는다. 둘 다 "그림이 실제로 차지하는 범위"를 알아야 해서 한 파일에 둔다.
+ *
+ * 목적: 맵을 끌다가 화면에서 놓치지 않게 하고, 열자마자 쓸 수 있는 크기로 보이게 한다.
  *
  * 사이트가 쓰는 것 (번들에서 확인):
  *   panzoom(.map-wrap, { autocenter: true, bounds: true, smoothScroll: false, ... })
@@ -30,6 +33,20 @@
  * transform으로 움직이는데 둘 다 사이트 상태에서 나오므로, 우리가 고치면 두 층이 어긋난다.
  * 합성 드래그로 되돌리는 애니메이션도 만들지 않는다. 사이트가 기억하는 커서 위치와 실제 커서가
  * 어긋나 튀는 동작이 반복해서 나왔다.
+ *
+ * 열 때 맞추기: 사이트는 캔버스 기준으로 첫 배율을 잡는데 캔버스가 그림보다 훨씬 크다
+ * (Streets 기준 캔버스 3260x3500, 그림 1260x1700으로 면적의 19%). 그래서 맵을 열면 그림이
+ * 작게 뜨고 둘레가 비어 보인다. 그림이 창을 채우도록 배율과 위치를 한 번 맞춰 준다.
+ *
+ * 맞추기는 휠만으로 한다. 드래그는 쓰지 않는다. 사이트는 누른 자리에 마커나 그린 도형이
+ * 있으면 그것을 옮기는 동작으로 보고 panzoom의 이동을 꺼 버린다(번들의 마커 층 mousedown에서
+ * togglePanEnabled(false)). 중심을 맞추려면 화면 한가운데에서 끌어야 하는데 거기가 바로
+ * 마커가 몰려 있는 자리라, 맵과 위치에 따라 되기도 하고 안 되기도 했다. 휠에는 그 차단이 없다.
+ *
+ * 휠 한 칸의 배율은 사이트가 정한다. deltaY 25.6이면 0.8배, -32면 1.25배다(실측, 오차 없음).
+ * 두 칸을 서로 다른 자리에서 연달아 걸면 배율은 0.8 x 1.25 = 1로 돌아오고 두 자리의 차이에
+ * 비례한 평행이동만 남는다. 이 성질로 배율과 위치를 따로 맞춘다. 자세한 식은 shiftContent에
+ * 적어 두었다.
  */
 
 (function () {
@@ -45,7 +62,47 @@
     // 가운데를 덮은 뒤에도 이만큼은 더 들어와 있어야 한다 (창 크기에 대한 비율)
     var MARGIN_RATIO = 0.1;
 
+    // 그림이 창에서 차지하는 비율이 이 사이에 들면 맞은 것으로 본다.
+    // 휠 한 칸이 1.25배라 이보다 좁게 잡으면 어느 칸에서도 만족하지 못하고 오간다
+    var FIT_MIN = 0.75;
+    var FIT_MAX = 0.98;
+
+    // 휠 한 칸의 deltaY. 사이트는 이 값을 0.8배와 1.25배로 받아들이며 둘은 서로의 역수다.
+    // 역수가 아니면 위치를 맞추는 짝이 배율까지 바꿔 버린다
+    var WHEEL_OUT = 25.6;
+    var WHEEL_IN = -32;
+
+    // 축소 자리를 확대 자리에서 얼마나 떨어뜨릴지. 한 짝의 이동량이 두 자리 차이의 1/4이라 4다
+    var PAIR_SHIFT_FACTOR = 4;
+
+    // 중심이 이만큼 안에 들면 맞은 것으로 본다 (px)
+    var CENTER_TOLERANCE = 3;
+
+    // 중심 맞추기를 되풀이하는 한계. 한 번이면 끝나지만 배율이 바뀌는 중에 재면 어긋날 수 있다
+    var CENTER_MAX_TRIES = 3;
+
+    // 맞추기가 끝나지 않아도 이 횟수를 넘기지 않는다
+    var FIT_MAX_STEPS = 14;
+
+    // 맵이 그려지기를 기다리는 한계 (ms)
+    var FIT_WAIT = 8000;
+
+    // 중심이 이만큼 넘게 어긋나 있으면 다시 맞춘다 (px)
+    var FIT_CENTER_TOLERANCE = 20;
+
+    // 맞추기 과정을 밖에서 볼 수 있게 남긴다. 이 값이 없으면 왜 안 움직였는지 알 방법이 없다
+    var debugLog = [];
+
+    function note(entry) {
+        entry.t = Math.round(performance.now());
+        debugLog.push(entry);
+        if (debugLog.length > 40) debugLog.shift();
+    }
+
     var dragging = false;
+
+    // 사용자가 직접 끌거나 휠을 돌리면 그 뒤의 화면은 사용자 것이다. 맞추기를 더 하지 않는다
+    var userTookOver = false;
 
     // 사이트가 마지막으로 본 커서 위치. 사이트는 이 값과의 차이로 맵을 옮긴다
     var deliveredX = 0;
@@ -142,6 +199,12 @@
         return {
             x: map.left - view.left,
             y: map.top - view.top,
+            width: map.width,
+            height: map.height,
+            viewLeft: view.left,
+            viewTop: view.top,
+            viewWidth: view.width,
+            viewHeight: view.height,
 
             // 맵의 오른쪽 끝이 가운데를 지나야 하므로 왼쪽으로는 여기까지만 간다
             minX: view.width / 2 + marginX - map.width,
@@ -218,6 +281,8 @@
     function onDown(event) {
         if (event.button !== 0) return;
 
+        if (event.isTrusted) userTookOver = true;
+
         // 맵을 바꾸면 svg가 새로 만들어지므로 그때 다시 잰다
         var wrap = document.querySelector(WRAP_SELECTOR);
         if (contentCache && wrap && contentCache.svg !== wrap.querySelector('svg.svg-map')) contentCache = null;
@@ -265,7 +330,213 @@
         replaceMove(event, nextX, nextY);
     }
 
+    /**
+     * 그림과 창의 크기 비를 구한다. 1이면 그림이 창을 꽉 채운 것이다
+     */
+    function fillRatio(bounds) {
+        return Math.max(bounds.width / bounds.viewWidth, bounds.height / bounds.viewHeight);
+    }
+
+    /**
+     * 그림 중심을 창 중심에 맞추려면 얼마나 옮겨야 하는지 구한다
+     */
+    function centerShift(bounds) {
+        return {
+            x: bounds.viewWidth / 2 - (bounds.x + bounds.width / 2),
+            y: bounds.viewHeight / 2 - (bounds.y + bounds.height / 2)
+        };
+    }
+
+    /**
+     * 휠 한 칸을 보낸다. 사이트는 커서 자리를 고정점으로 삼아 배율을 바꾼다
+     */
+    function fireWheel(x, y, deltaY) {
+        var container = document.querySelector(CONTAINER_SELECTOR);
+        if (!container) return;
+
+        var event = new WheelEvent('wheel', {
+            bubbles: true,
+            cancelable: true,
+            view: window,
+            clientX: Math.round(x),
+            clientY: Math.round(y),
+            deltaY: deltaY
+        });
+
+        event[OURS] = true;
+        container.dispatchEvent(event);
+    }
+
+    /**
+     * 배율은 그대로 두고 그림만 옮긴다.
+     *
+     * 휠 한 칸은 커서 자리 a를 고정점으로 삼아 위치를 x' = r*x + (1-r)*a 로 바꾼다.
+     * 축소(r = 0.8)를 a에서, 확대(1/r = 1.25)를 b에서 연달아 걸면
+     *   x'' = x + (1/r - 1) * (a - b) = x + (a - b) / 4
+     * 가 되어 배율은 제자리로 돌아오고 평행이동만 남는다. 그래서 a를 b에서 옮길 거리의 4배만큼
+     * 떨어뜨린다 (실측: 목표 200,120 -> 결과 200,120, 배율 변화 없음).
+     *
+     * 두 칸을 같은 틱에 보내는 이유는 중간의 축소된 화면이 그려지지 않게 하기 위해서다
+     */
+    function shiftContent(bounds, shift) {
+        var baseX = bounds.viewLeft + bounds.viewWidth / 2;
+        var baseY = bounds.viewTop + bounds.viewHeight / 2;
+
+        fireWheel(baseX + shift.x * PAIR_SHIFT_FACTOR, baseY + shift.y * PAIR_SHIFT_FACTOR, WHEEL_OUT);
+        fireWheel(baseX, baseY, WHEEL_IN);
+    }
+
+    /**
+     * 그림 중심을 창 중심으로 옮긴다.
+     *
+     * 한 번이면 맞지만, 사이트가 경계로 잘라 내거나 층이 늦게 그려져 값이 달라질 수 있어
+     * 남은 어긋남이 없어질 때까지 몇 번 더 확인한다
+     */
+    function centerStep(remaining) {
+        if (userTookOver) return;
+
+        var bounds = readBounds();
+        if (!bounds) return;
+
+        var shift = centerShift(bounds);
+
+        note({ 단계: 'center', shiftX: Math.round(shift.x), shiftY: Math.round(shift.y), 남은시도: remaining });
+
+        if (Math.abs(shift.x) < CENTER_TOLERANCE && Math.abs(shift.y) < CENTER_TOLERANCE) return;
+        if (remaining <= 0) return;
+
+        shiftContent(bounds, shift);
+
+        setTimeout(function () { centerStep(remaining - 1); }, 120);
+    }
+
+    /**
+     * 그림이 창을 채우도록 배율을 한 칸씩 맞춘다.
+     *
+     * 칸수를 미리 계산해 한 번에 보내지 않고 매번 다시 재는 이유는, 사이트가 최소와 최대
+     * 배율을 따로 두고 있어 계산대로 끝나지 않을 수 있기 때문이다.
+     * 고정점을 그림 중심에 두어 배율을 맞추는 동안 그림이 제자리에 있게 한다
+     */
+    function fitStep(remaining) {
+        if (userTookOver) return;
+
+        var bounds = readBounds();
+        if (!bounds || remaining <= 0) {
+            centerStep(CENTER_MAX_TRIES);
+            return;
+        }
+
+        var fill = fillRatio(bounds);
+
+        note({ 단계: 'fit', 채움: +fill.toFixed(3), 남은칸: remaining });
+
+        if (fill >= FIT_MIN && fill <= FIT_MAX) {
+            centerStep(CENTER_MAX_TRIES);
+            return;
+        }
+
+        var anchorX = bounds.viewLeft + bounds.x + bounds.width / 2;
+        var anchorY = bounds.viewTop + bounds.y + bounds.height / 2;
+        var before = bounds.width;
+
+        fireWheel(anchorX, anchorY, fill < FIT_MIN ? WHEEL_IN : WHEEL_OUT);
+
+        setTimeout(function () {
+            var after = readBounds();
+
+            // 배율이 더 움직이지 않으면 사이트의 한계에 닿은 것이다
+            if (!after || Math.abs(after.width - before) < 1) {
+                centerStep(CENTER_MAX_TRIES);
+                return;
+            }
+
+            fitStep(remaining - 1);
+        }, 80);
+    }
+
+    /**
+     * 맞춘 뒤 사이트가 다시 옮겨 놓았는지 확인한다.
+     *
+     * 사이트도 맵을 열 때 자기 방식으로 가운데를 잡고, 층이 늦게 그려지는 맵(Streets의 tramway
+     * 등)은 처음 잰 그림 범위가 낡는다. 그때는 다시 맞춘다
+     */
+    function verifyFit(remaining) {
+        if (remaining <= 0 || userTookOver) return;
+
+        setTimeout(function () {
+            if (userTookOver) return;
+
+            // 확인할 때는 그림 범위를 다시 잰다. 끄는 도중에는 캐시를 그대로 써서 값이 비싸지지 않게 한다
+            contentCache = null;
+
+            var bounds = readBounds();
+            if (!bounds) return;
+
+            var fill = fillRatio(bounds);
+            var shift = centerShift(bounds);
+            var drifted = fill < FIT_MIN || fill > FIT_MAX
+                || Math.abs(shift.x) > FIT_CENTER_TOLERANCE || Math.abs(shift.y) > FIT_CENTER_TOLERANCE;
+
+            note({ 단계: 'verify', 채움: +fill.toFixed(3), offX: Math.round(shift.x), offY: Math.round(shift.y), 다시: drifted });
+
+            if (drifted) fitStep(FIT_MAX_STEPS);
+
+            verifyFit(remaining - 1);
+        }, 1200);
+    }
+
+    /**
+     * 맵이 그려지면 맞춘다
+     */
+    function fitWhenReady(deadline) {
+        if (userTookOver) return;
+
+        var bounds = readBounds();
+
+        if (bounds && bounds.width > 0) {
+            fitStep(FIT_MAX_STEPS);
+            verifyFit(3);
+            return;
+        }
+
+        if (Date.now() > deadline) return;
+
+        setTimeout(function () { fitWhenReady(deadline); }, 150);
+    }
+
+    /**
+     * 맵을 바꿔도 맞춘다.
+     *
+     * 사이트 왼쪽 목록으로 맵을 고르면 문서를 다시 읽지 않아 이 스크립트도 다시 돌지 않는다.
+     * 주소가 바뀌는 것으로 새 맵을 알아낸다
+     */
+    function watchMapChange() {
+        var fittedPath = location.pathname;
+
+        setInterval(function () {
+            if (location.pathname === fittedPath) return;
+
+            fittedPath = location.pathname;
+            if (fittedPath.indexOf('/maps/') === -1) return;
+
+            // 새 맵은 svg가 새로 만들어지므로 그림 범위를 다시 잰다
+            contentCache = null;
+            userTookOver = false;
+            setTimeout(function () { fitWhenReady(Date.now() + FIT_WAIT); }, 600);
+        }, 500);
+    }
+
+    /**
+     * 사용자가 배율을 직접 바꾸면 맞추기를 그만둔다.
+     *
+     * 우리가 보내는 휠은 isTrusted가 false라 여기에 걸리지 않는다
+     */
+    function onWheel(event) {
+        if (event.isTrusted) userTookOver = true;
+    }
+
     // 캡처 단계에서 먼저 받아야 사이트 처리보다 앞선다
+    window.addEventListener('wheel', onWheel, true);
     window.addEventListener('mousedown', onDown, true);
     window.addEventListener('mouseup', onUp, true);
     window.addEventListener('mousemove', onMove, true);
@@ -275,7 +546,16 @@
 
     // 앱 안에서 어떤 판이 도는지 CDP로 바로 확인하기 위한 표시.
     // 옛 판이 남아 있는 채로 증상을 쫓다 시간을 버린 적이 있어 둔다
-    window.__tanukiKeepVisible = { version: 4, rule: 'center-clamp-content', marginRatio: MARGIN_RATIO };
+    window.__tanukiKeepVisible = {
+        version: 5,
+        rule: 'fit-on-open + center-clamp',
+        marginRatio: MARGIN_RATIO,
+        log: function () { return debugLog; }
+    };
 
-    console.log('[Map Keep Visible] Ready (v4 center-clamp on drawn content)');
+    // 사이트가 첫 배율과 위치를 잡은 뒤에 맞춘다. 너무 이르면 사이트가 다시 가운데로 옮긴다
+    setTimeout(function () { fitWhenReady(Date.now() + FIT_WAIT); }, 600);
+    watchMapChange();
+
+    console.log('[Map Keep Visible] Ready (v5 fit-on-open + center-clamp)');
 })();
