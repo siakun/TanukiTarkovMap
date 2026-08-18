@@ -30,5 +30,14 @@ node tools/archive-maps.mjs --out archive
 맵 하나만 갱신하려면 `--maps lab,customs`처럼 지정합니다. 도구는 실제 브라우저로 페이지를
 열어 받은 응답을 저장하므로, 사이트가 무엇을 필요로 하는지 우리가 알 필요가 없습니다.
 
+만든 뒤에는 반드시 확인합니다. 파일 수만으로는 응답이 빈 채로 담긴 상태를 잡지 못합니다.
+
+```
+node tools/verify-archive.mjs
+```
+
+이 도구는 네트워크를 완전히 막고 사본만으로 맵 열두 개를 열어, 바닥 맵과 마커 층이 실제로
+그려지는지 봅니다. 하나라도 실패하면 종료 코드 1로 끝납니다.
+
 읽는 쪽은 `src/TanukiTarkovMap/Models/Offline/MapArchive.cs`이고, 그 설계 근거는
 [오프라인 맵 설계](../docs/20260818-offline-map.md)에 있습니다.
