@@ -28,10 +28,15 @@
  * 주지 않는데, 맵의 지형 svg가 바로 그 조각에 들어 있다. 이것을 빈 채로 담으면 앱은 200에 빈
  * 본문을 돌려주고 사이트는 지형만 빠진 채로 뜬다 (2026-08-18에 겪은 증상).
  *
+ * css가 가리키는 자원도 채운다. 브라우저는 그 규칙이 실제로 쓰일 때만 폰트와 배경을 받아 오므로,
+ * 맵 화면에서 안 쓰이는 이탤릭 폰트나 한국어 서브셋은 페이지를 열어도 요청되지 않는다. 사본에
+ * 그대로 빠지면 오프라인에서 그 글자만 다른 글꼴로 나온다. 그래서 마지막에 css와 html의
+ * url()과 @import를 훑어 빠진 것을 직접 받아 담는다.
+ *
  * 주의: 디버깅 포트는 9224를 쓴다. 9222는 실행 중인 앱, 9223은 재현용 브라우저 자리다.
  */
 import { spawn } from 'node:child_process';
-import { mkdir, writeFile, rm, stat } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, rm, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
@@ -250,6 +255,81 @@ for (const mapId of MAPS) {
   manifest.maps[mapId] = { url, responses: Object.keys(index).length, bytes };
 
   console.log(`응답 ${Object.keys(index).length}개, ${(bytes / 1024 / 1024).toFixed(1)}MB`);
+}
+
+// --- css가 가리키는 자원 채우기 ---
+// 색인은 맵마다 따로 쓰지만 이 자원들은 어느 맵에서나 같으므로 모든 색인에 함께 넣는다.
+// 앱은 색인을 전부 합쳐 쓰므로 한 곳에만 넣어도 되지만, 맵별 색인이 그 맵을 여는 데 필요한
+// 것을 모두 담는다는 성질을 깨지 않는다
+const REFERENCE_PATTERN = /url\(\s*['"]?([^'")]+)['"]?\s*\)|@import\s+(?:url\(\s*)?['"]([^'"]+)['"]/g;
+
+const mapIndexes = new Map();
+for (const mapId of MAPS) {
+  const file = path.join(OUT, 'maps', `${mapId}.json`);
+  mapIndexes.set(mapId, JSON.parse(await readFile(file, 'utf8')));
+}
+
+const known = new Set();
+for (const index of mapIndexes.values()) for (const url of Object.keys(index)) known.add(url);
+
+const wanted = new Map();
+for (const index of mapIndexes.values()) {
+  for (const [url, entry] of Object.entries(index)) {
+    const mime = String(entry.mime || '');
+    if (!mime.includes('css') && !mime.includes('html')) continue;
+
+    const text = await readFile(path.join(OUT, 'blobs', entry.blob), 'utf8');
+
+    for (const match of text.matchAll(REFERENCE_PATTERN)) {
+      const raw = (match[1] || match[2] || '').trim();
+      if (!raw || raw.startsWith('data:') || raw.startsWith('#') || raw.startsWith('blob:')) continue;
+
+      let absolute;
+      try { absolute = new URL(raw, url).toString(); } catch { continue; }
+      if (known.has(absolute) || wanted.has(absolute)) continue;
+
+      wanted.set(absolute, url);
+    }
+  }
+}
+
+const addedAssets = {};
+for (const [assetUrl, fromUrl] of wanted) {
+  let fetched = null;
+  try {
+    const res = await fetch(assetUrl, { headers: { 'user-agent': USER_AGENT, referer: fromUrl } });
+    if (res.ok) {
+      fetched = {
+        body: Buffer.from(await res.arrayBuffer()),
+        mime: (res.headers.get('content-type') || 'application/octet-stream').split(';')[0].trim(),
+      };
+    }
+  } catch {
+    fetched = null;
+  }
+
+  if (!fetched || fetched.body.length === 0) {
+    emptyBodies.push(assetUrl);
+    continue;
+  }
+
+  const hash = crypto.createHash('sha1').update(fetched.body).digest('hex');
+  if (!blobSizes.has(hash)) {
+    await writeFile(path.join(OUT, 'blobs', hash), fetched.body);
+    blobSizes.set(hash, fetched.body.length);
+  }
+
+  addedAssets[assetUrl] = { blob: hash, mime: fetched.mime, status: 200 };
+}
+
+if (Object.keys(addedAssets).length > 0) {
+  for (const [mapId, index] of mapIndexes) {
+    Object.assign(index, addedAssets);
+    await writeFile(path.join(OUT, 'maps', `${mapId}.json`), JSON.stringify(index, null, 1), 'utf8');
+    manifest.maps[mapId].responses = Object.keys(index).length;
+  }
+
+  console.log(`css가 가리키는 자원 ${Object.keys(addedAssets).length}개를 더 받아 담았습니다`);
 }
 
 const uniqueBytes = [...blobSizes.values()].reduce((a, b) => a + b, 0);

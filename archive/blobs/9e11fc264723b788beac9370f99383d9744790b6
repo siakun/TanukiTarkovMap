@@ -1,0 +1,1 @@
+import{_ as s,c as t,o,a,Q as c}from"./pmgU-Ag-.js";const r={},d={class:"widget-wrap"},n={class:"widget"};function _(e,i){return o(),t("div",d,[a("div",n,[c(e.$slots,"default")])])}const f=s(r,[["render",_]]);export{f as default};

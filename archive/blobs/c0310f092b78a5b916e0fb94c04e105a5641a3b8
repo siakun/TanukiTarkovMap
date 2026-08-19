@@ -1,0 +1,1 @@
+import{w as h,O as r}from"./pmgU-Ag-.js";const s=(a,e)=>{let t=a.value&&h(()=>`${a.value.charUid}|${a.value.gameMode}`,async(l,o)=>{let[d,i]=l.split("|"),[n,c]=o.split("|");(n!==d||i!==c)&&e&&e()});return r(()=>{t&&t()}),{}};export{s as u};
