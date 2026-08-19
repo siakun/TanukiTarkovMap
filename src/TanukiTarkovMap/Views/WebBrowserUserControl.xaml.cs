@@ -1,8 +1,4 @@
 using System.Windows.Controls;
-using System.Windows.Input;
-using CefSharp;
-using CefSharp.Wpf;
-using TanukiTarkovMap.ViewModels;
 
 namespace TanukiTarkovMap.Views
 {
@@ -11,69 +7,9 @@ namespace TanukiTarkovMap.Views
     /// </summary>
     public partial class WebBrowserUserControl : UserControl
     {
-        private ChromiumWebBrowser? _browser;
-
         public WebBrowserUserControl()
         {
             InitializeComponent();
-
-            // 브라우저 생성 및 설정
-            CreateBrowser();
-
-            // ViewModel에 브라우저 인스턴스 전달 및 URL 로드
-            // 중요: 이벤트 핸들러가 등록된 후에 URL을 로드해야 JavascriptMessageReceived가 정상 작동
-            Loaded += (s, e) =>
-            {
-                if (DataContext is WebBrowserViewModel viewModel && _browser != null)
-                {
-                    // 1. 먼저 ViewModel에 브라우저 전달 (이벤트 핸들러 등록)
-                    viewModel.SetBrowser(_browser);
-
-                    // 2. 이벤트 핸들러 등록 후 실제 URL 로드
-                    _browser.Load(viewModel.Address);
-                }
-            };
-
-            // F12 키로 개발자 도구 열기
-            KeyDown += (s, e) =>
-            {
-                if (e.Key == Key.F12)
-                {
-                    _browser?.ShowDevTools();
-                }
-            };
         }
-
-        /// <summary>
-        /// ChromiumWebBrowser 생성
-        /// </summary>
-        private void CreateBrowser()
-        {
-            // about:blank로 초기화 (실제 URL은 이벤트 핸들러 등록 후 로드)
-            _browser = new ChromiumWebBrowser("about:blank");
-
-            // CefSharp.Wpf는 OSR(오프스크린 렌더링) 방식이라 페인트 콜백이
-            // WindowlessFrameRate(기본 30fps)로 제한된다. 초기값 60으로 시작하고,
-            // 이후 MonitorRefreshRateBehavior가 창이 위치한 모니터의 주사율로 갱신한다
-            _browser.BrowserSettings.WindowlessFrameRate = 60;
-
-            // 클릭 시 WPF가 만드는 이동량 0짜리 유령 MouseMove를 차단
-            // (맵 마커 좌클릭이 드래그로 오인되어 팝업이 열리지 않는 문제 방지)
-            Microsoft.Xaml.Behaviors.Interaction.GetBehaviors(_browser)
-                .Add(new Behaviors.DuplicateMouseMoveFilterBehavior());
-
-            // 컨테이너에 브라우저 추가
-            BrowserContainer.Children.Add(_browser);
-        }
-
-        /// <summary>
-        /// ViewModel 접근용 프로퍼티
-        /// </summary>
-        public WebBrowserViewModel? ViewModel => DataContext as WebBrowserViewModel;
-
-        /// <summary>
-        /// 브라우저 인스턴스 접근용 프로퍼티
-        /// </summary>
-        public ChromiumWebBrowser? Browser => _browser;
     }
 }
