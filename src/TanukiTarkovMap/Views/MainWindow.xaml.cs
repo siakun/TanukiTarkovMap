@@ -69,30 +69,8 @@ namespace TanukiTarkovMap.Views
             var behaviors = Interaction.GetBehaviors(this);
             _trayBehavior = behaviors.OfType<TrayWindowBehavior>().FirstOrDefault();
 
-            // ViewModel 간 초기 동기화 (Messenger 패턴으로 대체됨)
-            SyncInitialViewModelState();
-
             // 핫키 서비스 초기화 (전역 단축키용)
             InitializeHotkeyService();
-        }
-
-        /// <summary>
-        /// ViewModel 간 초기 상태 동기화 (Messenger 패턴으로 대체됨)
-        /// </summary>
-        private void SyncInitialViewModelState()
-        {
-            var webBrowserViewModel = WebBrowser.ViewModel;
-            if (webBrowserViewModel == null)
-            {
-                Logger.SimpleLog("[MainWindow] WebBrowserViewModel is null");
-                return;
-            }
-
-            // 초기 값 동기화 (Messenger는 구독 후 발송된 메시지만 수신하므로 초기값은 직접 설정)
-            webBrowserViewModel.HideWebElements = _viewModel.HideWebElements;
-            webBrowserViewModel.ZoomLevel = _viewModel.SelectedZoomLevel;
-
-            Logger.SimpleLog("[MainWindow] Initial ViewModel state synchronized");
         }
 
         /// <summary>
