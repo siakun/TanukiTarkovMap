@@ -6,7 +6,7 @@
  * 구조:
  * - 각 함수는 window 객체에 등록되어 C#에서 호출 가능
  * - 헤더/푸터는 항상 숨김 유지
- * - 패널(좌/우/상단)은 "UI 요소 숨기기" 체크박스에 따라 토글
+ * - 패널(좌/우/상단)과 좁은 창의 모바일 UI는 "UI 요소 숨기기" 체크박스에 따라 토글
  */
 
 (function() {
@@ -40,7 +40,14 @@
             // 패널은 <html>의 클래스로 켜고 끈다
             'html.' + PANEL_HIDDEN_CLASS + ' .panel_left,' +
             'html.' + PANEL_HIDDEN_CLASS + ' .panel_right,' +
-            'html.' + PANEL_HIDDEN_CLASS + ' .panel_top { display: none !important; }';
+            'html.' + PANEL_HIDDEN_CLASS + ' .panel_top,' +
+            // 창이 좁으면 사이트가 데스크톱 패널을 접고 대신 모바일 UI(위 검색 줄, 아래 탭 줄)를
+            // 편다. 이 요소들은 폭과 상관없이 늘 문서에 있고 사이트의 미디어 쿼리가 display만
+            // 바꾸므로(실측: 넓을 때 none, 좁을 때 block), 만들어지고 지워지는 것이 아니라
+            // 켜지고 꺼지는 것이다. 그래서 지우지 않고 같은 클래스로 함께 끈다.
+            // 지우는 쪽은 사이트가 다시 그릴 때마다 되살아나고, 우리가 지운 자리를 사이트가
+            // 참조하면 그쪽이 깨진다
+            'html.' + PANEL_HIDDEN_CLASS + ' .mobile-map-ui { display: none !important; }';
 
         (document.head || document.documentElement).appendChild(style);
     }

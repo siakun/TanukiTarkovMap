@@ -1,0 +1,1 @@
+const r=(e,t)=>{let o=(e.clipboardData||e.originalEvent.clipboardData).items;t=t||"file";for(const a of o)if(a.type.indexOf("image")!=-1){let l=a.getAsFile(),i=new FormData;return i.append(t,l),{file:l,formData:i}}return{file:null,formData:null}};export{r as u};

@@ -1,4 +1,4 @@
-﻿using System.Collections.ObjectModel;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -124,6 +124,7 @@ namespace TanukiTarkovMap.ViewModels
             settings.GoonTrackerEnabled = GoonTrackerEnabled;
             settings.AutoMapSwitchEnabled = AutoMapSwitchEnabled;
             settings.ScreenshotMapSyncEnabled = ScreenshotMapSyncEnabled;
+            settings.LocalMapEnabled = LocalMapEnabled;
             settings.AutoUpdateEnabled = AutoUpdateEnabled;
             settings.PrereleaseEnabled = PrereleaseEnabled;
 
@@ -162,6 +163,7 @@ namespace TanukiTarkovMap.ViewModels
                 GoonTrackerEnabled = settings.GoonTrackerEnabled;
                 AutoMapSwitchEnabled = settings.AutoMapSwitchEnabled;
                 ScreenshotMapSyncEnabled = settings.ScreenshotMapSyncEnabled;
+                LocalMapEnabled = settings.LocalMapEnabled;
                 AutoUpdateEnabled = settings.AutoUpdateEnabled;
                 PrereleaseEnabled = settings.PrereleaseEnabled;
             }
@@ -327,6 +329,25 @@ namespace TanukiTarkovMap.ViewModels
         #endregion
 
         #region 업데이트와 버전 전환
+        /// <summary> 실험적 기능: 상단바에 Online/Local 전환을 띄운다 </summary>
+        [ObservableProperty] public partial bool LocalMapEnabled { get; set; } = false;
+
+        /// <summary>
+        /// 사본의 상태 문구. 사본이 없으면 그 사실을 알려야 체크만 켜고 왜 안 되는지 묻지 않는다
+        /// </summary>
+        public string LocalMapArchiveStatus
+        {
+            get
+            {
+                var archive = ServiceLocator.MapArchive;
+
+                if (!archive.IsAvailable) return "이 빌드에는 사본이 없어 Local 전환이 나타나지 않습니다";
+
+                var created = archive.CreatedAt?.ToLocalTime().ToString("yyyy-MM-dd") ?? "알 수 없음";
+                return $"사본: 응답 {archive.EntryCount}개, 만든 날짜 {created}";
+            }
+        }
+
         [ObservableProperty] public partial bool AutoUpdateEnabled { get; set; } = true;
         [ObservableProperty] public partial bool PrereleaseEnabled { get; set; } = false;
 
@@ -369,6 +390,14 @@ namespace TanukiTarkovMap.ViewModels
                 try { return ServiceLocator.UpdateService.IsManagedInstall; }
                 catch { return false; }
             }
+        }
+
+        partial void OnLocalMapEnabledChanged(bool value)
+        {
+            AutoSave();
+
+            // 저장만 하면 상단바는 다음 실행에야 바뀐다. 켠 자리에서 바로 보여야 한다
+            WeakReferenceMessenger.Default.Send(new LocalMapFeatureChangedMessage(value));
         }
 
         partial void OnAutoUpdateEnabledChanged(bool value) => AutoSave();

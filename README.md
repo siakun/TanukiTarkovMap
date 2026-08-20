@@ -111,7 +111,13 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 2026-08-17까지는 앱 안에서 ASP.NET Core Kestrel로 포트 `5123`에 WebSocket 서버를 띄우고, 사이트가 그 서버에 접속해 파일명을 받아 갔습니다. 같은 날 tarkov-market이 Pilot v2를 배포하면서 사이트가 로컬 앱 대신 자기 서버(`wss://tarkov-market.com/ws/pilot`)로만 붙게 바뀌어, 서버를 띄워도 접속하는 클라이언트가 없어졌습니다. 서버 중계 규약을 따라가려면 계정 인증까지 구현해야 하는데 `window.pilot`은 그것 없이 같은 일을 하므로, WebSocket 서버와 ASP.NET Core 의존을 걷어내고 브리지 호출로 갈아탔습니다. 진단 근거와 버린 대안, 사이트 변경을 알아차리는 방법은 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에 정리했습니다.
 
-### 4. 게임 로그 파싱으로 자동 맵 전환
+### 4. 오프라인 맵 (실험적 기능)
+
+설정에서 "로컬 맵 사용"을 켜면 상단 바에 Online/Local 전환이 생깁니다. Local은 사이트에 접속하지 않고 앱에 담긴 사본으로 맵을 엽니다. 사이트가 죽어 있어도 맵과 위치 표시가 그대로 동작합니다.
+
+사본은 `tools/archive-maps.mjs`가 실제 브라우저로 맵 페이지를 열어 받은 응답을 저장한 것이고, 앱은 CefSharp의 요청 가로채기로 그 응답을 돌려줍니다. 주소는 온라인과 같으므로 사이트 코드가 그대로 돌고, 위치 표시도 같은 경로를 씁니다. 맵이 전부 벡터라 확대와 이동에 새 요청이 없어, 12개 맵 전체가 13MB에 담깁니다. 설계 근거와 한계는 [오프라인 맵 설계](docs/20260818-offline-map.md)에 정리했습니다.
+
+### 5. 게임 로그 파싱으로 자동 맵 전환
 
 게임은 실행할 때마다 로그 폴더(공식 런처는 `게임 폴더\Logs`, 스팀판은 `게임 폴더\build\Logs`) 아래에 새 세션 폴더를 만들고 `application.log` 등에 상태를 기록합니다. 게임 폴더는 레지스트리에서 자동 감지하며(공식 런처 -> 스팀 순), 실패하면 설정에서 직접 지정할 수 있습니다.
 
@@ -141,19 +147,19 @@ scene preset 줄 감지
 
 이 밖에 BattlEye 초기화 로그(`BEClient inited successfully`)는 레이드 경계 신호로 삼아 스크린샷 자동 정리를 트리거하고, 알림 로그의 퀘스트 알림(JSON)을 파싱해 퀘스트 진행 상태도 페이지에 전달합니다.
 
-### 5. CefSharp와 JavaScript 양방향 통신
+### 6. CefSharp와 JavaScript 양방향 통신
 
-웹 UI를 앱에 맞게 다듬는 로직은 JavaScript로 주입합니다. `.js` 파일을 Embedded Resource로 묶어 `JavaScriptLoader`로 읽고, 페이지 로드 후 `EvaluateScriptAsync`로 실행합니다(헤더와 푸터 제거, 패널 토글, 위치 마커에 방향 표시 추가 등). 반대로 웹에서 일어난 사건(맵 변경, 연결 상태)은 `postMessage`로 보내 `JavascriptMessageReceived`에서 받고, CommunityToolkit.Mvvm의 `WeakReferenceMessenger`로 ViewModel에 전달합니다. C#과 JS의 경계를 메시지로 느슨하게 연결했습니다.
+웹 UI를 앱에 맞게 다듬는 로직은 JavaScript로 주입합니다. `.js` 파일을 Embedded Resource로 묶어 `JavaScriptLoader`로 읽고, 페이지 로드 후 `EvaluateScriptAsync`로 실행합니다(헤더와 푸터 제거, 패널 토글, 위치 마커에 방향 표시 추가 등). 반대로 웹에서 일어난 사건(맵 변경, 연결 상태)은 `postMessage`로 보내 `JavascriptMessageReceived`에서 받고, CommunityToolkit.Mvvm의 `WeakReferenceMessenger`로 ViewModel에 전달합니다. C#과 JS의 경계를 메시지로 느슨하게 연결했습니다. 남의 사이트를 앱 안에서 고쳐 쓸 때 쓰는 기법과 겪은 함정은 [임베디드 웹페이지 제어 레퍼런스](docs/20260818-embedded-site-control.md)에 정리했습니다.
 
-### 6. MVVM 아키텍처와 DI
+### 7. MVVM 아키텍처와 DI
 
 코드비하인드(`*.xaml.cs`)에는 로직을 두지 않는다는 원칙을 지켰습니다. UI 인터랙션은 Microsoft.Xaml.Behaviors 기반 Behavior로 분리하고(창 드래그, 트레이 최소화, 단축키 입력 캡처 등), 데이터와 비즈니스 로직은 ViewModel과 Service에 둡니다. 서비스는 Microsoft.Extensions.DependencyInjection으로 등록하고 `ServiceLocator`로 접근하며, ViewModel 사이 통신은 직접 참조 대신 Messenger로 처리해 결합도를 낮췄습니다.
 
-### 7. 릴리스 자동화 (GitHub Actions + Velopack)
+### 8. 릴리스 자동화 (GitHub Actions + Velopack)
 
 버전 태그(`v1.0.0` 또는 `0.1.0` 형태)를 push하면 GitHub Actions가 self-contained로 publish하고, Velopack(`vpk`)으로 설치 파일과 포터블 zip을 패키징해 GitHub Release에 자동 업로드합니다. 사용자 쪽에서는 앱 시작 시 Velopack `UpdateManager`가 새 버전을 확인하고 조용히 받아 다음 실행에 적용합니다. 빌드부터 배포, 자동 업데이트까지 태그 하나로 이어집니다.
 
-### 8. 버전 선택과 되돌리기
+### 9. 버전 선택과 되돌리기
 
 자동 업데이트는 최신 버전으로만 흐릅니다. 새 버전에서 문제를 만난 사용자가 스스로 빠져나올 길이 없다는 뜻이라, 설정에서 자동 업데이트를 끄고 원하는 버전을 직접 고를 수 있게 했습니다.
 

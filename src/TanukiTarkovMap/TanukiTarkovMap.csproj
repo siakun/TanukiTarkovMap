@@ -39,6 +39,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- 오프라인 맵 사본. tools/archive-maps.mjs가 만들고, 앱은 실행 파일 옆에서 읽는다 -->
+    <Content Include="..\..\archive\**\*" Exclude="..\..\archive\README.md" LinkBase="archive" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.NETCore" Version="141.0.110" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />

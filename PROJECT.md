@@ -55,6 +55,11 @@ graph TB
         SW[ScreenshotsWatcher]
     end
 
+    subgraph Offline["Offline (로컬 맵)"]
+        MA[MapArchive]
+        ARF[ArchiveResourceRequestHandlerFactory]
+    end
+
     subgraph Application["Application"]
         APP[App.xaml.cs]
     end
@@ -124,6 +129,8 @@ graph TB
     JSL --> PB
     WBVM --> PB
 
+    WBVM --> ARF
+    ARF --> MA
     WBVM --> CEF
     CEF --> TM
     LW --> TK
@@ -303,6 +310,7 @@ src/TanukiTarkovMap/
 │   ├── Data/           # 데이터 모델 (MapInfo, Settings 등)
 │   ├── FileSystem/     # 파일 시스템 감시 (LogsWatcher, ScreenshotsWatcher)
 │   ├── JavaScript/     # CefSharp JavaScript 통합
+│   ├── Offline/        # 로컬 맵 사본 읽기와 요청 가로채기
 │   ├── Services/       # 비즈니스 로직 서비스
 │   └── Utils/          # 유틸리티 (Logger, HotkeyManager 등)
 ├── ViewModels/         # MVVM ViewModel
@@ -328,6 +336,7 @@ ServiceLocator.WindowStateManager
 ServiceLocator.HotkeyService
 ServiceLocator.GoonTrackerService
 ServiceLocator.UpdateService
+ServiceLocator.MapArchive
 ```
 
 ### 주요 서비스
@@ -341,9 +350,10 @@ ServiceLocator.UpdateService
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
 | `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
 | `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
+| `MapArchive` | 오프라인 맵 사본에서 주소에 해당하는 파일 찾기 |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
 
-`UpdateService`는 두 경로를 함께 다룹니다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 씁니다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#8-버전-선택과-되돌리기)에 적어 두었습니다. Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `WaitExitThenApplyUpdates`로만 적용합니다.
+`UpdateService`는 두 경로를 함께 다룹니다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 씁니다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#9-버전-선택과-되돌리기)에 적어 두었습니다. Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `WaitExitThenApplyUpdates`로만 적용합니다.
 
 업데이트 확인은 메인 창을 띄운 **뒤에** 시작합니다. 시작을 막지 않는 것이 이 앱에서는
 다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은
@@ -516,7 +526,7 @@ resize 이벤트 발생 → SVG 맵 레이아웃 재계산
 ### 핵심 원칙
 
 1. **헤더/푸터는 항상 숨김**: 맵 이동, 체크 해제와 무관하게 절대 표시하지 않음
-2. **패널만 토글 대상**: "UI 요소 숨기기" 체크박스는 좌/우/상단 패널에만 적용
+2. **패널만 토글 대상**: "UI 요소 숨기기" 체크박스는 좌/우/상단 패널과, 창이 좁을 때 사이트가 대신 펴는 모바일 UI에 적용
 3. **레이아웃 재계산**: 요소 숨김 후 `window.dispatchEvent(new Event('resize'))` 호출로 검은 영역 방지
 4. **숨김은 스타일시트 규칙으로**: 요소의 `style.display`를 직접 넣지 않습니다. 인라인 방식은 나중에
    만들어진 요소를 놓치고, 다른 스크립트가 `style.cssText`를 대입하면 함께 지워집니다. 0.2.4에서
@@ -545,6 +555,10 @@ Models/JavaScript/
 2. `.js.cs` 파일: `JavaScriptLoader.Load()`로 스크립트 로드 + 함수 호출 상수 정의
 3. `BrowserUIService`: 초기화 스크립트 -> 함수 호출 순서로 실행
 
+주입 시점은 `FrameLoadEnd`가 기본입니다. 예외는 `page-health.js` 하나로, 로딩 중에 난 자원
+실패와 스크립트 오류를 잡아야 해서 `FrameLoadStart`에 넣습니다. 이 스크립트가 보낸 오류와
+맵 렌더 여부는 앱 로그에 `[PageHealth]`로 남습니다.
+
 **예시 (WebElementsControl):**
 ```csharp
 // 1. 함수 등록 (INIT_SCRIPT)
@@ -561,6 +575,9 @@ await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);  // "window.h
 - `BrowserUIService.cs`: 브라우저에 스크립트 실행 서비스
 - `WebBrowserViewModel.cs`: 페이지 로드 시 `ApplyUIVisibilityAsync()` 호출
 - `JavaScriptLoader.cs`: Embedded Resource에서 .js 파일 로드
+
+주입 파이프라인, 페이지 조사 방법(CDP), 사이트를 고쳐 쓸 때 쓰는 기법과 함정은
+[임베디드 웹페이지 제어 레퍼런스](docs/20260818-embedded-site-control.md)에 정리했습니다.
 
 ---
 
@@ -634,3 +651,4 @@ sequenceDiagram
 | **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
 | **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |
 | **Pilot 브리지** | 게임 사건을 tarkov-market의 `window.pilot`으로 넘기는 통로 |
+| **로컬 모드** | 사이트 대신 앱에 담긴 사본으로 맵을 여는 상태 (실험적 기능) |

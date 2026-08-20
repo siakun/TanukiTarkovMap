@@ -68,6 +68,10 @@ namespace TanukiTarkovMap.Models.Data
         public bool AutoMapSwitchEnabled { get; set; } = true;         // 맵 입장 시 자동 맵 변경
         public bool ScreenshotMapSyncEnabled { get; set; } = true;     // 스크린샷 촬영 시 로그의 현재 맵으로 이동
 
+        // 오프라인 맵 (실험적 기능)
+        public bool LocalMapEnabled { get; set; } = false;          // 상단바에 Online/Local 전환 표시
+        public bool LocalMapModeActive { get; set; } = false;       // 마지막으로 고른 전환 상태
+
         // 업데이트 설정
         public bool AutoUpdateEnabled { get; set; } = true;         // 새 버전 자동 확인/다운로드
         public bool PrereleaseEnabled { get; set; } = false;        // 베타(프리릴리스) 버전까지 받기

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.JavaScript;
+using TanukiTarkovMap.Models.Offline;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
@@ -21,6 +22,8 @@ Core Functionality:
 - 탐색 조정: Navigate()가 모든 URL 요청의 준비 상태를 판정하고 준비 전 마지막 요청만 보관
 - 시작 탐색: App.StartupUrl을 Navigate()에 전달해 다른 탐색 요청과 같은 준비 경로 사용
 - 페이지 로드 후처리: UI 요소 제거, 마진 제거, 줌 적용
+- 로컬 모드: 사본으로 응답할 처리기를 브라우저에 붙이고 토글에 따라 켜고 끈 뒤 다시 읽기
+- 상태 보고: 로드 시작 시점에 page-health.js를 넣어 페이지 오류와 맵 렌더 여부를 로그로 받기
 - JavaScript 통신: CefSharp.PostMessage로 맵 정보/연결 상태 수신
 - Pilot 브리지: 게임 사건을 웹 페이지의 window.pilot으로 전달
 - Messenger 수신: MainWindowViewModel에서 맵 선택/줌/UI 숨김 설정 수신
@@ -30,9 +33,13 @@ State Management:
 - _pendingNavigationUrl: CEF 준비 전에 받은 URL 중 마지막 하나, 실행을 시작하면 null로 전환
 - Address: AddressChanged/FrameLoadEnd가 갱신하는 현재 관측 주소
 - ReadyBrowser: BrowserCore 생성과 폐기 여부로 스크립트 실행 가능 상태 판정
+- _archiveFactory: 로컬 모드일 때만 요청을 사본으로 응답한다. 첫 이동이 시작되기 전에 브라우저에
+  붙여야 첫 요청부터 사본이 답한다
 
 Method Flow:
-  SetBrowser -> 필요하면 IsBrowserInitializedChanged 구독 -> 기존 대기 URL 또는 NavigateToStartupUrl
+  SetBrowser -> 사본 처리기 연결 -> 필요하면 IsBrowserInitializedChanged 구독
+             -> 기존 대기 URL 또는 NavigateToStartupUrl
+  FrameLoadStart -> page-health.js 주입 (로딩 중에 난 실패를 잡으려면 자원보다 먼저 들어가야 한다)
   Navigate(준비 전) -> _pendingNavigationUrl 교체 -> 로드 보류
   IsBrowserInitializedChanged(true) -> 이벤트 해제 -> 마지막 대기 URL을 Navigate로 재전달
   Navigate(준비됨) -> 대기 URL 제거 -> 현재 주소 중복 확인 -> LoadUrl
@@ -56,7 +63,7 @@ Load()를 호출했다. CEF 초기화가 느린 Windows Sandbox에서는 호출�
 CEF 준비 전에 들어온 자동 맵 전환이 사라지는 남은 경합을 모든 탐색의 공통 대기 경로로 합쳤다.
 Known Limitations: ChromiumWebBrowser 수명은 WebBrowserUserControl과 같다고 전제한다.
 
-Last Updated: 2026-08-20 | .NET 8.0 / CefSharp 141.0.110 | By 준비 전 탐색 보존
+Last Updated: 2026-08-20 | .NET 8.0 / CefSharp 141.0.110 | By 준비 전 탐색 보존과 로컬 모드 병합
 */
 namespace TanukiTarkovMap.ViewModels
 {
@@ -66,10 +73,12 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<ZoomLevelChangedMessage>,
         IRecipient<ExtractionFilterChangedMessage>,
         IRecipient<NavigateToUrlMessage>,
-        IRecipient<MonitorRefreshRateChangedMessage>
+        IRecipient<MonitorRefreshRateChangedMessage>,
+        IRecipient<LocalMapModeChangedMessage>
     {
         private readonly BrowserUIService _browserUIService;
         private readonly MapEventService _mapEventService;
+        private readonly ArchiveResourceRequestHandlerFactory _archiveFactory;
         private ChromiumWebBrowser? _browser;
         private string? _pendingNavigationUrl;
 
@@ -123,6 +132,10 @@ namespace TanukiTarkovMap.ViewModels
         {
             _browserUIService = ServiceLocator.BrowserUIService;
             _mapEventService = ServiceLocator.MapEventService;
+            _archiveFactory = new ArchiveResourceRequestHandlerFactory(ServiceLocator.MapArchive)
+            {
+                LocalModeEnabled = App.GetSettings().LocalMapEnabled && App.GetSettings().LocalMapModeActive,
+            };
 
             _zoomLevel = App.GetSettings().EffectiveBrowserZoomLevel;
 
@@ -147,11 +160,16 @@ namespace TanukiTarkovMap.ViewModels
             _browser = browser;
 
             // 이벤트 핸들러 등록
+            _browser.FrameLoadStart += OnFrameLoadStart;
             _browser.FrameLoadEnd += OnFrameLoadEnd;
             _browser.AddressChanged += OnAddressChanged;
 
             // JavaScript 메시지 수신 이벤트 등록
             _browser.JavascriptMessageReceived += OnJavascriptMessageReceived;
+
+            // 로컬 모드일 때 요청을 사본으로 응답한다 (온라인 모드에서는 아무것도 하지 않는다).
+            // 이 메서드 끝에서 첫 이동이 시작되므로 그 전에 붙여야 첫 요청부터 사본이 답한다
+            _browser.ResourceRequestHandlerFactory = _archiveFactory;
 
             Logger.SimpleLog($"[WebBrowserViewModel] Browser attached (initialized: {_browser.IsBrowserInitialized})");
 
@@ -206,6 +224,26 @@ namespace TanukiTarkovMap.ViewModels
             {
                 Address = e.NewValue?.ToString() ?? string.Empty;
             });
+        }
+
+        /// <summary>
+        /// 페이지 로드 시작 이벤트
+        ///
+        /// 여기서는 상태 보고 스크립트만 넣는다. 로딩 중에 난 자원 실패와 스크립트 오류를 잡으려면
+        /// 자원을 받기 전에 들어가 있어야 하므로, 다른 스크립트와 달리 로드가 끝나기를 기다리지 않는다
+        /// </summary>
+        private void OnFrameLoadStart(object? sender, FrameLoadStartEventArgs e)
+        {
+            if (!e.Frame.IsMain || _isDebugMode) return;
+
+            try
+            {
+                e.Frame.ExecuteJavaScriptAsync(PageHealth.INIT_SCRIPT);
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[WebBrowserViewModel] Page health inject skipped: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -267,6 +305,9 @@ namespace TanukiTarkovMap.ViewModels
 
                         // 방향 표시기 추가
                         await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT);
+
+                        // 맵을 열 때 창 크기에 맞추고, 끄는 동안 화면 가운데를 벗어나지 않게 한다
+                        await ExecuteScriptAsync(MapKeepVisible.KEEP_MAP_VISIBLE_SCRIPT);
 
                         // UI 요소 숨김 설정 적용
                         await ApplyUIVisibilityAsync();
@@ -344,6 +385,20 @@ namespace TanukiTarkovMap.ViewModels
                     case "ui-elements-removed":
                         Logger.SimpleLog($"[WebBrowserViewModel] {messageType}");
                         // CefSharp은 자동으로 리사이즈를 처리하므로 별도 작업 불필요
+                        break;
+
+                    // 페이지가 낸 오류. 앱 안에서만 나는 렌더 실패의 단서가 여기에 남는다
+                    case "page-error":
+                        Logger.SimpleLog($"[PageHealth] {json.RootElement.GetProperty("kind").GetString()}: " +
+                            $"{json.RootElement.GetProperty("detail").GetString()}");
+                        break;
+
+                    // 맵이 그려졌는지. 바닥 맵이 없으면 그 자체가 증상이므로 눈에 띄게 남긴다
+                    case "page-health":
+                        var baseMap = json.RootElement.GetProperty("baseMap").GetBoolean();
+                        Logger.SimpleLog($"[PageHealth] {json.RootElement.GetProperty("path").GetString()} " +
+                            $"baseMap={baseMap}, markerLayer={json.RootElement.GetProperty("markerLayer").GetBoolean()}" +
+                            (baseMap ? string.Empty : " <- 바닥 맵이 그려지지 않았다"));
                         break;
                 }
             }
@@ -576,6 +631,20 @@ namespace TanukiTarkovMap.ViewModels
             // 하한 30: 저주사율 모니터에서도 조작감 유지, 상한 240: 비정상 드라이버 값 방어
             _monitorRefreshRate = Math.Clamp(message.Value, 30, 240);
             ApplyWindowlessFrameRate();
+        }
+
+        /// <summary>
+        /// 로컬 맵 전환 메시지 핸들러 (MainWindowViewModel → WebBrowserViewModel)
+        ///
+        /// 가로채기는 새 요청부터 걸리므로, 이미 그려진 페이지를 다시 읽어야 화면이 바뀐다.
+        /// Navigate()는 같은 주소면 건너뛰므로 여기서는 Refresh()를 쓴다
+        /// </summary>
+        public void Receive(LocalMapModeChangedMessage message)
+        {
+            _archiveFactory.LocalModeEnabled = message.Value;
+            Logger.SimpleLog($"[WebBrowserViewModel] Local map mode via Messenger: {message.Value}");
+
+            Refresh();
         }
 
         #endregion
