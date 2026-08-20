@@ -309,7 +309,7 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnMapEventReceived(object sender, MapChangedEventArgs e)
         {
-            if (!App.GetSettings().AutoMapSwitchEnabled)
+            if (!IsMapChangeAllowed(e.Source))
             {
                 return;
             }
@@ -329,6 +329,22 @@ namespace TanukiTarkovMap.ViewModels
                 // SelectedMapInfo 변경이 MapSelectionChangedMessage를 통해 브라우저를 이동시킨다
                 SelectedMapInfo = e.Map;
             });
+        }
+
+        /// <summary>
+        /// 요청이 나온 경로에 해당하는 설정이 켜져 있는지 본다.
+        /// 두 경로를 한 설정으로 묶으면 스크린샷 보정만 끄고 싶은 사용자가 진입 감지까지 잃는다
+        /// </summary>
+        private static bool IsMapChangeAllowed(MapChangeSource source)
+        {
+            var settings = App.GetSettings();
+
+            return source switch
+            {
+                MapChangeSource.RaidEntry => settings.AutoMapSwitchEnabled,
+                MapChangeSource.Screenshot => settings.ScreenshotMapSyncEnabled,
+                _ => false
+            };
         }
 
         public void LoadSettings()

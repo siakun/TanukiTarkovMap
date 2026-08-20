@@ -172,9 +172,9 @@ sequenceDiagram
     LW->>LW: scene preset 파싱
     LW->>MC: GetByScenePreset(preset)
     MC-->>LW: MapInfo (미등록이면 null)
-    LW->>MES: OnMapChanged(mapInfo)
+    LW->>MES: OnMapChanged(mapInfo, RaidEntry)
     MES->>MWVM: MapChanged Event
-    MWVM->>MWVM: SelectedMapInfo 대입
+    MWVM->>MWVM: 설정 확인 후 SelectedMapInfo 대입
     Note over MWVM: 이후는 수동 선택과 같은 경로
 ```
 
@@ -376,9 +376,9 @@ services.AddSingleton(_ => new ServiceName());
        ↓
   MapConfiguration.GetByScenePreset() -> MapInfo
        ↓
-  MapEventService.OnMapChanged(mapInfo)
+  MapEventService.OnMapChanged(mapInfo, MapChangeSource.RaidEntry)
        ↓
-  MainWindowViewModel.OnMapEventReceived()
+  MainWindowViewModel.OnMapEventReceived()  [AutoMapSwitchEnabled 확인]
        ↓
   SelectedMapInfo 대입 -> MapSelectionChangedMessage
        ↓
@@ -397,12 +397,15 @@ services.AddSingleton(_ => new ServiceName());
        ↓
   LogsWatcher.LastDetectedMap (초기 읽기 구간에서 기억해 둔 마지막 맵)
        ↓
-  MapEventService.OnMapChanged(mapInfo)
+  MapEventService.OnMapChanged(mapInfo, MapChangeSource.Screenshot)
        ↓
-  MainWindowViewModel.OnMapEventReceived()
+  MainWindowViewModel.OnMapEventReceived()  [ScreenshotMapSyncEnabled 확인]
        ↓
   이미 같은 맵이면 중단, 아니면 위와 같은 경로로 전환
 ```
+
+두 경로는 신뢰도가 달라 설정에서 각각 끕니다. 진입 감지는 게임 로그에서 방금 읽은
+사실이지만, 스크린샷 보정은 마지막으로 읽어 둔 맵을 다시 쓰는 추측입니다.
 
 ### 스크린샷 위치 표시와 퀘스트 완료 (window.pilot 브리지)
 

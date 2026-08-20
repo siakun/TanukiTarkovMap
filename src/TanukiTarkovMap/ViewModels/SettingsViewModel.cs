@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net;
@@ -123,6 +123,7 @@ namespace TanukiTarkovMap.ViewModels
             settings.autoDeleteScreenshots = AutoDeleteScreenshots;
             settings.GoonTrackerEnabled = GoonTrackerEnabled;
             settings.AutoMapSwitchEnabled = AutoMapSwitchEnabled;
+            settings.ScreenshotMapSyncEnabled = ScreenshotMapSyncEnabled;
             settings.AutoUpdateEnabled = AutoUpdateEnabled;
             settings.PrereleaseEnabled = PrereleaseEnabled;
 
@@ -160,6 +161,7 @@ namespace TanukiTarkovMap.ViewModels
                 AutoDeleteScreenshots = settings.autoDeleteScreenshots;
                 GoonTrackerEnabled = settings.GoonTrackerEnabled;
                 AutoMapSwitchEnabled = settings.AutoMapSwitchEnabled;
+                ScreenshotMapSyncEnabled = settings.ScreenshotMapSyncEnabled;
                 AutoUpdateEnabled = settings.AutoUpdateEnabled;
                 PrereleaseEnabled = settings.PrereleaseEnabled;
             }
@@ -261,9 +263,11 @@ namespace TanukiTarkovMap.ViewModels
 
         #region 자동 맵 전환과 Goon Tracker
         [ObservableProperty] public partial bool AutoMapSwitchEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool ScreenshotMapSyncEnabled { get; set; } = true;
         [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
 
         partial void OnAutoMapSwitchEnabledChanged(bool value) => AutoSave();
+        partial void OnScreenshotMapSyncEnabledChanged(bool value) => AutoSave();
         partial void OnGoonTrackerEnabledChanged(bool value) => AutoSaveAndUpdateGoonTracker();
 
         private void AutoSaveAndUpdateGoonTracker()

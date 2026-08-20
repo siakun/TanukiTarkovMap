@@ -237,7 +237,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                                     // 지난 판의 맵으로 화면이 바뀌지 않도록 전환은 초기 읽기 이후에만 한다
                                     if (IsAllInitialLogsRead && mapInfo != null)
                                     {
-                                        ServiceLocator.MapEventService.OnMapChanged(mapInfo);
+                                        ServiceLocator.MapEventService.OnMapChanged(mapInfo, MapChangeSource.RaidEntry);
                                     }
                                 }
                                 continue;

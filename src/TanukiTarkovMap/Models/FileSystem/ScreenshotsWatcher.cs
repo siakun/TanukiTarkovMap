@@ -165,7 +165,7 @@ namespace TanukiTarkovMap.Models.FileSystem
                     var lastDetectedMap = LogsWatcher.LastDetectedMap;
                     if (lastDetectedMap != null)
                     {
-                        ServiceLocator.MapEventService.OnMapChanged(lastDetectedMap);
+                        ServiceLocator.MapEventService.OnMapChanged(lastDetectedMap, MapChangeSource.Screenshot);
                     }
                 }
             }
