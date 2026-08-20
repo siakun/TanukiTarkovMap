@@ -563,6 +563,9 @@ await browser.EvaluateScriptAsync(WebElementsControl.HIDE_HEADER);  // "window.h
 - `WebBrowserViewModel.cs`: 페이지 로드 시 `ApplyUIVisibilityAsync()` 호출
 - `JavaScriptLoader.cs`: Embedded Resource에서 .js 파일 로드
 
+주입 파이프라인, 페이지 조사 방법(CDP), 사이트를 고쳐 쓸 때 쓰는 기법과 함정은
+[임베디드 웹페이지 제어 레퍼런스](docs/20260818-embedded-site-control.md)에 정리했습니다.
+
 ---
 
 ## TopBar 자동 숨김 동작
