@@ -15,12 +15,14 @@ null을 돌려 평소대로 네트워크를 타게 두고, 켜져 있으면 MapA
 State Management:
 - LocalModeEnabled: 이 값 하나가 가로채기 여부를 정한다. UI 토글이 바꾸고, 바꾼 뒤에는
   브라우저를 다시 읽어야 이미 그려진 페이지에도 반영된다
+- _prefetchStarted: 미리 읽기를 한 번만 걸기 위한 표시. 토글을 여러 번 눌러도 한 번이면 된다
 
 Method Flow:
+  로컬 모드 켜짐 -> MapArchive.Prefetch()를 배경에서 한 번 (본문을 미리 읽어 둔다)
   CefSharp 자원 요청 -> GetResourceRequestHandler
     -> 로컬 모드 꺼짐: null (네트워크)
     -> 로컬 모드 켜짐: ArchiveHandler -> MapArchive.Find(주소)
-        -> 있으면 그 파일로 응답
+        -> 있으면 그 본문으로 응답 (메모리에서 낸다)
         -> 없으면 404 (네트워크로 새지 않게)
 
 Design Rationale: 커스텀 스킴(local://)을 쓰지 않는다. 사이트의 절대 주소와 라우팅이 그대로
@@ -30,7 +32,7 @@ Critical Warnings: HasHandlers를 로컬 모드에 따라 바꾸지 않는다. C
 읽는지 보장되지 않아, 껐다 켜는 시점에 가로채기가 통째로 빠질 수 있다. 항상 true로 두고
 분기는 GetResourceRequestHandler 안에서 한다.
 
-Last Updated: 2026-08-18 | .NET 8 / CefSharp 141 | 오프라인 맵 도입
+Last Updated: 2026-08-18 | .NET 8 / CefSharp 141 | 첫 로딩에서 맵이 빠지는 문제 대응
 */
 namespace TanukiTarkovMap.Models.Offline
 {
@@ -43,8 +45,28 @@ namespace TanukiTarkovMap.Models.Offline
             _archive = archive;
         }
 
-        /// <summary> 로컬 모드 여부. 켜져 있는 동안에만 요청을 사본으로 응답한다 </summary>
-        public bool LocalModeEnabled { get; set; }
+        private bool _localModeEnabled;
+        private bool _prefetchStarted;
+
+        /// <summary>
+        /// 로컬 모드 여부. 켜져 있는 동안에만 요청을 사본으로 응답한다.
+        ///
+        /// 켤 때 사본 본문을 배경에서 미리 읽어 둔다. 첫 페이지는 요청 백 개를 한꺼번에 보내는데,
+        /// 그때 디스크를 처음 읽으면 응답이 늦어 사이트가 늦게 온 조각을 쓰지 못할 수 있다
+        /// </summary>
+        public bool LocalModeEnabled
+        {
+            get => _localModeEnabled;
+            set
+            {
+                _localModeEnabled = value;
+
+                if (!value || _prefetchStarted) return;
+
+                _prefetchStarted = true;
+                Task.Run(_archive.Prefetch);
+            }
+        }
 
         /// <summary> 위 Critical Warnings 참고. 언제나 true로 둔다 </summary>
         public bool HasHandlers => true;
@@ -80,10 +102,19 @@ namespace TanukiTarkovMap.Models.Offline
 
                 if (entry != null)
                 {
-                    return ResourceHandler.FromFilePath(entry.FilePath, entry.MimeType);
-                }
+                    var body = _archive.ReadBody(entry);
 
-                Logger.SimpleLog($"[MapArchive] Not in archive: {request.Url}");
+                    // 파일을 읽지 못한 경우에도 네트워크로 넘기지 않는다.
+                    // 반쯤 온라인인 상태를 만들지 않는다는 이 클래스의 규칙은 그대로다
+                    if (body != null)
+                    {
+                        return ResourceHandler.FromByteArray(body, entry.MimeType);
+                    }
+                }
+                else
+                {
+                    Logger.SimpleLog($"[MapArchive] Not in archive: {request.Url}");
+                }
 
                 var missing = new ResourceHandler
                 {
