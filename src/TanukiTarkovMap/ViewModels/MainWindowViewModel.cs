@@ -24,11 +24,21 @@ Message Flow:
   SelectedMapInfo 변경 → MapSelectionChangedMessage → WebBrowserViewModel
   WebBrowserViewModel → MapReceivedMessage → 이 ViewModel
 
+Initialization Flow:
+  LoadSettings → InitializeCommands → NotifyInitialMapSelection
+  설정 복원 중에는 변경 처리기를 붙이지 않고, 복원이 끝난 선택 맵만 한 번 명시적으로 알림
+
 Dependencies:
 - WindowBoundsService: 창 위치/크기 저장소
 - WindowStateManager: Normal 모드 Rect 관리
 - MapEventService: 게임 로그 기반 맵 변경 이벤트
 - WeakReferenceMessenger: ViewModel 간 통신
+
+Design Rationale: 설정 복원과 사용자 변경을 구분해 시작 중 Settings.Save()와 불완전한 상태 메시지를
+막는다. 초기 맵은 복원 뒤 명시적으로 알리고 이후 변경은 PropertyChanged 처리기로 전달한다.
+
+Historical Context: 2026-08-19 이전에는 LoadSettings() 뒤에 PropertyChanged 처리기를 등록해
+시작 맵의 MapSelectionChangedMessage가 발행되지 않았다.
 */
 namespace TanukiTarkovMap.ViewModels
 {
@@ -204,7 +214,7 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> 사용 가능한 Browser 배율 목록 </summary>
         public List<int> AvailableZoomLevels { get; } = new List<int> { 50, 67, 75, 80, 90, 100, 110, 125, 150, 175, 200 };
 
-        private int _selectedZoomLevel = 67;
+        private int _selectedZoomLevel = AppSettings.DefaultBrowserZoomLevel;
         /// <summary> 선택된 Browser 배율 (%) </summary>
         public int SelectedZoomLevel
         {
@@ -246,8 +256,13 @@ namespace TanukiTarkovMap.ViewModels
             _windowStateManager = windowStateManager;
             _mapEventService = mapEventService;
             _goonTrackerService = goonTrackerService;
+
+            // 설정 복원 중 변경 처리기를 붙이면 SelectedMapInfo가 같은 설정을 다시 저장하고,
+            // SelectedZoomLevel 같은 중간 상태 메시지도 수신자가 생기기 전에 발행된다.
+            // 복원이 끝난 뒤 시작 맵만 명시적으로 통지해 로드와 사용자 변경을 구분한다.
             LoadSettings();
             InitializeCommands();
+            NotifyInitialMapSelection();
             SubscribeToMapEvents();
             SubscribeToGoonTrackerEvents();
 
@@ -343,7 +358,7 @@ namespace TanukiTarkovMap.ViewModels
             OnPropertyChanged(nameof(IsAlwaysOnTop));
 
             // Load Browser zoom level
-            _selectedZoomLevel = _settings.BrowserZoomLevel > 0 ? _settings.BrowserZoomLevel : 67;
+            _selectedZoomLevel = _settings.EffectiveBrowserZoomLevel;
             OnPropertyChanged(nameof(SelectedZoomLevel));
 
             // Load window opacity
@@ -398,8 +413,7 @@ namespace TanukiTarkovMap.ViewModels
                         break;
                     case nameof(SelectedMapInfo):
                         OnSelectedMapInfoChanged();
-                        // WebBrowserViewModel에 메시지 전송
-                        WeakReferenceMessenger.Default.Send(new MapSelectionChangedMessage(SelectedMapInfo));
+                        NotifyMapSelectionChanged();
                         break;
                     case nameof(HideWebElements):
                         OnHideWebElementsChanged();
@@ -419,6 +433,22 @@ namespace TanukiTarkovMap.ViewModels
                         break;
                 }
             };
+        }
+
+        private void NotifyInitialMapSelection()
+        {
+            if (SelectedMapInfo == null)
+            {
+                return;
+            }
+
+            NotifyMapSelectionChanged();
+            Logger.SimpleLog($"[MainWindowViewModel] Initial map selection notified: {SelectedMapInfo.MapId}");
+        }
+
+        private void NotifyMapSelectionChanged()
+        {
+            WeakReferenceMessenger.Default.Send(new MapSelectionChangedMessage(SelectedMapInfo));
         }
 
         #region Commands

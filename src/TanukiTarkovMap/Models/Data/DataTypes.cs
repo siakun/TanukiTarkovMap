@@ -46,7 +46,15 @@ namespace TanukiTarkovMap.Models.Data
         public bool IsAlwaysOnTop { get; set; } = true;             // 항상 위 (Topmost) 설정 - 기본값 활성화
 
         // Browser 배율 설정
-        public int BrowserZoomLevel { get; set; } = 67;             // Browser 배율 (%)
+        // 저장된 값이 없거나 0인 설정 파일을 대비해 기본값과 보정을 여기 한 곳에 둔다.
+        // 값을 읽는 쪽이 저마다 기본값을 적으면 한쪽만 바뀌어도 조용히 어긋난다
+        public const int DefaultBrowserZoomLevel = 67;              // Browser 배율 기본값 (%)
+
+        public int BrowserZoomLevel { get; set; } = DefaultBrowserZoomLevel;  // Browser 배율 (%)
+
+        /// <summary>저장된 배율. 값이 없거나 0이면 기본값으로 보정한다</summary>
+        public int EffectiveBrowserZoomLevel
+            => BrowserZoomLevel > 0 ? BrowserZoomLevel : DefaultBrowserZoomLevel;
 
         // 창 투명도 설정
         public double WindowOpacity { get; set; } = 1.0;            // 창 투명도 (0.1 ~ 1.0)

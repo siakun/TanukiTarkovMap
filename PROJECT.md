@@ -26,6 +26,7 @@ graph TB
         HIB[HotkeyInputBehavior]
         MRB[MonitorRefreshRateBehavior]
         DMF[DuplicateMouseMoveFilterBehavior]
+        WBL[WebBrowserLifecycleBehavior]
     end
 
     subgraph ViewModels["ViewModels"]
@@ -82,7 +83,7 @@ graph TB
     SP -->|직접 생성| SPVM
     WBU -->|직접 생성| WBVM
 
-    MW -.->|code-behind 연결| WBU
+    MW -.->|embed| WBU
     MW -.->|embed| SP
 
     TBA -.-> MW
@@ -92,6 +93,8 @@ graph TB
     MRB -.-> MW
     MRB -->|MonitorRefreshRateChangedMessage| WBVM
     DMF -.-> WBU
+    WBL -.-> WBU
+    WBL -->|SetBrowser| WBVM
 
     MWVM --> SL
     WBVM --> SL
@@ -188,14 +191,13 @@ sequenceDiagram
 sequenceDiagram
     participant UI as ComboBox
     participant MWVM as MainWindowViewModel
-    participant MW as MainWindow
     participant WBVM as WebBrowserViewModel
     participant CEF as CefSharp Browser
 
     UI->>MWVM: SelectedMapInfo 변경
     MWVM->>MWVM: OnSelectedMapInfoChanged()
-    MW->>MW: ViewModel_PropertyChanged
-    MW->>WBVM: NavigateToMap(mapInfo)
+    MWVM->>WBVM: MapSelectionChangedMessage
+    WBVM->>WBVM: NavigateToMap(mapInfo)
     WBVM->>CEF: LoadUrl(mapUrl)
     CEF->>CEF: FrameLoadEnd
     WBVM->>CEF: ApplyUIVisibilityAsync()

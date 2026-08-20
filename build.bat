@@ -69,11 +69,17 @@ if !errorlevel! neq 0 (
 :: Pack with Velopack
 echo.
 echo [4/4] Packing with Velopack...
+:: --framework: CefSharp.Core.Runtime.dll이 MSVCP140.dll, VCRUNTIME140.dll,
+::   VCRUNTIME140_1.dll을 import한다. 이 셋은 Windows에 기본 포함되지 않고 VC++
+::   재배포 패키지에만 들어 있어, 개발 도구가 없는 깨끗한 Windows에서는 앱이
+::   "지정된 모듈을 찾을 수 없습니다"로 죽는다. Setup.exe가 설치 전에 이를 먼저
+::   깔도록 선언해 둔다. 개발 PC에서는 이미 깔려 있어 증상이 안 보이므로 지우지 말 것.
 vpk pack ^
     --packId "TanukiTarkovMap" ^
     --packVersion "%VERSION%" ^
     --packDir "%PUBLISH_DIR%" ^
     --mainExe "TanukiTarkovMap.exe" ^
+    --framework "vcredist143-x64" ^
     --outputDir "%RELEASE_DIR%"
 
 if !errorlevel! neq 0 (

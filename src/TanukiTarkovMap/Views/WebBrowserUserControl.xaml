@@ -3,7 +3,9 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:cefSharp="clr-namespace:CefSharp.Wpf;assembly=CefSharp.Wpf"
+             xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
              xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
              mc:Ignorable="d"
              d:DesignHeight="600" d:DesignWidth="800">
@@ -13,8 +15,13 @@
     </UserControl.DataContext>
 
     <Grid>
-        <!-- CefSharp ChromiumWebBrowser - 코드에서 생성 -->
-        <Grid x:Name="BrowserContainer"/>
+        <!-- about:blank는 CEF 인스턴스만 만들며, 실제 시작 주소는 준비 완료 후 ViewModel이 연다. -->
+        <cefSharp:ChromiumWebBrowser Address="about:blank">
+            <i:Interaction.Behaviors>
+                <behaviors:WebBrowserLifecycleBehavior/>
+                <behaviors:DuplicateMouseMoveFilterBehavior/>
+            </i:Interaction.Behaviors>
+        </cefSharp:ChromiumWebBrowser>
 
         <!-- 로딩 오버레이 -->
         <Border Background="#DD1A1A1A"
