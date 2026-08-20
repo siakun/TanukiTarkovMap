@@ -198,6 +198,9 @@ namespace TanukiTarkovMap.ViewModels
                         // 방향 표시기 추가
                         await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT);
 
+                        // 맵이 화면 밖으로 나가면 가운데로 되돌린다
+                        await ExecuteScriptAsync(MapKeepVisible.KEEP_MAP_VISIBLE_SCRIPT);
+
                         // UI 요소 숨김 설정 적용
                         await ApplyUIVisibilityAsync();
 
