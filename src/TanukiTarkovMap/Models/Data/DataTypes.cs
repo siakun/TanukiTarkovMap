@@ -62,8 +62,11 @@ namespace TanukiTarkovMap.Models.Data
         // Goon Tracker 설정
         public bool GoonTrackerEnabled { get; set; } = true;        // Goon Tracker 사용 여부
 
-        // 자동 맵 전환 설정
-        public bool AutoMapSwitchEnabled { get; set; } = true;      // 레이드 진입 시 맵 자동 전환
+        // 자동 맵 전환 설정.
+        // 두 경로를 따로 끄고 켠다. 진입 감지는 게임 로그에서 방금 읽은 사실이라 확실하지만,
+        // 스크린샷 보정은 마지막으로 읽어 둔 맵을 다시 쓰는 추측이라 신뢰도가 다르다
+        public bool AutoMapSwitchEnabled { get; set; } = true;         // 맵 입장 시 자동 맵 변경
+        public bool ScreenshotMapSyncEnabled { get; set; } = true;     // 스크린샷 촬영 시 로그의 현재 맵으로 이동
 
         // 오프라인 맵 (실험적 기능)
         public bool LocalMapEnabled { get; set; } = false;          // 상단바에 Online/Local 전환 표시
