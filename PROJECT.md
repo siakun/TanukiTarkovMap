@@ -388,14 +388,18 @@ services.AddSingleton(_ => new ServiceName());
 ### 맵 자동 전환 (스크린샷 보정)
 
 레이드 도중 앱을 켜면 진입 로그가 이미 지나가 위 경로가 발동하지 않습니다.
-스크린샷은 인게임에서만 생성되므로 이를 신호로 삼아 보정합니다.
+레이드 안에서 찍은 스크린샷은 그 시점에 레이드 중이라는 증거이므로 이를 신호로 삼아 보정합니다.
+
+메뉴와 은신처에서 찍은 스크린샷은 파일명에 좌표가 없습니다. 이것까지 신호로 쓰면
+다음 레이드를 고르려고 지도를 손으로 바꿔 둔 사용자가 지난 판의 맵으로 되돌아가므로,
+좌표가 있는 파일명만 보정에 씁니다.
 
 ```
 스크린샷 파일 생성
        ↓
-  ScreenshotsWatcher 감지
+  ScreenshotsWatcher 감지 (파일명에 좌표가 없으면 여기서 중단)
        ↓
-  LogsWatcher.LastDetectedMap (초기 읽기 구간에서 기억해 둔 마지막 맵)
+  LogsWatcher.LastDetectedMap (따라잡기 읽기 구간에서 기억해 둔 마지막 맵)
        ↓
   MapEventService.OnMapChanged(mapInfo, MapChangeSource.Screenshot)
        ↓
