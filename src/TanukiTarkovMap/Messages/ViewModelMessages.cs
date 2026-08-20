@@ -36,6 +36,24 @@ namespace TanukiTarkovMap.Messages
     }
 
     /// <summary>
+    /// 로컬 맵 기능 사용 여부 변경 메시지 (SettingsViewModel → MainWindowViewModel)
+    /// 상단바의 Online/Local 전환을 보일지 말지가 이 값에 달려 있다
+    /// </summary>
+    public class LocalMapFeatureChangedMessage : ValueChangedMessage<bool>
+    {
+        public LocalMapFeatureChangedMessage(bool value) : base(value) { }
+    }
+
+    /// <summary>
+    /// 로컬 맵 전환 메시지 (MainWindowViewModel → WebBrowserViewModel)
+    /// true면 사본으로 응답하고, false면 사이트를 그대로 연다
+    /// </summary>
+    public class LocalMapModeChangedMessage : ValueChangedMessage<bool>
+    {
+        public LocalMapModeChangedMessage(bool value) : base(value) { }
+    }
+
+    /// <summary>
     /// 핫키 설정 변경 메시지 (SettingsViewModel → MainWindow)
     /// </summary>
     public class HotkeySettingsChangedMessage

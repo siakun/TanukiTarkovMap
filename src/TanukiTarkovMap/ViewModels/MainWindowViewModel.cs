@@ -35,6 +35,7 @@ namespace TanukiTarkovMap.ViewModels
     public partial class MainWindowViewModel : ObservableObject,
         IRecipient<MapReceivedMessage>,
         IRecipient<TopBarHiddenChangedMessage>,
+        IRecipient<LocalMapFeatureChangedMessage>,
         IRecipient<OpacitySliderDragMessage>,
         IRecipient<UpdateReadyMessage>,
         IRecipient<UpdateIconPreviewMessage>
@@ -177,6 +178,15 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary> Extraction 필터: true = PMC, false = SCAV </summary>
         [ObservableProperty] public partial bool IsPmcExtraction { get; set; } = true;
+
+        /// <summary>
+        /// 상단바에 Online/Local 전환을 보일지 여부.
+        /// 설정에서 실험적 기능을 켜고, 사본이 실제로 있을 때만 참이다
+        /// </summary>
+        [ObservableProperty] public partial bool IsLocalMapAvailable { get; set; } = false;
+
+        /// <summary> 지금 사본으로 보고 있는지 여부 </summary>
+        [ObservableProperty] public partial bool IsLocalMapMode { get; set; } = false;
 
         /// <summary> 현재 선택된 맵에 Goons가 있는지 여부 </summary>
         [ObservableProperty] public partial bool GoonsOnCurrentMap { get; set; } = false;
@@ -340,6 +350,8 @@ namespace TanukiTarkovMap.ViewModels
             _windowOpacity = _settings.WindowOpacity > 0 ? _settings.WindowOpacity : 1.0;
             OnPropertyChanged(nameof(WindowOpacity));
 
+            ApplyLocalMapAvailability(_settings.LocalMapEnabled, _settings.LocalMapModeActive);
+
             // Load last selected map
             // 저장된 맵이 없으면 첫 맵을 고른다. App.StartupUrl도 같은 맵을 열므로
             // 첫 실행에서 브라우저와 드롭다운이 서로 다른 맵을 가리키지 않는다
@@ -402,6 +414,9 @@ namespace TanukiTarkovMap.ViewModels
                         // WebBrowserViewModel에 메시지 전송
                         WeakReferenceMessenger.Default.Send(new ExtractionFilterChangedMessage(IsPmcExtraction));
                         break;
+                    case nameof(IsLocalMapMode):
+                        OnLocalMapModeChanged();
+                        break;
                 }
             };
         }
@@ -449,6 +464,15 @@ namespace TanukiTarkovMap.ViewModels
         }
 
         /// <summary>
+        /// 상단바의 Online/Local 전환. 매개변수는 XAML에서 문자열로 온다
+        /// </summary>
+        [RelayCommand]
+        private void SetLocalMapMode(object parameter)
+        {
+            IsLocalMapMode = parameter is string text ? bool.Parse(text) : parameter is bool value && value;
+        }
+
+        /// <summary>
         /// PMC/SCAV Extraction 필터 설정
         /// </summary>
         [RelayCommand]
@@ -489,6 +513,46 @@ namespace TanukiTarkovMap.ViewModels
                 // Goons 상태 업데이트
                 UpdateGoonsOnCurrentMap();
             }
+        }
+
+        /// <summary>
+        /// 로컬 맵 기능 사용 여부 변경 메시지 핸들러 (SettingsViewModel → MainWindowViewModel)
+        /// </summary>
+        public void Receive(LocalMapFeatureChangedMessage message)
+        {
+            ApplyLocalMapAvailability(message.Value, App.GetSettings().LocalMapModeActive);
+        }
+
+        /// <summary>
+        /// 상단바에 전환을 보일지 정하고, 보이지 않게 되면 온라인으로 되돌린다.
+        ///
+        /// 사본이 없을 때 전환을 감추는 이유: Local로 바꿔도 빈 화면만 남는다.
+        /// 기능을 끌 때 모드까지 되돌리는 이유: 스위치가 사라진 채로 사본을 보고 있으면
+        /// 사용자가 온라인으로 돌아갈 방법이 없다
+        /// </summary>
+        private void ApplyLocalMapAvailability(bool featureEnabled, bool modeActive)
+        {
+            IsLocalMapAvailable = featureEnabled && ServiceLocator.MapArchive.IsAvailable;
+            IsLocalMapMode = IsLocalMapAvailable && modeActive;
+
+            Logger.SimpleLog(
+                $"[MainWindowViewModel] Local map available: {IsLocalMapAvailable} " +
+                $"(setting: {featureEnabled}, archive: {ServiceLocator.MapArchive.IsAvailable})");
+        }
+
+        /// <summary>
+        /// 전환 상태를 저장하고 브라우저에 알린다.
+        /// 이미 그려진 페이지에는 가로채기가 걸리지 않으므로 수신 측이 페이지를 다시 읽는다
+        /// </summary>
+        private void OnLocalMapModeChanged()
+        {
+            var settings = App.GetSettings();
+            settings.LocalMapModeActive = IsLocalMapMode;
+            App.SetSettings(settings);
+            Settings.Save();
+
+            Logger.SimpleLog($"[MainWindowViewModel] Local map mode: {IsLocalMapMode}");
+            WeakReferenceMessenger.Default.Send(new LocalMapModeChangedMessage(IsLocalMapMode));
         }
 
         private void OnHideWebElementsChanged()

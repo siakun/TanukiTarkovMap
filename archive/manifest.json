@@ -1,0 +1,67 @@
+{
+ "site": "https://tarkov-market.com",
+ "createdAt": "2026-08-18T00:17:37.244Z",
+ "maps": {
+  "ground-zero": {
+   "url": "https://tarkov-market.com/maps/ground-zero",
+   "responses": 125,
+   "bytes": 8865716
+  },
+  "factory": {
+   "url": "https://tarkov-market.com/maps/factory",
+   "responses": 120,
+   "bytes": 2875399
+  },
+  "customs": {
+   "url": "https://tarkov-market.com/maps/customs",
+   "responses": 124,
+   "bytes": 3243603
+  },
+  "interchange": {
+   "url": "https://tarkov-market.com/maps/interchange",
+   "responses": 118,
+   "bytes": 3168315
+  },
+  "woods": {
+   "url": "https://tarkov-market.com/maps/woods",
+   "responses": 123,
+   "bytes": 3166440
+  },
+  "shoreline": {
+   "url": "https://tarkov-market.com/maps/shoreline",
+   "responses": 122,
+   "bytes": 3300717
+  },
+  "reserve": {
+   "url": "https://tarkov-market.com/maps/reserve",
+   "responses": 123,
+   "bytes": 3071634
+  },
+  "lighthouse": {
+   "url": "https://tarkov-market.com/maps/lighthouse",
+   "responses": 122,
+   "bytes": 3267235
+  },
+  "streets": {
+   "url": "https://tarkov-market.com/maps/streets",
+   "responses": 122,
+   "bytes": 3100888
+  },
+  "lab": {
+   "url": "https://tarkov-market.com/maps/lab",
+   "responses": 115,
+   "bytes": 2765877
+  },
+  "labyrinth": {
+   "url": "https://tarkov-market.com/maps/labyrinth",
+   "responses": 115,
+   "bytes": 2887058
+  },
+  "icebreaker": {
+   "url": "https://tarkov-market.com/maps/icebreaker",
+   "responses": 115,
+   "bytes": 2886002
+  }
+ },
+ "totalBytes": 13639618
+}

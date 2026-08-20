@@ -1,0 +1,1 @@
+.search-input[data-v-1887898c]{display:inline-block;position:relative}.search-input input[data-v-1887898c]{font-size:.9rem;padding:5px 20px 5px 5px}@media (max-width:480px){.search-input[data-v-1887898c],.search-input input[data-v-1887898c]{width:100%}}.clear-btn[data-v-1887898c]{border:0;height:15px;position:absolute;right:4px;top:50%;transform:translateY(-50%);width:15px}

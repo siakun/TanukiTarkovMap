@@ -54,6 +54,11 @@ graph TB
         SW[ScreenshotsWatcher]
     end
 
+    subgraph Offline["Offline (로컬 맵)"]
+        MA[MapArchive]
+        ARF[ArchiveResourceRequestHandlerFactory]
+    end
+
     subgraph Application["Application"]
         APP[App.xaml.cs]
     end
@@ -121,6 +126,8 @@ graph TB
     JSL --> PB
     WBVM --> PB
 
+    WBVM --> ARF
+    ARF --> MA
     WBVM --> CEF
     CEF --> TM
     LW --> TK
@@ -301,6 +308,7 @@ src/TanukiTarkovMap/
 │   ├── Data/           # 데이터 모델 (MapInfo, Settings 등)
 │   ├── FileSystem/     # 파일 시스템 감시 (LogsWatcher, ScreenshotsWatcher)
 │   ├── JavaScript/     # CefSharp JavaScript 통합
+│   ├── Offline/        # 로컬 맵 사본 읽기와 요청 가로채기
 │   ├── Services/       # 비즈니스 로직 서비스
 │   └── Utils/          # 유틸리티 (Logger, HotkeyManager 등)
 ├── ViewModels/         # MVVM ViewModel
@@ -326,6 +334,7 @@ ServiceLocator.WindowStateManager
 ServiceLocator.HotkeyService
 ServiceLocator.GoonTrackerService
 ServiceLocator.UpdateService
+ServiceLocator.MapArchive
 ```
 
 ### 주요 서비스
@@ -339,9 +348,10 @@ ServiceLocator.UpdateService
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
 | `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
 | `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
+| `MapArchive` | 오프라인 맵 사본에서 주소에 해당하는 파일 찾기 |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
 
-`UpdateService`는 두 경로를 함께 다룹니다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 씁니다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#8-버전-선택과-되돌리기)에 적어 두었습니다. Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `WaitExitThenApplyUpdates`로만 적용합니다.
+`UpdateService`는 두 경로를 함께 다룹니다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 씁니다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#9-버전-선택과-되돌리기)에 적어 두었습니다. Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `WaitExitThenApplyUpdates`로만 적용합니다.
 
 업데이트 확인은 메인 창을 띄운 **뒤에** 시작합니다. 시작을 막지 않는 것이 이 앱에서는
 다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은
@@ -625,3 +635,4 @@ sequenceDiagram
 | **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
 | **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |
 | **Pilot 브리지** | 게임 사건을 tarkov-market의 `window.pilot`으로 넘기는 통로 |
+| **로컬 모드** | 사이트 대신 앱에 담긴 사본으로 맵을 여는 상태 (실험적 기능) |

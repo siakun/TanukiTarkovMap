@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.JavaScript;
+using TanukiTarkovMap.Models.Offline;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
@@ -35,10 +36,12 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<ZoomLevelChangedMessage>,
         IRecipient<ExtractionFilterChangedMessage>,
         IRecipient<NavigateToUrlMessage>,
-        IRecipient<MonitorRefreshRateChangedMessage>
+        IRecipient<MonitorRefreshRateChangedMessage>,
+        IRecipient<LocalMapModeChangedMessage>
     {
         private readonly BrowserUIService _browserUIService;
         private readonly MapEventService _mapEventService;
+        private readonly ArchiveResourceRequestHandlerFactory _archiveFactory;
         private ChromiumWebBrowser? _browser;
 
         /// <summary> 디버그 모드 - 모든 JavaScript 주입 비활성화 </summary>
@@ -91,6 +94,10 @@ namespace TanukiTarkovMap.ViewModels
         {
             _browserUIService = ServiceLocator.BrowserUIService;
             _mapEventService = ServiceLocator.MapEventService;
+            _archiveFactory = new ArchiveResourceRequestHandlerFactory(ServiceLocator.MapArchive)
+            {
+                LocalModeEnabled = App.GetSettings().LocalMapEnabled && App.GetSettings().LocalMapModeActive,
+            };
 
             // 게임 사건 구독 (감시자 -> 웹 페이지의 window.pilot)
             _mapEventService.ScreenshotTaken += OnScreenshotTaken;
@@ -113,6 +120,9 @@ namespace TanukiTarkovMap.ViewModels
 
             // JavaScript 메시지 수신 이벤트 등록
             _browser.JavascriptMessageReceived += OnJavascriptMessageReceived;
+
+            // 로컬 모드일 때 요청을 사본으로 응답한다 (온라인 모드에서는 아무것도 하지 않는다)
+            _browser.ResourceRequestHandlerFactory = _archiveFactory;
 
             Logger.SimpleLog("[WebBrowserViewModel] Browser initialized");
         }
@@ -479,6 +489,20 @@ namespace TanukiTarkovMap.ViewModels
             // 하한 30: 저주사율 모니터에서도 조작감 유지, 상한 240: 비정상 드라이버 값 방어
             _monitorRefreshRate = Math.Clamp(message.Value, 30, 240);
             ApplyWindowlessFrameRate();
+        }
+
+        /// <summary>
+        /// 로컬 맵 전환 메시지 핸들러 (MainWindowViewModel → WebBrowserViewModel)
+        ///
+        /// 가로채기는 새 요청부터 걸리므로, 이미 그려진 페이지를 다시 읽어야 화면이 바뀐다.
+        /// Navigate()는 같은 주소면 건너뛰므로 여기서는 Refresh()를 쓴다
+        /// </summary>
+        public void Receive(LocalMapModeChangedMessage message)
+        {
+            _archiveFactory.LocalModeEnabled = message.Value;
+            Logger.SimpleLog($"[WebBrowserViewModel] Local map mode via Messenger: {message.Value}");
+
+            Refresh();
         }
 
         #endregion
