@@ -23,6 +23,11 @@
  *   node tools/archive-maps.mjs --maps lab,customs  일부만
  *   node tools/archive-maps.mjs --out D:\archive    저장 위치 지정
  *
+ * 본문을 두 경로로 받는다: 브라우저가 들고 있는 응답 본문을 CDP로 달라고 하고, 주지 못하면
+ * 같은 주소를 직접 한 번 더 받는다. 미리 읽기(preload/prefetch)로 받은 조각은 CDP가 본문을
+ * 주지 않는데, 맵의 지형 svg가 바로 그 조각에 들어 있다. 이것을 빈 채로 담으면 앱은 200에 빈
+ * 본문을 돌려주고 사이트는 지형만 빠진 채로 뜬다 (2026-08-18에 겪은 증상).
+ *
  * 주의: 디버깅 포트는 9224를 쓴다. 9222는 실행 중인 앱, 9223은 재현용 브라우저 자리다.
  */
 import { spawn } from 'node:child_process';
@@ -44,6 +49,9 @@ const ALL_MAPS = [
 // 사본에 담지 않을 요청. 추적기는 오프라인에서 실패해도 페이지에 영향이 없고,
 // 담아 두면 앱이 켜질 때마다 옛 추적 요청을 되돌려주는 셈이 된다
 const SKIP_HOSTS = ['google-analytics.com', 'googletagmanager.com', 'google.com', 'doubleclick.net'];
+
+// 저장할 이유가 없는 주소. 봇 확인은 한 번 쓰고 버리는 값이라 사본에 담아도 쓸모가 없다
+const SKIP_PATHS = ['/cdn-cgi/challenge-platform/'];
 
 const args = process.argv.slice(2);
 const argValue = (name, fallback) => {
@@ -129,7 +137,10 @@ const page = await connect();
 const cdp = session(page);
 await cdp.ready;
 await cdp.send('Page.enable');
-await cdp.send('Network.enable');
+// 응답 본문은 브라우저가 버퍼에 들고 있다가 우리가 달라고 할 때 준다. 기본 버퍼는 10MB쯤이라
+// 맵 조각(200KB 넘는 js가 여러 개)이 밀려나면 본문이 빈 채로 온다. 사본에 빈 응답이 담기면
+// 앱은 200에 빈 본문을 돌려주고 사이트는 조용히 망가진다(지형이 안 그려지던 원인).
+await cdp.send('Network.enable', { maxTotalBufferSize: 512 * 1024 * 1024, maxResourceBufferSize: 128 * 1024 * 1024 });
 await cdp.send('Network.setCacheDisabled', { cacheDisabled: true });
 
 await mkdir(path.join(OUT, 'blobs'), { recursive: true });
@@ -137,6 +148,71 @@ await mkdir(path.join(OUT, 'maps'), { recursive: true });
 
 const manifest = { site: SITE, createdAt: new Date().toISOString(), maps: {} };
 const blobSizes = new Map();
+
+// 본문을 못 받은 주소. 하나라도 있으면 사본이 불완전하므로 끝에 알리고 실패로 끝낸다
+const emptyBodies = [];
+
+// 직접 받을 때 쓰는 신원. 사이트가 브라우저를 구분하므로 같은 값으로 맞춘다
+const USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36';
+
+/**
+ * 브라우저가 본문을 주지 않는 응답을 같은 주소로 직접 받아 온다.
+ * 정적 자원이라 쿠키 없이도 같은 내용이 온다
+ */
+async function fetchBody(url, referer) {
+  // 맵 열두 개를 잇달아 여는 동안 연결이 한 번씩 끊긴다. 한 번은 다시 시도한다
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      const res = await fetch(url, { headers: { 'user-agent': USER_AGENT, referer } });
+      if (!res.ok) return null;
+
+      // 서버가 정말 빈 본문을 주는 파일도 있다. 그것과 "못 받았다"를 가르려고 상태를 함께 돌려준다
+      return { body: Buffer.from(await res.arrayBuffer()) };
+    } catch (error) {
+      if (attempt === 1) throw error;
+      await sleep(500);
+    }
+  }
+
+  return null;
+}
+
+/**
+ * 응답 하나를 사본에 담는다. 본문이 비면 직접 받아 채우고, 그래도 비면 담지 않고 보고한다
+ */
+async function saveResponse(requestId, info, referer, index) {
+  let buffer = null;
+
+  try {
+    const body = await cdp.send('Network.getResponseBody', { requestId });
+    buffer = Buffer.from(body.body, body.base64Encoded ? 'base64' : 'utf8');
+  } catch {
+    buffer = null;
+  }
+
+  if (!buffer || buffer.length === 0) {
+    const fetched = await fetchBody(info.url, referer).catch(() => null);
+
+    // 직접 받아도 못 받으면 사본이 불완전한 것이다. 받았는데 비어 있으면 원래 빈 파일이므로 그대로 담는다
+    if (fetched === null) {
+      if (info.status !== 204 && info.status !== 304) emptyBodies.push(info.url);
+      return;
+    }
+
+    buffer = fetched.body;
+  }
+
+  const hash = crypto.createHash('sha1').update(buffer).digest('hex');
+  const blobPath = path.join(OUT, 'blobs', hash);
+
+  if (!blobSizes.has(hash)) {
+    await writeFile(blobPath, buffer);
+    blobSizes.set(hash, buffer.length);
+  }
+
+  index[info.url] = { blob: hash, mime: info.mime, status: info.status };
+}
 
 for (const mapId of MAPS) {
   const url = `${SITE}/maps/${mapId}`;
@@ -156,24 +232,9 @@ for (const mapId of MAPS) {
     const info = meta.get(params.requestId);
     if (!info) return;
     if (SKIP_HOSTS.some((host) => info.url.includes(host))) return;
+    if (SKIP_PATHS.some((part) => info.url.includes(part))) return;
 
-    saves.push(
-      cdp
-        .send('Network.getResponseBody', { requestId: params.requestId })
-        .then(async (body) => {
-          const buffer = Buffer.from(body.body, body.base64Encoded ? 'base64' : 'utf8');
-          const hash = crypto.createHash('sha1').update(buffer).digest('hex');
-          const blobPath = path.join(OUT, 'blobs', hash);
-
-          if (!blobSizes.has(hash)) {
-            await writeFile(blobPath, buffer);
-            blobSizes.set(hash, buffer.length);
-          }
-
-          index[info.url] = { blob: hash, mime: info.mime, status: info.status };
-        })
-        .catch(() => {})
-    );
+    saves.push(saveResponse(params.requestId, info, url, index));
   };
 
   cdp.on('Network.responseReceived', onResponse);
@@ -197,6 +258,14 @@ await writeFile(path.join(OUT, 'manifest.json'), JSON.stringify(manifest, null, 
 
 console.log(`\n저장 위치: ${OUT}`);
 console.log(`중복 제거 후 전체 크기: ${(uniqueBytes / 1024 / 1024).toFixed(1)}MB (blob ${blobSizes.size}개)`);
+
+if (emptyBodies.length > 0) {
+  const unique = [...new Set(emptyBodies)];
+  console.error(`\n본문을 받지 못한 응답 ${unique.length}개. 사본이 불완전하다.`);
+  for (const url of unique.slice(0, 20)) console.error(`  ${url}`);
+  if (unique.length > 20) console.error(`  ... 외 ${unique.length - 20}개`);
+  process.exitCode = 1;
+}
 
 cdp.close();
 chrome.kill();

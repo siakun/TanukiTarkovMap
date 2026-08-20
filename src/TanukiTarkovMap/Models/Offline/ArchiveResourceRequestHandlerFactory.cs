@@ -104,12 +104,24 @@ namespace TanukiTarkovMap.Models.Offline
                 {
                     var body = _archive.ReadBody(entry);
 
-                    // 파일을 읽지 못한 경우에도 네트워크로 넘기지 않는다.
-                    // 반쯤 온라인인 상태를 만들지 않는다는 이 클래스의 규칙은 그대로다
-                    if (body != null)
+                    if (body is { Length: > 0 })
                     {
                         return ResourceHandler.FromByteArray(body, entry.MimeType);
                     }
+
+                    // 사이트에 원래 빈 파일이 있다(예: 내용이 없는 css 조각). 그때는 빈 200으로
+                    // 그대로 돌려준다. CefSharp의 FromByteArray는 길이 0인 배열에 예외를 던지므로
+                    // 여기서는 본문 없는 응답을 만든다
+                    if (body != null)
+                    {
+                        return new ResourceHandler
+                        {
+                            StatusCode = 200,
+                            MimeType = entry.MimeType,
+                        };
+                    }
+
+                    Logger.SimpleLog($"[MapArchive] Body read failed: {request.Url}");
                 }
                 else
                 {
