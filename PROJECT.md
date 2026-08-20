@@ -172,9 +172,9 @@ sequenceDiagram
     LW->>LW: scene preset 파싱
     LW->>MC: GetByScenePreset(preset)
     MC-->>LW: MapInfo (미등록이면 null)
-    LW->>MES: OnMapChanged(mapInfo)
+    LW->>MES: OnMapChanged(mapInfo, RaidEntry)
     MES->>MWVM: MapChanged Event
-    MWVM->>MWVM: SelectedMapInfo 대입
+    MWVM->>MWVM: 설정 확인 후 SelectedMapInfo 대입
     Note over MWVM: 이후는 수동 선택과 같은 경로
 ```
 
@@ -376,9 +376,9 @@ services.AddSingleton(_ => new ServiceName());
        ↓
   MapConfiguration.GetByScenePreset() -> MapInfo
        ↓
-  MapEventService.OnMapChanged(mapInfo)
+  MapEventService.OnMapChanged(mapInfo, MapChangeSource.RaidEntry)
        ↓
-  MainWindowViewModel.OnMapEventReceived()
+  MainWindowViewModel.OnMapEventReceived()  [AutoMapSwitchEnabled 확인]
        ↓
   SelectedMapInfo 대입 -> MapSelectionChangedMessage
        ↓
@@ -388,21 +388,28 @@ services.AddSingleton(_ => new ServiceName());
 ### 맵 자동 전환 (스크린샷 보정)
 
 레이드 도중 앱을 켜면 진입 로그가 이미 지나가 위 경로가 발동하지 않습니다.
-스크린샷은 인게임에서만 생성되므로 이를 신호로 삼아 보정합니다.
+레이드 안에서 찍은 스크린샷은 그 시점에 레이드 중이라는 증거이므로 이를 신호로 삼아 보정합니다.
+
+메뉴와 은신처에서 찍은 스크린샷은 파일명에 좌표가 없습니다. 이것까지 신호로 쓰면
+다음 레이드를 고르려고 지도를 손으로 바꿔 둔 사용자가 지난 판의 맵으로 되돌아가므로,
+좌표가 있는 파일명만 보정에 씁니다.
 
 ```
 스크린샷 파일 생성
        ↓
-  ScreenshotsWatcher 감지
+  ScreenshotsWatcher 감지 (파일명에 좌표가 없으면 여기서 중단)
        ↓
-  LogsWatcher.LastDetectedMap (초기 읽기 구간에서 기억해 둔 마지막 맵)
+  LogsWatcher.LastDetectedMap (따라잡기 읽기 구간에서 기억해 둔 마지막 맵)
        ↓
-  MapEventService.OnMapChanged(mapInfo)
+  MapEventService.OnMapChanged(mapInfo, MapChangeSource.Screenshot)
        ↓
-  MainWindowViewModel.OnMapEventReceived()
+  MainWindowViewModel.OnMapEventReceived()  [ScreenshotMapSyncEnabled 확인]
        ↓
   이미 같은 맵이면 중단, 아니면 위와 같은 경로로 전환
 ```
+
+두 경로는 신뢰도가 달라 설정에서 각각 끕니다. 진입 감지는 게임 로그에서 방금 읽은
+사실이지만, 스크린샷 보정은 마지막으로 읽어 둔 맵을 다시 쓰는 추측입니다.
 
 ### 스크린샷 위치 표시와 퀘스트 완료 (window.pilot 브리지)
 

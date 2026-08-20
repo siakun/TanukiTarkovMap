@@ -1,4 +1,4 @@
-<UserControl x:Class="TanukiTarkovMap.Views.SettingsPage"
+﻿<UserControl x:Class="TanukiTarkovMap.Views.SettingsPage"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -212,13 +212,26 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding AutoMapSwitchEnabled}"
-                                  Content="레이드 진입 시 맵 자동 전환"
+                                  Content="맵 입장 시 자동 맵 변경"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
                         <TextBlock Text="게임 로그에서 입장한 맵을 감지해 화면을 그 맵으로 바꿉니다"
                                    Foreground="#FF888888"
                                    FontSize="8"
+                                   Margin="18,2,0,0"/>
+                    </StackPanel>
+
+                    <StackPanel Orientation="Vertical" Margin="12,2,0,4">
+                        <CheckBox IsChecked="{Binding ScreenshotMapSyncEnabled}"
+                                  Content="스크린샷 촬영 시 로그의 현재 맵으로 이동"
+                                  Foreground="White"
+                                  FontSize="10"
+                                  HorizontalAlignment="Left"/>
+                        <TextBlock Text="레이드 도중 앱을 켜 입장을 놓쳤을 때를 위한 보정입니다. 게임 로그를 읽지 못하면 지난 맵으로 되돌아갈 수 있습니다"
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   TextWrapping="Wrap"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
