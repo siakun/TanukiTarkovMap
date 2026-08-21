@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "mapId": "shoreline",
+  "title": "Shoreline",
+  "size": {
+    "width": 3700,
+    "height": 3100
+  },
+  "zoom": 0.8,
+  "minZoom": 0.12,
+  "maxZoom": 15,
+  "transform": {
+    "rotate": 90,
+    "xOffset": 1570,
+    "yOffset": 1450,
+    "invertX": false,
+    "invertY": false,
+    "ratio": 1
+  },
+  "levels": [
+    {
+      "id": "basement",
+      "label": "지하",
+      "defaultVisible": false
+    },
+    {
+      "id": "main",
+      "label": "지상",
+      "defaultVisible": true
+    },
+    {
+      "id": "level2",
+      "label": "2층",
+      "defaultVisible": false
+    },
+    {
+      "id": "level3",
+      "label": "3층",
+      "defaultVisible": false
+    }
+  ],
+  "source": {
+    "site": "https://tarkov-market.com",
+    "page": "https://tarkov-market.com/maps/shoreline",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
+    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/PzPYwWmy.js",
+    "terrainBlob": "b9946efe2aa628e9920be6db880887c256dd2a50",
+    "coordinateFormula": {
+      "rotation": "-transform.rotate degrees",
+      "mapX": "xOffset - rotatedX * ratio",
+      "mapY": "yOffset - rotatedY * ratio",
+      "rounding": "4 decimal places"
+    }
+  }
+}
