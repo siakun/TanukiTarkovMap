@@ -76,15 +76,20 @@ gamePosToMapPos = (x, y, t) => {
 `applyX`, `applyY`는 `xOffset`, `yOffset`, `ratio`, `invertX`, `invertY`를 쓰는 1차식입니다.
 정확한 식은 사본에서 확인해 재구현하고, **반드시 사이트와 대조 검증**합니다(검증 방법은 아래).
 
-### 4. 마커와 퀘스트 데이터는 페이지 payload에 실려 옵니다
+### 4. 마커는 사본 페이지가 복원한 상태에서 읽습니다
 
-API(`/api/be/quests/all`, `/api/be/markers/list`)의 사본 응답은 "변경 없음" 껍데기입니다. 실제 데이터는
-서버가 렌더한 HTML 안에 들어 있습니다. 저장소가 완전히 빈 새 프로필로 사본만 열어도 좌측 목록에
-추출구 8개, 스폰 26개, 퀘스트 90개가 나오는 것으로 확인했습니다.
+2026-08-22에 새 Chrome 프로필로 다시 확인한 결과, Shoreline HTML의 초기 Nuxt 상태에는 마커가
+들어 있지 않았습니다. Shoreline 색인의 해시가 붙은 `/api/be/markers/list` 응답은 "변경 없음"
+껍데기지만, `archive/maps/ground-zero.json`에는 새 프로필이 요청하는 질의 없는 최초 응답이 있습니다.
+기존 `verify-archive.mjs`가 맵별 색인을 모두 합쳐 재생하는 것도 이 전역 캐시 응답을 함께 제공하려는
+구조입니다.
 
-따라서 추출은 API가 아니라 **페이지를 열어 그 안의 데이터를 읽는 방식**이어야 합니다.
-가장 확실한 경로는 렌더된 페이지에서 사이트가 이미 만들어 둔 마커 목록을 읽어 JSON으로 내보내는 것입니다.
-정확한 접근 경로는 1단계 스파이크에서 확정합니다.
+`extract-resources.mjs`는 맵별 색인을 모두 합쳐 별도 headless Chrome에만 응답하고 외부 요청은
+차단합니다. 페이지가 자체 압축 형식과 Nuxt payload를 풀어 hydration을 마치면
+`$nuxt.payload.state.$squestsState.markers`에서 현재 맵의 마커를 읽습니다. 좌표는 같은 페이지의
+`MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)`로 변환하고, 좌측 목록에 쓰이는
+`MapLeftPanel.props.categories`와 세부 종류별 수량도 대조합니다. 압축된 API 본문이나 Nuxt의
+직렬화 형식을 도구가 따로 구현하지 않아 사이트의 내부 저장 형식과 데이터 의미를 혼동하지 않습니다.
 
 ## 결정된 사항
 
@@ -128,6 +133,12 @@ viewer/
 
 `meta.json`에는 스키마 판 번호를 둡니다. 뷰어는 아는 판만 읽고 모르는 필드는 무시합니다.
 
+`markers.json`도 독립된 스키마 판 번호를 둡니다. `categories`는 상위 종류와 세부 종류의 안정된 ID,
+표시 이름, 원본 사이트 이름을 연결하고 `markers`는 원본 UID, 종류 ID, 이름, `levelId`, 변환이 끝난
+지도 좌표를 담습니다. 영역형 스폰의 다각형은 2단계 표시 범위가 아니므로 사이트가 라벨과 팝업의
+기준으로 쓰는 `geometry.x/y` 중심점만 변환합니다. 원본 이름이 비어 있으면 값을 만들지 않고 뷰어가
+세부 종류의 표시 이름을 대신 사용합니다.
+
 ## 도구
 
 저장소에 이미 같은 성격의 도구가 셋 있습니다. 그 형태를 따르십시오
@@ -142,9 +153,10 @@ viewer/
 - `tools/fetch-resources.mjs` 사이트에서 최신을 받아 `resources/`를 갱신. `--maps lab,customs`로 일부만
 - `tools/verify-resources.mjs` 받은 리소스로 뷰어가 실제로 뜨는지 검사
 
-**포트 자리**: 9222는 실행 중인 앱, 9223은 재현용 브라우저, 9224는 archive-maps, 9225는 verify-archive가
-씁니다. 새 도구는 9226 이후를 쓰십시오. 같은 포트를 쓰면 명령이 실행 중인 앱으로 흘러 사용자가 보는
-화면을 조작하게 됩니다(실제 사고 사례).
+**포트 자리**: 9222는 실행 중인 앱, 9223은 재현용 브라우저, 9224는 archive-maps, 9225는 verify-archive,
+9226~9229는 1단계 도구와 검사가 씁니다. 2단계의 `extract-resources.mjs`는 9230,
+`verify-resources.mjs`는 9231을 기본값으로 씁니다. 같은 포트를 쓰면 명령이 실행 중인 앱으로 흘러
+사용자가 보는 화면을 조작하게 됩니다(실제 사고 사례).
 
 ## 단계와 완료 기준
 

@@ -1,6 +1,6 @@
 import { gamePositionToMapPosition } from './coords.js';
 import { createMapView } from './map-view.js';
-import { createPositionMarker } from './markers.js';
+import { createMapMarkers, createPositionMarker } from './markers.js';
 
 /**
  * 진입점은 URL의 맵 ID를 resources/manifest.json에서 확인하고 해당 리소스만 조립한다.
@@ -12,6 +12,7 @@ const mapTitle = document.querySelector('#mapTitle');
 const mapCode = document.querySelector('#mapCode');
 const zoomReadout = document.querySelector('#zoomReadout');
 const levelControls = document.querySelector('#levelControls');
+const markerControls = document.querySelector('#markerControls');
 const positionForm = document.querySelector('#positionForm');
 const coordinateResult = document.querySelector('#coordinateResult');
 const viewport = document.querySelector('#mapViewport');
@@ -33,24 +34,54 @@ function assertSchema(data, description) {
   }
 }
 
-function buildLevelControls(meta, mapView) {
+function createVisibilityControl({ checked, text, codeText, data, onChange }) {
+  const label = document.createElement('label');
+  label.className = 'visibility-control';
+  const input = document.createElement('input');
+  input.type = 'checkbox';
+  input.checked = checked;
+  Object.assign(input.dataset, data);
+  const description = document.createElement('span');
+  description.textContent = text;
+  const code = document.createElement('code');
+  code.textContent = codeText;
+  label.append(input, description, code);
+  input.addEventListener('change', () => onChange(input.checked));
+  return label;
+}
+
+function buildLevelControls(meta, mapView, mapMarkers) {
   const fragment = document.createDocumentFragment();
   for (const level of meta.levels) {
-    const label = document.createElement('label');
-    label.className = 'level-control';
-    const input = document.createElement('input');
-    input.type = 'checkbox';
-    input.checked = level.defaultVisible;
-    input.dataset.levelId = level.id;
-    const text = document.createElement('span');
-    text.textContent = level.label;
-    const code = document.createElement('code');
-    code.textContent = `#${level.id}`;
-    label.append(input, text, code);
-    input.addEventListener('change', () => mapView.setLevelVisibility(level.id, input.checked));
-    fragment.append(label);
+    fragment.append(createVisibilityControl({
+      checked: level.defaultVisible,
+      text: level.label,
+      codeText: `#${level.id}`,
+      data: { levelId: level.id },
+      onChange: (visible) => {
+        mapView.setLevelVisibility(level.id, visible);
+        mapMarkers.setLevelVisibility(level.id, visible);
+      },
+    }));
   }
   levelControls.replaceChildren(fragment);
+}
+
+function buildMarkerControls(markerData, mapMarkers) {
+  const fragment = document.createDocumentFragment();
+  for (const category of markerData.categories) {
+    const count = markerData.markers.filter((marker) => marker.category === category.id).length;
+    const control = createVisibilityControl({
+      checked: category.defaultVisible !== false,
+      text: category.label,
+      codeText: String(count),
+      data: { markerCategoryId: category.id },
+      onChange: (visible) => mapMarkers.setCategoryVisibility(category.id, visible),
+    });
+    control.dataset.markerCategory = category.id;
+    fragment.append(control);
+  }
+  markerControls.replaceChildren(fragment);
 }
 
 function formatCoordinate(value) {
@@ -74,6 +105,21 @@ async function initialize() {
   const meta = await loadJson(new URL('meta.json', mapRoot), `${mapId} meta.json`);
   assertSchema(meta, `${mapId} meta.json`);
   if (meta.mapId !== mapId) throw new Error('요청한 맵과 meta.json의 mapId가 다릅니다.');
+  const markerData = await loadJson(new URL('markers.json', mapRoot), `${mapId} markers.json`);
+  assertSchema(markerData, `${mapId} markers.json`);
+  if (markerData.mapId !== mapId) {
+    throw new Error('요청한 맵과 markers.json의 mapId가 다릅니다.');
+  }
+  if (!Array.isArray(markerData.markers)) {
+    throw new Error('markers.json에 markers 배열이 없습니다.');
+  }
+  const knownLevels = new Set(meta.levels.map((level) => level.id));
+  const unknownLevelMarker = markerData.markers.find(
+    (marker) => !knownLevels.has(marker.levelId)
+  );
+  if (unknownLevelMarker) {
+    throw new Error(`${unknownLevelMarker.id}: meta.json에 없는 마커 레벨입니다.`);
+  }
 
   document.title = `${meta.title} / Tanuki Local Map`;
   mapTitle.textContent = meta.title;
@@ -86,9 +132,18 @@ async function initialize() {
       zoomReadout.textContent = `${Math.round(zoom * 100).toString().padStart(3, '0')}%`;
     },
   });
+  const initiallyVisibleLevels = meta.levels
+    .filter((level) => level.defaultVisible)
+    .map((level) => level.id);
+  const mapMarkers = createMapMarkers(
+    mapView.markerLayer,
+    markerData,
+    initiallyVisibleLevels
+  );
   const positionMarker = createPositionMarker(mapView.markerLayer);
 
-  buildLevelControls(meta, mapView);
+  buildLevelControls(meta, mapView, mapMarkers);
+  buildMarkerControls(markerData, mapMarkers);
   document.querySelector('#zoomIn').addEventListener('click', mapView.zoomIn);
   document.querySelector('#zoomOut').addEventListener('click', mapView.zoomOut);
   document.querySelector('#resetView').addEventListener('click', mapView.reset);

@@ -1,8 +1,8 @@
 <!doctype html>
 <!--
-이 화면은 로컬 맵 뷰어 1단계 스파이크다. 지도 자체를 화면의 중심에 두고, 왼쪽 계기판에는
-지형을 해석하는 데 필요한 레벨과 좌표 조작만 둔다. 지도와 설정은 resources에서 읽으므로
-데이터를 갱신할 때 이 파일을 고치지 않는다.
+이 화면은 로컬 맵 리소스의 지형과 위치 표식을 읽는 독립 뷰어다. 지도 자체를 화면의 중심에 두고,
+왼쪽 계기판에는 지형을 해석하는 레벨과 마커 종류, 좌표 조작만 둔다. 데이터는 resources에서
+읽으므로 맵을 갱신할 때 이 파일을 고치지 않는다.
 -->
 <html lang="ko" data-viewer-state="loading">
 <head>
@@ -26,7 +26,15 @@
           <h2 id="levelHeading">레벨 표시</h2>
           <span class="section-code">LAYERS</span>
         </div>
-        <div id="levelControls" class="level-controls"></div>
+        <div id="levelControls" class="visibility-controls"></div>
+      </section>
+
+      <section class="control-section" aria-labelledby="markerHeading">
+        <div class="section-heading">
+          <h2 id="markerHeading">마커 표시</h2>
+          <span class="section-code">MARKERS</span>
+        </div>
+        <div id="markerControls" class="visibility-controls"></div>
       </section>
 
       <section class="control-section" aria-labelledby="positionHeading">

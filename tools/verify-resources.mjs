@@ -2,17 +2,18 @@
 /**
  * verify-resources.mjs - 새 리소스와 뷰어가 실제 브라우저에서 함께 동작하는지 검사한다
  *
- * 파일 존재 여부만 보면 SVG 파싱 오류, 모듈 로드 실패, 포인터 조작 오류를 놓친다. 이 도구는
- * loopback 정적 서버와 별도 headless Chrome을 띄우고 완성 화면을 직접 조작해 확인한다.
- * 앱은 실행하거나 연결하지 않으며 네트워크로 나가는 자원도 없다.
+ * 파일 존재 여부만 보면 SVG 파싱 오류, 모듈 로드 실패, 포인터 조작 오류, 마커 누락을 놓친다.
+ * 이 도구는 loopback 정적 서버와 별도 headless Chrome을 띄우고 완성 화면의 마커 수량, 종류와
+ * 레벨 필터, 이름 표시까지 직접 조작해 확인한다. 앱은 실행하거나 연결하지 않으며 네트워크로
+ * 나가는 자원도 없다.
  *
  * 사용법:
  *   node tools/verify-resources.mjs
  *   node tools/verify-resources.mjs --maps shoreline
  *   node tools/verify-resources.mjs --screenshot D:\shoreline.png
  *
- * 디버깅 포트는 9226을 쓴다. 9222~9225는 앱과 기존 도구 자리다. 포트가 이미 사용 중이면
- * 다른 프로세스에 붙지 않고 즉시 실패한다. VERIFY_RESOURCES_PORT로 9226 이후 포트를 고를 수 있다.
+ * 디버깅 포트는 9231을 쓴다. 9230은 리소스 추출 자리다. 포트가 이미 사용 중이면 다른
+ * 프로세스에 붙지 않고 즉시 실패한다. VERIFY_RESOURCES_PORT로 9230 이후 포트를 고를 수 있다.
  */
 import { spawn } from 'node:child_process';
 import { createServer as createHttpServer } from 'node:http';
@@ -22,9 +23,9 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 
-const CDP_PORT = Number(process.env.VERIFY_RESOURCES_PORT || 9226);
-if (!Number.isInteger(CDP_PORT) || CDP_PORT < 9226 || CDP_PORT > 65_535) {
-  throw new Error('VERIFY_RESOURCES_PORT는 9226~65535 사이 정수여야 합니다.');
+const CDP_PORT = Number(process.env.VERIFY_RESOURCES_PORT || 9231);
+if (!Number.isInteger(CDP_PORT) || CDP_PORT < 9230 || CDP_PORT > 65_535) {
+  throw new Error('VERIFY_RESOURCES_PORT는 9230~65535 사이 정수여야 합니다.');
 }
 
 const args = process.argv.slice(2);
@@ -51,6 +52,24 @@ if (!Array.isArray(requestedMaps) || requestedMaps.length === 0) {
 
 for (const mapId of requestedMaps) {
   if (!manifest.maps.includes(mapId)) throw new Error(`${mapId}: manifest에 없는 맵입니다.`);
+}
+
+const markerResources = new Map();
+const defaultVisibleLevels = new Map();
+for (const mapId of requestedMaps) {
+  const markerPath = path.join(repositoryRoot, 'resources', 'maps', mapId, 'markers.json');
+  const metaPath = path.join(repositoryRoot, 'resources', 'maps', mapId, 'meta.json');
+  const markerResource = JSON.parse(await readFile(markerPath, 'utf8'));
+  const meta = JSON.parse(await readFile(metaPath, 'utf8'));
+  if (markerResource.schemaVersion !== 1 || markerResource.mapId !== mapId
+    || !Array.isArray(markerResource.categories) || !Array.isArray(markerResource.markers)) {
+    throw new Error(`${mapId}: markers.json의 스키마가 올바르지 않습니다.`);
+  }
+  markerResources.set(mapId, markerResource);
+  defaultVisibleLevels.set(
+    mapId,
+    new Set(meta.levels.filter((level) => level.defaultVisible).map((level) => level.id))
+  );
 }
 
 const CHROME_CANDIDATES = [
@@ -202,6 +221,19 @@ function matrixState(matrixText) {
   return { scale: values[0], x: values[4], y: values[5] };
 }
 
+function formatMarkerSummary(markerResource) {
+  return markerResource.categories.map((category) => {
+    const categoryMarkers = markerResource.markers.filter(
+      (marker) => marker.category === category.id
+    );
+    const subtypes = category.subtypes.map((subtype) => {
+      const count = categoryMarkers.filter((marker) => marker.subtype === subtype.id).length;
+      return `${subtype.label} ${count}`;
+    }).join(', ');
+    return `${category.label} ${categoryMarkers.length} (${subtypes})`;
+  }).join(' / ');
+}
+
 let cdp = null;
 let failed = 0;
 
@@ -213,6 +245,7 @@ try {
 
   for (const mapId of requestedMaps) {
     try {
+      const markerResource = markerResources.get(mapId);
       const url = `http://127.0.0.1:${serverPort}/viewer/index.html?map=${encodeURIComponent(mapId)}`;
       await cdp.send('Page.navigate', { url });
       await waitUntil(
@@ -230,6 +263,7 @@ try {
         const viewport = document.querySelector('#mapViewport');
         const stage = document.querySelector('.map-stage');
         const svg = document.querySelector('svg.map-svg');
+        const markers = [...document.querySelectorAll('.map-marker')];
         const bounds = viewport.getBoundingClientRect();
         return {
           viewBox: svg?.getAttribute('viewBox'),
@@ -238,11 +272,72 @@ try {
           matrix: getComputedStyle(stage).transform,
           center: { x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2 },
           basementDisplay: svg?.querySelector('#basement')?.style.display,
+          markerCount: markers.length,
+          visibleMarkerCount: markers.filter((marker) => !marker.hidden).length,
+          markerCategoryCounts: Object.fromEntries(
+            [...new Set(markers.map((marker) => marker.dataset.markerCategory))]
+              .map((category) => [
+                category,
+                markers.filter((marker) => marker.dataset.markerCategory === category).length,
+              ])
+          ),
+          markerControlCounts: Object.fromEntries(
+            [...document.querySelectorAll('[data-marker-category-id]')].map((control) => [
+              control.dataset.markerCategoryId,
+              Number(control.closest('.visibility-control')?.querySelector('code')?.textContent),
+            ])
+          ),
+          emptyMarkerLabelCount: markers.filter((marker) => !marker.dataset.markerName).length,
+          basementMarkerCount: markers.filter(
+            (marker) => marker.dataset.markerLevel === 'basement'
+          ).length,
+          visibleBasementMarkerCount: markers.filter(
+            (marker) => marker.dataset.markerLevel === 'basement' && !marker.hidden
+          ).length,
         };
       })())`);
       const initialState = JSON.parse(initial);
       if (!initialState.viewBox || initialState.groups === 0) throw new Error('지형 SVG가 비어 있습니다.');
       if (initialState.basementDisplay !== 'none') throw new Error('지하 레벨의 초기 상태가 꺼짐이 아닙니다.');
+      if (initialState.markerCount !== markerResource.markers.length) {
+        throw new Error(
+          `마커 DOM 수량이 다릅니다: ${initialState.markerCount}/${markerResource.markers.length}`
+        );
+      }
+      for (const category of markerResource.categories) {
+        const expectedCount = markerResource.markers.filter(
+          (marker) => marker.category === category.id
+        ).length;
+        if (initialState.markerCategoryCounts[category.id] !== expectedCount) {
+          throw new Error(
+            `${category.label} 마커 수량이 다릅니다: ` +
+            `${initialState.markerCategoryCounts[category.id]}/${expectedCount}`
+          );
+        }
+        if (initialState.markerControlCounts[category.id] !== expectedCount) {
+          throw new Error(
+            `${category.label} 필터 수량이 다릅니다: ` +
+            `${initialState.markerControlCounts[category.id]}/${expectedCount}`
+          );
+        }
+      }
+      if (initialState.emptyMarkerLabelCount !== 0) {
+        throw new Error('이름 또는 세부 종류 이름이 없는 마커가 있습니다.');
+      }
+      const expectedVisibleMarkers = markerResource.markers.filter((marker) => {
+        const category = markerResource.categories.find((entry) => entry.id === marker.category);
+        return category?.defaultVisible !== false
+          && defaultVisibleLevels.get(mapId).has(marker.levelId);
+      }).length;
+      if (initialState.visibleMarkerCount !== expectedVisibleMarkers) {
+        throw new Error(
+          `초기 표시 마커 수량이 다릅니다: ` +
+          `${initialState.visibleMarkerCount}/${expectedVisibleMarkers}`
+        );
+      }
+      if (initialState.visibleBasementMarkerCount !== 0) {
+        throw new Error('지하 레벨이 꺼졌는데 지하 마커가 보입니다.');
+      }
 
       await cdp.send('Input.dispatchMouseEvent', {
         type: 'mouseMoved',
@@ -297,12 +392,113 @@ try {
         throw new Error(`끌기 이동값이 다릅니다: X ${dragX}, Y ${dragY}`);
       }
 
-      const levelVisible = await evaluate(cdp, `(() => {
+      const levelState = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
         const input = document.querySelector('[data-level-id="basement"]');
         input.click();
-        return document.querySelector('svg.map-svg #basement').style.display !== 'none';
-      })()`);
-      if (!levelVisible) throw new Error('레벨 토글이 지하 그룹을 켜지 못했습니다.');
+        const basementMarkers = [...document.querySelectorAll(
+          '.map-marker[data-marker-level="basement"]'
+        )];
+        return {
+          terrainVisible: document.querySelector('svg.map-svg #basement').style.display !== 'none',
+          visibleMarkers: basementMarkers.filter((marker) => !marker.hidden).length,
+        };
+      })())`));
+      if (!levelState.terrainVisible) throw new Error('레벨 토글이 지하 그룹을 켜지 못했습니다.');
+      if (levelState.visibleMarkers !== initialState.basementMarkerCount) {
+        throw new Error(
+          `지하 마커가 모두 켜지지 않았습니다: ` +
+          `${levelState.visibleMarkers}/${initialState.basementMarkerCount}`
+        );
+      }
+
+      const categoryFilter = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
+        const allMarkers = [...document.querySelectorAll('.map-marker')];
+        return [...document.querySelectorAll('[data-marker-category-id]')].map((input) => {
+          const categoryId = input.dataset.markerCategoryId;
+          const selected = allMarkers.filter(
+            (marker) => marker.dataset.markerCategory === categoryId
+          );
+          const other = allMarkers.filter(
+            (marker) => marker.dataset.markerCategory !== categoryId
+          );
+          const selectedBefore = selected.map((marker) => marker.hidden);
+          const otherBefore = other.map((marker) => marker.hidden);
+          input.click();
+          const selectedHidden = selected.every((marker) => marker.hidden);
+          const otherUnchanged = other.every(
+            (marker, index) => marker.hidden === otherBefore[index]
+          );
+          input.click();
+          const selectedRestored = selected.every(
+            (marker, index) => marker.hidden === selectedBefore[index]
+          );
+          return { categoryId, selectedHidden, otherUnchanged, selectedRestored };
+        });
+      })())`));
+      if (categoryFilter.length !== markerResource.categories.length
+        || categoryFilter.some((result) => !result.selectedHidden
+          || !result.otherUnchanged || !result.selectedRestored)) {
+        throw new Error('종류 필터가 선택한 마커만 숨기고 복원하지 못했습니다.');
+      }
+
+      const markerPositions = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
+        const markers = [...document.querySelectorAll('.map-marker')];
+        const positions = markers.map((marker) => ({
+          xDifference: Math.abs(Number.parseFloat(marker.style.left) - Number(marker.dataset.mapX)),
+          yDifference: Math.abs(Number.parseFloat(marker.style.top) - Number(marker.dataset.mapY)),
+        }));
+        return {
+          maxXDifference: Math.max(...positions.map((position) => position.xDifference)),
+          maxYDifference: Math.max(...positions.map((position) => position.yDifference)),
+        };
+      })())`));
+      // Chromium은 left/top을 내부 레이아웃 단위로 양자화하므로 4자리 좌표가 최대 0.01px 안에서
+      // 반올림된다. 이 합격선은 좌표가 다른 마커를 통과시키지 않으면서 렌더러 반올림만 허용한다.
+      if (markerPositions.maxXDifference > 0.01 || markerPositions.maxYDifference > 0.01) {
+        throw new Error(
+          `markers.json과 DOM 위치가 다릅니다: ` +
+          `X ${markerPositions.maxXDifference}, Y ${markerPositions.maxYDifference}`
+        );
+      }
+
+      await evaluate(cdp, `document.querySelector('#resetView').click()`);
+      await delay(100);
+      const hoverTarget = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
+        const viewport = document.querySelector('#mapViewport').getBoundingClientRect();
+        for (const marker of document.querySelectorAll('.map-marker:not([hidden])')) {
+          const bounds = marker.getBoundingClientRect();
+          const x = bounds.left + bounds.width / 2;
+          const y = bounds.top + bounds.height / 2;
+          if (x <= viewport.left || x >= viewport.right || y <= viewport.top || y >= viewport.bottom) {
+            continue;
+          }
+          const topMarker = document.elementFromPoint(x, y)?.closest('.map-marker');
+          if (topMarker) return { x, y };
+        }
+        return null;
+      })())`));
+      if (!hoverTarget) throw new Error('이름 표시를 검사할 화면 안 마커를 찾지 못했습니다.');
+      await cdp.send('Input.dispatchMouseEvent', {
+        type: 'mouseMoved',
+        x: hoverTarget.x,
+        y: hoverTarget.y,
+      });
+      await delay(150);
+      const hoverState = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
+        const marker = document.querySelector('.map-marker:hover');
+        const label = marker?.querySelector('.map-marker__label');
+        const style = label ? getComputedStyle(label) : null;
+        return {
+          name: marker?.dataset.markerName,
+          text: label?.textContent,
+          opacity: style ? Number(style.opacity) : 0,
+          visibility: style?.visibility,
+        };
+      })())`));
+      if (!hoverState.name || hoverState.text !== hoverState.name
+        || hoverState.opacity < 0.9 || hoverState.visibility !== 'visible') {
+        throw new Error('마커에 올렸을 때 이름이 표시되지 않습니다.');
+      }
 
       const coordinate = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
         document.querySelector('#gameX').value = '100';
@@ -339,7 +535,10 @@ try {
       console.log(
         `OK   ${mapId.padEnd(12)} SVG ${initialState.viewBox}, 그림 ${initialState.groups}겹, ` +
         `휠 ${initialState.zoom}->${wheelZoom}, 끌기 ${dragX}/${dragY}, ` +
-        `좌표 ${coordinate.mapX}/${coordinate.mapY}`
+        `좌표 ${coordinate.mapX}/${coordinate.mapY}\n` +
+        `     마커 ${formatMarkerSummary(markerResource)}, ` +
+        `위치 최대 오차 ${markerPositions.maxXDifference}/${markerPositions.maxYDifference}px, ` +
+        `hover ${hoverState.name}`
       );
     } catch (error) {
       failed++;

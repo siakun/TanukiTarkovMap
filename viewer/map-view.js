@@ -63,7 +63,8 @@ export async function createMapView({ viewport, meta, mapUrl, onViewChange }) {
 
   const markerLayer = document.createElement('div');
   markerLayer.className = 'marker-layer';
-  markerLayer.setAttribute('aria-hidden', 'true');
+  markerLayer.setAttribute('role', 'group');
+  markerLayer.setAttribute('aria-label', '지도 마커');
   stage.append(svg, markerLayer);
   viewport.replaceChildren(stage);
 

@@ -11,6 +11,8 @@
   --paper: #e3dfd2;
   --muted: #889499;
   --signal: #f1a33b;
+  --extraction: #76b9ad;
+  --spawn: #c98362;
   --danger: #d86d5a;
   font-family: "Segoe UI", "Malgun Gothic", sans-serif;
   color: var(--paper);
@@ -138,12 +140,13 @@ h1 {
   letter-spacing: 0.12em;
 }
 
-.level-controls {
+.visibility-controls {
   display: grid;
   gap: 7px;
 }
 
-.level-control {
+.visibility-control {
+  --control-accent: var(--signal);
   display: grid;
   grid-template-columns: 20px 1fr auto;
   align-items: center;
@@ -155,25 +158,41 @@ h1 {
   cursor: pointer;
 }
 
-.level-control:hover {
+.visibility-control:hover {
   border-color: var(--line);
   background: var(--panel-raised);
 }
 
-.level-control input {
+.visibility-control input {
   width: 14px;
   height: 14px;
   margin: 0;
-  accent-color: var(--signal);
+  accent-color: var(--control-accent);
 }
 
-.level-control span {
+.visibility-control span {
   font-size: 0.82rem;
 }
 
-.level-control code {
+.visibility-control code {
   color: var(--muted);
   font-size: 0.62rem;
+}
+
+.visibility-control[data-marker-category] {
+  border-left-color: var(--control-accent);
+}
+
+.visibility-control[data-marker-category] code {
+  color: var(--control-accent);
+}
+
+.visibility-control[data-marker-category="extraction"] {
+  --control-accent: var(--extraction);
+}
+
+.visibility-control[data-marker-category="spawn"] {
+  --control-accent: var(--spawn);
 }
 
 .position-form {
@@ -343,6 +362,80 @@ kbd {
   pointer-events: none;
 }
 
+.map-marker {
+  --marker-color: var(--paper);
+  position: absolute;
+  z-index: 1;
+  width: 26px;
+  height: 26px;
+  transform: translate(-50%, -50%) scale(var(--inverse-zoom));
+  transform-origin: 50% 50%;
+  cursor: help;
+  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 90%));
+  pointer-events: auto;
+}
+
+.map-marker[hidden] {
+  display: none;
+}
+
+.map-marker[data-marker-category="extraction"] {
+  --marker-color: var(--extraction);
+}
+
+.map-marker[data-marker-category="spawn"] {
+  --marker-color: var(--spawn);
+}
+
+.map-marker__symbol {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border: 2px solid #091012;
+  background: var(--marker-color);
+  box-shadow: 0 0 0 1px var(--marker-color);
+}
+
+.map-marker[data-marker-category="extraction"] .map-marker__symbol {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.map-marker[data-marker-category="spawn"] .map-marker__symbol {
+  border-radius: 50%;
+}
+
+.map-marker__label {
+  position: absolute;
+  bottom: 25px;
+  left: 50%;
+  padding: 4px 6px;
+  transform: translate(-50%, 3px);
+  border: 1px solid color-mix(in srgb, var(--marker-color) 65%, transparent);
+  background: rgb(11 15 18 / 94%);
+  color: var(--paper);
+  font-family: "Cascadia Mono", Consolas, monospace;
+  font-size: 8px;
+  line-height: 1.25;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 100ms ease-out, transform 100ms ease-out;
+  visibility: hidden;
+  white-space: nowrap;
+}
+
+.map-marker:hover {
+  z-index: 4;
+}
+
+.map-marker:hover .map-marker__label {
+  transform: translate(-50%, 0);
+  opacity: 1;
+  visibility: visible;
+}
+
 .position-marker {
   position: absolute;
   width: 46px;
@@ -494,7 +587,9 @@ kbd {
 
   .control-panel {
     display: grid;
-    grid-template-columns: minmax(150px, 0.8fr) minmax(180px, 1fr) minmax(220px, 1.2fr);
+    grid-template-columns:
+      minmax(130px, 0.65fr) minmax(160px, 0.8fr)
+      minmax(150px, 0.75fr) minmax(210px, 1.1fr);
     max-height: 42vh;
     border-right: 0;
     border-bottom: 1px solid var(--line);
@@ -532,18 +627,18 @@ kbd {
     padding: 12px;
   }
 
-  .level-controls {
+  .visibility-controls {
     grid-template-columns: 1fr 1fr;
     gap: 5px;
   }
 
-  .level-control {
+  .visibility-control {
     grid-template-columns: 16px 1fr;
     min-height: 32px;
     padding: 0 7px;
   }
 
-  .level-control code {
+  .visibility-control code {
     display: none;
   }
 
@@ -571,6 +666,10 @@ kbd {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .map-marker__label {
+    transition: none;
+  }
+
   .position-marker.is-pinging .position-marker__ring {
     animation: none;
   }

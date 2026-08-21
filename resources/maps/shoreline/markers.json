@@ -1,0 +1,918 @@
+{
+  "schemaVersion": 1,
+  "mapId": "shoreline",
+  "coordinateSpace": "map",
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition"
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction"
+        },
+        {
+          "id": "scav",
+          "label": "Scav",
+          "sourceSubtype": "Scav Extraction"
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction"
+        }
+      ]
+    },
+    {
+      "id": "spawn",
+      "label": "스폰",
+      "sourceCategory": "Spawns",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Spawn"
+        },
+        {
+          "id": "scav",
+          "label": "Scav",
+          "sourceSubtype": "Scav Spawn"
+        },
+        {
+          "id": "sniper-scav",
+          "label": "Sniper Scav",
+          "sourceSubtype": "Sniper Scav"
+        },
+        {
+          "id": "boss",
+          "label": "Boss",
+          "sourceSubtype": "Boss Spawn"
+        },
+        {
+          "id": "cultist",
+          "label": "Cultist",
+          "sourceSubtype": "Cultist Spawn"
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "05cc7c93-6d1d-4b14-8eee-40ad1e8ae163",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 1124.2411,
+        "y": 1265.5027
+      }
+    },
+    {
+      "id": "4fcbfffe-6b44-43e6-9377-24614796cff3",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Icebreaker",
+      "levelId": "main",
+      "position": {
+        "x": 1883.4681,
+        "y": 1979.391
+      }
+    },
+    {
+      "id": "afbea725-2d1d-4276-a994-1f52276d51be",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Labyrinth",
+      "levelId": "basement",
+      "position": {
+        "x": 1764.2248,
+        "y": 1374.1344
+      }
+    },
+    {
+      "id": "07d7a578-6fe7-4725-be18-bf8d11e388d5",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Mountain Bunker (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1959.5871,
+        "y": 1071.3924
+      }
+    },
+    {
+      "id": "30eb4935-9544-47ff-9f6d-a97e4bba84f8",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Tunnel",
+      "levelId": "main",
+      "position": {
+        "x": 1186.4682,
+        "y": 1759.1509
+      }
+    },
+    {
+      "id": "3309ee9d-17c1-45a2-84c0-b6d2ddfdf12c",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 2424.5952,
+        "y": 1456.0439
+      }
+    },
+    {
+      "id": "331f7a0b-38e1-4d65-939e-65335ab8d063",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Path to Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 1135.1486,
+        "y": 1209.3132
+      }
+    },
+    {
+      "id": "419feb99-0691-431f-9d0a-c5dec9c62041",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Pier Boat",
+      "levelId": "main",
+      "position": {
+        "x": 1909.0212,
+        "y": 2021.8759
+      }
+    },
+    {
+      "id": "865917c8-52eb-4d51-a4a9-2ed526b33803",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to North V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 2112.6068,
+        "y": 1072.7987
+      }
+    },
+    {
+      "id": "c860e10b-4310-43ec-9b5f-db7531f6d9db",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Railway Bridge",
+      "levelId": "main",
+      "position": {
+        "x": 2593.6635,
+        "y": 1760.9757
+      }
+    },
+    {
+      "id": "eb4d75e9-1852-4515-b1a6-04728167edeb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Climber's Trail",
+      "levelId": "main",
+      "position": {
+        "x": 1794.197,
+        "y": 1098.2366
+      }
+    },
+    {
+      "id": "10034d75-92c9-40e3-ad40-d05000556dc6",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Mountain Bunker (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1958.9505,
+        "y": 1077.5239
+      }
+    },
+    {
+      "id": "2ba9d2b2-ed48-4f07-8a7e-83350ee17ecc",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Ruined Road",
+      "levelId": "main",
+      "position": {
+        "x": 1213.7919,
+        "y": 1780.1046
+      }
+    },
+    {
+      "id": "366d7779-7ab3-4d0d-93b0-53df2c0b715f",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Road to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 2422.3562,
+        "y": 1459.1215
+      }
+    },
+    {
+      "id": "6e03cfdf-1388-416d-a4d0-876ea27e842e",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "East Wing Gym Entrance",
+      "levelId": "main",
+      "position": {
+        "x": 1866.5829,
+        "y": 1349.767
+      }
+    },
+    {
+      "id": "be8f2185-c852-4310-b047-eaff9bed3fa9",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 2028.3071,
+        "y": 2019.5537
+      }
+    },
+    {
+      "id": "ffc86106-c66e-4cd2-959f-1ce189fb9dd5",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Admin Basement",
+      "levelId": "basement",
+      "position": {
+        "x": 1816.9436,
+        "y": 1297.2791
+      }
+    },
+    {
+      "id": "05072375-fb76-4dae-909e-4fe4da7d0a00",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Smuggler's Path (Co-op)",
+      "levelId": "main",
+      "position": {
+        "x": 2278.6718,
+        "y": 1203.2921
+      }
+    },
+    {
+      "id": "01338ce7-2202-42bc-96e2-922f262fd72c",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1566.6876,
+        "y": 1178.8894
+      }
+    },
+    {
+      "id": "08c1c4e7-27ab-4890-b07b-cadd8484e19b",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1435.9929,
+        "y": 1164.945
+      }
+    },
+    {
+      "id": "15863845-fb49-43ba-ac06-727097477fd0",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1220.9776,
+        "y": 1785.0548
+      }
+    },
+    {
+      "id": "23130a04-bf6b-44ac-9005-e6a41f1b5428",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1346.3061,
+        "y": 1169.6471
+      }
+    },
+    {
+      "id": "24ba6fd8-6c43-4a48-9aa0-708a34bec6ed",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1143.2047,
+        "y": 1528.9321
+      }
+    },
+    {
+      "id": "33d9df65-1f9a-4b24-b271-1ea38baff2bb",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2478.0617,
+        "y": 1655.8886
+      }
+    },
+    {
+      "id": "38f50c06-2f71-40bc-9a51-d0a6e07dadaa",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2210.4958,
+        "y": 1927.609
+      }
+    },
+    {
+      "id": "3b9bf48c-4151-4421-8370-a18e59ccc55a",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1231.7513,
+        "y": 1197.2776
+      }
+    },
+    {
+      "id": "3c1d8699-f5ff-4fc2-b233-45a8f5c3b8e0",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1464.3552,
+        "y": 1743.912
+      }
+    },
+    {
+      "id": "40a64638-b006-4126-a764-767942277b75",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2375.394,
+        "y": 1466.7921
+      }
+    },
+    {
+      "id": "40a7b5c4-d51c-4645-9172-f9cd5ebaa2a7",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1893.9402,
+        "y": 1812.7912
+      }
+    },
+    {
+      "id": "47131246-d0ea-43cb-83fd-a4437ad4a333",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1595.5196,
+        "y": 1765.4195
+      }
+    },
+    {
+      "id": "6efaa706-a3ae-4abd-8808-6995f52e21a8",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1331.0915,
+        "y": 1708.3529
+      }
+    },
+    {
+      "id": "73626978-73ec-464c-87a8-593b38549dcc",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1118.8666,
+        "y": 1591.3896
+      }
+    },
+    {
+      "id": "751e988a-eb1e-4766-918c-e2357f408dd8",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2430.332,
+        "y": 1819.6129
+      }
+    },
+    {
+      "id": "7563d0c6-c2f1-42fb-a3b3-04968b394f5d",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1139.0096,
+        "y": 1377.1194
+      }
+    },
+    {
+      "id": "7babe5eb-567f-45b7-99b7-f650951c80bd",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2354.3082,
+        "y": 1913.6015
+      }
+    },
+    {
+      "id": "8520cf37-cafa-4586-8c2c-aa967402a352",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1836.1362,
+        "y": 1103.8714
+      }
+    },
+    {
+      "id": "919f6c65-81aa-45c5-b215-152930c80c19",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2105.4735,
+        "y": 1928.9819
+      }
+    },
+    {
+      "id": "9a9317ea-e40a-4c0d-a7ef-287455c35935",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1114.4206,
+        "y": 1642.8278
+      }
+    },
+    {
+      "id": "ab2cea84-9bce-4de5-8af3-838da55190e3",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2488.7524,
+        "y": 1549.6666
+      }
+    },
+    {
+      "id": "b11d82f3-6cc0-49ef-afc5-c23de2f9d3d4",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2012.5315,
+        "y": 1828.9876
+      }
+    },
+    {
+      "id": "b2d4a6bb-09e3-4a99-9fa0-1a958d81f0bc",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1972.1792,
+        "y": 1076.4138
+      }
+    },
+    {
+      "id": "b8ff4581-8c24-45bb-99cd-f4ccc4cf7703",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1747.8616,
+        "y": 1769.3217
+      }
+    },
+    {
+      "id": "e74ae360-0838-415a-9cd7-bab554217107",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 2455.4069,
+        "y": 1463.2988
+      }
+    },
+    {
+      "id": "f3c00f22-40af-4def-82c9-7cfe6548b2da",
+      "category": "spawn",
+      "subtype": "pmc",
+      "name": "PMC Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1176.5853,
+        "y": 1719.2551
+      }
+    },
+    {
+      "id": "03de4d2d-f362-40ef-b9ce-0af7861f7df6",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn",
+      "levelId": "main",
+      "position": {
+        "x": 1901.2074,
+        "y": 1310.1596
+      }
+    },
+    {
+      "id": "17edc4a1-46a2-47d2-abab-966b889ab066",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 2226.5798,
+        "y": 1909.4611
+      }
+    },
+    {
+      "id": "1b511c8f-a79a-4147-beca-fd7eb5e0f301",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 2049.8783,
+        "y": 1710.5864
+      }
+    },
+    {
+      "id": "31220b28-9ee7-4bb9-9914-5791d36cd1cd",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1457.6004,
+        "y": 1136.0698
+      }
+    },
+    {
+      "id": "4c54c8f8-bfee-46cf-a4f4-1132d4264592",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1898.8927,
+        "y": 1964.5654
+      }
+    },
+    {
+      "id": "661ff06e-d8af-4611-a04f-e06f0f40a4b9",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1665.2806,
+        "y": 1441.1551
+      }
+    },
+    {
+      "id": "777acc5d-39ec-404b-9ae7-1aad38876bda",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1736.8026,
+        "y": 1313.1651
+      }
+    },
+    {
+      "id": "7f635c96-8906-45ef-8fff-82e7e7ed1663",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1426.2226,
+        "y": 1554.891
+      }
+    },
+    {
+      "id": "81383329-c8e1-4e05-b5b1-e03c0c9ae9fe",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1350.4538,
+        "y": 1881.9519
+      }
+    },
+    {
+      "id": "8252fb4a-5bd9-46e3-8277-4b0155f71851",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1729.4054,
+        "y": 1161.6611
+      }
+    },
+    {
+      "id": "889f1e4b-b882-4d05-86de-a17101f325d8",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1601.9138,
+        "y": 1689.223
+      }
+    },
+    {
+      "id": "9abd33a7-b1ff-43d1-ae65-d283ef14b589",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1287.7465,
+        "y": 1759.0152
+      }
+    },
+    {
+      "id": "a69b38ec-8680-4a1c-81de-419fd9daa391",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 2493.8223,
+        "y": 1727.6273
+      }
+    },
+    {
+      "id": "a8cc29b9-e57e-43ff-9778-ef45321dec54",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1165.0605,
+        "y": 1564.7577
+      }
+    },
+    {
+      "id": "b6e6c38f-5e92-40fe-b846-040fff82ff6e",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 2204.5381,
+        "y": 1250.8553
+      }
+    },
+    {
+      "id": "b7e9b3a8-8ed0-44b8-a4ee-642f8e2f0dfe",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1813.0867,
+        "y": 1620.4717
+      }
+    },
+    {
+      "id": "ba4fcc56-74cf-4440-88d3-08a233a88b55",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1773.0553,
+        "y": 1850.9428
+      }
+    },
+    {
+      "id": "d1e658c3-d897-47ba-b394-530c367ca655",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1358.8168,
+        "y": 1215.31
+      }
+    },
+    {
+      "id": "d41c083d-a723-4da9-a575-e4d8777ebcef",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 2432.7374,
+        "y": 1509.4623
+      }
+    },
+    {
+      "id": "f213c6fe-13a1-403f-bf0a-3cfaa583bc77",
+      "category": "spawn",
+      "subtype": "scav",
+      "name": "Scav Spawn / Habitats",
+      "levelId": "main",
+      "position": {
+        "x": 1567.9338,
+        "y": 1258.9926
+      }
+    },
+    {
+      "id": "016e4923-7000-4f89-be42-10a5c5ef4ad5",
+      "category": "spawn",
+      "subtype": "sniper-scav",
+      "name": "",
+      "levelId": "main",
+      "position": {
+        "x": 1720.2403,
+        "y": 1183.8855
+      }
+    },
+    {
+      "id": "13b111ab-0027-46b3-b127-d67d3d3ad142",
+      "category": "spawn",
+      "subtype": "sniper-scav",
+      "name": "",
+      "levelId": "main",
+      "position": {
+        "x": 1798.591,
+        "y": 1641.271
+      }
+    },
+    {
+      "id": "26d27290-30b1-466b-94d6-9b30966688ab",
+      "category": "spawn",
+      "subtype": "boss",
+      "name": "Sniper shooting area",
+      "levelId": "main",
+      "position": {
+        "x": 2500.5739,
+        "y": 1797.5245
+      }
+    },
+    {
+      "id": "352d65c9-818c-4115-9a1c-78817fa8a0c4",
+      "category": "spawn",
+      "subtype": "boss",
+      "name": "Sanitar",
+      "levelId": "main",
+      "position": {
+        "x": 1743.2488,
+        "y": 1367.3104
+      }
+    },
+    {
+      "id": "3a53dbad-b60d-4185-880a-797e864b14f3",
+      "category": "spawn",
+      "subtype": "boss",
+      "name": "Sanitar",
+      "levelId": "main",
+      "position": {
+        "x": 1890.9932,
+        "y": 1957.0794
+      }
+    },
+    {
+      "id": "6279dd24-3979-431d-842c-366a21399173",
+      "category": "spawn",
+      "subtype": "boss",
+      "name": "Sanitar",
+      "levelId": "main",
+      "position": {
+        "x": 1463.4673,
+        "y": 1540.4919
+      }
+    },
+    {
+      "id": "6f09f984-927d-4f78-bfbe-734edf22bda1",
+      "category": "spawn",
+      "subtype": "boss",
+      "name": "Sanitar",
+      "levelId": "main",
+      "position": {
+        "x": 1905.9825,
+        "y": 1367.2024
+      }
+    },
+    {
+      "id": "de5847e8-8cf2-4c0b-ae43-6a7a522ca05a",
+      "category": "spawn",
+      "subtype": "boss",
+      "name": "Goons",
+      "levelId": "main",
+      "position": {
+        "x": 2060.5738,
+        "y": 1704.5951
+      }
+    },
+    {
+      "id": "279be064-4c8a-4e9f-89a6-93558e2b1ee7",
+      "category": "spawn",
+      "subtype": "cultist",
+      "name": "",
+      "levelId": "main",
+      "position": {
+        "x": 1391.8595,
+        "y": 1211.5957
+      }
+    },
+    {
+      "id": "521c9abe-7d18-4175-ae01-a5212359ec08",
+      "category": "spawn",
+      "subtype": "cultist",
+      "name": "",
+      "levelId": "main",
+      "position": {
+        "x": 1732.4586,
+        "y": 1342.4114
+      }
+    },
+    {
+      "id": "70c84992-9555-402f-bb64-4877eb2db8e3",
+      "category": "spawn",
+      "subtype": "cultist",
+      "name": "",
+      "levelId": "main",
+      "position": {
+        "x": 1648.2935,
+        "y": 1689.5573
+      }
+    },
+    {
+      "id": "72aa130b-b3e3-48fa-a3e5-4da253e8e42b",
+      "category": "spawn",
+      "subtype": "cultist",
+      "name": "",
+      "levelId": "main",
+      "position": {
+        "x": 1891.427,
+        "y": 1339.7429
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/shoreline",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "b93a02cfe9388bb3748e1e2b5bd6d13676d5f239",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}
