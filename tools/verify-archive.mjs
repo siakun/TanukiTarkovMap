@@ -4,13 +4,13 @@
  *
  * 왜 필요한가: 사본이 불완전해도 화면은 그럴듯하게 뜬다. 실제로 맵의 지형 조각이 빈 채로
  * 담긴 적이 있는데(2026-08-18), 앱은 그것을 200에 빈 본문으로 돌려주고 사이트는 마커만 있고
- * 지형이 없는 화면을 그렸다. 사본 파일이 있는지 세는 것만으로는 이런 상태를 잡지 못한다.
- * 실제로 열어 봐야 안다.
+ * 지형이 없는 화면을 그렸다. 또 변경되지 않았다는 응답만 담겨 퀘스트와 스폰 마커가 비었는데도
+ * 마커 층이 있다는 이유로 통과한 적이 있다(2026-08-22). 파일 수나 DOM 껍데기만 봐서는 부족하다.
  *
  * 무엇을 하는가: 앱의 로컬 모드와 같은 규칙을 브라우저 밖에서 흉내 낸다. 모든 요청을 가로채
  * 사본에 있으면 그 본문으로 응답하고, 없으면 실패시킨다. 네트워크로 나가는 요청이 하나도
- * 없으므로 인터넷이 끊긴 상태와 같다. 그 상태에서 맵마다 바닥 맵, 마커 층, window.pilot이
- * 있는지 본다.
+ * 없으므로 인터넷이 끊긴 상태와 같다. 브라우저를 열기 전에는 캐시에 의존하는 notModified
+ * 응답이 없는지 본문을 검사하고, 연 뒤에는 맵마다 바닥 맵과 마커가 실제로 그려졌는지 본다.
  *
  * 사용법:
  *   node tools/verify-archive.mjs                      모든 맵
@@ -84,11 +84,36 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 // 앱과 같은 방식으로 색인을 합친다. 같은 주소가 맵마다 나오지만 내용이 같으므로 처음 것만 쓴다
 const index = new Map();
+const bodies = new Map();
+const notModifiedBodies = new Map();
+const invalidResponses = [];
+
+const readBlob = async (blob) => {
+  if (!bodies.has(blob)) bodies.set(blob, await readFile(path.join(ARCHIVE, 'blobs', blob)));
+  return bodies.get(blob);
+};
+
+async function isNotModifiedResponse(entry) {
+  if (notModifiedBodies.has(entry.blob)) return notModifiedBodies.get(entry.blob);
+
+  let notModified = false;
+  try {
+    const response = JSON.parse((await readBlob(entry.blob)).toString('utf8'));
+    notModified = response !== null && !Array.isArray(response) && response.notModified === true;
+  } catch {
+    notModified = false;
+  }
+
+  notModifiedBodies.set(entry.blob, notModified);
+  return notModified;
+}
+
 for (const mapId of ALL_MAPS) {
   const indexPath = path.join(ARCHIVE, 'maps', `${mapId}.json`);
   if (!existsSync(indexPath)) continue;
 
   for (const [url, entry] of Object.entries(JSON.parse(await readFile(indexPath, 'utf8')))) {
+    if (await isNotModifiedResponse(entry)) invalidResponses.push({ mapId, url });
     if (!index.has(url)) index.set(url, entry);
   }
 }
@@ -98,13 +123,13 @@ if (index.size === 0) {
   process.exit(1);
 }
 
-console.log(`사본 ${ARCHIVE}, 항목 ${index.size}개`);
+if (invalidResponses.length > 0) {
+  console.error(`사본에 캐시 없이는 쓸 수 없는 notModified 응답 ${invalidResponses.length}개가 있습니다.`);
+  for (const { mapId, url } of invalidResponses) console.error(`  ${mapId}: ${url}`);
+  process.exit(1);
+}
 
-const bodies = new Map();
-const readBlob = async (blob) => {
-  if (!bodies.has(blob)) bodies.set(blob, await readFile(path.join(ARCHIVE, 'blobs', blob)));
-  return bodies.get(blob);
-};
+console.log(`사본 ${ARCHIVE}, 항목 ${index.size}개, notModified 응답 없음`);
 
 // 앱의 MapArchive.Find와 같은 규칙: 정확히 일치, 없으면 질의를 뗀 주소로 한 번 더
 const find = (url) => index.get(url) ?? (url.includes('?') ? index.get(url.split('?')[0]) : undefined);
@@ -138,6 +163,7 @@ const ws = new WebSocket(page.webSocketDebuggerUrl);
 let nextId = 1;
 const pending = new Map();
 const blocked = new Set();
+const fallbacks = new Set();
 
 const send = (method, params = {}) =>
   new Promise((resolve, reject) => {
@@ -166,6 +192,8 @@ ws.addEventListener('message', async (message) => {
     send('Fetch.failRequest', { requestId, errorReason: 'ConnectionRefused' }).catch(() => {});
     return;
   }
+
+  if (!index.has(request.url)) fallbacks.add(request.url);
 
   const body = await readBlob(entry.blob);
   send('Fetch.fulfillRequest', {
@@ -209,12 +237,36 @@ const captureScreenshot = async (name) => {
 const CHECK = `JSON.stringify((() => {
   const svg = document.querySelector('svg.svg-map');
   const layer = document.querySelector('svg.map-layer');
-  const canvas = document.querySelector('canvas.doc-map-canvas');
+  const mapCanvas = document.querySelector('canvas.doc-map-canvas');
+  const markerCanvas = document.querySelector('canvas.markers-canvas');
+  let markerPixels = 0;
+
+  try {
+    if (markerCanvas) {
+      // 원본 캔버스를 맵마다 통째로 읽으면 큰 픽셀 배열이 쌓여 뒤쪽 맵의 렌더링을 방해한다.
+      // 작은 캔버스로 축소해도 마커가 실제로 그려졌는지는 알 수 있다.
+      const sampleCanvas = document.createElement('canvas');
+      sampleCanvas.width = 160;
+      sampleCanvas.height = 160;
+      const sampleContext = sampleCanvas.getContext('2d');
+      sampleContext.drawImage(markerCanvas, 0, 0, sampleCanvas.width, sampleCanvas.height);
+      const pixels = sampleContext.getImageData(0, 0, sampleCanvas.width, sampleCanvas.height).data;
+
+      for (let alpha = 3; alpha < pixels.length; alpha += 4) {
+        if (pixels[alpha] > 0) markerPixels++;
+      }
+    }
+  } catch {
+    markerPixels = -1;
+  }
+
   return {
     baseMap: svg ? svg.getAttribute('class') : null,
     groups: svg ? svg.children.length : 0,
     markerLayer: !!layer,
-    canvas: canvas ? Math.round(canvas.getBoundingClientRect().width) : 0,
+    canvas: mapCanvas ? Math.round(mapCanvas.getBoundingClientRect().width) : 0,
+    markerPixels,
+    questRows: document.querySelectorAll('.tools_quests [data-quest-uid]').length,
     pilot: typeof window.pilot,
   };
 })())`;
@@ -507,18 +559,21 @@ if (LOCAL_CORE) {
 } else {
   for (const mapId of MAPS) {
     blocked.clear();
+    fallbacks.clear();
 
     await send('Page.navigate', { url: `https://tarkov-market.com/maps/${mapId}` });
     await sleep(SETTLE);
 
     const state = JSON.parse(await evaluate(CHECK));
-    const ok = !!state.baseMap && state.groups > 0 && state.markerLayer && state.canvas > 0;
+    const ok = !!state.baseMap && state.groups > 0 && state.markerLayer &&
+      state.canvas > 0 && state.markerPixels > 0 && state.questRows > 0;
     if (!ok) failed++;
 
     console.log(
       `${ok ? 'OK  ' : '실패'} ${mapId.padEnd(12)} 바닥맵 ${state.baseMap || '없음'} ` +
-      `(그림 ${state.groups}겹), 마커층 ${state.markerLayer ? '있음' : '없음'}, ` +
-      `pilot ${state.pilot}, 막은 요청 ${blocked.size}개`
+      `(그림 ${state.groups}겹), 마커 표본 ${state.markerPixels.toLocaleString()}픽셀, ` +
+      `퀘스트 ${state.questRows}개, pilot ${state.pilot}, 질의 제거 ${fallbacks.size}개, ` +
+      `막은 요청 ${blocked.size}개`
     );
 
     if (!ok) for (const url of [...blocked].slice(0, 10)) console.log(`       막힘: ${url.slice(0, 110)}`);

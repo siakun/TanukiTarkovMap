@@ -559,11 +559,6 @@
   "mime": "application/json",
   "status": 200
  },
- "https://tarkov-market.com/api/be/quests/all?hash=195554ca5a0f5b99c1864e9d0fa98527": {
-  "blob": "9b2274c2f82fd1e145d2aa48bf37300b60325405",
-  "mime": "application/json",
-  "status": 200
- },
  "https://tarkov-market.com/api/be/user-layers/list?map=ground-zero": {
   "blob": "d4d587808b347efd83ec9fb2f7d8377f14b24e73",
   "mime": "application/json",

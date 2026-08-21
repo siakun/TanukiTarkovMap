@@ -5,9 +5,9 @@
  * 왜 도구로 만드는가: 사본을 사람이 손으로 모으면 사이트가 바뀔 때마다 낡고, 무엇이 빠졌는지
  * 알 방법이 없다. 한 번의 명령으로 다시 만들 수 있어야 갱신이 유지된다.
  *
- * 무엇을 저장하는가: 맵 페이지를 실제 브라우저로 열고 그 페이지가 받은 모든 응답을 저장한다.
- * 앱은 오프라인일 때 이 응답을 그대로 돌려주므로, 사이트 코드가 무엇을 필요로 하는지 우리가
- * 알아낼 필요가 없다.
+ * 무엇을 저장하는가: 맵 페이지를 실제 브라우저로 열고 그 페이지가 받은 재사용 가능한 응답
+ * 본문을 저장한다. 앱은 오프라인일 때 이 응답을 그대로 돌려주므로, 사이트 코드가 무엇을
+ * 필요로 하는지 우리가 알아낼 필요가 없다.
  *
  * 저장 구조: 같은 파일이 맵마다 반복되지 않도록 내용 해시로 blobs에 한 번만 두고,
  * 맵별 index.json이 주소에서 그 해시를 가리킨다. JS 번들과 폰트가 12개 맵에 공통이라
@@ -183,6 +183,15 @@ async function fetchBody(url, referer) {
   return null;
 }
 
+function isNotModifiedResponse(buffer) {
+  try {
+    const response = JSON.parse(buffer.toString('utf8'));
+    return response !== null && !Array.isArray(response) && response.notModified === true;
+  } catch {
+    return false;
+  }
+}
+
 /**
  * 응답 하나를 사본에 담는다. 본문이 비면 직접 받아 채우고, 그래도 비면 담지 않고 보고한다
  */
@@ -207,6 +216,10 @@ async function saveResponse(requestId, info, referer, index) {
 
     buffer = fetched.body;
   }
+
+  // notModified는 기존 본문을 브라우저 캐시에서 계속 쓰라는 지시일 뿐 데이터가 아니다.
+  // 이 응답을 저장하면 해시가 붙은 주소가 실제 본문보다 먼저 선택되어 새 브라우저에서 데이터가 빈다.
+  if (isNotModifiedResponse(buffer)) return;
 
   const hash = crypto.createHash('sha1').update(buffer).digest('hex');
   const blobPath = path.join(OUT, 'blobs', hash);

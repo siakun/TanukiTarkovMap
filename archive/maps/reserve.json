@@ -524,11 +524,6 @@
   "mime": "text/javascript",
   "status": 200
  },
- "https://tarkov-market.com/api/be/quests/all?hash=195554ca5a0f5b99c1864e9d0fa98527": {
-  "blob": "9b2274c2f82fd1e145d2aa48bf37300b60325405",
-  "mime": "application/json",
-  "status": 200
- },
  "https://tarkov-market.com/_nuxt3/BE5GWKlq.js": {
   "blob": "ee85036a9cdd5da4b843f2e6262fd6c11f229a03",
   "mime": "text/javascript",
@@ -547,11 +542,6 @@
  "https://tarkov-market.com/_nuxt3/B3hqyQkC.js": {
   "blob": "19be1b0f4b0f54d0702ff7b4b119e81b4c8cad75",
   "mime": "text/javascript",
-  "status": 200
- },
- "https://tarkov-market.com/api/be/markers/list?hash=ed630b17c75d6916bd6dc49658743a08": {
-  "blob": "9ab4af3fb8f2c7032840b13b47ea904bde5b79c6",
-  "mime": "application/json",
   "status": 200
  },
  "https://cdn.tarkov-market.app/images/items/d3b419af-63ba-41d5-84e0-2799623449e0_enImg.webp?r=1736024954879": {
