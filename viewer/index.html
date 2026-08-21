@@ -1,0 +1,93 @@
+<!doctype html>
+<!--
+이 화면은 로컬 맵 뷰어 1단계 스파이크다. 지도 자체를 화면의 중심에 두고, 왼쪽 계기판에는
+지형을 해석하는 데 필요한 레벨과 좌표 조작만 둔다. 지도와 설정은 resources에서 읽으므로
+데이터를 갱신할 때 이 파일을 고치지 않는다.
+-->
+<html lang="ko" data-viewer-state="loading">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Tanuki Local Map</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="viewer-shell">
+    <aside class="control-panel" aria-label="지도 조작">
+      <header class="viewer-header">
+        <p class="viewer-kicker">Tanuki local map</p>
+        <h1 id="mapTitle">지도 불러오는 중</h1>
+        <p class="viewer-subtitle">오프라인 전술 지도</p>
+      </header>
+
+      <section class="control-section" aria-labelledby="levelHeading">
+        <div class="section-heading">
+          <h2 id="levelHeading">레벨 표시</h2>
+          <span class="section-code">LAYERS</span>
+        </div>
+        <div id="levelControls" class="level-controls"></div>
+      </section>
+
+      <section class="control-section" aria-labelledby="positionHeading">
+        <div class="section-heading">
+          <h2 id="positionHeading">게임 좌표</h2>
+          <span class="section-code">POSITION</span>
+        </div>
+        <form id="positionForm" class="position-form">
+          <div class="coordinate-fields">
+            <label>
+              <span>X</span>
+              <input id="gameX" name="gameX" type="number" step="any" inputmode="decimal" placeholder="0" required>
+            </label>
+            <label>
+              <span>Y</span>
+              <input id="gameY" name="gameY" type="number" step="any" inputmode="decimal" placeholder="0" required>
+            </label>
+          </div>
+          <button type="submit" class="position-submit">위치 표시</button>
+        </form>
+        <output id="coordinateResult" class="coordinate-result" aria-live="polite">
+          좌표를 입력하면 변환한 지도 좌표를 표시합니다.
+        </output>
+      </section>
+
+      <div class="interaction-guide" aria-label="지도 조작법">
+        <span><kbd>휠</kbd> 확대</span>
+        <span><kbd>끌기</kbd> 이동</span>
+        <span><kbd>0</kbd> 초기화</span>
+      </div>
+
+      <footer class="source-note">
+        <span>지도 데이터</span>
+        <strong>tarkov-market / HighTek 레이어</strong>
+      </footer>
+    </aside>
+
+    <main class="map-panel">
+      <div class="map-readout" aria-hidden="true">
+        <span id="mapCode">SHORELINE</span>
+        <span class="readout-rule"></span>
+        <span id="zoomReadout">080%</span>
+      </div>
+
+      <div
+        id="mapViewport"
+        class="map-viewport"
+        tabindex="0"
+        aria-label="지도. 마우스 휠로 확대하고 끌어서 이동합니다."
+      ></div>
+
+      <nav class="map-toolbar" aria-label="지도 배율">
+        <button id="zoomOut" type="button" aria-label="축소">−</button>
+        <button id="resetView" type="button">초기화</button>
+        <button id="zoomIn" type="button" aria-label="확대">+</button>
+      </nav>
+
+      <div id="loadStatus" class="load-status" role="status">지형을 불러오는 중입니다.</div>
+    </main>
+  </div>
+
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

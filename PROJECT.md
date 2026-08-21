@@ -305,6 +305,10 @@ double ActualWindowOpacity // 실제 적용 투명도 (계산됨)
 ## 프로젝트 구조
 
 ```
+archive/                    # 현재 로컬 모드가 돌려주는 사이트 응답 사본
+resources/                  # 자체 뷰어가 읽는 맵 데이터
+tools/                      # 사본 수집, 리소스 추출과 검증 도구
+viewer/                     # 생 JavaScript와 SVG로 만든 독립 뷰어
 src/TanukiTarkovMap/
 ├── Models/
 │   ├── Data/           # 데이터 모델 (MapInfo, Settings 등)
@@ -317,6 +321,37 @@ src/TanukiTarkovMap/
 ├── Views/              # WPF XAML 뷰
 ├── Converters/         # WPF Value Converters
 └── Resources/          # XAML 리소스 (스타일)
+```
+
+### 로컬 맵 뷰어 스파이크
+
+`viewer/`는 tarkov-market 사이트 번들을 실행하지 않고 `resources/`의 SVG와 JSON을 직접 읽습니다.
+맵 목록은 `resources/manifest.json`이 정하고, 맵마다 지형과 설정을 같은 폴더에 둡니다. 따라서 새
+맵을 넣거나 기존 맵을 갱신할 때 뷰어 코드를 고치지 않습니다. `resources/`에는 실행 코드를 두지
+않으며, 추출 도구와 뷰어가 SVG의 스크립트, 이벤트 속성, 외부 실행 URL을 각각 거부합니다.
+
+```mermaid
+flowchart LR
+    ARCHIVE[archive 사본] --> EXTRACT[extract-resources.mjs]
+    EXTRACT --> RESOURCES[resources 맵 데이터]
+    RESOURCES --> VIEWER[viewer ES 모듈]
+    RESOURCES --> VERIFY[verify-resources.mjs]
+    VIEWER --> VERIFY
+    ONLINE[tarkov-market 온라인 지도] --> COORDS[verify-coordinates.mjs]
+    VIEWER --> COORDS
+```
+
+현재는 독립 스파이크이며 앱의 로컬 모드에는 연결하지 않았습니다. 앱은 계속 `MapArchive`와
+`ArchiveResourceRequestHandlerFactory`로 `archive/`를 읽습니다. 자체 뷰어로 바꾸는 앱 통합은
+[로컬 맵 뷰어 재구성 설계](docs/20260821-local-viewer-design.md)의 4단계이고, 시작하기 전에 사용자
+확인이 필요합니다.
+
+다음 명령으로 스파이크를 같은 입력에서 다시 만들고 검사합니다.
+
+```bash
+node tools/extract-resources.mjs --maps shoreline
+node tools/verify-resources.mjs --maps shoreline
+node tools/verify-coordinates.mjs --map shoreline --x 100 --y 200
 ```
 
 ---
