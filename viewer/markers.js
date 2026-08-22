@@ -7,8 +7,21 @@ function assertMarkerData(markerData) {
   if (markerData.coordinateSpace !== 'map') {
     throw new Error(`지원하지 않는 마커 좌표계입니다: ${markerData.coordinateSpace}`);
   }
-  if (!Array.isArray(markerData.categories) || !Array.isArray(markerData.markers)) {
-    throw new Error('markers.json에 categories 또는 markers 배열이 없습니다.');
+  if (!Array.isArray(markerData.factions) || !Array.isArray(markerData.categories)
+    || !Array.isArray(markerData.markers)) {
+    throw new Error('markers.json에 factions, categories 또는 markers 배열이 없습니다.');
+  }
+
+  const factionIds = new Set();
+  for (const faction of markerData.factions) {
+    if (!faction.id || factionIds.has(faction.id) || typeof faction.label !== 'string') {
+      throw new Error(`진영이 없거나 중복됩니다: ${faction.id}`);
+    }
+    factionIds.add(faction.id);
+  }
+  if (factionIds.size === 0) throw new Error('markers.json에 진영이 없습니다.');
+  if (markerData.factions.filter((faction) => faction.defaultSelected).length !== 1) {
+    throw new Error('markers.json은 기본 진영을 하나만 지정해야 합니다.');
   }
 
   const categoryIds = new Set();
@@ -21,6 +34,12 @@ function assertMarkerData(markerData) {
     if (subtypeList.some((subtypeId) => !subtypeId)
       || new Set(subtypeList).size !== subtypeList.length) {
       throw new Error(`${category.id}: 마커 세부 종류가 없거나 중복됩니다.`);
+    }
+    for (const subtype of category.subtypes) {
+      if (!Array.isArray(subtype.factions) || subtype.factions.length === 0
+        || subtype.factions.some((factionId) => !factionIds.has(factionId))) {
+        throw new Error(`${category.id}/${subtype.id}: 진영 구분이 올바르지 않습니다.`);
+      }
     }
     categoryIds.add(category.id);
     subtypeIds.set(category.id, new Set(subtypeList));
@@ -50,6 +69,7 @@ export function createMapMarkers(markerLayer, markerData, initiallyVisibleLevels
     markerData.categories.map((category) => [category.id, category.defaultVisible !== false])
   );
   const visibleLevels = new Set(initiallyVisibleLevels);
+  let activeFaction = markerData.factions.find((faction) => faction.defaultSelected).id;
   const renderedMarkers = [];
   const fragment = document.createDocumentFragment();
 
@@ -64,6 +84,7 @@ export function createMapMarkers(markerLayer, markerData, initiallyVisibleLevels
     marker.dataset.markerId = markerDataEntry.id;
     marker.dataset.markerCategory = markerDataEntry.category;
     marker.dataset.markerSubtype = markerDataEntry.subtype;
+    marker.dataset.markerFactions = subtype.factions.join(' ');
     marker.dataset.markerLevel = markerDataEntry.levelId;
     marker.dataset.markerName = markerName;
     marker.dataset.mapX = String(markerDataEntry.position.x);
@@ -78,14 +99,15 @@ export function createMapMarkers(markerLayer, markerData, initiallyVisibleLevels
     label.textContent = markerName;
     marker.append(symbol, label);
     fragment.append(marker);
-    renderedMarkers.push({ element: marker, data: markerDataEntry });
+    renderedMarkers.push({ element: marker, data: markerDataEntry, subtype });
   }
   markerLayer.append(fragment);
 
   function updateVisibility() {
     for (const marker of renderedMarkers) {
       marker.element.hidden = !categoryVisibility.get(marker.data.category)
-        || !visibleLevels.has(marker.data.levelId);
+        || !visibleLevels.has(marker.data.levelId)
+        || !marker.subtype.factions.includes(activeFaction);
     }
   }
 
@@ -102,6 +124,13 @@ export function createMapMarkers(markerLayer, markerData, initiallyVisibleLevels
       visible ? visibleLevels.add(levelId) : visibleLevels.delete(levelId);
       updateVisibility();
     },
+    setFaction(factionId) {
+      if (!markerData.factions.some((faction) => faction.id === factionId)) {
+        throw new Error(`markers.json에 ${factionId} 진영이 없습니다.`);
+      }
+      activeFaction = factionId;
+      updateVisibility();
+    },
   };
 }
 
@@ -111,6 +140,8 @@ export function createPositionMarker(markerLayer) {
   marker.hidden = true;
   marker.setAttribute('aria-hidden', 'true');
 
+  const direction = document.createElement('span');
+  direction.className = 'position-marker__direction';
   const ring = document.createElement('span');
   ring.className = 'position-marker__ring';
   const core = document.createElement('span');
@@ -118,15 +149,26 @@ export function createPositionMarker(markerLayer) {
   const label = document.createElement('span');
   label.className = 'position-marker__label';
   label.textContent = 'YOU';
-  marker.append(ring, core, label);
+  marker.append(direction, ring, core, label);
   markerLayer.append(marker);
 
   return {
-    show(mapPosition) {
+    show(mapPosition, mapDirection = null) {
       marker.style.left = `${mapPosition.x}px`;
       marker.style.top = `${mapPosition.y}px`;
       marker.dataset.mapX = String(mapPosition.x);
       marker.dataset.mapY = String(mapPosition.y);
+      if (mapDirection === null) {
+        delete marker.dataset.mapDirection;
+        direction.hidden = true;
+      } else {
+        if (!Number.isFinite(mapDirection)) {
+          throw new TypeError('mapDirection은 유한한 숫자여야 합니다.');
+        }
+        marker.dataset.mapDirection = String(mapDirection);
+        marker.style.setProperty('--direction-angle', `${mapDirection}deg`);
+        direction.hidden = false;
+      }
       marker.hidden = false;
       marker.classList.remove('is-pinging');
       void marker.offsetWidth;

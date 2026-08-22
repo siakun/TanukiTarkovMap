@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "mapId": "icebreaker",
+  "title": "Icebreaker",
+  "size": {
+    "width": 5000,
+    "height": 8400
+  },
+  "zoom": 0.24,
+  "minZoom": 0.12,
+  "maxZoom": 10,
+  "transform": {
+    "rotate": 90,
+    "xOffset": 2500,
+    "yOffset": 4200,
+    "invertX": false,
+    "invertY": false,
+    "ratio": 25
+  },
+  "levels": [
+    {
+      "id": "bridge_roof",
+      "label": "Bridge Roof",
+      "sourceLevel": 10,
+      "terrainGroupId": "bridge_roof",
+      "defaultVisible": false
+    },
+    {
+      "id": "bridge",
+      "label": "Bridge",
+      "sourceLevel": 9,
+      "terrainGroupId": "bridge",
+      "defaultVisible": false
+    },
+    {
+      "id": "stairs_blocked",
+      "label": "Stairs (blocked)",
+      "sourceLevel": 8,
+      "terrainGroupId": "stairs_blocked",
+      "defaultVisible": false
+    },
+    {
+      "id": "officers_deck",
+      "label": "Officers Deck",
+      "sourceLevel": 7,
+      "terrainGroupId": "officers_deck",
+      "defaultVisible": false
+    },
+    {
+      "id": "accomodation_6",
+      "label": "Accomodation 3",
+      "sourceLevel": 6,
+      "terrainGroupId": "accomodation_6",
+      "defaultVisible": false
+    },
+    {
+      "id": "accomodation_5",
+      "label": "Accomodation 2",
+      "sourceLevel": 5,
+      "terrainGroupId": "accomodation_5",
+      "defaultVisible": false
+    },
+    {
+      "id": "accomodation_4",
+      "label": "Accomodation 1",
+      "sourceLevel": 4,
+      "terrainGroupId": "accomodation_4",
+      "defaultVisible": false
+    },
+    {
+      "id": "gym_canteen",
+      "label": "Gym / Canteen",
+      "sourceLevel": 3,
+      "terrainGroupId": "gym_canteen",
+      "defaultVisible": false
+    },
+    {
+      "id": "helipad",
+      "label": "Helipad",
+      "sourceLevel": 2,
+      "terrainGroupId": "helipad",
+      "defaultVisible": false
+    },
+    {
+      "id": "main_infirmary",
+      "label": "Main - Infirmary",
+      "sourceLevel": 1,
+      "terrainGroupId": "main_infirmary",
+      "defaultVisible": true
+    },
+    {
+      "id": "storage_security",
+      "label": "Storage & Security",
+      "sourceLevel": 0,
+      "terrainGroupId": "storage_security",
+      "defaultVisible": false
+    },
+    {
+      "id": "fuel_pumps",
+      "label": "Fuel Pumps",
+      "sourceLevel": -1,
+      "terrainGroupId": "fuel_pumps",
+      "defaultVisible": false
+    },
+    {
+      "id": "engine_room",
+      "label": "Engine Room",
+      "sourceLevel": -2,
+      "terrainGroupId": "engine_room",
+      "defaultVisible": false
+    },
+    {
+      "id": "lower_automation",
+      "label": "Lower Automation",
+      "sourceLevel": -3,
+      "terrainGroupId": "lower_automation",
+      "defaultVisible": false
+    }
+  ],
+  "source": {
+    "site": "https://tarkov-market.com",
+    "page": "https://tarkov-market.com/maps/icebreaker",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
+    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/M44xNwy0.js",
+    "terrainBlob": "fc6483253e9ebba1c6da7c6073585237c4554d3a",
+    "coordinateFormula": {
+      "rotation": "-transform.rotate degrees",
+      "mapX": "xOffset - rotatedX * ratio",
+      "mapY": "yOffset - rotatedY * ratio",
+      "rounding": "4 decimal places"
+    },
+    "directionFormula": {
+      "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
+      "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
+      "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
+    }
+  }
+}

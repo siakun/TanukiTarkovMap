@@ -6,8 +6,8 @@
  * markers.json으로 바꾼다. 실측값을 손으로 옮기지 않고 원본 blob과 함께 기록해야 사이트가
  * 바뀌었을 때 차이를 추적할 수 있다.
  *
- * 현재 범위: 2단계 대상인 shoreline만 지원한다. 다른 맵은 설정과 지형을 찾는 공통 경로를
- * 그대로 쓰되, 레벨 의미를 확인하기 전에는 지원 목록에 넣지 않는다.
+ * 대상 맵은 MapConfiguration.cs에서 읽는다. 맵 목록을 도구에 다시 적지 않아 앱에 맵이
+ * 늘거나 빠졌는데 리소스만 조용히 뒤처지는 일을 막는다.
  *
  * 사용법:
  *   node tools/extract-resources.mjs
@@ -24,20 +24,16 @@ import { existsSync } from 'node:fs';
 import { createServer as createNetServer } from 'node:net';
 import path from 'node:path';
 import os from 'node:os';
+import { fileURLToPath } from 'node:url';
 
-const SUPPORTED_MAPS = new Set(['shoreline']);
-const LEVEL_LABELS = {
-  basement: '지하',
-  main: '지상',
-  level2: '2층',
-  level3: '3층',
-};
-const SITE_LEVEL_IDS = new Map([
-  [-1, 'basement'],
-  [1, 'main'],
-  [2, 'level2'],
-  [3, 'level3'],
-]);
+const toolDirectory = path.dirname(fileURLToPath(import.meta.url));
+const repositoryRoot = path.resolve(toolDirectory, '..');
+const MARKER_FACTIONS = [
+  { id: 'pmc', label: 'PMC', defaultSelected: true },
+  { id: 'scav', label: 'SCAV', defaultSelected: false },
+];
+// 2026-08-19 archive의 지도 blob 0ffa064b...는 Transition을 PMC Extraction과 같은
+// #70a800 규칙으로 그린다. Co-Op은 두 진영이 함께 써야 하므로 어느 진영에서도 표시한다.
 const MARKER_CATEGORIES = [
   {
     id: 'extraction',
@@ -45,23 +41,10 @@ const MARKER_CATEGORIES = [
     sourceCategory: 'Extractions',
     defaultVisible: true,
     subtypes: [
-      { id: 'transit', label: 'Transit', sourceSubtype: 'Transition' },
-      { id: 'pmc', label: 'PMC', sourceSubtype: 'PMC Extraction' },
-      { id: 'scav', label: 'Scav', sourceSubtype: 'Scav Extraction' },
-      { id: 'co-op', label: 'Co-Op', sourceSubtype: 'Co-Op Extraction' },
-    ],
-  },
-  {
-    id: 'spawn',
-    label: '스폰',
-    sourceCategory: 'Spawns',
-    defaultVisible: true,
-    subtypes: [
-      { id: 'pmc', label: 'PMC', sourceSubtype: 'PMC Spawn' },
-      { id: 'scav', label: 'Scav', sourceSubtype: 'Scav Spawn' },
-      { id: 'sniper-scav', label: 'Sniper Scav', sourceSubtype: 'Sniper Scav' },
-      { id: 'boss', label: 'Boss', sourceSubtype: 'Boss Spawn' },
-      { id: 'cultist', label: 'Cultist', sourceSubtype: 'Cultist Spawn' },
+      { id: 'transit', label: 'Transit', sourceSubtype: 'Transition', factions: ['pmc'] },
+      { id: 'pmc', label: 'PMC', sourceSubtype: 'PMC Extraction', factions: ['pmc'] },
+      { id: 'scav', label: 'SCAV', sourceSubtype: 'Scav Extraction', factions: ['scav'] },
+      { id: 'co-op', label: 'Co-Op', sourceSubtype: 'Co-Op Extraction', factions: ['pmc', 'scav'] },
     ],
   },
 ];
@@ -82,22 +65,30 @@ function argValue(name, fallback) {
   return args[index + 1];
 }
 
-const archivePath = path.resolve(argValue('--archive', path.join(process.cwd(), 'archive')));
-const outputPath = path.resolve(argValue('--out', path.join(process.cwd(), 'resources')));
-const requestedMaps = argValue('--maps', 'shoreline')
-  .split(',')
-  .map((mapId) => mapId.trim())
-  .filter(Boolean);
+const archivePath = path.resolve(argValue('--archive', path.join(repositoryRoot, 'archive')));
+const outputPath = path.resolve(argValue('--out', path.join(repositoryRoot, 'resources')));
+const archiveManifest = await readJson(path.join(archivePath, 'manifest.json'), 'archive manifest');
+const configuredMaps = await readConfiguredMapIds();
+const requestedMapArgument = argValue('--maps', '').trim();
+const requestedMaps = requestedMapArgument
+  ? requestedMapArgument.split(',').map((mapId) => mapId.trim()).filter(Boolean)
+  : configuredMaps;
 
 if (requestedMaps.length === 0) throw new Error('추출할 맵을 하나 이상 지정해야 합니다.');
+if (new Set(requestedMaps).size !== requestedMaps.length) {
+  throw new Error('추출할 맵 ID가 중복됩니다.');
+}
 
+const configuredMapSet = new Set(configuredMaps);
 for (const mapId of requestedMaps) {
-  if (!SUPPORTED_MAPS.has(mapId)) {
-    throw new Error(`${mapId}: 레벨 구조를 아직 검증하지 않아 추출할 수 없습니다.`);
+  if (!configuredMapSet.has(mapId)) {
+    throw new Error(`${mapId}: MapConfiguration.cs에 없는 맵입니다.`);
+  }
+  if (!archiveManifest.maps?.[mapId]) {
+    throw new Error(`${mapId}: archive manifest에 없는 맵입니다.`);
   }
 }
 
-const archiveManifest = await readJson(path.join(archivePath, 'manifest.json'), 'archive manifest');
 const blobCache = new Map();
 
 async function readJson(filePath, description) {
@@ -106,6 +97,24 @@ async function readJson(filePath, description) {
   } catch (error) {
     throw new Error(`${description}를 읽지 못했습니다: ${filePath}\n${error.message}`);
   }
+}
+
+async function readConfiguredMapIds() {
+  const configurationPath = path.join(
+    repositoryRoot,
+    'src',
+    'TanukiTarkovMap',
+    'Models',
+    'Data',
+    'MapConfiguration.cs'
+  );
+  const source = await readFile(configurationPath, 'utf8');
+  const mapIds = [...source.matchAll(/new MapInfo\("([a-z0-9-]+)"/g)]
+    .map((match) => match[1]);
+  if (mapIds.length === 0 || new Set(mapIds).size !== mapIds.length) {
+    throw new Error('MapConfiguration.cs에서 고유한 맵 ID 목록을 읽지 못했습니다.');
+  }
+  return mapIds;
 }
 
 async function readBlob(blobHash) {
@@ -209,10 +218,12 @@ function hasCoordinateFormula(bundle) {
 }
 
 function extractSvgMarkup(moduleText) {
-  const defsIndex = moduleText.indexOf('<defs>');
-  if (defsIndex < 0) throw new Error('지형 모듈에서 <defs>를 찾지 못했습니다.');
+  const markupIndex = moduleText.indexOf('<defs>') >= 0
+    ? moduleText.indexOf('<defs>')
+    : moduleText.indexOf('<g id="wrapper">');
+  if (markupIndex < 0) throw new Error('지형 모듈에서 SVG 내용의 시작을 찾지 못했습니다.');
 
-  const quoteIndex = moduleText.lastIndexOf("'", defsIndex);
+  const quoteIndex = moduleText.lastIndexOf("'", markupIndex);
   if (quoteIndex < 0) throw new Error('지형 SVG 문자열의 시작을 찾지 못했습니다.');
 
   let escaped = false;
@@ -321,14 +332,59 @@ function formatSvg(mapId, settings, innerMarkup, source) {
   ].join('\n');
 }
 
-function findLevels(markup) {
-  const levels = Object.entries(LEVEL_LABELS)
-    .filter(([levelId]) => new RegExp(`\\bid=["']${escapePattern(levelId)}["']`).test(markup))
-    .map(([id, label]) => ({ id, label, defaultVisible: id === 'main' }));
+function findLevels(mapId, markup, renderedLevels, sourceMarkers) {
+  const sourceLevelNumbers = new Set(sourceMarkers.map((marker) => marker.siteLevel));
+  const seenIds = new Set();
+  const seenNumbers = new Set();
+  const levels = renderedLevels.map((level) => {
+    if (!level.id || seenIds.has(level.id) || !Number.isFinite(level.sourceLevel)
+      || seenNumbers.has(level.sourceLevel) || typeof level.label !== 'string') {
+      throw new Error(
+        `${mapId}: 사이트 레벨 목록이 없거나 중복됩니다: ${JSON.stringify(level)}`
+      );
+    }
+    seenIds.add(level.id);
+    seenNumbers.add(level.sourceLevel);
+    const hasTerrainGroup = new RegExp(
+      `<g\\s+[^>]*\\bid=["']${escapePattern(level.id)}["']`
+    ).test(markup);
+    return {
+      id: level.id,
+      label: level.label,
+      sourceLevel: level.sourceLevel,
+      terrainGroupId: hasTerrainGroup ? level.id : null,
+      defaultVisible: level.defaultVisible,
+    };
+  });
 
-  if (levels.length !== Object.keys(LEVEL_LABELS).length) {
-    throw new Error(`shoreline 레벨 그룹이 ${levels.length}개만 있습니다.`);
+  if (levels.length === 0) {
+    if (sourceLevelNumbers.size > 1) {
+      throw new Error(`${mapId}: 여러 마커 레벨이 있지만 사이트 레벨 목록을 찾지 못했습니다.`);
+    }
+    const sourceLevel = sourceLevelNumbers.size === 1 ? [...sourceLevelNumbers][0] : 1;
+    const hasMainGroup = /<g\s+[^>]*\bid=["']main["']/.test(markup);
+    levels.push({
+      id: 'main',
+      label: '지상',
+      sourceLevel,
+      terrainGroupId: hasMainGroup ? 'main' : null,
+      defaultVisible: true,
+    });
+    seenNumbers.add(sourceLevel);
   }
+
+  const missingSourceLevel = [...sourceLevelNumbers]
+    .find((sourceLevel) => !seenNumbers.has(sourceLevel));
+  if (missingSourceLevel !== undefined) {
+    throw new Error(`${mapId}: 사이트 목록에 없는 마커 레벨입니다: ${missingSourceLevel}`);
+  }
+  if (levels.filter((level) => level.defaultVisible).length !== 1) {
+    throw new Error(`${mapId}: 기본 표시 레벨을 하나로 특정하지 못했습니다.`);
+  }
+  if (levels.length > 1 && levels.some((level) => level.terrainGroupId === null)) {
+    throw new Error(`${mapId}: 여러 레벨 중 지형 그룹이 없는 항목이 있습니다.`);
+  }
+
   return levels;
 }
 
@@ -360,12 +416,15 @@ async function findSource(index, mapId) {
   for (const [url, entry] of javascriptEntries) {
     const moduleText = await readBlob(entry.blob);
     if (!moduleText.includes(`viewBox:"0 0 ${width} ${height}"`)) continue;
-    if (!moduleText.includes('<g id="wrapper">') || !moduleText.includes('<defs>')) continue;
+    if (!moduleText.includes('<g id="wrapper">')) continue;
     terrainSources.push({ url, entry, moduleText });
   }
 
   if (terrainSources.length !== 1) {
-    throw new Error(`${mapId}: 지형 module을 하나로 특정하지 못했습니다 (${terrainSources.length}개).`);
+    throw new Error(
+      `${mapId}: ${width}x${height} 지형 module을 하나로 특정하지 못했습니다 ` +
+      `(${terrainSources.length}개).`
+    );
   }
 
   return { settingsSource, terrainSource: terrainSources[0] };
@@ -602,8 +661,41 @@ async function extractRenderedMarkerState(index, mapId, pageUrl) {
           position: siteMap.gamePosToMapPos(marker.geometry.x, marker.geometry.y),
         }));
 
+      const levelById = new Map();
+      const layerSettings = leftPanel.props.visibleLayers || {};
+      for (const element of document.querySelectorAll('[data-layer]')) {
+        const input = element.querySelector('input[name="layers"]');
+        const numberText = element.querySelector('.level-num')?.textContent?.trim();
+        const layerId = element.dataset.layer;
+        if (!input || !layerId || levelById.has(layerId)) continue;
+        const fallbackLevel = layerId === 'basement' || layerId === 'bunker'
+          ? -1
+          : layerId === 'main'
+            ? 1
+            : Number(layerId.match(/^level(\\d+)$/)?.[1]);
+        levelById.set(element.dataset.layer, {
+          id: layerId,
+          label: numberText
+            ? element.textContent.replace(numberText, '').trim()
+            : element.textContent.trim(),
+          sourceLevel: Number(
+            layerSettings[layerId]?.num
+              ?? (numberText ? numberText.replace(/[()]/g, '') : fallbackLevel)
+          ),
+          defaultVisible: input.checked,
+        });
+      }
+
+      const titlePrefix = 'Map - ';
+      const titleSuffix = ' - Tarkov Market';
+      const title = document.title.startsWith(titlePrefix) && document.title.endsWith(titleSuffix)
+        ? document.title.slice(titlePrefix.length, -titleSuffix.length)
+        : ${JSON.stringify(mapId)};
+
       return {
         mapId: state.map,
+        title,
+        levels: [...levelById.values()],
         categories: leftPanel.props.categories,
         markers,
       };
@@ -638,7 +730,9 @@ function buildMarkerResource(mapId, levels, pageUrl, renderedState) {
   const categoryBySource = new Map(
     MARKER_CATEGORIES.map((category) => [category.sourceCategory, category])
   );
-  const levelIds = new Set(levels.map((level) => level.id));
+  const levelBySourceNumber = new Map(
+    levels.map((level) => [level.sourceLevel, level.id])
+  );
   const seenIds = new Set();
   const sourceCounts = new Map();
   const markers = renderedState.markers.map((sourceMarker) => {
@@ -657,8 +751,8 @@ function buildMarkerResource(mapId, levels, pageUrl, renderedState) {
     }
     seenIds.add(sourceMarker.id);
 
-    const levelId = SITE_LEVEL_IDS.get(sourceMarker.siteLevel);
-    if (!levelId || !levelIds.has(levelId)) {
+    const levelId = levelBySourceNumber.get(sourceMarker.siteLevel);
+    if (!levelId) {
       throw new Error(`${mapId}: 알 수 없는 마커 레벨입니다: ${sourceMarker.siteLevel}`);
     }
     if (!Number.isFinite(sourceMarker.position?.x) || !Number.isFinite(sourceMarker.position?.y)) {
@@ -680,17 +774,24 @@ function buildMarkerResource(mapId, levels, pageUrl, renderedState) {
     };
   });
 
+  const listedCounts = {};
   for (const category of MARKER_CATEGORIES) {
+    const sourceCategoryCounts = renderedState.categories?.[category.sourceCategory];
+    if (!sourceCategoryCounts || typeof sourceCategoryCounts !== 'object') {
+      throw new Error(`${mapId}: 좌측 목록에서 ${category.sourceCategory} 수량을 찾지 못했습니다.`);
+    }
+    listedCounts[category.id] = {};
     for (const subtype of category.subtypes) {
       const sourceCountKey = `${category.sourceCategory}\n${subtype.sourceSubtype}`;
       const extractedCount = sourceCounts.get(sourceCountKey) || 0;
-      const listedCount = renderedState.categories?.[category.sourceCategory]?.[subtype.sourceSubtype];
+      const listedCount = sourceCategoryCounts[subtype.sourceSubtype] ?? 0;
       if (listedCount !== extractedCount) {
         throw new Error(
           `${mapId}: 좌측 목록의 ${category.sourceCategory} / ${subtype.sourceSubtype} ` +
           `수량 ${listedCount}과 추출 수량 ${extractedCount}이 다릅니다.`
         );
       }
+      listedCounts[category.id][subtype.id] = listedCount;
     }
   }
 
@@ -709,6 +810,7 @@ function buildMarkerResource(mapId, levels, pageUrl, renderedState) {
     schemaVersion: 1,
     mapId,
     coordinateSpace: 'map',
+    factions: MARKER_FACTIONS,
     categories: MARKER_CATEGORIES,
     markers,
     source: {
@@ -718,6 +820,7 @@ function buildMarkerResource(mapId, levels, pageUrl, renderedState) {
       markerResponse: renderedState.markerResponse,
       markerState: '$nuxt.payload.state.$squestsState.markers',
       categoryState: 'MapLeftPanel.props.categories',
+      listedCounts,
       mapPosition: 'MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)',
     },
   };
@@ -731,9 +834,9 @@ for (const mapId of requestedMaps) {
   const { settingsSource, terrainSource } = await findSource(index, mapId);
   const innerMarkup = extractSvgMarkup(terrainSource.moduleText);
   assertPassiveSvg(innerMarkup);
-  const levels = findLevels(innerMarkup);
   const pageUrl = archiveManifest.maps?.[mapId]?.url || `${archiveManifest.site}/maps/${mapId}`;
   const renderedState = await extractRenderedMarkerState(browserArchiveIndex, mapId, pageUrl);
+  const levels = findLevels(mapId, innerMarkup, renderedState.levels, renderedState.markers);
   const markerResource = buildMarkerResource(mapId, levels, pageUrl, renderedState);
   const mapPath = path.join(outputPath, 'maps', mapId);
   const source = {
@@ -750,11 +853,16 @@ for (const mapId of requestedMaps) {
       mapY: 'yOffset - rotatedY * ratio',
       rounding: '4 decimal places',
     },
+    directionFormula: {
+      directionX: '2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)',
+      directionZ: '1 - 2 * (quaternion.x^2 + quaternion.y^2)',
+      screenDegrees: 'normalize(gameDegrees + 270 - transform.rotate)',
+    },
   };
   const meta = {
     schemaVersion: 1,
     mapId,
-    title: mapId === 'shoreline' ? 'Shoreline' : mapId,
+    title: renderedState.title,
     ...settingsSource.settings,
     levels,
     source,
@@ -792,7 +900,9 @@ if (existsSync(existingManifestPath)) {
   if (Array.isArray(existingManifest.maps)) existingMaps = existingManifest.maps;
 }
 
-const maps = [...new Set([...existingMaps, ...extractedMaps])].sort();
+const retainedMaps = existingMaps.filter((mapId) => configuredMapSet.has(mapId));
+const presentMaps = new Set([...retainedMaps, ...extractedMaps]);
+const maps = configuredMaps.filter((mapId) => presentMaps.has(mapId));
 const resourceManifest = {
   schemaVersion: 1,
   source: archiveManifest.site,

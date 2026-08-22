@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "mapId": "lab",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "1ef3b543-8caa-48b8-b07e-70d9de15a19e",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Streets of Tarkov",
+      "levelId": "main",
+      "position": {
+        "x": 1881.604,
+        "y": 2362.294
+      }
+    },
+    {
+      "id": "4ed62448-5d86-4dea-a9a9-7cf710a55252",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Medical Block Elevator",
+      "levelId": "basement",
+      "position": {
+        "x": 2651.78,
+        "y": 2904.392
+      }
+    },
+    {
+      "id": "64ce99e4-567e-4d5f-af49-7830a0b38cba",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Sewage Conduit",
+      "levelId": "basement",
+      "position": {
+        "x": 3545.97,
+        "y": 2816.195
+      }
+    },
+    {
+      "id": "6c76fb7a-56c6-472d-a2fa-c1c4f6a23648",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Ventilation Shaft",
+      "levelId": "basement",
+      "position": {
+        "x": 2089.028,
+        "y": 2594.059
+      }
+    },
+    {
+      "id": "82d33e66-caeb-4cdf-9807-1dedf805cac6",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Main Elevator",
+      "levelId": "basement",
+      "position": {
+        "x": 2753.006,
+        "y": 1227.27
+      }
+    },
+    {
+      "id": "83042ba2-84d1-4576-8897-df8826e091bd",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Cargo Elevator",
+      "levelId": "level2",
+      "position": {
+        "x": 2009.948,
+        "y": 2899.941
+      }
+    },
+    {
+      "id": "b3eb4ff7-2495-4068-b0d5-a20ce0f028a4",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Parking Gate",
+      "levelId": "main",
+      "position": {
+        "x": 1824.305,
+        "y": 1726.905
+      }
+    },
+    {
+      "id": "c7774bac-63d3-406f-929b-dda1b9454584",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Hangar Gate",
+      "levelId": "main",
+      "position": {
+        "x": 3614.501,
+        "y": 2342.609
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/lab",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "c46aa91ddc9a62db52fd6f26bf42659b86086a7d",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 1,
+        "pmc": 7,
+        "scav": 0,
+        "co-op": 0
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

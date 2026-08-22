@@ -1,16 +1,16 @@
 #!/usr/bin/env node
 /**
- * verify-coordinates.mjs - 온라인 사이트와 로컬 뷰어의 게임 좌표 변환값을 대조한다
+ * verify-directions.mjs - 쿼터니언 방향 계산을 온라인 사이트의 마커 회전값과 대조한다
  *
- * bundle 수식을 읽어 옮긴 것만으로는 같은 오해를 양쪽에 복제할 수 있다. 사이트가 페이지에
- * 공개한 window.pilot.position에 게임 좌표를 넘기고, 실제 마커의 left/top과 로컬 변환값을
- * 숫자로 비교한다. 이 검사는 네트워크가 필요하지만 앱은 실행하거나 연결하지 않는다.
+ * 사본에서 옮긴 수식끼리 비교하면 같은 실수를 양쪽에 복제해도 통과한다. 별도 Chrome에서
+ * 온라인 지도를 열고 북/동/남/서 쿼터니언을 게임 각도로 바꾼 뒤 window.pilot.position에
+ * 넘긴다. 사이트가 마커에 쓴 CSS rotate 값과 로컬 화면각의 원형 각도 차이를 보고한다.
  *
  * 사용법:
- *   node tools/verify-coordinates.mjs
- *   node tools/verify-coordinates.mjs --map shoreline --x 100 --y 200
+ *   node tools/verify-directions.mjs
+ *   node tools/verify-directions.mjs --map shoreline
  *
- * 기본 CDP 포트는 9233이다. 9230~9232는 추출, 리소스 검사와 방향 검사 자리다.
+ * 기본 CDP 포트는 9232다. 실행 중인 앱에는 연결하지 않는다.
  */
 import { spawn } from 'node:child_process';
 import { createServer as createNetServer } from 'node:net';
@@ -18,34 +18,32 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
-import { gamePositionToMapPosition } from '../viewer/coords.js';
+import {
+  gameDirectionToMapDirection,
+  parseScreenshotPosition,
+} from '../viewer/coords.js';
 
-const CDP_PORT = Number(process.env.VERIFY_COORDINATES_PORT || 9233);
+const CDP_PORT = Number(process.env.VERIFY_DIRECTIONS_PORT || 9232);
 if (!Number.isInteger(CDP_PORT) || CDP_PORT < 9230 || CDP_PORT > 65_535) {
-  throw new Error('VERIFY_COORDINATES_PORT는 9230~65535 사이 정수여야 합니다.');
+  throw new Error('VERIFY_DIRECTIONS_PORT는 9230~65535 사이 정수여야 합니다.');
 }
 
 const args = process.argv.slice(2);
-const argValue = (name, fallback) => {
+function argValue(name, fallback) {
   const index = args.indexOf(name);
   if (index < 0) return fallback;
   if (!args[index + 1] || args[index + 1].startsWith('--')) {
     throw new Error(`${name} 뒤에 값을 지정해야 합니다.`);
   }
   return args[index + 1];
-};
+}
 
 const mapId = argValue('--map', 'shoreline');
 if (!/^[a-z0-9-]+$/.test(mapId)) throw new Error(`올바르지 않은 맵 ID입니다: ${mapId}`);
-const gameX = Number(argValue('--x', '100'));
-const gameY = Number(argValue('--y', '200'));
-if (!Number.isFinite(gameX) || !Number.isFinite(gameY)) {
-  throw new Error('--x와 --y에는 숫자를 지정해야 합니다.');
-}
-
-const metaPath = path.resolve('resources', 'maps', mapId, 'meta.json');
-const meta = JSON.parse(await readFile(metaPath, 'utf8'));
-const localPosition = gamePositionToMapPosition(gameX, gameY, meta.transform);
+const meta = JSON.parse(await readFile(
+  path.resolve('resources', 'maps', mapId, 'meta.json'),
+  'utf8'
+));
 const siteUrl = meta.source?.page;
 if (!/^https:\/\//.test(siteUrl || '')) throw new Error('meta.json에 온라인 source.page가 없습니다.');
 
@@ -55,10 +53,7 @@ const CHROME_CANDIDATES = [
   process.env.CHROME_PATH,
 ].filter(Boolean);
 const chromePath = CHROME_CANDIDATES.find((candidate) => existsSync(candidate));
-if (!chromePath) {
-  console.error('Chrome을 찾지 못했습니다. CHROME_PATH 환경변수로 경로를 지정하세요.');
-  process.exit(1);
-}
+if (!chromePath) throw new Error('Chrome을 찾지 못했습니다. CHROME_PATH로 경로를 지정하세요.');
 
 function delay(milliseconds) {
   return new Promise((resolve) => setTimeout(resolve, milliseconds));
@@ -72,11 +67,27 @@ function portAvailable(port) {
   });
 }
 
+function yawQuaternion(degrees) {
+  const halfRadians = degrees * (Math.PI / 360);
+  return { x: 0, y: Math.sin(halfRadians), z: 0, w: Math.cos(halfRadians) };
+}
+
+function screenshotFilename(quaternion) {
+  const look = [quaternion.x, quaternion.y, quaternion.z, quaternion.w]
+    .map((value) => value.toFixed(12))
+    .join(', ');
+  return `2026-08-22[21-49]_0.00, 0.00, 0.00_${look}_0.00 (0).png`;
+}
+
+function angleDifference(left, right) {
+  return Math.abs(((left - right + 540) % 360) - 180);
+}
+
 if (!await portAvailable(CDP_PORT)) {
   throw new Error(`CDP 포트 ${CDP_PORT}을 이미 다른 프로세스가 사용 중입니다.`);
 }
 
-const profilePath = await mkdtemp(path.join(os.tmpdir(), 'tanuki-coordinate-verify-'));
+const profilePath = await mkdtemp(path.join(os.tmpdir(), 'tanuki-direction-verify-'));
 const chrome = spawn(chromePath, [
   '--headless=new',
   '--disable-gpu',
@@ -89,8 +100,8 @@ const chrome = spawn(chromePath, [
   'about:blank',
 ], { stdio: 'ignore' });
 const chromeExited = new Promise((resolve) => chrome.once('exit', resolve));
-
-process.on('exit', () => chrome.kill());
+const killChrome = () => chrome.kill();
+process.once('exit', killChrome);
 
 async function connect() {
   for (let attempt = 0; attempt < 40; attempt++) {
@@ -152,6 +163,12 @@ async function waitUntil(cdp, expression, timeout = 35_000) {
   throw new Error(`온라인 지도 준비를 ${timeout}ms 안에 확인하지 못했습니다.`);
 }
 
+const cases = [
+  { name: '북', quaternion: yawQuaternion(0) },
+  { name: '동', quaternion: yawQuaternion(90) },
+  { name: '남', quaternion: yawQuaternion(180) },
+  { name: '서', quaternion: yawQuaternion(270) },
+];
 let cdp = null;
 
 try {
@@ -162,49 +179,55 @@ try {
   await cdp.send('Page.navigate', { url: siteUrl });
   await waitUntil(
     cdp,
-    `typeof window.pilot?.position === 'function' && !!document.querySelector('.map-wrap.inited svg.svg-map')`
+    `typeof window.pilot?.position === 'function' && !!document.querySelector('.map-wrap.inited')`
   );
 
-  // 루트의 window.pilot과 맵 컴포넌트의 위치 구독은 서로 다른 마운트 단계에서 준비된다.
-  // 둘 사이의 짧은 틈에 한 번만 보내면 사건을 놓치므로 마커가 생길 때까지만 같은 좌표를 다시 보낸다.
-  for (let attempt = 0; attempt < 20; attempt++) {
-    await evaluate(
-      cdp,
-      `window.pilot.position(${JSON.stringify(gameX)}, ${JSON.stringify(gameY)}, 0, null)`
+  let failed = false;
+  console.log(`${mapId}: transform.rotate ${meta.transform.rotate}°`);
+  for (const testCase of cases) {
+    const filename = screenshotFilename(testCase.quaternion);
+    const gameDirection = parseScreenshotPosition(filename).look;
+    const localDirection = gameDirectionToMapDirection(gameDirection, meta.transform);
+    let siteState = null;
+    // window.pilot 등록과 맵 컴포넌트의 위치 구독 사이에는 짧은 틈이 있다. 첫 사건을 놓쳐도
+    // 마커가 생길 때까지만 같은 값을 다시 보내 검사가 준비 시점에 좌우되지 않게 한다.
+    for (let attempt = 0; attempt < 20; attempt++) {
+      await evaluate(
+        cdp,
+        `window.pilot.position(100, 200, 0, ${JSON.stringify(gameDirection)})`
+      );
+      await delay(100);
+      siteState = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
+        const marker = document.querySelector('.marker, .marker-arrow');
+        const transform = marker?.style.transform || '';
+        const match = transform.match(/rotate\\(([-+\\d.eE]+)deg\\)/);
+        return { exists: !!marker, transform, degrees: match ? Number(match[1]) : null };
+      })())`));
+      if (siteState.exists && Number.isFinite(siteState.degrees)) break;
+    }
+    if (!siteState.exists || !Number.isFinite(siteState.degrees)) {
+      throw new Error(
+        `${testCase.name}: 사이트 마커의 CSS rotate 값을 읽지 못했습니다: ` +
+        JSON.stringify(siteState)
+      );
+    }
+
+    const difference = angleDifference(siteState.degrees, localDirection);
+    console.log(
+      `${testCase.name}: 게임 ${gameDirection.toFixed(6)}°, 사이트 ${siteState.degrees.toFixed(6)}°, ` +
+      `로컬 ${localDirection.toFixed(6)}°, 각도 차이 ${difference.toFixed(6)}°`
     );
-    if (await evaluate(cdp, `!!document.querySelector('.marker, .marker-arrow')`)) break;
-    await delay(250);
-  }
-  if (!await evaluate(cdp, `!!document.querySelector('.marker, .marker-arrow')`)) {
-    throw new Error('온라인 사이트가 위치 마커를 만들지 않았습니다.');
+    if (difference > 0.0001) failed = true;
   }
 
-  const sitePosition = JSON.parse(await evaluate(cdp, `JSON.stringify((() => {
-    const marker = document.querySelector('.marker, .marker-arrow');
-    const style = getComputedStyle(marker);
-    return {
-      x: Number.parseFloat(marker.style.left || style.left),
-      y: Number.parseFloat(marker.style.top || style.top),
-      markerClass: marker.className,
-    };
-  })())`));
-
-  const xDifference = Math.abs(sitePosition.x - localPosition.x);
-  const yDifference = Math.abs(sitePosition.y - localPosition.y);
-  console.log(`게임 좌표: X ${gameX}, Y ${gameY}`);
-  console.log(`온라인 사이트 맵 좌표: X ${sitePosition.x}, Y ${sitePosition.y}`);
-  console.log(`로컬 뷰어 맵 좌표: X ${localPosition.x}, Y ${localPosition.y}`);
-  console.log(`차이: X ${xDifference}, Y ${yDifference}`);
-
-  if (xDifference > 0.0001 || yDifference > 0.0001) {
-    throw new Error('온라인 사이트와 로컬 뷰어의 좌표가 일치하지 않습니다.');
-  }
-  console.log(`OK   ${mapId}: 온라인 사이트와 로컬 뷰어의 좌표가 일치합니다.`);
+  if (failed) throw new Error('온라인 사이트와 로컬 뷰어의 방향이 일치하지 않습니다.');
+  console.log(`OK   ${mapId}: 네 방향의 최대 허용 오차 0.0001° 안에서 일치합니다.`);
 } finally {
   cdp?.close();
   if (chrome.exitCode === null) {
     chrome.kill();
     await Promise.race([chromeExited, delay(3_000)]);
   }
+  process.removeListener('exit', killChrome);
   await rm(profilePath, { recursive: true, force: true }).catch(() => {});
 }

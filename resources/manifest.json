@@ -3,6 +3,17 @@
   "source": "https://tarkov-market.com",
   "collectedAt": "2026-08-19T01:04:08.749Z",
   "maps": [
-    "shoreline"
+    "ground-zero",
+    "factory",
+    "customs",
+    "interchange",
+    "woods",
+    "shoreline",
+    "reserve",
+    "lighthouse",
+    "streets",
+    "lab",
+    "labyrinth",
+    "icebreaker"
   ]
 }

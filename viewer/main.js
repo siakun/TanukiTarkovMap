@@ -1,4 +1,8 @@
-import { gamePositionToMapPosition } from './coords.js';
+import {
+  gameDirectionToMapDirection,
+  gamePositionToMapPosition,
+  parseScreenshotPosition,
+} from './coords.js';
 import { createMapView } from './map-view.js';
 import { createMapMarkers, createPositionMarker } from './markers.js';
 
@@ -13,10 +17,57 @@ const mapCode = document.querySelector('#mapCode');
 const zoomReadout = document.querySelector('#zoomReadout');
 const levelControls = document.querySelector('#levelControls');
 const markerControls = document.querySelector('#markerControls');
+const factionControls = document.querySelector('#factionControls');
 const positionForm = document.querySelector('#positionForm');
 const coordinateResult = document.querySelector('#coordinateResult');
 const viewport = document.querySelector('#mapViewport');
 const loadStatus = document.querySelector('#loadStatus');
+let showPositionOnMap = null;
+let pendingPosition = null;
+
+function normalizePosition(position) {
+  if (!position || typeof position !== 'object') {
+    throw new TypeError('위치 정보가 없습니다.');
+  }
+
+  const normalized = {
+    x: Number(position.x),
+    y: Number(position.y),
+    z: position.z === undefined ? 0 : Number(position.z),
+    look: position.look === null || position.look === undefined ? null : Number(position.look),
+  };
+  for (const name of ['x', 'y', 'z']) {
+    if (!Number.isFinite(normalized[name])) {
+      throw new TypeError(`${name} 좌표는 유한한 숫자여야 합니다.`);
+    }
+  }
+  if (normalized.look !== null && !Number.isFinite(normalized.look)) {
+    throw new TypeError('look은 유한한 숫자이거나 null이어야 합니다.');
+  }
+  return normalized;
+}
+
+function requestPosition(position) {
+  const normalized = normalizePosition(position);
+  if (!showPositionOnMap) {
+    // 리소스를 읽는 동안 들어온 위치는 버리지 않고 가장 최근 값 하나만 준비 뒤 표시한다.
+    pendingPosition = normalized;
+    return { queued: true };
+  }
+  return showPositionOnMap(normalized);
+}
+
+window.tanukiViewer = Object.freeze({
+  get ready() {
+    return showPositionOnMap !== null;
+  },
+  showPosition(position) {
+    return requestPosition(position);
+  },
+  showPositionFromScreenshot(filename) {
+    return requestPosition(parseScreenshotPosition(filename));
+  },
+});
 
 async function loadJson(url, description) {
   const response = await fetch(url);
@@ -56,7 +107,7 @@ function buildLevelControls(meta, mapView, mapMarkers) {
     fragment.append(createVisibilityControl({
       checked: level.defaultVisible,
       text: level.label,
-      codeText: `#${level.id}`,
+      codeText: level.terrainGroupId ? `#${level.terrainGroupId}` : '단층',
       data: { levelId: level.id },
       onChange: (visible) => {
         mapView.setLevelVisibility(level.id, visible);
@@ -82,6 +133,37 @@ function buildMarkerControls(markerData, mapMarkers) {
     fragment.append(control);
   }
   markerControls.replaceChildren(fragment);
+}
+
+function buildFactionControls(markerData, mapMarkers) {
+  const subtypeFactions = new Map(markerData.categories.flatMap((category) =>
+    category.subtypes.map((subtype) => [`${category.id}\n${subtype.id}`, subtype.factions])
+  ));
+  const fragment = document.createDocumentFragment();
+
+  for (const faction of markerData.factions) {
+    const label = document.createElement('label');
+    label.className = 'faction-control';
+    label.dataset.markerFaction = faction.id;
+    const input = document.createElement('input');
+    input.type = 'radio';
+    input.name = 'markerFaction';
+    input.checked = faction.defaultSelected === true;
+    input.dataset.markerFactionId = faction.id;
+    const text = document.createElement('span');
+    text.textContent = faction.label;
+    const count = document.createElement('code');
+    count.textContent = String(markerData.markers.filter((marker) =>
+      subtypeFactions.get(`${marker.category}\n${marker.subtype}`)?.includes(faction.id)
+    ).length);
+    label.append(input, text, count);
+    input.addEventListener('change', () => {
+      if (input.checked) mapMarkers.setFaction(faction.id);
+    });
+    fragment.append(label);
+  }
+
+  factionControls.replaceChildren(fragment);
 }
 
 function formatCoordinate(value) {
@@ -144,27 +226,51 @@ async function initialize() {
 
   buildLevelControls(meta, mapView, mapMarkers);
   buildMarkerControls(markerData, mapMarkers);
+  buildFactionControls(markerData, mapMarkers);
   document.querySelector('#zoomIn').addEventListener('click', mapView.zoomIn);
   document.querySelector('#zoomOut').addEventListener('click', mapView.zoomOut);
   document.querySelector('#resetView').addEventListener('click', mapView.reset);
 
-  positionForm.addEventListener('submit', (event) => {
-    event.preventDefault();
-    const formData = new FormData(positionForm);
-    const gameX = Number(formData.get('gameX'));
-    const gameY = Number(formData.get('gameY'));
-    if (!Number.isFinite(gameX) || !Number.isFinite(gameY)) {
-      coordinateResult.textContent = 'X와 Y에 숫자를 입력해 주세요.';
-      return;
-    }
-
-    const mapPosition = gamePositionToMapPosition(gameX, gameY, meta.transform);
-    positionMarker.show(mapPosition);
+  showPositionOnMap = ({ x, y, z, look }) => {
+    const mapPosition = gamePositionToMapPosition(x, y, meta.transform);
+    const mapDirection = look === null
+      ? null
+      : gameDirectionToMapDirection(look, meta.transform);
+    positionMarker.show(mapPosition, mapDirection);
     mapView.centerOn(mapPosition);
     coordinateResult.dataset.mapX = String(mapPosition.x);
     coordinateResult.dataset.mapY = String(mapPosition.y);
-    coordinateResult.textContent =
-      `지도 좌표 X ${formatCoordinate(mapPosition.x)} / Y ${formatCoordinate(mapPosition.y)}`;
+    coordinateResult.dataset.gameX = String(x);
+    coordinateResult.dataset.gameY = String(y);
+    coordinateResult.dataset.gameZ = String(z);
+    if (mapDirection === null) {
+      delete coordinateResult.dataset.gameDirection;
+      delete coordinateResult.dataset.mapDirection;
+    } else {
+      coordinateResult.dataset.gameDirection = String(look);
+      coordinateResult.dataset.mapDirection = String(mapDirection);
+    }
+    coordinateResult.textContent = `지도 좌표 X ${formatCoordinate(mapPosition.x)} / ` +
+      `Y ${formatCoordinate(mapPosition.y)}` +
+      (mapDirection === null ? '' : ` / 방향 ${formatCoordinate(mapDirection)}°`);
+    document.documentElement.dataset.positionState = 'shown';
+    return { mapPosition, gameDirection: look, mapDirection };
+  };
+
+  if (pendingPosition) {
+    const position = pendingPosition;
+    pendingPosition = null;
+    showPositionOnMap(position);
+  }
+
+  positionForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    const formData = new FormData(positionForm);
+    try {
+      requestPosition({ x: formData.get('gameX'), y: formData.get('gameY') });
+    } catch (error) {
+      coordinateResult.textContent = error.message;
+    }
   });
 
   loadStatus.hidden = true;

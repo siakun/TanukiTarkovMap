@@ -108,8 +108,16 @@ export async function createMapView({ viewport, meta, mapUrl, onViewChange }) {
   }
 
   function setLevelVisibility(levelId, visible) {
-    const group = svg.querySelector(`[id="${CSS.escape(levelId)}"]`);
-    if (!group) throw new Error(`map.svg에 #${levelId} 레벨이 없습니다.`);
+    const level = meta.levels.find((entry) => entry.id === levelId);
+    if (!level) throw new Error(`meta.json에 ${levelId} 레벨이 없습니다.`);
+    const terrainGroupId = Object.hasOwn(level, 'terrainGroupId')
+      ? level.terrainGroupId
+      : level.id;
+    // 단층 지도는 지형 전체가 여러 최상위 그룹으로 나뉘어 있어 끌 단일 그룹이 없다.
+    // 이때 가상 main 레벨은 마커 가시성만 맡고 지형은 그대로 둔다.
+    if (terrainGroupId === null) return;
+    const group = svg.querySelector(`[id="${CSS.escape(terrainGroupId)}"]`);
+    if (!group) throw new Error(`map.svg에 #${terrainGroupId} 레벨이 없습니다.`);
     group.style.display = visible ? '' : 'none';
   }
 

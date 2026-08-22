@@ -1,7 +1,7 @@
 <!doctype html>
 <!--
-이 화면은 로컬 맵 리소스의 지형과 위치 표식을 읽는 독립 뷰어다. 지도 자체를 화면의 중심에 두고,
-왼쪽 계기판에는 지형을 해석하는 레벨과 마커 종류, 좌표 조작만 둔다. 데이터는 resources에서
+이 화면은 로컬 맵 리소스의 지형, 추출구, 현재 위치와 방향을 읽는 독립 뷰어다. 지도 자체를 화면의
+중심에 두고, 왼쪽 계기판에는 레벨과 PMC/SCAV 추출구 구분, 좌표 조작만 둔다. 데이터는 resources에서
 읽으므로 맵을 갱신할 때 이 파일을 고치지 않는다.
 -->
 <html lang="ko" data-viewer-state="loading">
@@ -34,6 +34,12 @@
           <h2 id="markerHeading">마커 표시</h2>
           <span class="section-code">MARKERS</span>
         </div>
+        <div
+          id="factionControls"
+          class="faction-controls"
+          role="radiogroup"
+          aria-label="추출구 진영"
+        ></div>
         <div id="markerControls" class="visibility-controls"></div>
       </section>
 

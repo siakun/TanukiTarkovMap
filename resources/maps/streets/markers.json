@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "mapId": "shoreline",
+  "mapId": "streets",
   "coordinateSpace": "map",
   "factions": [
     {
@@ -59,208 +59,241 @@
   ],
   "markers": [
     {
-      "id": "05cc7c93-6d1d-4b14-8eee-40ad1e8ae163",
+      "id": "7604a876-3781-4f1b-b490-bd04c62f9cb0",
       "category": "extraction",
       "subtype": "transit",
-      "name": "Transit to Lighthouse",
+      "name": "Transit to Interchange",
       "levelId": "main",
       "position": {
-        "x": 1124.2411,
-        "y": 1265.5027
+        "x": 1081.4474,
+        "y": 2414.8548
       }
     },
     {
-      "id": "4fcbfffe-6b44-43e6-9377-24614796cff3",
+      "id": "b99a3faf-2961-4377-a9c9-c3f666837900",
       "category": "extraction",
       "subtype": "transit",
-      "name": "Transit to Icebreaker",
+      "name": "Transit to Ground Zero",
       "levelId": "main",
       "position": {
-        "x": 1883.4681,
-        "y": 1979.391
+        "x": 2181.1704,
+        "y": 1635.1028
       }
     },
     {
-      "id": "afbea725-2d1d-4276-a994-1f52276d51be",
+      "id": "c339f3bb-57b5-4436-ae1c-992c49d1e912",
       "category": "extraction",
       "subtype": "transit",
-      "name": "Transit to Labyrinth",
-      "levelId": "basement",
-      "position": {
-        "x": 1764.2248,
-        "y": 1374.1344
-      }
-    },
-    {
-      "id": "07d7a578-6fe7-4725-be18-bf8d11e388d5",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Mountain Bunker (Secret)",
+      "name": "Transit to The Lab",
       "levelId": "main",
       "position": {
-        "x": 1959.5871,
-        "y": 1071.3924
+        "x": 1240.2492,
+        "y": 1580.199
       }
     },
     {
-      "id": "30eb4935-9544-47ff-9f6d-a97e4bba84f8",
+      "id": "10707693-315f-4093-8423-715951398aae",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Tunnel",
+      "name": "Stylobate Building Elevator",
       "levelId": "main",
       "position": {
-        "x": 1186.4682,
-        "y": 1759.1509
+        "x": 1760.687,
+        "y": 1260.8048
       }
     },
     {
-      "id": "3309ee9d-17c1-45a2-84c0-b6d2ddfdf12c",
+      "id": "1edcdaad-2d94-4009-9f44-7623821dd72b",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Road to Customs",
+      "name": "Damaged House",
       "levelId": "main",
       "position": {
-        "x": 2424.5952,
-        "y": 1456.0439
+        "x": 2158.3024,
+        "y": 2107.1946
       }
     },
     {
-      "id": "331f7a0b-38e1-4d65-939e-65335ab8d063",
+      "id": "3fbc3c47-f5f1-47b9-8841-3f2fc84e0058",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Path to Lighthouse",
+      "name": "Expo Checkpoint",
       "levelId": "main",
       "position": {
-        "x": 1135.1486,
-        "y": 1209.3132
+        "x": 1230.184,
+        "y": 1203.1414
       }
     },
     {
-      "id": "419feb99-0691-431f-9d0a-c5dec9c62041",
+      "id": "456bc27f-9b81-4cd2-bafa-909132e5937e",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Pier Boat",
+      "name": "Primorsky Ave Taxi V-Ex (Paid)",
       "levelId": "main",
       "position": {
-        "x": 1909.0212,
-        "y": 2021.8759
+        "x": 1653.6994,
+        "y": 2337.495
       }
     },
     {
-      "id": "865917c8-52eb-4d51-a4a9-2ed526b33803",
+      "id": "4794a194-6c46-4c25-a3c3-70c0e25517df",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Road to North V-Ex (Paid)",
+      "name": "Klimov Street",
       "levelId": "main",
       "position": {
-        "x": 2112.6068,
-        "y": 1072.7987
+        "x": 2121.5672,
+        "y": 1512.7132
       }
     },
     {
-      "id": "c860e10b-4310-43ec-9b5f-db7531f6d9db",
+      "id": "4de82d78-7316-4979-9d2f-adf6b05c18f4",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Railway Bridge",
+      "name": "Collapsed Crane",
       "levelId": "main",
       "position": {
-        "x": 2593.6635,
-        "y": 1760.9757
+        "x": 1233.3354,
+        "y": 1959.2696
       }
     },
     {
-      "id": "eb4d75e9-1852-4515-b1a6-04728167edeb",
+      "id": "508d9817-2c7e-429c-838b-44795113ebed",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Climber's Trail",
+      "name": "Courtyard",
       "levelId": "main",
       "position": {
-        "x": 1794.197,
-        "y": 1098.2366
+        "x": 1962.3828,
+        "y": 2412.6902
       }
     },
     {
-      "id": "10034d75-92c9-40e3-ad40-d05000556dc6",
+      "id": "8ecc914d-0261-4682-a106-be8e3cd62fbb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Crash Site",
+      "levelId": "main",
+      "position": {
+        "x": 1041.2032,
+        "y": 2240.5368
+      }
+    },
+    {
+      "id": "a8ff3fe5-5151-4d1c-9f99-5f4a7a05e7b1",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Smugglers' Basement (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1509.8512,
+        "y": 1516.1236
+      }
+    },
+    {
+      "id": "f9ce997b-6f19-4936-9a3a-b59c9dd56cb2",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Sewer River",
+      "levelId": "main",
+      "position": {
+        "x": 2163.1108,
+        "y": 1830.5814
+      }
+    },
+    {
+      "id": "3dfdaa13-fc46-407f-b916-5a1689f19a41",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Mountain Bunker (Secret)",
+      "name": "Cardinal Apartment Complex Parking",
       "levelId": "main",
       "position": {
-        "x": 1958.9505,
-        "y": 1077.5239
+        "x": 1465.9354,
+        "y": 1101.0884
       }
     },
     {
-      "id": "2ba9d2b2-ed48-4f07-8a7e-83350ee17ecc",
+      "id": "51772f5d-83f0-4a43-97db-c71550e34884",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Ruined Road",
+      "name": "Smugglers' Basement (Secret)",
       "levelId": "main",
       "position": {
-        "x": 1213.7919,
-        "y": 1780.1046
+        "x": 1510.8738,
+        "y": 1518.1686
       }
     },
     {
-      "id": "366d7779-7ab3-4d0d-93b0-53df2c0b715f",
+      "id": "5a913ff2-35a8-4d11-a475-79a664446695",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Road to Customs",
+      "name": "Ventilation Shaft",
       "levelId": "main",
       "position": {
-        "x": 2422.3562,
-        "y": 1459.1215
+        "x": 1908.2526,
+        "y": 2264.4056
       }
     },
     {
-      "id": "6e03cfdf-1388-416d-a4d0-876ea27e842e",
+      "id": "5fd16c93-52b2-4d9c-ada0-df5728e81caa",
       "category": "extraction",
       "subtype": "scav",
-      "name": "East Wing Gym Entrance",
+      "name": "Sewer Manhole",
       "levelId": "main",
       "position": {
-        "x": 1866.5829,
-        "y": 1349.767
+        "x": 1108.9356,
+        "y": 2106.185
       }
     },
     {
-      "id": "be8f2185-c852-4310-b047-eaff9bed3fa9",
+      "id": "720caef5-8ea1-41d4-aff2-106f9d9841d8",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Lighthouse",
+      "name": "Near Kamchatskaya Arch",
       "levelId": "main",
       "position": {
-        "x": 2028.3071,
-        "y": 2019.5537
+        "x": 1136.5308,
+        "y": 1511.9044
       }
     },
     {
-      "id": "ffc86106-c66e-4cd2-959f-1ce189fb9dd5",
+      "id": "da4ed7fe-06d3-4e3e-82dc-88a2eed62c61",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Admin Basement",
-      "levelId": "basement",
+      "name": "Entrance to Catacombs",
+      "levelId": "main",
       "position": {
-        "x": 1816.9436,
-        "y": 1297.2791
+        "x": 2159.5422,
+        "y": 1903.7644
       }
     },
     {
-      "id": "05072375-fb76-4dae-909e-4fe4da7d0a00",
+      "id": "fb71e4be-d8cf-413d-bf42-5f6fa47066b6",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Klimov Shopping Mall Exfil",
+      "levelId": "main",
+      "position": {
+        "x": 1988.4874,
+        "y": 1386.3376
+      }
+    },
+    {
+      "id": "06e21bb5-82d3-4ba7-9dd6-25d59668b143",
       "category": "extraction",
       "subtype": "co-op",
-      "name": "Smuggler's Path (Co-op)",
+      "name": "Pinewood Basement (Co-Op)",
       "levelId": "main",
       "position": {
-        "x": 2278.6718,
-        "y": 1203.2921
+        "x": 1878.7554,
+        "y": 1542.8436
       }
     }
   ],
   "source": {
-    "page": "https://tarkov-market.com/maps/shoreline",
+    "page": "https://tarkov-market.com/maps/streets",
     "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "b93a02cfe9388bb3748e1e2b5bd6d13676d5f239",
+    "htmlBlob": "545ab10529bb2226111d1a1c694ef9ae4d96f107",
     "markerResponse": {
       "url": "https://tarkov-market.com/api/be/markers/list",
       "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
@@ -270,8 +303,8 @@
     "listedCounts": {
       "extraction": {
         "transit": 3,
-        "pmc": 8,
-        "scav": 6,
+        "pmc": 10,
+        "scav": 7,
         "co-op": 1
       }
     },

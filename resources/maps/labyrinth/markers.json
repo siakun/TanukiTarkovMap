@@ -1,0 +1,104 @@
+{
+  "schemaVersion": 1,
+  "mapId": "labyrinth",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "3be22c46-d8a1-4e41-9c65-2881bb855c56",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "The Way Up",
+      "levelId": "main",
+      "position": {
+        "x": 1875.165,
+        "y": 1530.443
+      }
+    },
+    {
+      "id": "bad6d214-93d1-4def-ae73-d1e9ceaafe37",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Ariadne's Path",
+      "levelId": "main",
+      "position": {
+        "x": 1495.022,
+        "y": 1788.542
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/labyrinth",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "4a82de9c4d8860250c13e15a6027a6ca0f86cb1c",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 0,
+        "pmc": 2,
+        "scav": 0,
+        "co-op": 0
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

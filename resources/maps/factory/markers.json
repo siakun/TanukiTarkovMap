@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "mapId": "factory",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "573f3b47-d9a9-4bf6-b06a-62466154b2d1",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 2314.286,
+        "y": 1682.143
+      }
+    },
+    {
+      "id": "63ad57b4-821c-49a7-8546-a1b4342d5738",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Woods",
+      "levelId": "main",
+      "position": {
+        "x": 1179.752,
+        "y": 1616.434
+      }
+    },
+    {
+      "id": "e868f23f-0ada-4d79-a1e1-73785ea7070b",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to The Lab",
+      "levelId": "basement",
+      "position": {
+        "x": 2226.412,
+        "y": 2128.142
+      }
+    },
+    {
+      "id": "563c7d99-140b-4861-97ac-a6ada89aaddf",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Gate 0",
+      "levelId": "main",
+      "position": {
+        "x": 1240.359,
+        "y": 2475.192
+      }
+    },
+    {
+      "id": "682cde45-7700-48ce-86d6-25bfa693c775",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Courtyard Gate",
+      "levelId": "main",
+      "position": {
+        "x": 1144.593,
+        "y": 1607.818
+      }
+    },
+    {
+      "id": "9d60b6ef-c70e-457d-925a-b09e60445746",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Cellars",
+      "levelId": "basement",
+      "position": {
+        "x": 2092.143,
+        "y": 1082.857
+      }
+    },
+    {
+      "id": "ab539273-1e24-48b2-9d2c-89c6b9f7446a",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Med Tent Gate",
+      "levelId": "main",
+      "position": {
+        "x": 2379.359,
+        "y": 2022.382
+      }
+    },
+    {
+      "id": "d69414d0-4916-4779-b30b-9b3a8596f744",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Smugglers' Passage (Secret)",
+      "levelId": "basement",
+      "position": {
+        "x": 2094.984,
+        "y": 1370.713
+      }
+    },
+    {
+      "id": "ea939080-61b2-4b73-9e15-ef07f02f5ad6",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Gate 3",
+      "levelId": "main",
+      "position": {
+        "x": 1163.359,
+        "y": 1258.002
+      }
+    },
+    {
+      "id": "366ef3f5-64da-4f7a-8390-9f92b57338b2",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Smugglers' Passage (Secret)",
+      "levelId": "basement",
+      "position": {
+        "x": 2096.135,
+        "y": 1373.014
+      }
+    },
+    {
+      "id": "6f14d12a-6bd9-47f9-b021-56fd6a534f93",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Camera Bunker Door",
+      "levelId": "basement",
+      "position": {
+        "x": 1385.618,
+        "y": 1988.572
+      }
+    },
+    {
+      "id": "b2f7881f-bdce-4ab4-a84f-c2e333531e5e",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Gate 3",
+      "levelId": "main",
+      "position": {
+        "x": 1161.339,
+        "y": 1263.418
+      }
+    },
+    {
+      "id": "ff07a8ba-e8d9-4ae3-8b9b-2815007fb646",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Office Window",
+      "levelId": "level3",
+      "position": {
+        "x": 1371.455,
+        "y": 1684.871
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/factory",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "491a066af7d6f741f83d332b5006064935962a08",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 3,
+        "pmc": 6,
+        "scav": 4,
+        "co-op": 0
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

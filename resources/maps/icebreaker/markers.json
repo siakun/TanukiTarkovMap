@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "mapId": "icebreaker",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "097f0577-3c5d-4b55-9d7d-258a2733ab6a",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Helicopter",
+      "levelId": "helipad",
+      "position": {
+        "x": 2500.695,
+        "y": 2676.53
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/icebreaker",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "ecbf6c87d10096dc3507f11425f8875af25aa22a",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 0,
+        "pmc": 1,
+        "scav": 0,
+        "co-op": 0
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

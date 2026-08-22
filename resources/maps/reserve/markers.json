@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "mapId": "shoreline",
+  "mapId": "reserve",
   "coordinateSpace": "map",
   "factions": [
     {
@@ -59,208 +59,208 @@
   ],
   "markers": [
     {
-      "id": "05cc7c93-6d1d-4b14-8eee-40ad1e8ae163",
+      "id": "1efe7bd1-0f22-4422-b01e-088b0699bd70",
       "category": "extraction",
       "subtype": "transit",
       "name": "Transit to Lighthouse",
       "levelId": "main",
       "position": {
-        "x": 1124.2411,
-        "y": 1265.5027
+        "x": 1083.2286,
+        "y": 1402.1072
       }
     },
     {
-      "id": "4fcbfffe-6b44-43e6-9377-24614796cff3",
+      "id": "38e2fe56-0bd3-4533-9f8b-2aade21942fc",
       "category": "extraction",
       "subtype": "transit",
-      "name": "Transit to Icebreaker",
+      "name": "Transit to Customs",
       "levelId": "main",
       "position": {
-        "x": 1883.4681,
-        "y": 1979.391
+        "x": 1906.7918,
+        "y": 1202.2542
       }
     },
     {
-      "id": "afbea725-2d1d-4276-a994-1f52276d51be",
+      "id": "f490dbe7-bd93-4e1e-9580-ddb9f9ba1c48",
       "category": "extraction",
       "subtype": "transit",
-      "name": "Transit to Labyrinth",
-      "levelId": "basement",
-      "position": {
-        "x": 1764.2248,
-        "y": 1374.1344
-      }
-    },
-    {
-      "id": "07d7a578-6fe7-4725-be18-bf8d11e388d5",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Mountain Bunker (Secret)",
+      "name": "Transit to Woods",
       "levelId": "main",
       "position": {
-        "x": 1959.5871,
-        "y": 1071.3924
+        "x": 1083.7752,
+        "y": 1249.0802
       }
     },
     {
-      "id": "30eb4935-9544-47ff-9f6d-a97e4bba84f8",
+      "id": "1728f410-82c4-4b5d-b8b9-a44f4a2a033d",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Tunnel",
+      "name": "Armored Train",
       "levelId": "main",
       "position": {
-        "x": 1186.4682,
-        "y": 1759.1509
+        "x": 1280.2898,
+        "y": 1306.0236
       }
     },
     {
-      "id": "3309ee9d-17c1-45a2-84c0-b6d2ddfdf12c",
+      "id": "50b34bf8-302c-4c62-a07e-76fd8d138b9e",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Road to Customs",
+      "name": "Cliff Descent",
       "levelId": "main",
       "position": {
-        "x": 2424.5952,
-        "y": 1456.0439
+        "x": 1728.3462,
+        "y": 1918.884
       }
     },
     {
-      "id": "331f7a0b-38e1-4d65-939e-65335ab8d063",
+      "id": "5612b045-32d5-444a-8cf7-574e4c083c58",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Path to Lighthouse",
+      "name": "Sewer Manhole",
       "levelId": "main",
       "position": {
-        "x": 1135.1486,
-        "y": 1209.3132
+        "x": 1560.9912,
+        "y": 1688.4846
       }
     },
     {
-      "id": "419feb99-0691-431f-9d0a-c5dec9c62041",
+      "id": "70cc2d6c-ef46-42f4-8002-d4a751fe6869",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Pier Boat",
+      "name": "Exit to Woods (Secret)",
       "levelId": "main",
       "position": {
-        "x": 1909.0212,
-        "y": 2021.8759
+        "x": 1417.7522,
+        "y": 1100.3724
       }
     },
     {
-      "id": "865917c8-52eb-4d51-a4a9-2ed526b33803",
+      "id": "9ad7cc89-8e65-4d45-8a42-1e0a35f6a566",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Road to North V-Ex (Paid)",
-      "levelId": "main",
+      "name": "Bunker Hermetic Door",
+      "levelId": "bunker",
       "position": {
-        "x": 2112.6068,
-        "y": 1072.7987
+        "x": 1375.1862,
+        "y": 1072.2352
       }
     },
     {
-      "id": "c860e10b-4310-43ec-9b5f-db7531f6d9db",
+      "id": "bb955cf1-8710-48af-8414-27c3d4acad00",
       "category": "extraction",
       "subtype": "pmc",
-      "name": "Railway Bridge",
-      "levelId": "main",
+      "name": "D-2",
+      "levelId": "bunker",
       "position": {
-        "x": 2593.6635,
-        "y": 1760.9757
+        "x": 1921.9434,
+        "y": 1786.2834
       }
     },
     {
-      "id": "eb4d75e9-1852-4515-b1a6-04728167edeb",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Climber's Trail",
-      "levelId": "main",
-      "position": {
-        "x": 1794.197,
-        "y": 1098.2366
-      }
-    },
-    {
-      "id": "10034d75-92c9-40e3-ad40-d05000556dc6",
+      "id": "55a84562-c7e6-4891-9cf2-a9605956f2c2",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Mountain Bunker (Secret)",
+      "name": "Checkpoint Fence",
       "levelId": "main",
       "position": {
-        "x": 1958.9505,
-        "y": 1077.5239
+        "x": 1548.7892,
+        "y": 1807.0134
       }
     },
     {
-      "id": "2ba9d2b2-ed48-4f07-8a7e-83350ee17ecc",
+      "id": "608bb75f-4603-4c06-a629-ed9aea9ee0ba",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Ruined Road",
+      "name": "Exit to Woods (Secret)",
       "levelId": "main",
       "position": {
-        "x": 1213.7919,
-        "y": 1780.1046
+        "x": 1418.5522,
+        "y": 1098.3724
       }
     },
     {
-      "id": "366d7779-7ab3-4d0d-93b0-53df2c0b715f",
+      "id": "934ae5b1-e079-4de3-b735-92917f38f5c5",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Road to Customs",
+      "name": "Heating Pipe",
       "levelId": "main",
       "position": {
-        "x": 2422.3562,
-        "y": 1459.1215
+        "x": 1578.7492,
+        "y": 1155.3986
       }
     },
     {
-      "id": "6e03cfdf-1388-416d-a4d0-876ea27e842e",
+      "id": "ad02a14f-9d78-4eca-bf93-29a934625d55",
       "category": "extraction",
       "subtype": "scav",
-      "name": "East Wing Gym Entrance",
+      "name": "Armored Train",
       "levelId": "main",
       "position": {
-        "x": 1866.5829,
-        "y": 1349.767
+        "x": 1280.4786,
+        "y": 1308.7226
       }
     },
     {
-      "id": "be8f2185-c852-4310-b047-eaff9bed3fa9",
+      "id": "aea4c2c8-13bc-4c5f-9edd-a76884567d7d",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Lighthouse",
+      "name": "Sewer Manhole",
       "levelId": "main",
       "position": {
-        "x": 2028.3071,
-        "y": 2019.5537
+        "x": 1558.0594,
+        "y": 1691.8112
       }
     },
     {
-      "id": "ffc86106-c66e-4cd2-959f-1ce189fb9dd5",
+      "id": "cce35541-6598-4562-a7a5-0ebb540b7e0f",
       "category": "extraction",
       "subtype": "scav",
-      "name": "Admin Basement",
-      "levelId": "basement",
+      "name": "Depot Hermetic Door",
+      "levelId": "bunker",
       "position": {
-        "x": 1816.9436,
-        "y": 1297.2791
+        "x": 1296.4844,
+        "y": 1343.4206
       }
     },
     {
-      "id": "05072375-fb76-4dae-909e-4fe4da7d0a00",
+      "id": "e1ecac86-324e-4b4b-af89-b6aaadf0a75f",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Bunker Hermetic Door",
+      "levelId": "bunker",
+      "position": {
+        "x": 1377.2326,
+        "y": 1073.7624
+      }
+    },
+    {
+      "id": "f905705b-c531-415d-87f5-3981a51590fe",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Hole in the Wall by the Mountains",
+      "levelId": "main",
+      "position": {
+        "x": 2124.4576,
+        "y": 1477.5368
+      }
+    },
+    {
+      "id": "c141fba9-207d-4a37-87f4-0bb5a34bde39",
       "category": "extraction",
       "subtype": "co-op",
-      "name": "Smuggler's Path (Co-op)",
+      "name": "Scav Lands (Co-Op)",
       "levelId": "main",
       "position": {
-        "x": 2278.6718,
-        "y": 1203.2921
+        "x": 1770.4034,
+        "y": 1187.4276
       }
     }
   ],
   "source": {
-    "page": "https://tarkov-market.com/maps/shoreline",
+    "page": "https://tarkov-market.com/maps/reserve",
     "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "b93a02cfe9388bb3748e1e2b5bd6d13676d5f239",
+    "htmlBlob": "ac65a0707cb4dc199127fc20d9943418bbcc4c8a",
     "markerResponse": {
       "url": "https://tarkov-market.com/api/be/markers/list",
       "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
@@ -270,8 +270,8 @@
     "listedCounts": {
       "extraction": {
         "transit": 3,
-        "pmc": 8,
-        "scav": 6,
+        "pmc": 6,
+        "scav": 8,
         "co-op": 1
       }
     },

@@ -12,7 +12,8 @@
   --muted: #889499;
   --signal: #f1a33b;
   --extraction: #76b9ad;
-  --spawn: #c98362;
+  --pmc: #70a800;
+  --scav: #aeaeb0;
   --danger: #d86d5a;
   font-family: "Segoe UI", "Malgun Gothic", sans-serif;
   color: var(--paper);
@@ -145,6 +146,72 @@ h1 {
   gap: 7px;
 }
 
+.faction-controls {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.faction-control {
+  --faction-color: var(--paper);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  min-height: 34px;
+  gap: 8px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.faction-control[data-marker-faction="pmc"] {
+  --faction-color: var(--pmc);
+}
+
+.faction-control[data-marker-faction="scav"] {
+  --faction-color: var(--scav);
+}
+
+.faction-control input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.faction-control span {
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+}
+
+.faction-control code {
+  color: var(--muted);
+  font-size: 0.6rem;
+}
+
+.faction-control:hover {
+  background: var(--panel-raised);
+}
+
+.faction-control:has(input:checked) {
+  border-color: var(--faction-color);
+  background: color-mix(in srgb, var(--faction-color) 13%, transparent);
+  color: var(--paper);
+}
+
+.faction-control:has(input:checked) code {
+  color: var(--faction-color);
+}
+
+.faction-control:has(input:focus-visible) {
+  outline: 2px solid var(--signal);
+  outline-offset: 2px;
+}
+
 .visibility-control {
   --control-accent: var(--signal);
   display: grid;
@@ -189,10 +256,6 @@ h1 {
 
 .visibility-control[data-marker-category="extraction"] {
   --control-accent: var(--extraction);
-}
-
-.visibility-control[data-marker-category="spawn"] {
-  --control-accent: var(--spawn);
 }
 
 .position-form {
@@ -383,8 +446,16 @@ kbd {
   --marker-color: var(--extraction);
 }
 
-.map-marker[data-marker-category="spawn"] {
-  --marker-color: var(--spawn);
+.map-marker[data-marker-factions="pmc"] {
+  --marker-color: var(--pmc);
+}
+
+.map-marker[data-marker-factions="scav"] {
+  --marker-color: var(--scav);
+}
+
+.map-marker[data-marker-factions="pmc scav"] {
+  --marker-color: var(--brass);
 }
 
 .map-marker__symbol {
@@ -401,10 +472,6 @@ kbd {
 
 .map-marker[data-marker-category="extraction"] .map-marker__symbol {
   transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.map-marker[data-marker-category="spawn"] .map-marker__symbol {
-  border-radius: 50%;
 }
 
 .map-marker__label {
@@ -438,8 +505,8 @@ kbd {
 
 .position-marker {
   position: absolute;
-  width: 46px;
-  height: 46px;
+  width: 54px;
+  height: 54px;
   transform: translate(-50%, -50%) scale(var(--inverse-zoom));
   transform-origin: 50% 50%;
   filter: drop-shadow(0 2px 5px rgb(0 0 0 / 85%));
@@ -447,6 +514,30 @@ kbd {
 
 .position-marker[hidden] {
   display: none;
+}
+
+.position-marker__direction {
+  position: absolute;
+  inset: 0;
+  transform: rotate(var(--direction-angle, 0deg));
+  transform-origin: 50% 50%;
+}
+
+.position-marker__direction[hidden] {
+  display: none;
+}
+
+.position-marker__direction::before {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 18px;
+  height: 27px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, #d9821d, #ffd08b 48%, #f1a33b 52%);
+  clip-path: polygon(50% 0, 100% 100%, 50% 79%, 0 100%);
+  content: "";
+  filter: drop-shadow(0 0 1px #22170b);
 }
 
 .position-marker__ring,
@@ -458,6 +549,7 @@ kbd {
 }
 
 .position-marker__ring {
+  z-index: 1;
   width: 30px;
   height: 30px;
   border: 2px solid var(--signal);
@@ -465,6 +557,7 @@ kbd {
 }
 
 .position-marker__core {
+  z-index: 2;
   width: 8px;
   height: 8px;
   border: 2px solid #22170b;
@@ -474,7 +567,7 @@ kbd {
 
 .position-marker__label {
   position: absolute;
-  top: 37px;
+  top: 43px;
   left: 50%;
   padding: 2px 4px;
   transform: translateX(-50%);

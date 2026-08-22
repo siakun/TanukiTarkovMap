@@ -1,21 +1,21 @@
 {
   "schemaVersion": 1,
-  "mapId": "shoreline",
-  "title": "Shoreline",
+  "mapId": "customs",
+  "title": "Customs",
   "size": {
-    "width": 3700,
-    "height": 3100
+    "width": 4400,
+    "height": 3200
   },
-  "zoom": 0.8,
+  "zoom": 0.6,
   "minZoom": 0.12,
-  "maxZoom": 15,
+  "maxZoom": 10,
   "transform": {
     "rotate": 90,
-    "xOffset": 1570,
-    "yOffset": 1450,
+    "xOffset": 2600,
+    "yOffset": 1600,
     "invertX": false,
     "invertY": false,
-    "ratio": 1
+    "ratio": 2
   },
   "levels": [
     {
@@ -49,12 +49,12 @@
   ],
   "source": {
     "site": "https://tarkov-market.com",
-    "page": "https://tarkov-market.com/maps/shoreline",
+    "page": "https://tarkov-market.com/maps/customs",
     "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
     "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
     "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
-    "terrainUrl": "https://tarkov-market.com/_nuxt3/PzPYwWmy.js",
-    "terrainBlob": "b9946efe2aa628e9920be6db880887c256dd2a50",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/CyjHRDIF.js",
+    "terrainBlob": "e9727da868658f164e199f13b3c66bd5d470924d",
     "coordinateFormula": {
       "rotation": "-transform.rotate degrees",
       "mapX": "xOffset - rotatedX * ratio",

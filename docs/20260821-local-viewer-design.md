@@ -1,9 +1,9 @@
 # 로컬 맵 뷰어 재구성 설계와 인수인계
 
 <!--
-이 문서는 Claude가 조사와 설계를 마치고 Codex에게 구현을 넘기며 씁니다. 결정된 사항과 이미
-확인한 사실을 적어, 받는 쪽이 같은 조사를 되풀이하지 않게 하는 것이 목적입니다.
-2026-08-21에 기록했습니다.
+이 문서는 로컬 뷰어의 조사와 설계 결과, 단계별 구현 결정을 다음 세션에 넘깁니다. 결정된 사항과
+이미 확인한 사실을 적어, 받는 쪽이 같은 조사를 되풀이하지 않게 하는 것이 목적입니다.
+2026-08-21에 처음 기록하고 3단계 결과까지 갱신했습니다.
 -->
 
 ## 목표
@@ -98,12 +98,18 @@ gamePosToMapPos = (x, y, t) => {
 | 항목 | 결정 |
 |---|---|
 | 뷰어 기술 | 생 JS(ES 모듈) + SVG. 빌드 단계 없음. 릴리스에 npm이 끼지 않게 함 |
-| 1차 범위 | 지형, 레벨 전환, 추출구와 스폰 마커, 내 위치 표시. 퀘스트 필터와 검색은 그다음 |
+| 3단계 범위 | 지형, 레벨 전환, 현재 위치와 방향, PMC/SCAV별 추출구. 스폰과 퀘스트는 제외 |
 | 기존 로컬 모드 | 3단계까지 그대로 둠. 새 뷰어가 안정된 뒤 4단계에서 교체 |
 | 출처 표기 | 데이터 출처(tarkov-market, HighTek 레이어)를 뷰어 어딘가에 남김. 맵 위에 겹치지 않는 자리로 |
 
 UI가 커져 프레임워크가 필요해지면 Preact + htm을 import 한 줄로 붙이는 쪽을 씁니다. 빌드 도입은
 그때 다시 논의합니다.
+
+3단계에서는 맵 수를 늘리기 전에 코어 우선순위에 맞춰 범위를 줄였습니다. 현재 위치만 표시하면
+바라보는 방향이 빠져 코어의 절반만 구현한 상태이므로, 스크린샷 파일명의 쿼터니언을 읽어 방향까지
+표시합니다. 그다음 필요한 지도와 추출구에는 PMC/SCAV 구분을 남깁니다. 스폰은 세 번째 우선순위이고
+퀘스트는 부가 기능이므로 `markers.json`에서 모두 뺐습니다. 사이트 기능을 그대로 복제하지 않고
+로컬 모드가 반드시 지켜야 할 기능부터 완결하려는 선택입니다.
 
 ## 리소스 구조
 
@@ -111,14 +117,10 @@ UI가 커져 프레임워크가 필요해지면 Preact + htm을 import 한 줄�
 resources/
   manifest.json              스키마 판, 수집 시각, 맵 목록
   maps/
-    shoreline/
+    <map-id>/
       map.svg                지형 (레이어 id 유지)
       meta.json              size, zoom, minZoom, maxZoom, transform, levels
-      markers.json           추출구/스폰/퀘스트 마커
-    streets/ ...
-  assets/
-    icons/*.svg
-    fonts/*.woff2
+      markers.json           PMC/SCAV별 추출구 마커
 viewer/
   index.html
   main.js                    진입점, 맵 선택과 초기화
@@ -133,11 +135,27 @@ viewer/
 
 `meta.json`에는 스키마 판 번호를 둡니다. 뷰어는 아는 판만 읽고 모르는 필드는 무시합니다.
 
-`markers.json`도 독립된 스키마 판 번호를 둡니다. `categories`는 상위 종류와 세부 종류의 안정된 ID,
-표시 이름, 원본 사이트 이름을 연결하고 `markers`는 원본 UID, 종류 ID, 이름, `levelId`, 변환이 끝난
-지도 좌표를 담습니다. 영역형 스폰의 다각형은 2단계 표시 범위가 아니므로 사이트가 라벨과 팝업의
-기준으로 쓰는 `geometry.x/y` 중심점만 변환합니다. 원본 이름이 비어 있으면 값을 만들지 않고 뷰어가
-세부 종류의 표시 이름을 대신 사용합니다.
+`markers.json`도 독립된 스키마 판 번호를 둡니다. `factions`는 뷰어가 고를 PMC와 SCAV를,
+`categories`는 추출구와 세부 종류의 안정된 ID, 표시 이름, 원본 사이트 이름과 해당 진영을 연결합니다.
+`markers`는 원본 UID, 종류 ID, 이름, `levelId`, 변환이 끝난 지도 좌표만 담습니다. 원본 이름이 비어
+있으면 값을 만들지 않고 뷰어가 세부 종류의 표시 이름을 대신 사용합니다. `source.listedCounts`에는
+사이트 좌측 목록에서 읽은 세부 종류별 수량을 넣어 추출 결과가 원본 목록과 같은지 검사합니다.
+
+`meta.json`의 `levels`는 사이트가 복원한 실제 레벨 목록에서 만듭니다. 각 항목의 `sourceLevel`은
+마커가 쓰는 원본 숫자이고 `terrainGroupId`는 SVG에서 켜고 끌 그룹입니다. 단층 지도처럼 전환할 SVG
+그룹이 없으면 `terrainGroupId`를 `null`로 두어 레벨 필터와 지형 제어를 구분합니다.
+
+스크린샷 파일명은 좌표를 `Y, Z, X` 순서로 담습니다. 이어지는 쿼터니언 `(x, y, z, w)`에서 다음
+벡터를 구해 북쪽 기준 게임 각도로 바꾸고, 맵의 회전값을 보정해 화면 각도를 얻습니다.
+
+```text
+directionX = 2 * (x * z + w * y)
+directionZ = 1 - 2 * (x * x + y * y)
+화면 각도 = normalize(게임 각도 + 270 - transform.rotate)
+```
+
+앱 통합 때는 `window.tanukiViewer.showPosition({ x, y, z, look })`을 부릅니다. 파일명만 넘길 때는
+`window.tanukiViewer.showPositionFromScreenshot(filename)`이 같은 파서와 표시 경로를 씁니다.
 
 ## 도구
 
@@ -148,15 +166,21 @@ viewer/
 - `tools/archive-maps.mjs` 실제 브라우저로 페이지를 열어 응답 저장 (수집 도구의 본보기)
 - `tools/verify-archive.mjs` 네트워크를 막고 사본만으로 맵이 뜨는지 검사 (검사 도구의 본보기)
 
-새로 만들 것:
+로컬 뷰어용 도구:
 
-- `tools/fetch-resources.mjs` 사이트에서 최신을 받아 `resources/`를 갱신. `--maps lab,customs`로 일부만
-- `tools/verify-resources.mjs` 받은 리소스로 뷰어가 실제로 뜨는지 검사
+- `tools/extract-resources.mjs` 저장한 사이트 사본에서 리소스를 다시 만듭니다. 대상 맵은
+  `MapConfiguration.cs`에서 읽고 `--maps lab,customs`로 일부만 고를 수 있습니다
+- `tools/verify-resources.mjs` 맵 목록, 스키마, 추출구 수량과 진영, 레벨, 좌표, 방향, 팬과 줌을
+  실제 브라우저에서 검사합니다
+- `tools/verify-directions.mjs` 파일명 쿼터니언으로 구한 각도를 온라인 사이트의 마커 CSS 회전값과
+  북, 동, 남, 서에서 대조합니다
+- `tools/verify-coordinates.mjs` 게임 좌표 변환값을 온라인 사이트의 실제 마커 위치와 대조합니다
 
 **포트 자리**: 9222는 실행 중인 앱, 9223은 재현용 브라우저, 9224는 archive-maps, 9225는 verify-archive,
-9226~9229는 1단계 도구와 검사가 씁니다. 2단계의 `extract-resources.mjs`는 9230,
-`verify-resources.mjs`는 9231을 기본값으로 씁니다. 같은 포트를 쓰면 명령이 실행 중인 앱으로 흘러
-사용자가 보는 화면을 조작하게 됩니다(실제 사고 사례).
+9226~9229는 1단계 도구와 검사가 씁니다. `extract-resources.mjs`는 9230,
+`verify-resources.mjs`는 9231, `verify-directions.mjs`는 9232, `verify-coordinates.mjs`는 9233을
+기본값으로 씁니다. 같은 포트를 쓰면 명령이 실행 중인 앱으로 흘러 사용자가 보는 화면을 조작하게
+됩니다(실제 사고 사례). 새 도구도 9230 이후의 빈 포트를 써야 합니다.
 
 ## 단계와 완료 기준
 
@@ -173,17 +197,20 @@ viewer/
 
 ### 2단계: 데이터
 
-산출물: `markers.json` 스키마와 추출 경로, 마커 그리기와 종류별 켜고 끄기.
+당시 산출물: 추출구와 스폰을 담은 `markers.json` 스키마와 추출 경로, 마커 그리기와 종류별 켜고
+끄기. 스폰은 3단계에서 코어 범위를 다시 정하며 제거했습니다.
 
-완료 기준: 추출구와 스폰이 사이트와 같은 자리에 같은 개수로 뜹니다. 개수를 사이트의 좌측 목록 숫자와
-대조해 보고합니다.
+현재 완료 기준: 추출구가 사이트와 같은 자리에 같은 개수로 뜨고 PMC/SCAV 선택에 맞게 걸러집니다.
+개수는 사이트의 좌측 목록 숫자와 대조합니다.
 
 ### 3단계: 전체와 도구
 
-산출물: 12개 맵, `fetch-resources.mjs`, `verify-resources.mjs`.
+산출물: `MapConfiguration.cs`가 정한 12개 맵, 위치 방향 표시, 추출구 진영 필터,
+`extract-resources.mjs`, `verify-resources.mjs`, `verify-directions.mjs`.
 
-완료 기준: 사본을 지우고 도구만으로 `resources/`를 다시 만들 수 있고, 검사 도구가 12개 맵 전부
-통과합니다.
+완료 기준: 빈 출력 폴더에 도구만으로 `resources/`를 다시 만들었을 때 저장소의 리소스와 같고,
+검사 도구가 12개 맵을 모두 통과합니다. 망가뜨린 리소스에서는 검사가 실패해야 합니다. 방향은 서로
+다른 여러 쿼터니언에서 사이트의 CSS 회전값과 각도 차이를 숫자로 대조합니다.
 
 ### 4단계: 앱 통합 (여기부터는 사용자 확인 후)
 
