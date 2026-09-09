@@ -170,6 +170,18 @@ scene preset 줄 감지
 
 버전 태그(`v1.0.0` 또는 `0.1.0` 형태)를 push하면 GitHub Actions가 self-contained로 publish하고, Velopack(`vpk`)으로 설치 파일과 포터블 zip을 패키징해 GitHub Release에 자동 업로드합니다. 사용자 쪽에서는 앱 시작 시 Velopack `UpdateManager`가 새 버전을 확인하고 조용히 받아 다음 실행에 적용합니다. 빌드부터 배포, 자동 업데이트까지 태그 하나로 이어집니다.
 
+<!--
+INTENT
+업데이트 내역이 없는 릴리스를 막고 GitHub와 설치 패키지의 안내가 서로 달라지지 않게 한다.
+버전은 프로젝트에서, 해당 버전의 사용자용 변경 내역은 docs/releases에서 관리한다.
+-->
+버전을 올릴 때는 `src/TanukiTarkovMap/TanukiTarkovMap.csproj`의 `Version`을 변경하고,
+`docs/releases/<Version>.md`에 [release-notes 스킬](.agents/skills/release-notes/SKILL.md)의
+작성 기준에 따라 업데이트 내역을 작성합니다.
+이 디렉터리의 버전별 파일이 업데이트 이력이며, 배포 시 같은 파일을 GitHub 릴리스 본문과
+Velopack 패키지에 함께 넣습니다. 태그와 프로젝트 버전이 다르거나 내역 파일이 없으면
+배포를 중단합니다. 로컬 패키징은 프로젝트 버전과 같은 값을 `build.bat <Version>`에 전달합니다.
+
 ### 9. 버전 선택과 되돌리기
 
 자동 업데이트는 최신 버전으로만 흐릅니다. 새 버전에서 문제를 만난 사용자가 스스로 빠져나올 길이 없다는 뜻이라, 설정에서 자동 업데이트를 끄고 원하는 버전을 직접 고를 수 있게 했습니다.

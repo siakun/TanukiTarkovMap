@@ -27,6 +27,18 @@ if "%1"=="" (
     exit /b 1
 )
 set VERSION=%1
+set RELEASE_NOTES=docs\releases\%VERSION%.md
+
+:: 프로젝트와 패키지 버전이 다르거나 업데이트 내역이 없으면 기존 출력물을 지우기 전에 중단한다.
+for /f "delims=" %%v in ('dotnet msbuild "%PROJECT_PATH%" -getProperty:Version -nologo') do set PROJECT_VERSION=%%v
+if not "%VERSION%"=="%PROJECT_VERSION%" (
+    echo [ERROR] Version must match the project version: %PROJECT_VERSION%
+    exit /b 1
+)
+if not exist "%RELEASE_NOTES%" (
+    echo [ERROR] Release notes are missing: %RELEASE_NOTES%
+    exit /b 1
+)
 
 echo Version: %VERSION%
 echo.
@@ -79,6 +91,7 @@ vpk pack ^
     --packVersion "%VERSION%" ^
     --packDir "%PUBLISH_DIR%" ^
     --mainExe "TanukiTarkovMap.exe" ^
+    --releaseNotes "%RELEASE_NOTES%" ^
     --framework "vcredist143-x64" ^
     --outputDir "%RELEASE_DIR%"
 

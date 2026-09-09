@@ -50,10 +50,22 @@ Code-behind에 로직이 있는 파일을 발견하면:
 
 커밋 메시지 컨벤션, 작성자 표기, 푸시 정책은 전역 규칙을 그대로 따릅니다. push는 사용자가 직접 합니다.
 
+### GitHub 작업 계정
+
+GitHub 조회와 이슈 및 PR 작성은 로컬 `gh` CLI만 사용합니다. GitHub 커넥터는 사용하지 않습니다.
+원격에 기록을 남기기 전에 `gh api user --jq .login`으로 로그인 계정이 `siakun`인지 확인합니다.
+다른 계정이면 쓰기 작업을 중단합니다. Git 커밋 작성자 설정과 GitHub 로그인 계정은 별개이므로
+`git config user.name`과 `git config user.email`만 확인하고 진행하지 않습니다.
+
 ## 빌드 방법
 ```bash
 cd src && dotnet build
 ```
+
+## 릴리스 내역
+
+릴리스마다 [AGENTS.md의 릴리스 내역 작성 규칙](AGENTS.md#릴리스-내역-작성)에 따라
+프로젝트 내장 스킬의 작성 기준을 따릅니다.
 
 ## CefSharp 렌더링 디버깅 (CDP)
 

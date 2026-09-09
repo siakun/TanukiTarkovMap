@@ -36,6 +36,30 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "tag=$TAG" >> $GITHUB_OUTPUT
 
+    # INTENT: 태그와 프로젝트 버전이 다르거나 업데이트 내역이 빠진 배포를 막는다.
+    # 사용자용 내역은 버전별 파일 한 곳에서 관리하고 GitHub와 Velopack에 함께 전달한다.
+    - name: Validate release version and notes
+      id: release
+      shell: pwsh
+      env:
+        RELEASE_VERSION: ${{ steps.version.outputs.version }}
+      run: |
+        [xml]$project = Get-Content -LiteralPath "src/TanukiTarkovMap/TanukiTarkovMap.csproj" -Raw
+        $projectVersion = $project.SelectSingleNode('/Project/PropertyGroup/Version').InnerText
+        if ($env:RELEASE_VERSION -ne $projectVersion) {
+          throw "Release tag version ($env:RELEASE_VERSION) does not match project version ($projectVersion)."
+        }
+        $notesPath = "docs/releases/$projectVersion.md"
+        if (-not (Test-Path -LiteralPath $notesPath -PathType Leaf)) {
+          throw "Release notes are missing: $notesPath"
+        }
+        $notes = Get-Content -LiteralPath $notesPath -Raw
+        $notesBody = $notes -replace '(?s)<!--.*?-->', ''
+        if ($notesBody -notmatch '(?m)^## [^\s]' -or $notesBody -notmatch '(?m)^- [^\s]') {
+          throw "Release notes must contain Markdown headings and a list of changes: $notesPath"
+        }
+        "notes_path=$notesPath" >> $env:GITHUB_OUTPUT
+
     - name: Publish application
       run: |
         dotnet publish src/TanukiTarkovMap/TanukiTarkovMap.csproj `
@@ -70,6 +94,7 @@ jobs:
           --packVersion "${{ steps.version.outputs.version }}" `
           --packDir "publish" `
           --mainExe "TanukiTarkovMap.exe" `
+          --releaseNotes "${{ steps.release.outputs.notes_path }}" `
           --framework "vcredist143-x64" `
           --outputDir "releases"
 
@@ -108,6 +133,7 @@ jobs:
       with:
         tag_name: ${{ steps.version.outputs.tag }}
         name: Release ${{ steps.version.outputs.tag }}
+        body_path: ${{ steps.release.outputs.notes_path }}
         draft: false
         prerelease: ${{ contains(steps.version.outputs.version, '-') }}
         files: |
