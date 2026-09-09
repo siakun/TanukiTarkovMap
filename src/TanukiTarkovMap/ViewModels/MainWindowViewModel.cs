@@ -198,7 +198,7 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary> 지금 사본으로 보고 있는지 여부 </summary>
         [ObservableProperty] public partial bool IsLocalMapMode { get; set; } = false;
 
-        /// <summary> 현재 선택된 맵에 Goons가 있는지 여부 </summary>
+        /// <summary> 현재 선택된 맵이 최근 군즈 목격 제보의 맵인지 여부 </summary>
         [ObservableProperty] public partial bool GoonsOnCurrentMap { get; set; } = false;
         #endregion
 
@@ -306,7 +306,7 @@ namespace TanukiTarkovMap.ViewModels
         }
 
         /// <summary>
-        /// 현재 선택된 맵에 Goons가 있는지 업데이트
+        /// 현재 선택된 맵이 최근 군즈 목격 제보의 맵인지 업데이트
         /// </summary>
         private void UpdateGoonsOnCurrentMap()
         {

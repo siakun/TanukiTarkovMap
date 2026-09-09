@@ -129,7 +129,9 @@ graph TB
     JSL --> PB
     WBVM --> PB
 
-    WBVM --> ARF
+    WBVM -->|BrowserModeChanged| WBL
+    WBL -->|모드별 저장 공간과 브라우저 생성| CEF
+    WBL --> ARF
     ARF --> MA
     WBVM --> CEF
     CEF --> TM
@@ -348,7 +350,7 @@ ServiceLocator.MapArchive
 | `WindowStateManager` | 창 상태 저장/복원 |
 | `MapEventService` | 맵 변경, 스크린샷, 퀘스트 완료 이벤트 발행 |
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
-| `GoonTrackerService` | Goons 출몰 맵 주기 조회 (tarkov-goon-tracker.com) |
+| `GoonTrackerService` | 활성화된 동안 PvE 군즈 최근 목격 제보 조회 |
 | `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
 | `MapArchive` | 오프라인 맵 사본에서 주소에 해당하는 파일 찾기 |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
@@ -421,26 +423,38 @@ services.AddSingleton(_ => new ServiceName());
 두 경로는 신뢰도가 달라 설정에서 각각 끕니다. 진입 감지는 게임 로그에서 방금 읽은
 사실이지만, 스크린샷 보정은 마지막으로 읽어 둔 맵을 다시 쓰는 추측입니다.
 
-### 스크린샷 위치 표시와 퀘스트 완료 (window.pilot 브리지)
+### 스크린샷 위치 표시와 퀘스트 완료 (Pilot 브리지)
 
-좌표 파싱과 마커 표시는 tarkov-market이 하므로, 앱은 사건만 웹 페이지로 넘깁니다.
-넘기는 통로는 사이트가 페이지마다 열어 두는 `window.pilot`입니다.
+앱의 브리지가 스크린샷 파일명에서 좌표와 회전값을 읽고, 사이트의 Pilot 서비스와 지도별
+좌표 변환으로 위치와 방향을 표시합니다. 사이트가 제공하는 함수의 존재 여부로 이전 전역
+Pilot과 Nuxt 서비스를 구분합니다.
 
 ```
-스크린샷 파일 생성 / 퀘스트 완료 알림 로그
+스크린샷 파일 생성
        ↓
-  ScreenshotsWatcher / LogsWatcher 감지
+  ScreenshotsWatcher 감지 -> 필요한 맵 전환 먼저 요청
        ↓
-  MapEventService.OnScreenshotTaken(filename) / OnQuestCompleted(questId)
+  MapEventService.OnScreenshotTaken(filename)
        ↓
-  WebBrowserViewModel.SendToPilot() (UI 스레드로 마샬링)
+  WebBrowserViewModel이 대상 맵과 최신 입력 보관
        ↓
-  PilotBridge 호출문 -> CefSharp EvaluateScriptAsync
+  MaintainPilotAsync -> 스크립트 응답 확인과 복구 -> EvaluateScriptAsPromiseAsync
        ↓
-  window.tanukiPilot -> window.pilot.positionFromScreenshot / questComplete
+  window.tanukiPilot -> 사용 가능한 Pilot 서비스
+       ↓
+  지도 좌표와 위치 마커, 방향 준비 확인 -> 성공하면 대기 해제
 ```
 
-`window.tanukiPilot`은 페이지가 로드될 때마다 `PilotBridge.INIT_SCRIPT`로 다시 등록합니다.
+페이지 로드 완료, 스크린샷 수신과 주기 확인이 같은 복구 경로를 사용합니다. 호출이 끝나도
+지도 반영이 확인되지 않으면 최신 입력을 재시도합니다. 퀘스트 완료는 `SendToPilot()`에서
+같은 어댑터로 전달하지만 위치 재시도 큐에는 넣지 않습니다.
+
+`WebBrowserLifecycleBehavior`는 모드 전환 때 브라우저를 교체합니다. Online은 기존 프로필을
+사용하고 Local은 독립된 메모리 `RequestContext`로 열어 DB와 캐시를 분리합니다.
+`WebBrowserViewModel`은 교체 중에도 현재 맵과 마지막 위치를 보관하며 이전 브라우저의 응답을
+무시합니다. 저장 공간을 분리하는 이유와 전환 시 초기화되는 상태는
+[오프라인 맵 설계](docs/20260818-offline-map.md)에 정리했습니다.
+
 2026-08-17 Pilot v2 이전에는 포트 5123의 WebSocket 서버로 같은 사건을 넘겼으나, 사이트가
 로컬 앱에 접속하지 않게 되어 이 경로로 옮겼습니다. 무엇이 깨졌고 어떤 대안을 버렸는지,
 사이트가 또 바꿨을 때 어떻게 알아차리는지는 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에
@@ -502,9 +516,9 @@ tarkov-market.com 웹페이지의 UI 요소를 JavaScript로 제어해 맵만 �
 | **헤더 (header)** | 항상 숨김 | X |
 | **푸터 (footer-wrap)** | 항상 숨김 | X |
 | **쿠키 안내 (cookie-consent)** | 항상 숨김 | X |
-| **좌측 패널 (panel_left)** | 체크 시 숨김 | O |
-| **우측 패널 (panel_right)** | 체크 시 숨김 | O |
-| **상단 패널 (panel_top)** | 체크 시 숨김 | O |
+| **좌측 패널 (panel_left)** | Online은 체크 시, Local은 항상 숨김 | Online만 |
+| **우측 패널 (panel_right)** | Online은 체크 시, Local은 Levels 외 숨김 | Online만 |
+| **상단 패널 (panel_top)** | Online은 체크 시, Local은 항상 숨김 | Online만 |
 
 ### 동작 방식
 
@@ -527,8 +541,9 @@ resize 이벤트 발생 → SVG 맵 레이아웃 재계산
 
 1. **헤더/푸터는 항상 숨김**: 맵 이동, 체크 해제와 무관하게 절대 표시하지 않음
 2. **패널만 토글 대상**: "UI 요소 숨기기" 체크박스는 좌/우/상단 패널과, 창이 좁을 때 사이트가 대신 펴는 모바일 UI에 적용
-3. **레이아웃 재계산**: 요소 숨김 후 `window.dispatchEvent(new Event('resize'))` 호출로 검은 영역 방지
-4. **숨김은 스타일시트 규칙으로**: 요소의 `style.display`를 직접 넣지 않습니다. 인라인 방식은 나중에
+3. **Local은 코어만 유지**: 체크박스와 무관하게 지도, Levels, 진영별 추출구와 현재 위치/방향만 표시합니다. 캔버스에 다른 마커가 그려지기 전에 저장된 카테고리를 추출구로 제한합니다
+4. **레이아웃 재계산**: 요소 숨김 후 `window.dispatchEvent(new Event('resize'))` 호출로 검은 영역 방지
+5. **숨김은 스타일시트 규칙으로**: 요소의 `style.display`를 직접 넣지 않습니다. 인라인 방식은 나중에
    만들어진 요소를 놓치고, 다른 스크립트가 `style.cssText`를 대입하면 함께 지워집니다. 0.2.4에서
    `ui-customization.js`가 헤더의 `cssText`를 덮어써 상단 바가 되살아났습니다. `!important` 규칙은
    인라인 스타일보다 우선하므로 두 경우를 모두 막습니다
@@ -542,7 +557,7 @@ Models/JavaScript/
 ├── Scripts/                      # 실제 JavaScript 파일 (Embedded Resource)
 │   ├── web-elements-control.js   # UI 요소 제어 함수 정의
 │   ├── page-layout.js            # 마진/패딩 제거
-│   ├── pilot-bridge.js           # window.pilot 호출 통로 등록
+│   ├── pilot-bridge.js           # 사용 가능한 Pilot 서비스로 위치 전달
 │   └── ...
 ├── WebElementsControl.js.cs      # C# 래퍼 (함수 호출용 상수)
 ├── PageLayout.js.cs              # C# 래퍼
@@ -555,9 +570,10 @@ Models/JavaScript/
 2. `.js.cs` 파일: `JavaScriptLoader.Load()`로 스크립트 로드 + 함수 호출 상수 정의
 3. `BrowserUIService`: 초기화 스크립트 -> 함수 호출 순서로 실행
 
-주입 시점은 `FrameLoadEnd`가 기본입니다. 예외는 `page-health.js` 하나로, 로딩 중에 난 자원
-실패와 스크립트 오류를 잡아야 해서 `FrameLoadStart`에 넣습니다. 이 스크립트가 보낸 오류와
-맵 렌더 여부는 앱 로그에 `[PageHealth]`로 남습니다.
+페이지 후처리는 `FrameLoadEnd`에서 시작합니다. `page-health.js`와 모드별 마커 선택 설정은
+사이트 초기화 전에 적용해야 하므로 `FrameLoadStart`에 넣습니다. 방향 표시와 Pilot 브리지는
+페이지 로드뿐 아니라 주기 확인과 스크린샷 수신 때도 응답을 확인해 복구합니다. 상태 보고
+스크립트가 보낸 오류와 맵 렌더 여부는 앱 로그에 `[PageHealth]`로 남습니다.
 
 **예시 (WebElementsControl):**
 ```csharp
@@ -643,6 +659,13 @@ sequenceDiagram
 
 ---
 
+## 위치 연동 검증
+
+위치 연동의 회귀 검사는 `tools/verify-map-recovery.mjs`에서 관리합니다. PR과 릴리스는
+`.github/workflows/verify-map-recovery.yml`로 같은 검사를 실행합니다. 이 검사는 실제 DOM과
+분리된 Chromium 저장 공간을 사용하며 WPF 창을 실행하지 않습니다. CEF 컨트롤 교체와 게임
+포커스 유지는 별도 실행 검증이 필요합니다.
+
 ## 용어 정리
 
 | 용어 | 설명 |
@@ -650,5 +673,5 @@ sequenceDiagram
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
 | **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
 | **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |
-| **Pilot 브리지** | 게임 사건을 tarkov-market의 `window.pilot`으로 넘기는 통로 |
-| **로컬 모드** | 사이트 대신 앱에 담긴 사본으로 맵을 여는 상태 (실험적 기능) |
+| **Pilot 브리지** | 사용 가능한 사이트의 Pilot 서비스로 위치와 퀘스트 완료를 전달하는 어댑터 |
+| **로컬 모드** | 독립된 브라우저 저장 공간에서 앱에 담긴 사본으로 맵을 여는 상태 (실험적 기능) |

@@ -13,12 +13,11 @@ null을 돌려 평소대로 네트워크를 타게 두고, 켜져 있으면 MapA
 "로컬인데 왜 느리지", "왜 어떤 것만 최신이지"를 가려낼 수 없기 때문이다.
 
 State Management:
-- LocalModeEnabled: 이 값 하나가 가로채기 여부를 정한다. UI 토글이 바꾸고, 바꾼 뒤에는
-  브라우저를 다시 읽어야 이미 그려진 페이지에도 반영된다
-- _prefetchStarted: 미리 읽기를 한 번만 걸기 위한 표시. 토글을 여러 번 눌러도 한 번이면 된다
+- LocalModeEnabled: 생성 때 정하고 브라우저 수명 동안 바꾸지 않는다. 모드를 바꿀 때는
+  저장 공간과 처리기를 갖춘 새 브라우저를 만든다
 
 Method Flow:
-  로컬 모드 켜짐 -> MapArchive.Prefetch()를 배경에서 한 번 (본문을 미리 읽어 둔다)
+  로컬 처리기 생성 -> MapArchive.Prefetch()를 배경에서 실행 (본문을 미리 읽어 둔다)
   CefSharp 자원 요청 -> GetResourceRequestHandler
     -> 로컬 모드 꺼짐: null (네트워크)
     -> 로컬 모드 켜짐: ArchiveHandler -> MapArchive.Find(주소)
@@ -40,13 +39,12 @@ namespace TanukiTarkovMap.Models.Offline
     {
         private readonly MapArchive _archive;
 
-        public ArchiveResourceRequestHandlerFactory(MapArchive archive)
+        public ArchiveResourceRequestHandlerFactory(MapArchive archive, bool localModeEnabled)
         {
             _archive = archive;
+            LocalModeEnabled = localModeEnabled;
+            if (localModeEnabled) Task.Run(_archive.Prefetch);
         }
-
-        private bool _localModeEnabled;
-        private bool _prefetchStarted;
 
         /// <summary>
         /// 로컬 모드 여부. 켜져 있는 동안에만 요청을 사본으로 응답한다.
@@ -54,19 +52,8 @@ namespace TanukiTarkovMap.Models.Offline
         /// 켤 때 사본 본문을 배경에서 미리 읽어 둔다. 첫 페이지는 요청 백 개를 한꺼번에 보내는데,
         /// 그때 디스크를 처음 읽으면 응답이 늦어 사이트가 늦게 온 조각을 쓰지 못할 수 있다
         /// </summary>
-        public bool LocalModeEnabled
-        {
-            get => _localModeEnabled;
-            set
-            {
-                _localModeEnabled = value;
-
-                if (!value || _prefetchStarted) return;
-
-                _prefetchStarted = true;
-                Task.Run(_archive.Prefetch);
-            }
-        }
+        // INTENT: 처리 중인 요청이 모드 토글에 따라 다른 출처를 읽지 않게 생성 때 고정한다.
+        public bool LocalModeEnabled { get; }
 
         /// <summary> 위 Critical Warnings 참고. 언제나 true로 둔다 </summary>
         public bool HasHandlers => true;

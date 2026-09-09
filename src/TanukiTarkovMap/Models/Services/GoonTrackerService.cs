@@ -4,17 +4,17 @@ using System.Timers;
 using TanukiTarkovMap.Models.Utils;
 
 /**
-GoonTrackerService - Tarkov Goon Tracker 웹사이트에서 Goons 위치 정보 제공
+GoonTrackerService - Tarkov Goon Tracker 웹사이트의 최근 군즈 목격 제보 제공
 
-Purpose: tarkov-goon-tracker.com/pve에서 현재 Goons가 있는 맵을 주기적으로 조회하여 제공
+Purpose: 활성화된 동안 PvE 목격 제보를 조회한다. 제보된 맵이 현재 레이드의 출현을 보장하지는 않는다.
 
 Core Functionality:
-- FetchCurrentGoonsMap: 웹사이트에서 현재 Goons 위치 파싱
-- 주기적 업데이트: 5분마다 자동으로 위치 갱신
-- GoonsMapChanged 이벤트: 맵 변경 시 구독자에게 알림
+- FetchCurrentGoonsMapAsync: 웹사이트에서 최근 목격 제보의 맵 파싱
+- 주기적 업데이트: 활성화된 동안 제보 갱신
+- GoonsMapChanged 이벤트: 제보 맵 변경 시 구독자에게 알림
 
 State Management:
-- CurrentGoonsMap: 현재 Goons가 있는 맵 이름 (예: "Woods", "Customs")
+- CurrentGoonsMap: 최근 군즈 목격 제보의 맵 이름
 - _updateTimer: 주기적 업데이트용 타이머
 
 Dependencies:
@@ -28,7 +28,7 @@ namespace TanukiTarkovMap.Models.Services
         private readonly System.Timers.Timer _updateTimer;
         private string? _currentGoonsMap;
         private bool _disposed = false;
-        private bool _enabled = true;
+        private bool _enabled = false;
 
         /// <summary>
         /// Goons 위치 맵 이름 목록 (tarkov-goon-tracker에서 사용하는 이름과 앱 내 Name 매핑)
@@ -39,7 +39,7 @@ namespace TanukiTarkovMap.Models.Services
         };
 
         /// <summary>
-        /// 현재 Goons가 있는 맵 이름 (예: "woods", "customs")
+        /// 최근 군즈 목격 제보의 맵 이름
         /// </summary>
         public string? CurrentGoonsMap
         {
@@ -55,7 +55,7 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// Goons 맵 위치가 변경되었을 때 발생하는 이벤트
+        /// 최근 군즈 목격 제보의 맵이 변경되었을 때 발생하는 이벤트
         /// </summary>
         public event EventHandler<string?>? GoonsMapChanged;
 
@@ -86,6 +86,7 @@ namespace TanukiTarkovMap.Models.Services
             }
         }
 
+        // 생성 시에는 조회하지 않고 저장된 Enabled 설정을 적용할 때 시작한다.
         internal GoonTrackerService()
         {
             _httpClient.DefaultRequestHeaders.Add("User-Agent", "TanukiTarkovMap/1.0");
@@ -94,10 +95,6 @@ namespace TanukiTarkovMap.Models.Services
             _updateTimer = new System.Timers.Timer(3 * 60 * 1000);
             _updateTimer.Elapsed += OnTimerElapsed;
             _updateTimer.AutoReset = true;
-
-            // 초기 로드
-            _ = FetchCurrentGoonsMapAsync();
-            _updateTimer.Start();
         }
 
         private async void OnTimerElapsed(object? sender, ElapsedEventArgs e)
@@ -106,18 +103,22 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         /// <summary>
-        /// 웹사이트에서 현재 Goons 위치를 가져옵니다.
+        /// 웹사이트에서 최근 군즈 목격 제보를 가져온다.
         /// </summary>
         public async Task FetchCurrentGoonsMapAsync()
         {
-            if (!_enabled)
+            if (!_enabled || _disposed)
                 return;
 
             try
             {
                 var response = await _httpClient.GetStringAsync("https://www.tarkov-goon-tracker.com/pve");
 
-                // HTML에서 최근 Goons 위치 파싱
+                // 조회 중 기능을 껐으면 늦게 도착한 제보로 표시를 복원하지 않는다.
+                if (!_enabled || _disposed)
+                    return;
+
+                // HTML에서 최근 군즈 목격 제보의 맵 파싱
                 // 패턴: "map":{"name":"Woods" 형태의 JSON에서 첫 번째 맵 이름 추출
                 var mapMatch = Regex.Match(response, @"""map"":\s*\{\s*""name""\s*:\s*""([^""]+)""");
 
@@ -127,18 +128,18 @@ namespace TanukiTarkovMap.Models.Services
                     if (GoonsMapNames.Contains(mapName))
                     {
                         CurrentGoonsMap = mapName;
-                        Logger.SimpleLog($"[GoonTrackerService] Current Goons map: {mapName}");
+                        Logger.SimpleLog($"[GoonTrackerService] Latest reported Goons map: {mapName}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                Logger.SimpleLog($"[GoonTrackerService] Failed to fetch Goons location: {ex.Message}");
+                Logger.SimpleLog($"[GoonTrackerService] Failed to fetch Goons report: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// 지정된 맵에 Goons가 있는지 확인합니다.
+        /// 지정된 맵이 최근 군즈 목격 제보의 맵인지 확인한다.
         /// </summary>
         /// <param name="mapName">맵 이름 (MapInfo.Name)</param>
         public bool IsGoonsOnMap(string? mapName)

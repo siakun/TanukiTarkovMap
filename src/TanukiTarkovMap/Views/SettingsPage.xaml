@@ -106,8 +106,12 @@
                                Foreground="White"
                                Margin="0,0,0,6"/>
 
-                    <!-- 전역 단축키 설정 -->
-                    <TextBlock Text="전역 단축키"
+                    <!--
+                    INTENT
+                    창 표시/숨김과 위치 갱신은 서로 다른 입력입니다. 앱을 종료하는 키나 게임의
+                    스크린샷 키로 오해하지 않도록 두 키의 역할과 한 모니터에서의 핀 사용을 함께 설명합니다.
+                    -->
+                    <TextBlock Text="미니맵 창 표시/숨김 단축키"
                                FontSize="10"
                                FontWeight="SemiBold"
                                Foreground="White"
@@ -116,14 +120,25 @@
                     <!-- 단축키 활성화 -->
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox IsChecked="{Binding HotkeyEnabled}"
-                                  Content="전역 단축키 사용"
+                                  Content="창 표시/숨김 단축키 사용"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="단축키로 프로그램을 트레이로 숨기거나 표시합니다"
+                        <TextBlock Text="이 키는 미니맵 창 전체를 숨기거나 다시 표시합니다. 숨겨도 앱은 종료되지 않고 트레이에서 계속 실행됩니다."
                                    Foreground="#FF888888"
                                    FontSize="8"
+                                   TextWrapping="Wrap"
                                    Margin="18,2,0,0"/>
+                        <TextBlock Text="위치를 갱신하려면 타르코프 설정의 Screenshot 키를 눌러야 합니다. Steam의 F12 스크린샷 키와는 다릅니다."
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   TextWrapping="Wrap"
+                                   Margin="18,4,0,0"/>
+                        <TextBlock Text="한 모니터에서 게임 위에 계속 띄우려면 상단 핀(항상 위)을 켜 주세요. 핀이 꺼져 있으면 다른 창에 가려질 수 있습니다."
+                                   Foreground="#FF888888"
+                                   FontSize="8"
+                                   TextWrapping="Wrap"
+                                   Margin="18,4,0,0"/>
                     </StackPanel>
 
                     <!-- 단축키 입력 -->
@@ -243,7 +258,7 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="Goon Tracker"
+                    <TextBlock Text="군즈 최근 목격 제보"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -251,13 +266,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding GoonTrackerEnabled}"
-                                  Content="Goon Tracker 사용"
+                                  Content="최근 목격 제보 표시"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="tarkov-goon-tracker.com에서 Goons 위치 정보를 가져옵니다"
+                        <TextBlock Text="tarkov-goon-tracker.com의 PvE 최근 목격 제보를 표시합니다. 군즈는 확률에 따라 스폰하므로 제보와 실제 출현이 다를 수 있습니다."
                                    Foreground="#FF888888"
                                    FontSize="8"
+                                   TextWrapping="Wrap"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
@@ -511,7 +527,7 @@
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="상단 바에 Online/Local 전환이 생깁니다. Local은 앱에 담긴 사본으로 맵을 열어, 사이트가 죽어 있어도 맵과 위치 표시가 동작합니다"
+                        <TextBlock Text="상단 바에 Online/Local 전환이 생깁니다. Local은 앱에 담긴 사본에서 지도, Levels, 진영별 추출구와 현재 위치/방향만 표시합니다"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"
@@ -521,7 +537,7 @@
                                    FontSize="8"
                                    Margin="18,2,0,0"
                                    TextWrapping="Wrap"/>
-                        <TextBlock Text="사본은 만든 시점의 사이트입니다. 퀘스트와 시세는 그때 값으로 남고, 새 버전을 받을 때 함께 갱신됩니다"
+                        <TextBlock Text="사본은 만든 시점의 사이트 자산이며 새 버전을 받을 때 함께 갱신됩니다"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"

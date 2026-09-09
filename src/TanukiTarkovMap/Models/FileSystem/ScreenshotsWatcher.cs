@@ -162,9 +162,6 @@ namespace TanukiTarkovMap.Models.FileSystem
 
                     Logger.SimpleLog($"[Screenshot] {filename} | Path: {fullPath}{fileInfo}");
 
-                    // 파일명을 웹 페이지의 window.pilot으로 넘겨 위치 마커를 옮긴다
-                    ServiceLocator.MapEventService.OnScreenshotTaken(filename);
-
                     // 레이드 도중 앱을 켜면 진입 로그가 이미 지나가 맵이 전환되지 않는다.
                     // 레이드 안에서 찍은 스크린샷은 그 시점에 레이드 중이라는 증거이므로,
                     // 마지막 감지 맵을 현재 맵으로 보고 보정한다.
@@ -174,6 +171,10 @@ namespace TanukiTarkovMap.Models.FileSystem
                     {
                         ServiceLocator.MapEventService.OnMapChanged(lastDetectedMap, MapChangeSource.Screenshot);
                     }
+
+                    // 맵 전환을 먼저 알려 좌표가 이전 페이지에 전달된 직후 새로고침으로 사라지지 않게 한다.
+                    if (HasRaidCoordinates(filename))
+                        ServiceLocator.MapEventService.OnScreenshotTaken(filename);
                 }
             }
             catch (Exception ex)

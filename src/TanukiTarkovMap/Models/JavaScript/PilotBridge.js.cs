@@ -3,16 +3,15 @@ using System.Text.Json;
 namespace TanukiTarkovMap.Models.JavaScript
 {
     /// <summary>
-    /// tarkov-market.com이 열어 둔 window.pilot으로 게임 사건을 넘기는 스크립트
+    /// 페이지 안의 Pilot 서비스로 게임 사건을 넘기는 스크립트
     ///
     /// 왜 이 방식인가:
     /// 2026-08-17 Pilot v2부터 사이트가 로컬 앱의 WebSocket(포트 5123)에 접속하지 않는다.
-    /// 대신 페이지마다 window.pilot을 열어 두므로 그 함수를 직접 부른다.
-    /// 사이트 서버와의 연결이나 로그인 없이도 좌표 표시는 이 경로로 동작한다.
+    /// 앱은 페이지 안의 함수를 직접 호출하며, 전역 객체와 Nuxt 서비스의 차이는 JS 어댑터가 맡는다.
     ///
     /// 동작 원리 (WebElementsControl과 같은 방식):
-    /// 1. 페이지 로드 시 INIT_SCRIPT를 실행해 window.tanukiPilot 등록
-    /// 2. 사건이 생길 때마다 SendScreenshot()/CompleteQuest()가 만든 호출문을 실행
+    /// 1. 상태 확인에 응답하지 않으면 INIT_SCRIPT로 window.tanukiPilot 복구
+    /// 2. 스크린샷 호출은 Promise의 결과까지 기다려 지도 반영 여부 확인
     ///
     /// JavaScript 파일 위치: Models/JavaScript/Scripts/pilot-bridge.js
     /// </summary>
@@ -23,11 +22,22 @@ namespace TanukiTarkovMap.Models.JavaScript
         /// </summary>
         public static string INIT_SCRIPT => JavaScriptLoader.Load("pilot-bridge.js");
 
+        public const string IS_INSTALLED_SCRIPT =
+            "window.tanukiPilot?.version === 3 && typeof window.tanukiPilot.sendScreenshot === 'function' " +
+            "&& typeof window.tanukiPilot.isReady === 'function' && typeof window.tanukiPilot.status === 'function' " +
+            "&& typeof window.tanukiPilot.getMapHeading === 'function' " +
+            "&& typeof window.tanukiPilot.isRendered === 'function';";
+        public const string STATUS_SCRIPT = "window.tanukiPilot?.status() ?? 'bridge-unavailable';";
+
         /// <summary>
         /// 스크린샷 파일명 전달 호출문 생성
         /// </summary>
         public static string SendScreenshot(string filename) =>
-            $"window.tanukiPilot && window.tanukiPilot.sendScreenshot({ToJsString(filename)});";
+            $"return window.tanukiPilot ? window.tanukiPilot.sendScreenshot({ToJsString(filename)}) : false;";
+
+        /// <summary>지도 교체나 DOM 초기화 뒤 마지막 위치가 아직 표시되는지 확인</summary>
+        public static string IsRendered(string filename) =>
+            $"window.tanukiPilot?.isRendered({ToJsString(filename)}) === true;";
 
         /// <summary>
         /// 퀘스트 완료 전달 호출문 생성

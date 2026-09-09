@@ -1,8 +1,11 @@
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using CefSharp;
 using CefSharp.Wpf;
 using Microsoft.Xaml.Behaviors;
+using TanukiTarkovMap.Models.Offline;
+using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.ViewModels;
 
 namespace TanukiTarkovMap.Behaviors
@@ -11,31 +14,34 @@ namespace TanukiTarkovMap.Behaviors
     WebBrowserLifecycleBehavior - ChromiumWebBrowser와 WebBrowserViewModel의 수명 주기 연결
 
     Purpose: WebBrowserUserControl의 Code-behind 없이 브라우저 설정, ViewModel 연결과 F12 입력을 처리한다.
-    Architecture: XAML의 ChromiumWebBrowser에 붙어 UI 이벤트를 받고, 데이터와 이동 흐름은
+    Architecture: XAML의 ContentControl 안에 모드별 ChromiumWebBrowser를 만들고, 데이터와 이동 흐름은
     WebBrowserViewModel.SetBrowser()에 브라우저 인스턴스를 넘겨 ViewModel에서 처리한다.
 
     Core Functionality:
     - 브라우저 설정: CEF가 초기화되기 전에 WindowlessFrameRate를 60fps로 설정
-    - ViewModel 연결: DataContext가 준비되면 ChromiumWebBrowser를 WebBrowserViewModel에 한 번 전달
+    - ViewModel 연결: DataContext가 준비되거나 모드가 바뀌면 새 브라우저를 ViewModel에 전달
+    - 저장 공간 분리: Online은 기존 프로필, Local은 독립된 메모리 RequestContext 사용
     - 개발자 도구: 브라우저가 받은 F12 입력으로 CefSharp 개발자 도구 표시
 
     State Management:
-    - _browserConnected: 현재 Behavior가 브라우저를 ViewModel에 이미 전달했는지 기록
+    - _viewModel: 현재 연결한 ViewModel과 모드 변경 이벤트 구독
+    - _browser, _localContext: 함께 만들고 해제할 브라우저와 로컬 저장 공간
 
     Method Flow:
-      OnAttached -> 브라우저 기본 설정 -> UI 이벤트 구독 -> ConnectViewModel
+      OnAttached -> UI 이벤트 구독 -> ConnectViewModel
       Loaded/DataContextChanged -> ConnectViewModel -> WebBrowserViewModel.SetBrowser
+      BrowserModeChanged -> 이전 브라우저 해제 -> 새 저장 공간과 브라우저 연결
       KeyDown(F12) -> ChromiumWebBrowser.ShowDevTools
 
     Key Methods:
-    - OnAttached(): 브라우저 기본값을 적용하고 필요한 UI 이벤트를 구독
-    - ConnectViewModel(): DataContext가 WebBrowserViewModel일 때 브라우저 인스턴스를 한 번 전달
+    - OnAttached(): 필요한 UI 이벤트 구독
+    - ReplaceBrowser(): 요청 처리기와 저장 공간을 설정한 뒤 새 브라우저 연결
 
     Dependencies:
     - ChromiumWebBrowser: 설정과 키 입력을 처리할 WPF 브라우저 컨트롤
     - WebBrowserViewModel: 브라우저 이벤트, 준비 시점과 탐색 흐름 관리
 
-    Design Rationale: 컨트롤 생성과 UI 입력은 XAML/Behavior에 두되, 시작 주소 선택과 탐색은
+    Design Rationale: 컨트롤 생성과 UI 입력은 Behavior에 두되, 시작 주소 선택과 탐색은
     ViewModel에 남겨 UI 수명 주기와 데이터 흐름을 섞지 않는다.
 
     Historical Context: 2026-08-19 이전에는 WebBrowserUserControl의 Loaded 처리기가 SetBrowser() 직후
@@ -48,17 +54,15 @@ namespace TanukiTarkovMap.Behaviors
 
     Last Updated: 2026-08-19 | .NET 8.0 / CefSharp 141.0.110 | By 시작 맵 초기화 수정
     */
-    public class WebBrowserLifecycleBehavior : Behavior<ChromiumWebBrowser>
+    public class WebBrowserLifecycleBehavior : Behavior<ContentControl>
     {
-        private bool _browserConnected;
+        private WebBrowserViewModel? _viewModel;
+        private ChromiumWebBrowser? _browser;
+        private IRequestContext? _localContext;
 
         protected override void OnAttached()
         {
             base.OnAttached();
-
-            // CefSharp.Wpf의 OSR 페인트 상한을 먼저 60fps로 두고,
-            // 이후 MonitorRefreshRateBehavior가 현재 모니터 주사율로 갱신한다.
-            AssociatedObject.BrowserSettings.WindowlessFrameRate = 60;
 
             AssociatedObject.Loaded += OnBrowserLoaded;
             AssociatedObject.DataContextChanged += OnDataContextChanged;
@@ -72,7 +76,7 @@ namespace TanukiTarkovMap.Behaviors
             AssociatedObject.Loaded -= OnBrowserLoaded;
             AssociatedObject.DataContextChanged -= OnDataContextChanged;
             AssociatedObject.KeyDown -= OnBrowserKeyDown;
-            _browserConnected = false;
+            DisconnectViewModel();
 
             base.OnDetaching();
         }
@@ -89,21 +93,87 @@ namespace TanukiTarkovMap.Behaviors
 
         private void OnBrowserKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.F12)
+            if (e.Key == Key.F12 && _browser?.IsDisposed == false)
             {
-                AssociatedObject.ShowDevTools();
+                _browser.ShowDevTools();
             }
         }
 
         private void ConnectViewModel()
         {
-            if (_browserConnected || AssociatedObject.DataContext is not WebBrowserViewModel viewModel)
+            var viewModel = AssociatedObject.DataContext as WebBrowserViewModel;
+            if (ReferenceEquals(_viewModel, viewModel))
             {
                 return;
             }
 
-            viewModel.SetBrowser(AssociatedObject);
-            _browserConnected = true;
+            DisconnectViewModel();
+            _viewModel = viewModel;
+            if (_viewModel == null) return;
+
+            _viewModel.BrowserModeChanged += OnBrowserModeChanged;
+            ReplaceBrowser();
+        }
+
+        private void OnBrowserModeChanged(object? sender, EventArgs e) => ReplaceBrowser();
+
+        // INTENT
+        // Online과 Local은 주소가 같아도 사이트 자산과 DB 형식이 다를 수 있다. 요청 처리기만
+        // 바꾸거나 공용 DB를 지우면 사본이 최신 캐시를 읽거나 온라인 설정을 잃는다.
+        // Local은 진입할 때마다 독립된 메모리 저장 공간에서 시작해 사본 갱신 뒤에도 이전 DB를
+        // 읽지 않게 한다. 앱이 보관한 맵, 진영, 확대 설정과 마지막 좌표는 ViewModel에서 복원한다.
+        private void ReplaceBrowser()
+        {
+            ReleaseBrowser();
+            if (_viewModel == null) return;
+
+            if (_viewModel.IsLocalMapMode)
+            {
+                // RequestContext가 전달받은 settings의 해제도 맡는다.
+                _localContext = new RequestContext(new RequestContextSettings { CachePath = string.Empty });
+                // Behavior 해제 없이 앱이 종료되어도 CEF 종료 전에 네이티브 참조를 놓는다.
+                Cef.AddDisposable(_localContext);
+            }
+
+            // 요청 처리기와 저장 공간은 CEF 생성 전에 함께 정한다. Online의 null은 기존 전역
+            // 프로필을 사용하므로 쿠키와 사이트 설정을 보존한다.
+            _browser = new ChromiumWebBrowser
+            {
+                RequestContext = _localContext,
+                ResourceRequestHandlerFactory = new ArchiveResourceRequestHandlerFactory(
+                    ServiceLocator.MapArchive, _viewModel.IsLocalMapMode),
+                Address = "about:blank",
+            };
+            _browser.BrowserSettings.WindowlessFrameRate = 60;
+            Interaction.GetBehaviors(_browser).Add(new DuplicateMouseMoveFilterBehavior());
+
+            _viewModel.SetBrowser(_browser);
+            AssociatedObject.Content = _browser;
+        }
+
+        private void ReleaseBrowser()
+        {
+            _viewModel?.SetBrowser(null);
+            AssociatedObject.Content = null;
+            if (_browser != null)
+            {
+                Interaction.GetBehaviors(_browser).Clear();
+                _browser.Dispose();
+                _browser = null;
+            }
+            if (_localContext != null)
+            {
+                Cef.RemoveDisposable(_localContext);
+                if (!_localContext.IsDisposed) _localContext.Dispose();
+                _localContext = null;
+            }
+        }
+
+        private void DisconnectViewModel()
+        {
+            if (_viewModel != null) _viewModel.BrowserModeChanged -= OnBrowserModeChanged;
+            ReleaseBrowser();
+            _viewModel = null;
         }
     }
 }

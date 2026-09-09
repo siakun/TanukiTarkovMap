@@ -1,0 +1,28 @@
+name: Verify map recovery
+
+on:
+  pull_request:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+      # INTENT: 함수 존재 검사만 통과하고 실제 위치 표시가 끊기는 변경을 배포 전에 잡는다.
+      # 브라우저는 임시 프로필에서 headless로 실행하며 앱과 게임은 실행하지 않는다.
+      - name: Verify script recovery and archived maps
+        run: node tools/verify-map-recovery.mjs --archive archive
+      - name: Build application without launching
+        run: dotnet build src/TanukiTarkovMap.sln -c Release

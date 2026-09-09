@@ -187,6 +187,7 @@ namespace TanukiTarkovMap.Models.Utils
         internal const int VK_RWIN = 0x5C;
 
         // WindowPos 플래그
+        internal const int HWND_TOP = 0;
         internal const int HWND_TOPMOST = -1;
         internal const int HWND_NOTOPMOST = -2;
         internal const uint SWP_NOMOVE = 0x0002;
