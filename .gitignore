@@ -22,6 +22,8 @@ mono_crash.*
 [Dd]ebugPublic/
 [Rr]elease/
 [Rr]eleases/
+# 배포 출력물과 달리 버전별 업데이트 내역은 소스로 관리한다.
+!/docs/releases/
 x64/
 x86/
 [Ww][Ii][Nn]32/

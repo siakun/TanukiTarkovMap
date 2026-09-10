@@ -12,6 +12,7 @@ namespace TanukiTarkovMap.Models.JavaScript
     /// 숨김 정책:
     /// - 헤더/푸터: 항상 숨김 (복원 불가)
     /// - 패널(좌/우/상단): "UI 요소 숨기기" 체크박스에 따라 토글
+    /// - 로컬 모드: 체크박스와 무관하게 지도, Levels, 추출구와 위치/방향만 유지
     ///
     /// 숨김은 요소의 style.display가 아니라 스타일시트 규칙으로 겁니다.
     /// 인라인 방식은 나중에 만들어진 요소를 놓치고, 다른 스크립트가 style.cssText를 대입하면
@@ -55,6 +56,21 @@ namespace TanukiTarkovMap.Models.JavaScript
         /// 패널 복원 (헤더/푸터는 숨김 유지)
         /// </summary>
         public const string RESTORE_PANELS = "window.restorePanels();";
+
+        /// <summary>
+        /// 로컬 모드 코어 화면과 PMC 추출구만 활성화
+        /// </summary>
+        public const string ENABLE_LOCAL_MODE_PMC = "window.setLocalMapMode(true, true);";
+
+        /// <summary>
+        /// 로컬 모드 코어 화면과 SCAV 추출구만 활성화
+        /// </summary>
+        public const string ENABLE_LOCAL_MODE_SCAV = "window.setLocalMapMode(true, false);";
+
+        /// <summary>
+        /// 로컬 모드 표시를 끄고 온라인 마커 선택을 복원
+        /// </summary>
+        public const string DISABLE_LOCAL_MODE = "window.setLocalMapMode(false, true);";
 
         /// <summary>
         /// PMC Extraction 필터 클릭

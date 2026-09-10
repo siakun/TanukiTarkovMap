@@ -3,10 +3,10 @@ using CefSharp.Wpf;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
+using System.Windows.Threading;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.JavaScript;
-using TanukiTarkovMap.Models.Offline;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
@@ -14,7 +14,7 @@ using TanukiTarkovMap.Models.Utils;
 WebBrowserViewModel - CefSharp 웹 브라우저 제어 ViewModel
 
 Purpose: CEF가 준비된 뒤 시작 맵을 열고, tarkov-market.com의 JavaScript 주입과 메시지 수신을 처리
-Architecture: WebBrowserLifecycleBehavior가 XAML의 ChromiumWebBrowser를 SetBrowser()로 전달한다.
+Architecture: WebBrowserLifecycleBehavior가 모드별 ChromiumWebBrowser를 SetBrowser()로 전달한다.
 ViewModel은 CEF 준비 시점, 주소 상태와 모든 탐색을 관리하고 View는 브라우저를 표시하는 데 그친다.
 
 Core Functionality:
@@ -22,10 +22,11 @@ Core Functionality:
 - 탐색 조정: Navigate()가 모든 URL 요청의 준비 상태를 판정하고 준비 전 마지막 요청만 보관
 - 시작 탐색: App.StartupUrl을 Navigate()에 전달해 다른 탐색 요청과 같은 준비 경로 사용
 - 페이지 로드 후처리: UI 요소 제거, 마진 제거, 줌 적용
-- 로컬 모드: 사본으로 응답할 처리기를 브라우저에 붙이고 토글에 따라 켜고 끈 뒤 다시 읽기
+- 로컬 모드: Behavior에 브라우저 교체를 요청하고 현재 주소와 마지막 좌표 복원
+- 로컬 코어 필터: 사이트 모듈보다 먼저 마커 선택을 제한하고 온라인 전환 때 원래 선택 복원
 - 상태 보고: 로드 시작 시점에 page-health.js를 넣어 페이지 오류와 맵 렌더 여부를 로그로 받기
 - JavaScript 통신: CefSharp.PostMessage로 맵 정보/연결 상태 수신
-- Pilot 브리지: 게임 사건을 웹 페이지의 window.pilot으로 전달
+- Pilot 브리지: 페이지의 응답을 확인하고 통로를 복구한 뒤 최신 스크린샷 재전달
 - Messenger 수신: MainWindowViewModel에서 맵 선택/줌/UI 숨김 설정 수신
 
 State Management:
@@ -33,11 +34,10 @@ State Management:
 - _pendingNavigationUrl: CEF 준비 전에 받은 URL 중 마지막 하나, 실행을 시작하면 null로 전환
 - Address: AddressChanged/FrameLoadEnd가 갱신하는 현재 관측 주소
 - ReadyBrowser: BrowserCore 생성과 폐기 여부로 스크립트 실행 가능 상태 판정
-- _archiveFactory: 로컬 모드일 때만 요청을 사본으로 응답한다. 첫 이동이 시작되기 전에 브라우저에
-  붙여야 첫 요청부터 사본이 답한다
+- IsLocalMapMode: Behavior가 브라우저 저장 공간과 사본 처리기를 함께 선택하는 기준
 
 Method Flow:
-  SetBrowser -> 사본 처리기 연결 -> 필요하면 IsBrowserInitializedChanged 구독
+  SetBrowser -> 이전 브라우저 응답 무효화 -> 필요하면 IsBrowserInitializedChanged 구독
              -> 기존 대기 URL 또는 NavigateToStartupUrl
   FrameLoadStart -> page-health.js 주입 (로딩 중에 난 실패를 잡으려면 자원보다 먼저 들어가야 한다)
   Navigate(준비 전) -> _pendingNavigationUrl 교체 -> 로드 보류
@@ -49,7 +49,8 @@ Message Flow:
   MainWindowViewModel → MapSelectionChangedMessage → NavigateToMap
   MainWindowViewModel → ZoomLevelChangedMessage → ApplyZoomLevel
   MonitorRefreshRateBehavior → MonitorRefreshRateChangedMessage → ApplyWindowlessFrameRate
-  MapEventService(ScreenshotTaken/QuestCompleted) → SendToPilot → window.pilot
+  MapEventService(ScreenshotTaken) -> 최신 입력 보관 -> MaintainPilotAsync -> 페이지의 Pilot 서비스
+  MapEventService(QuestCompleted) -> SendToPilot -> 페이지의 Pilot 서비스
 
 Design Rationale: 시작 주소는 설정에서 계산하는 App.StartupUrl을 명령 값으로 사용하고, Address는
 브라우저가 알려 주는 현재 상태로만 다룬다. 시작, 맵 선택과 디버그 URL을 모두 Navigate()에서
@@ -61,9 +62,9 @@ Historical Context: 2026-08-19 이전에는 UserControl.Loaded에서 SetBrowser(
 Load()를 호출했다. CEF 초기화가 느린 Windows Sandbox에서는 호출이 사라져 about:blank에 머물렀다.
 2026-08-20에는 시작 경로만 준비 상태를 확인하고 메시지 경로의 Navigate()는 곧바로 LoadUrl을 호출해,
 CEF 준비 전에 들어온 자동 맵 전환이 사라지는 남은 경합을 모든 탐색의 공통 대기 경로로 합쳤다.
-Known Limitations: ChromiumWebBrowser 수명은 WebBrowserUserControl과 같다고 전제한다.
+Known Limitations: 모드 전환 때 브라우저를 교체하므로 웹 페이지의 뒤로/앞으로 이동 기록은 초기화된다.
 
-Last Updated: 2026-08-20 | .NET 8.0 / CefSharp 141.0.110 | By 준비 전 탐색 보존과 로컬 모드 병합
+Last Updated: 2026-08-23 | .NET 8.0 / CefSharp 141.0.110 | By 로컬 모드 코어 화면 단순화
 */
 namespace TanukiTarkovMap.ViewModels
 {
@@ -78,9 +79,24 @@ namespace TanukiTarkovMap.ViewModels
     {
         private readonly BrowserUIService _browserUIService;
         private readonly MapEventService _mapEventService;
-        private readonly ArchiveResourceRequestHandlerFactory _archiveFactory;
         private ChromiumWebBrowser? _browser;
         private string? _pendingNavigationUrl;
+        private readonly DispatcherTimer _pilotMaintenanceTimer = new(DispatcherPriority.Background)
+        {
+            Interval = TimeSpan.FromSeconds(2)
+        };
+        private bool _maintainingPilot;
+        private int _documentVersion;
+        private string? _requestedUrl;
+        private PendingScreenshot? _pendingScreenshot;
+        private PendingScreenshot? _latestScreenshot;
+        private string? _lastPilotFailure;
+
+        public bool IsLocalMapMode { get; private set; }
+        public event EventHandler? BrowserModeChanged;
+
+        // 지난 좌표를 차례로 재생하지 않고 사용자가 보려는 맵의 최신 입력만 보관한다.
+        private sealed record PendingScreenshot(string Filename, string MapUrl);
 
         /// <summary> 디버그 모드 - 모든 JavaScript 주입 비활성화 </summary>
         private bool _isDebugMode = false;
@@ -130,16 +146,14 @@ namespace TanukiTarkovMap.ViewModels
 
         public WebBrowserViewModel()
         {
+            _pilotMaintenanceTimer.Tick += async (_, _) => await MaintainPilotAsync();
             _browserUIService = ServiceLocator.BrowserUIService;
             _mapEventService = ServiceLocator.MapEventService;
-            _archiveFactory = new ArchiveResourceRequestHandlerFactory(ServiceLocator.MapArchive)
-            {
-                LocalModeEnabled = App.GetSettings().LocalMapEnabled && App.GetSettings().LocalMapModeActive,
-            };
+            IsLocalMapMode = App.GetSettings().LocalMapEnabled && App.GetSettings().LocalMapModeActive;
 
             _zoomLevel = App.GetSettings().EffectiveBrowserZoomLevel;
 
-            // 게임 사건 구독 (감시자 -> 웹 페이지의 window.pilot)
+            // 게임 사건 구독 (감시자 -> 페이지의 Pilot 서비스)
             _mapEventService.ScreenshotTaken += OnScreenshotTaken;
             _mapEventService.QuestCompleted += OnQuestCompleted;
 
@@ -150,14 +164,37 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// ChromiumWebBrowser 인스턴스 설정 (Behavior에서 호출)
         /// </summary>
-        public void SetBrowser(ChromiumWebBrowser browser)
+        public void SetBrowser(ChromiumWebBrowser? browser)
         {
             if (ReferenceEquals(_browser, browser))
             {
                 return;
             }
 
+            if (_browser != null)
+            {
+                _browser.FrameLoadStart -= OnFrameLoadStart;
+                _browser.FrameLoadEnd -= OnFrameLoadEnd;
+                _browser.AddressChanged -= OnAddressChanged;
+                _browser.JavascriptMessageReceived -= OnJavascriptMessageReceived;
+                _browser.IsBrowserInitializedChanged -= OnBrowserInitializedChanged;
+                _browser.Loaded -= OnBrowserLoaded;
+                _browser.Unloaded -= OnBrowserUnloaded;
+            }
+            _pilotMaintenanceTimer.Stop();
+            Interlocked.Increment(ref _documentVersion);
+            // INTENT: 새 브라우저의 about:blank가 현재 맵과 좌표를 지우지 않게 이동 의도를 먼저
+            // 보관한다. 이전 화면의 성공 응답은 문서 버전으로 걸러 새 화면의 전달 대기를 유지한다.
+            _pendingNavigationUrl ??= _requestedUrl ?? App.StartupUrl;
+            _pendingScreenshot ??= _latestScreenshot;
+            _lastPilotFailure = null;
+            Address = "about:blank";
+            IsLoading = true;
             _browser = browser;
+            if (_browser == null) return;
+            _browser.Loaded += OnBrowserLoaded;
+            _browser.Unloaded += OnBrowserUnloaded;
+            if (_browser.IsLoaded) _pilotMaintenanceTimer.Start();
 
             // 이벤트 핸들러 등록
             _browser.FrameLoadStart += OnFrameLoadStart;
@@ -167,11 +204,7 @@ namespace TanukiTarkovMap.ViewModels
             // JavaScript 메시지 수신 이벤트 등록
             _browser.JavascriptMessageReceived += OnJavascriptMessageReceived;
 
-            // 로컬 모드일 때 요청을 사본으로 응답한다 (온라인 모드에서는 아무것도 하지 않는다).
-            // 이 메서드 끝에서 첫 이동이 시작되므로 그 전에 붙여야 첫 요청부터 사본이 답한다
-            _browser.ResourceRequestHandlerFactory = _archiveFactory;
-
-            Logger.SimpleLog($"[WebBrowserViewModel] Browser attached (initialized: {_browser.IsBrowserInitialized})");
+            Logger.SimpleLog($"[WebBrowserViewModel] Browser attached (initialized: {_browser.IsBrowserInitialized}, local: {IsLocalMapMode})");
 
             if (!_browser.IsBrowserInitialized)
             {
@@ -222,7 +255,10 @@ namespace TanukiTarkovMap.ViewModels
         {
             System.Windows.Application.Current.Dispatcher.Invoke(() =>
             {
+                if (!ReferenceEquals(sender, _browser)) return;
                 Address = e.NewValue?.ToString() ?? string.Empty;
+                // SPA의 뒤로/앞으로 이동은 FrameLoadEnd가 발생하지 않는다.
+                if (!IsLoading && !IsBootstrapPage(Address)) AcceptPageAddress(Address);
             });
         }
 
@@ -234,11 +270,34 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnFrameLoadStart(object? sender, FrameLoadStartEventArgs e)
         {
-            if (!e.Frame.IsMain || _isDebugMode) return;
+            if (!ReferenceEquals(sender, _browser) || !e.Frame.IsMain || IsBootstrapPage(e.Url)) return;
+            var version = Interlocked.Increment(ref _documentVersion);
+            var loadingUrl = e.Url ?? string.Empty;
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(() =>
+            {
+                if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
+                IsLoading = true;
+                AcceptPageAddress(loadingUrl);
+                _pendingScreenshot ??= _latestScreenshot;
+            });
+            if (_isDebugMode) return;
 
             try
             {
                 e.Frame.ExecuteJavaScriptAsync(PageHealth.INIT_SCRIPT);
+
+                if (e.Url?.Contains("tarkov-market.com/maps/") == true)
+                {
+                    // 사이트는 모듈 평가 중 localStorage의 마커 선택을 한 번 읽는다. 로드가 끝난
+                    // 뒤 클릭하면 이미 캔버스에 그린 마커가 남으므로 페이지 스크립트보다 먼저 넣는다.
+                    var localModeScript = IsLocalMapMode
+                        ? IsPmcExtraction
+                            ? WebElementsControl.ENABLE_LOCAL_MODE_PMC
+                            : WebElementsControl.ENABLE_LOCAL_MODE_SCAV
+                        : WebElementsControl.DISABLE_LOCAL_MODE;
+                    e.Frame.ExecuteJavaScriptAsync(
+                        WebElementsControl.INIT_SCRIPT + "\n" + localModeScript);
+                }
             }
             catch (Exception ex)
             {
@@ -252,17 +311,20 @@ namespace TanukiTarkovMap.ViewModels
         private void OnFrameLoadEnd(object? sender, FrameLoadEndEventArgs e)
         {
             // 메인 프레임만 처리
-            if (!e.Frame.IsMain)
+            if (!ReferenceEquals(sender, _browser) || !e.Frame.IsMain || IsBootstrapPage(e.Url))
                 return;
 
             // 이벤트가 준 주소를 쓴다. CEF가 넘긴 값이므로 UI 스레드로 넘어간 뒤에도 확실하다.
             // IFrame은 이 핸들러가 끝나면 정리되므로 문자열만 들고 간다
             var loadedUrl = e.Url ?? string.Empty;
+            var version = _documentVersion;
 
             // CEF 스레드에서 호출되므로 UI 스레드로 전환
             System.Windows.Application.Current.Dispatcher.InvokeAsync(async () =>
             {
+                if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
                 IsLoading = false;
+                AcceptPageAddress(loadedUrl);
 
                 // 브라우저의 Address DependencyProperty보다 이쪽이 먼저 도착할 수 있으므로
                 // 뷰모델이 아는 주소를 여기서 맞춘다. 이후 판정은 모두 이 값으로 한다
@@ -290,9 +352,11 @@ namespace TanukiTarkovMap.ViewModels
                 {
                     // 불필요한 UI 요소 제거
                     await ExecuteScriptAsync(UICustomization.REMOVE_UNWANTED_ELEMENTS_SCRIPT);
+                    if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
 
                     // 웹 페이지 마진/패딩 제거
                     await ExecuteScriptAsync(PageLayout.REMOVE_PAGE_MARGINS_SCRIPT);
+                    if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
 
                     // 줌 레벨 적용
                     ApplyZoomLevel();
@@ -300,17 +364,16 @@ namespace TanukiTarkovMap.ViewModels
                     // Tarkov Market 전용 처리
                     if (loadedUrl.Contains("tarkov-market.com"))
                     {
-                        // 게임 사건을 넘길 통로 등록 (페이지마다 다시 만들어야 한다)
-                        await ExecuteScriptAsync(PilotBridge.INIT_SCRIPT);
-
-                        // 방향 표시기 추가
-                        await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT);
+                        await MaintainPilotAsync();
+                        if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
 
                         // 맵을 열 때 창 크기에 맞추고, 끄는 동안 화면 가운데를 벗어나지 않게 한다
                         await ExecuteScriptAsync(MapKeepVisible.KEEP_MAP_VISIBLE_SCRIPT);
+                        if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
 
                         // UI 요소 숨김 설정 적용
                         await ApplyUIVisibilityAsync();
+                        if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
 
                         // 맵 페이지에서 Extraction 필터 적용 (맵 이동 직후이므로 DOM 대기 필요)
                         if (loadedUrl.Contains("/maps/"))
@@ -333,6 +396,7 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnJavascriptMessageReceived(object? sender, JavascriptMessageReceivedEventArgs e)
         {
+            if (!ReferenceEquals(sender, _browser)) return;
             try
             {
                 // 디버깅: 모든 수신 메시지 로깅
@@ -352,6 +416,7 @@ namespace TanukiTarkovMap.ViewModels
 
                     System.Windows.Application.Current.Dispatcher.Invoke(() =>
                     {
+                        if (!ReferenceEquals(sender, _browser)) return;
                         CurrentMap = mapName;
                         // Messenger로 MainWindowViewModel에 전달
                         WeakReferenceMessenger.Default.Send(new MapReceivedMessage(mapName));
@@ -417,6 +482,9 @@ namespace TanukiTarkovMap.ViewModels
         public void Navigate(string url)
         {
             if (string.IsNullOrEmpty(url)) return;
+            _requestedUrl = url;
+            if (_pendingScreenshot?.MapUrl != MapPageUrl(url)) _pendingScreenshot = null;
+            if (_latestScreenshot?.MapUrl != MapPageUrl(url)) _latestScreenshot = null;
 
             if (_browser?.IsBrowserInitialized != true)
             {
@@ -501,16 +569,21 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// JavaScript 스크립트 실행
         /// </summary>
-        public async Task<JavascriptResponse?> ExecuteScriptAsync(string script)
+        public async Task<JavascriptResponse?> ExecuteScriptAsync(
+            string script, bool awaitPromise = false, int? documentVersion = null)
         {
             var browser = ReadyBrowser;
+            var version = documentVersion ?? _documentVersion;
 
-            if (browser == null)
+            if (browser == null || version != _documentVersion)
                 return null;
 
             try
             {
-                return await browser.EvaluateScriptAsync(script);
+                var response = awaitPromise
+                    ? await browser.EvaluateScriptAsPromiseAsync(script, timeout: TimeSpan.FromSeconds(3))
+                    : await browser.EvaluateScriptAsync(script, timeout: TimeSpan.FromSeconds(3));
+                return ReferenceEquals(browser, _browser) && version == _documentVersion ? response : null;
             }
             catch (Exception ex)
             {
@@ -636,15 +709,16 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// 로컬 맵 전환 메시지 핸들러 (MainWindowViewModel → WebBrowserViewModel)
         ///
-        /// 가로채기는 새 요청부터 걸리므로, 이미 그려진 페이지를 다시 읽어야 화면이 바뀐다.
-        /// Navigate()는 같은 주소면 건너뛰므로 여기서는 Refresh()를 쓴다
+        /// 요청 처리기와 브라우저 저장 공간을 함께 바꾼다. 같은 브라우저를 새로고침하면
+        /// 온라인의 IndexedDB와 캐시를 사본에서도 읽게 되므로 Behavior에 교체를 요청한다.
         /// </summary>
         public void Receive(LocalMapModeChangedMessage message)
         {
-            _archiveFactory.LocalModeEnabled = message.Value;
+            if (IsLocalMapMode == message.Value) return;
+            IsLocalMapMode = message.Value;
             Logger.SimpleLog($"[WebBrowserViewModel] Local map mode via Messenger: {message.Value}");
 
-            Refresh();
+            BrowserModeChanged?.Invoke(this, EventArgs.Empty);
         }
 
         #endregion
@@ -656,7 +730,110 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         private void OnScreenshotTaken(object? sender, ScreenshotTakenEventArgs e)
         {
-            SendToPilot(PilotBridge.SendScreenshot(e.Filename), $"screenshot: {e.Filename}");
+            System.Windows.Application.Current?.Dispatcher.InvokeAsync(async () =>
+            {
+                var target = MapPageUrl(_requestedUrl ?? _pendingNavigationUrl ?? Address);
+                if (_isDebugMode || target == null) return;
+                _pendingScreenshot = new PendingScreenshot(e.Filename, target);
+                _latestScreenshot = _pendingScreenshot;
+                _lastPilotFailure = null;
+                await MaintainPilotAsync();
+            });
+        }
+
+        private void OnBrowserLoaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (ReferenceEquals(sender, _browser)) _pilotMaintenanceTimer.Start();
+        }
+
+        private void OnBrowserUnloaded(object sender, System.Windows.RoutedEventArgs e)
+        {
+            if (ReferenceEquals(sender, _browser)) _pilotMaintenanceTimer.Stop();
+        }
+
+        private bool IsBootstrapPage(string? url) =>
+            string.Equals(url, "about:blank", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(_requestedUrl, "about:blank", StringComparison.OrdinalIgnoreCase);
+
+        private static string? MapPageUrl(string? address) =>
+            Uri.TryCreate(address, UriKind.Absolute, out var uri)
+            && uri.Scheme == Uri.UriSchemeHttps
+            && uri.Host.Equals("tarkov-market.com", StringComparison.OrdinalIgnoreCase)
+            && uri.AbsolutePath.StartsWith("/maps/", StringComparison.Ordinal)
+                ? uri.GetLeftPart(UriPartial.Path).TrimEnd('/') : null;
+
+        private void AcceptPageAddress(string url)
+        {
+            _requestedUrl = url;
+            // 다른 맵으로 떠난 뒤 돌아왔을 때 이전 맵의 대기 좌표를 다시 보내지 않는다.
+            if (_pendingScreenshot?.MapUrl != MapPageUrl(url)) _pendingScreenshot = null;
+            if (_latestScreenshot?.MapUrl != MapPageUrl(url)) _latestScreenshot = null;
+        }
+
+        private static bool ScriptSucceeded(JavascriptResponse? response) =>
+            response?.Success == true && response.Result is true;
+
+        /// <summary>
+        /// 페이지의 실제 응답을 확인해 방향 표시와 전달 통로를 복구한다.
+        /// 로드 완료 이벤트만 믿으면 SPA 이동과 늦은 마운트가 빠진다. 주기 확인과 스크린샷 전달이
+        /// 같은 경로를 사용하며, 중복 실행과 이전 문서에서 돌아온 응답은 완료 처리하지 않는다.
+        /// </summary>
+        private async Task MaintainPilotAsync()
+        {
+            if (_maintainingPilot || _isDebugMode || IsLoading || ReadyBrowser == null || MapPageUrl(Address) == null)
+                return;
+            _maintainingPilot = true;
+            var version = _documentVersion;
+            try
+            {
+                if (!ScriptSucceeded(await ExecuteScriptAsync(MapMarkers.ENSURE_READY_SCRIPT, documentVersion: version)))
+                {
+                    if (!ScriptSucceeded(await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT, documentVersion: version))) return;
+                    _pendingScreenshot ??= _latestScreenshot;
+                    Logger.SimpleLog("[PilotBridge] Direction script restored");
+                }
+                if (!ScriptSucceeded(await ExecuteScriptAsync(PilotBridge.IS_INSTALLED_SCRIPT, documentVersion: version)))
+                {
+                    if (!ScriptSucceeded(await ExecuteScriptAsync(PilotBridge.INIT_SCRIPT, documentVersion: version))) return;
+                    _pendingScreenshot ??= _latestScreenshot;
+                    Logger.SimpleLog("[PilotBridge] Bridge restored");
+                }
+                if (version != _documentVersion || IsLoading) return;
+
+                // INTENT: 함수가 살아 있어도 같은 주소에서 지도를 다시 만들면 마지막 위치가
+                // 사라진다. 설치 여부와 화면 반영 여부를 따로 확인하고 사라진 입력만 재전달한다.
+                if (_pendingScreenshot == null && _latestScreenshot is { } latest
+                    && latest.MapUrl == MapPageUrl(Address))
+                {
+                    var rendered = await ExecuteScriptAsync(PilotBridge.IsRendered(latest.Filename), documentVersion: version);
+                    if (version != _documentVersion || IsLoading) return;
+                    if (!ScriptSucceeded(rendered) && ReferenceEquals(latest, _latestScreenshot))
+                        _pendingScreenshot ??= latest;
+                }
+
+                var pending = _pendingScreenshot;
+                if (pending == null || pending.MapUrl != MapPageUrl(Address)) return;
+                var response = await ExecuteScriptAsync(PilotBridge.SendScreenshot(pending.Filename),
+                    awaitPromise: true, documentVersion: version);
+                if (version != _documentVersion || !ReferenceEquals(pending, _pendingScreenshot)) return;
+                if (ScriptSucceeded(response))
+                {
+                    _pendingScreenshot = null;
+                    Logger.SimpleLog($"[PilotBridge] Position rendered (screenshot: {pending.Filename})");
+                }
+                else
+                {
+                    var status = (await ExecuteScriptAsync(PilotBridge.STATUS_SCRIPT, documentVersion: version))?.Result?.ToString()
+                        ?? response?.Message ?? "page-unavailable";
+                    if (version != _documentVersion || !ReferenceEquals(pending, _pendingScreenshot)) return;
+                    if (_lastPilotFailure != status)
+                    {
+                        _lastPilotFailure = status;
+                        Logger.SimpleLog($"[PilotBridge] Screenshot pending: {status} ({pending.Filename})");
+                    }
+                }
+            }
+            finally { _maintainingPilot = false; }
         }
 
         /// <summary>
@@ -668,7 +845,7 @@ namespace TanukiTarkovMap.ViewModels
         }
 
         /// <summary>
-        /// 게임 사건을 웹 페이지의 window.pilot으로 전달
+        /// 퀘스트 사건을 페이지의 Pilot 서비스로 전달
         ///
         /// 파일 감시 스레드에서 불리므로 UI 스레드로 넘겨 실행한다.
         /// 전달 결과를 로그에 남기는 이유: 사이트가 브리지를 거두면 위치가 조용히 멈추는데,
@@ -696,7 +873,7 @@ namespace TanukiTarkovMap.ViewModels
                 }
                 else
                 {
-                    Logger.SimpleLog($"[PilotBridge] Not delivered ({description}): window.pilot unavailable");
+                    Logger.SimpleLog($"[PilotBridge] Not delivered ({description}): Pilot service unavailable");
                 }
             });
         }
@@ -734,6 +911,7 @@ namespace TanukiTarkovMap.ViewModels
         /// <param name="waitForDom">true = 맵 이동 직후 DOM 대기 필요</param>
         private async Task ApplyExtractionFilterAsync(bool isPmc, bool waitForDom = false)
         {
+            var version = _documentVersion;
             if (ReadyBrowser == null)
                 return;
 
@@ -744,19 +922,20 @@ namespace TanukiTarkovMap.ViewModels
             try
             {
                 // 먼저 초기화 스크립트 실행 (함수가 없을 수 있음)
-                await ExecuteScriptAsync(WebElementsControl.INIT_SCRIPT);
+                await ExecuteScriptAsync(WebElementsControl.INIT_SCRIPT, documentVersion: version);
 
                 // 맵 이동 직후에만 DOM 렌더링 대기
                 if (waitForDom)
                 {
                     await Task.Delay(700);
                 }
+                if (version != _documentVersion || isPmc != IsPmcExtraction) return;
 
                 var script = isPmc
                     ? WebElementsControl.CLICK_PMC_EXTRACTION
                     : WebElementsControl.CLICK_SCAV_EXTRACTION;
 
-                await ExecuteScriptAsync(script);
+                await ExecuteScriptAsync(script, documentVersion: version);
                 Logger.SimpleLog($"[WebBrowserViewModel] Applied extraction filter: {(isPmc ? "PMC" : "SCAV")}");
             }
             catch (Exception ex)

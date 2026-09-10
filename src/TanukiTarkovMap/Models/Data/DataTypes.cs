@@ -59,8 +59,8 @@ namespace TanukiTarkovMap.Models.Data
         // 창 투명도 설정
         public double WindowOpacity { get; set; } = 1.0;            // 창 투명도 (0.1 ~ 1.0)
 
-        // Goon Tracker 설정
-        public bool GoonTrackerEnabled { get; set; } = true;        // Goon Tracker 사용 여부
+        // 목격 제보는 현재 레이드의 출현을 보장하지 않으므로 사용자가 켠 경우에만 표시한다.
+        public bool GoonTrackerEnabled { get; set; } = false;
 
         // 자동 맵 전환 설정.
         // 두 경로를 따로 끄고 켠다. 진입 감지는 게임 로그에서 방금 읽은 사실이라 확실하지만,

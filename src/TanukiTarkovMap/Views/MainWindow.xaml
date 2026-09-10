@@ -97,7 +97,7 @@
                     <views:WebBrowserUserControl x:Name="WebBrowser"/>
                 </Border>
 
-                <!-- Goons 표시 (오른쪽 상단) -->
+                <!-- 현재 출현을 확정하는 표시로 읽히지 않도록 목격 제보임을 드러낸다. -->
                 <Border x:Name="GoonsIndicator"
                         HorizontalAlignment="Right"
                         VerticalAlignment="Top"
@@ -106,9 +106,10 @@
                         CornerRadius="4"
                         Padding="8,4"
                         Panel.ZIndex="100"
+                        ToolTip="PvE 최근 목격 제보입니다. 군즈는 확률에 따라 스폰하므로 제보와 실제 출현이 다를 수 있습니다."
                         Visibility="{Binding GoonsOnCurrentMap, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <TextBlock Text="Goons"
-                               FontSize="14"
+                    <TextBlock Text="군즈 최근 목격 제보"
+                               FontSize="12"
                                FontWeight="Bold"
                                Foreground="#FFFF4444"/>
                 </Border>

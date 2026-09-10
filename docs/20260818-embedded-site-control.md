@@ -250,8 +250,9 @@ var pilot = window.pilot;
 if (!pilot || typeof pilot[methodName] !== 'function') return false;
 ```
 
-**예시**: 호스트 앱은 스크린샷 파일명을 사이트의 `window.pilot.positionFromScreenshot`에 넘겨
-맵에 위치를 띄웁니다.
+**예시**: 전역 진입점이 있는 사본에서는 `window.pilot.positionFromScreenshot`으로 위치를
+전달합니다. 앱의 어댑터는 전역 객체가 없는 페이지의 Nuxt 서비스도 지원합니다.
+현재 전달과 복구 흐름은 [Pilot 연동 문서](20260817-pilot-bridge.md#지금-구조)를 참고합니다.
 
 **실패 모드**: 전역 함수는 계약이 아니므로 언제든 이름이 바뀌거나 사라집니다. 존재 확인과 실패
 로그가 없으면 사이트 변경이 조용한 기능 중단으로 나타납니다.

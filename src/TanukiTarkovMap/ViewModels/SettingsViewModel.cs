@@ -266,7 +266,7 @@ namespace TanukiTarkovMap.ViewModels
         #region 자동 맵 전환과 Goon Tracker
         [ObservableProperty] public partial bool AutoMapSwitchEnabled { get; set; } = true;
         [ObservableProperty] public partial bool ScreenshotMapSyncEnabled { get; set; } = true;
-        [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool GoonTrackerEnabled { get; set; } = false;
 
         partial void OnAutoMapSwitchEnabledChanged(bool value) => AutoSave();
         partial void OnScreenshotMapSyncEnabledChanged(bool value) => AutoSave();

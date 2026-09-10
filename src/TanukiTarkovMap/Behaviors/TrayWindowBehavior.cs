@@ -82,7 +82,6 @@ namespace TanukiTarkovMap.Behaviors
             try
             {
                 var window = AssociatedObject;
-                var handle = new System.Windows.Interop.WindowInteropHelper(window).Handle;
 
                 // 0. 설정 메뉴가 열려있으면 닫기
                 if (_viewModel != null)
@@ -90,24 +89,29 @@ namespace TanukiTarkovMap.Behaviors
                     _viewModel.IsSettingsOpen = false;
                 }
 
-                // 1. WPF Show() 호출하여 레이아웃 활성화
-                window.Show();
-                window.WindowState = WindowState.Normal;
+                // Show()부터 비활성 표시로 열어 게임 포커스를 잠깐 가져갔다 돌려주는 일을 막는다.
+                var showActivated = window.ShowActivated;
+                try
+                {
+                    window.ShowActivated = false;
+                    window.Show();
+                    window.WindowState = WindowState.Normal;
+                }
+                finally
+                {
+                    window.ShowActivated = showActivated;
+                }
 
                 // 2. 즉시 ShowWindow를 SW_SHOWNOACTIVATE로 호출하여 포커스 제거
+                var handle = new System.Windows.Interop.WindowInteropHelper(window).Handle;
                 PInvoke.ShowWindow(handle, PInvoke.SW_SHOWNOACTIVATE);
 
-                // 3. SetWindowPos로 TopMost 설정 (SWP_NOACTIVATE 플래그로 포커스 가져가지 않음)
-                if (_viewModel?.IsAlwaysOnTop == true)
-                {
-                    PInvoke.SetWindowPos(
-                        handle,
-                        PInvoke.HWND_TOPMOST,
-                        0, 0, 0, 0,
-                        PInvoke.SWP_NOMOVE | PInvoke.SWP_NOSIZE | PInvoke.SWP_NOACTIVATE
-                    );
-                    Logger.SimpleLog("[TrayWindowBehavior] TopMost set without stealing focus");
-                }
+                // 핀이 꺼져 있어도 표시 순간에는 일반 창 중 앞으로 올린다.
+                // 항상 위 고정은 사용자가 고른 경우에만 적용한다.
+                var insertAfter = window.Topmost ? PInvoke.HWND_TOPMOST : PInvoke.HWND_TOP;
+                if (!PInvoke.SetWindowPos(handle, insertAfter, 0, 0, 0, 0,
+                    PInvoke.SWP_NOMOVE | PInvoke.SWP_NOSIZE | PInvoke.SWP_NOACTIVATE | PInvoke.SWP_SHOWWINDOW))
+                    Logger.SimpleLog("[TrayWindowBehavior] Failed to raise restored window");
 
                 // 4. TopBar를 숨긴 상태로 시작한다.
                 //    트레이에서 돌아올 때는 포커스를 가져가지 않아 창 활성화도 마우스 진입도
@@ -152,7 +156,8 @@ namespace TanukiTarkovMap.Behaviors
         /// </summary>
         public void ToggleVisibility()
         {
-            if (AssociatedObject.IsVisible)
+            // 최소화된 WPF 창도 IsVisible은 true다. 보이지 않는 창은 첫 입력에서 복원한다.
+            if (AssociatedObject.IsVisible && AssociatedObject.WindowState != WindowState.Minimized)
             {
                 HideToTray();
             }
