@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Windows;
 using CommunityToolkit.Mvvm.Messaging;
 using Siakun.AutoUpdate;
@@ -15,7 +16,8 @@ Architecture: ServiceLocator가 싱글톤을 만들 때 Create()를 호출한다
 
 Core Functionality:
 - Create(): 저장소 카탈로그, 설정 어댑터, 로그 함수를 넣어 UpdateService를 만들고 다운로드 완료 이벤트를 메시지로 잇는다
-- RepositoryUrl: 업데이트 조회, 설정 화면의 저장소 링크, App의 버전 조회가 함께 쓰는 주소
+- RepositoryUrl: 업데이트 조회, 설정 화면의 저장소 링크, App의 버전 조회가 함께 쓰는 주소.
+  실제 설치 검증 빌드는 UpdateRepositoryUrl 빌드 속성(어셈블리 메타데이터)으로 테스트 저장소를 가리킨다
 
 State Management:
 - 상태를 두지 않는다. 업데이트 상태는 UpdateService가, 설정 값은 App.GetSettings()가 가진다
@@ -41,14 +43,20 @@ Critical Warnings: 라이브러리는 버전 전환 중 백그라운드 스레�
 저장을 UI 스레드로 넘긴다. 저장을 마친 뒤 반환해야 하므로 BeginInvoke가 아니라 Invoke를 쓴다.
 앱에서 Velopack 버전을 따로 지정하지 않는다. 라이브러리가 동작을 확인한 버전과 어긋날 수 있다.
 
-Last Updated: 2026-09-30 | .NET 8 / Siakun.AutoUpdate 0.1.0 | 앱의 업데이트 코드를 패키지로 교체
+Last Updated: 2026-09-30 | .NET 8 / Siakun.AutoUpdate 0.1.0 | 실제 설치 검증 빌드용 저장소 주소 속성 추가
 */
 namespace TanukiTarkovMap.Models.Services
 {
     internal static class UpdateServiceFactory
     {
-        /// <summary> 업데이트를 조회하는 GitHub 저장소 주소 </summary>
-        internal const string RepositoryUrl = "https://github.com/siakun/TanukiTarkovMap";
+        /// <summary>
+        /// 업데이트를 조회하는 GitHub 저장소 주소.
+        /// 실제 설치 검증 빌드만 UpdateRepositoryUrl 빌드 속성으로 테스트 저장소를 넣고, 나머지는 운영 저장소를 쓴다
+        /// </summary>
+        internal static readonly string RepositoryUrl =
+            typeof(UpdateServiceFactory).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+                .FirstOrDefault(attribute => attribute.Key == "UpdateRepositoryUrl")?.Value
+            ?? "https://github.com/siakun/TanukiTarkovMap";
 
         internal static UpdateService Create()
         {

@@ -45,6 +45,14 @@
     <Content Include="..\..\archive\**\*" Exclude="..\..\archive\README.md" LinkBase="archive" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
+  <!-- INTENT: 업데이트 실제 설치 검증 빌드만 업데이트를 받을 저장소를 바꾼다
+       (tools/publish-update-test-release.ps1이 -p:UpdateRepositoryUrl로 넘긴다).
+       값을 주지 않은 빌드는 이 메타데이터가 없어 UpdateServiceFactory의 운영 저장소 주소를 쓰므로,
+       CI 릴리스와 build.bat은 테스트 저장소를 바라볼 수 없다. -->
+  <ItemGroup Condition="'$(UpdateRepositoryUrl)' != ''">
+    <AssemblyMetadata Include="UpdateRepositoryUrl" Value="$(UpdateRepositoryUrl)" />
+  </ItemGroup>
+
   <ItemGroup>
     <PackageReference Include="CefSharp.Wpf.NETCore" Version="141.0.110" />
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
