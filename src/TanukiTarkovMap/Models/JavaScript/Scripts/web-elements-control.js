@@ -6,7 +6,7 @@
  * 구조:
  * - 각 함수는 window 객체에 등록되어 C#에서 호출 가능
  * - 헤더/푸터는 항상 숨김 유지
- * - 패널(좌/우/상단)과 좁은 창의 모바일 UI는 "UI 요소 숨기기" 체크박스에 따라 토글
+ * - "UI 요소 숨기기" 체크 시 맵 컨테이너에서 맵 레이어만 남기고 나머지 UI를 숨김
  * - 로컬 모드에서는 지도, 층 전환, 추출구와 현재 위치/방향 외의 UI와 마커를 숨김
  */
 
@@ -27,6 +27,31 @@
     var SELECTED_CATEGORIES_KEY = 'sel_cats_map';
     var ONLINE_CATEGORIES_BACKUP_KEY = 'tanuki-online-map-categories';
 
+    // ------------------------------------------------------------
+    // 맵 컨테이너(.map-cont)의 직계 자식 가운데 맵을 그리는 레이어
+    //
+    // 맵 위 UI의 숨김은 숨길 것을 나열하지 않고 이 목록에 없는 직계 자식 전부에 건다.
+    // 숨길 것을 나열하면 사이트가 맵 위에 UI를 새로 얹을 때마다 목록이 낡는다. 맵 레이어는
+    // UI보다 드물게 바뀌므로 바뀌지 않는 쪽을 적는다. 사이트의 Hide panels 버튼은
+    // 좌우 패널만 접고 상단 도구 줄과 나머지 UI를 남기므로 이 기능을 대신하지 못한다.
+    //
+    // 대가로 실패하는 방향이 뒤집힌다. 사이트가 맵 레이어를 새로 만들면 그 레이어는 체크했을
+    // 때만 사라진다. 체크를 풀어야 보이는 것이 맵 위에 있으면 그 레이어를 여기에 추가한다.
+    //
+    // 컨테이너는 .pan.map-cont가 아니라 .map-cont로 찾는다. pan은 사이트가 조작 상태에 따라
+    // 붙였다 떼는 클래스다 (사이트 CSS에 .map-cont.draw, .map-cont.edit 규칙이 함께 있다)
+    // ------------------------------------------------------------
+    var MAP_LAYER_SELECTORS = [
+        '.map-wrap',            // 확대와 이동이 걸리는 맵 요소 (SVG 레이어들을 담는다)
+        'canvas',               // 바닥 맵, 사용자가 그린 도형, 마커를 그리는 캔버스
+        '.map-compass-anchor',  // 맵과 함께 움직이는 나침반
+        '.squad-layer',         // 현재 위치 마커(.marker)와 스쿼드원 위치
+        '.popup-layer',         // 마커를 누르면 뜨는 설명 창
+        // 현재 위치 표시는 이 숨김이 절대 가리면 안 되는 것이라, 위치 마커를 담은 레이어는 이름이
+        // 바뀌어 위 목록이 낡아도 남긴다
+        ':has(.marker)'
+    ].join(', ');
+
     /**
      * 숨김 규칙을 문서에 한 번만 넣는다
      */
@@ -41,31 +66,25 @@
             // 쿠키 안내 줄도 숨긴다. 화면에서만 가리는 것이고 동의를 누르지는 않는다.
             // position: fixed로 지도 아래쪽을 덮고 있어, 이 창에서는 지도를 가리는 방해물이다
             '.cookie-consent { display: none !important; }' +
-            // 패널은 <html>의 클래스로 켜고 끈다. 로컬 모드에서도 그대로 적용한다.
+            // 맵 위 UI는 <html>의 클래스로 켜고 끈다. 좌우와 상단 패널을 비롯해 맵 레이어가
+            // 아닌 직계 자식이 모두 여기에 걸린다. 로컬 모드에서도 그대로 적용한다.
             // 로컬 모드는 "부가 UI를 늘 감추는 것"이고 이 체크박스는 "남은 UI까지 감추는 것"이라
             // 둘은 층이 다르다. 로컬에서 이 규칙을 빼면 체크를 해도 Levels가 남아, 사용자에게는
-            // 체크박스가 고장난 것으로 보인다
-            'html.' + PANEL_HIDDEN_CLASS + ' .panel_left,' +
-            'html.' + PANEL_HIDDEN_CLASS + ' .panel_right,' +
-            'html.' + PANEL_HIDDEN_CLASS + ' .panel_top,' +
+            // 체크박스가 고장난 것으로 보인다.
             // 창이 좁으면 사이트가 데스크톱 패널을 접고 대신 모바일 UI(위 검색 줄, 아래 탭 줄)를
             // 편다. 이 요소들은 폭과 상관없이 늘 문서에 있고 사이트의 미디어 쿼리가 display만
             // 바꾸므로(실측: 넓을 때 none, 좁을 때 block), 만들어지고 지워지는 것이 아니라
-            // 켜지고 꺼지는 것이다. 그래서 지우지 않고 같은 클래스로 함께 끈다.
+            // 켜지고 꺼지는 것이다. 그래서 지우지 않고 이 규칙으로 함께 끈다.
             // 지우는 쪽은 사이트가 다시 그릴 때마다 되살아나고, 우리가 지운 자리를 사이트가
             // 참조하면 그쪽이 깨진다
-            'html.' + PANEL_HIDDEN_CLASS + ' .mobile-map-ui,' +
-            // 로컬 모드는 코어만 남긴다. panel_right 자체를 끄지 않아 층 전환은 유지한다.
+            'html.' + PANEL_HIDDEN_CLASS + ' .map-cont > :not(' + MAP_LAYER_SELECTORS + ')' +
+            ' { display: none !important; }' +
+            // 로컬 모드는 코어만 남긴다. 맵 레이어에 더해 우측 패널의 층 전환(Levels)을
+            // 남긴다. 층마다 탈출구가 달라 층 전환은 코어에 속한다. 우측 패널 안도 남길 것을 적는다
+            'html.' + LOCAL_CORE_CLASS + ' .map-cont > :not(' + MAP_LAYER_SELECTORS + ', .panel_right),' +
+            'html.' + LOCAL_CORE_CLASS + ' .panel_right > :not(.layers),' +
             'html.' + LOCAL_CORE_CLASS + ' .maps-site-chrome > .head-pilot,' +
-            'html.' + LOCAL_CORE_CLASS + ' .maps-site-chrome > .alert-box,' +
-            'html.' + LOCAL_CORE_CLASS + ' .panel_left,' +
-            'html.' + LOCAL_CORE_CLASS + ' .panel_top,' +
-            'html.' + LOCAL_CORE_CLASS + ' .panel_right .squad-panel,' +
-            'html.' + LOCAL_CORE_CLASS + ' .panel_right .user-layers-panel,' +
-            'html.' + LOCAL_CORE_CLASS + ' .panel_right .tools_quests,' +
-            // 맵 오른쪽 아래에 겹쳐 뜨는 출처 줄. 코어가 아니므로 로컬에서는 체크와 무관하게 끈다
-            'html.' + LOCAL_CORE_CLASS + ' .map-credits,' +
-            'html.' + LOCAL_CORE_CLASS + ' .mobile-map-ui { display: none !important; }';
+            'html.' + LOCAL_CORE_CLASS + ' .maps-site-chrome > .alert-box { display: none !important; }';
 
         (document.head || document.documentElement).appendChild(style);
     }
@@ -108,8 +127,8 @@
     // ============================================================
     // 패널 숨기기 (UI 요소 숨기기 체크 시)
     //
-    // 좌/우/상단을 따로 호출하는 C# 쪽 순서를 그대로 두되, 실제로는 한 클래스가 셋을 함께
-    // 다룬다. 세 패널이 늘 같이 사라지고 같이 돌아오므로 상태를 셋으로 나눌 이유가 없다
+    // 좌/우/상단을 따로 호출하는 C# 쪽 순서를 그대로 두되, 실제로는 한 클래스가 맵 레이어 밖의
+    // UI를 한꺼번에 다룬다. 모두 같이 사라지고 같이 돌아오므로 상태를 나눌 이유가 없다
     // ============================================================
     function hidePanels() {
         try {

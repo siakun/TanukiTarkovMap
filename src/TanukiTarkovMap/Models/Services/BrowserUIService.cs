@@ -10,7 +10,7 @@ namespace TanukiTarkovMap.Models.Services
     /// CefSharp ChromiumWebBrowser의 UI 요소 가시성을 제어하는 서비스
     ///
     /// 주요 기능:
-    /// - tarkov-market.com 웹페이지의 UI 패널(좌측, 우측, 상단, 헤더, 푸터) 숨기기/복원
+    /// - tarkov-market.com 웹페이지의 헤더/푸터 숨김과 맵 위 UI 숨기기/복원
     ///
     /// 사용법: ServiceLocator.BrowserUIService (DI 싱글톤)
     /// </summary>
@@ -51,14 +51,14 @@ namespace TanukiTarkovMap.Models.Services
 
                 if (hideElements)
                 {
-                    // 패널들도 숨김
+                    // 맵 위 UI도 숨김
                     await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_RIGHT);
                     await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_LEFT);
                     await browser.EvaluateScriptAsync(WebElementsControl.HIDE_PANEL_TOP);
                 }
                 else
                 {
-                    // 패널들만 복원 (헤더/푸터는 숨김 유지)
+                    // 맵 위 UI만 복원 (헤더/푸터는 숨김 유지)
                     await browser.EvaluateScriptAsync(WebElementsControl.RESTORE_PANELS);
                 }
 

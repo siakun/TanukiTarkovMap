@@ -212,8 +212,8 @@ flowchart TD
     START[페이지 로드 완료] --> INIT[INIT_SCRIPT 실행]
     INIT --> ALWAYS[헤더/푸터 숨김]
     ALWAYS --> CHECK{HideWebElements?}
-    CHECK -->|true| HIDE[패널 숨김]
-    CHECK -->|false| SHOW[패널 표시]
+    CHECK -->|true| HIDE[맵 위 UI 숨김]
+    CHECK -->|false| SHOW[맵 위 UI 표시]
     HIDE --> RESIZE[resize 이벤트 발생]
     SHOW --> RESIZE
     RESIZE --> END[레이아웃 재계산 완료]
@@ -516,9 +516,8 @@ tarkov-market.com 웹페이지의 UI 요소를 JavaScript로 제어해 맵만 �
 | **헤더 (header)** | 항상 숨김 | X |
 | **푸터 (footer-wrap)** | 항상 숨김 | X |
 | **쿠키 안내 (cookie-consent)** | 항상 숨김 | X |
-| **좌측 패널 (panel_left)** | Online은 체크 시, Local은 항상 숨김 | Online만 |
-| **우측 패널 (panel_right)** | Online은 체크 시, Local은 Levels 외 숨김 | Online만 |
-| **상단 패널 (panel_top)** | Online은 체크 시, Local은 항상 숨김 | Online만 |
+| **맵 레이어** (맵 컨테이너 `.map-cont`의 직계 자식 중 `MAP_LAYER_SELECTORS`에 든 것) | 숨기지 않음 | - |
+| **그 밖의 맵 위 UI** (좌/우/상단 패널을 비롯한 `.map-cont`의 나머지 직계 자식) | Online은 체크 시, Local은 우측 패널의 Levels 외 항상 숨김 | Online은 전부, Local은 Levels만 |
 
 ### 동작 방식
 
@@ -531,8 +530,8 @@ INIT_SCRIPT 실행 (함수들을 window 객체에 등록)
        ↓
 "UI 요소 숨기기" 체크 여부 확인
        ↓
-  ┌─ 체크됨: 패널들도 숨김 (window.hidePanelLeft() 등)
-  └─ 해제됨: 패널들 복원 (window.restorePanels())
+  ┌─ 체크됨: 맵 위 UI도 숨김 (window.hidePanelLeft() 등)
+  └─ 해제됨: 맵 위 UI 복원 (window.restorePanels())
        ↓
 resize 이벤트 발생 → SVG 맵 레이아웃 재계산
 ```
@@ -540,8 +539,12 @@ resize 이벤트 발생 → SVG 맵 레이아웃 재계산
 ### 핵심 원칙
 
 1. **헤더/푸터는 항상 숨김**: 맵 이동, 체크 해제와 무관하게 절대 표시하지 않음
-2. **패널만 토글 대상**: "UI 요소 숨기기" 체크박스는 좌/우/상단 패널과, 창이 좁을 때 사이트가 대신 펴는 모바일 UI에 적용
-3. **Local은 코어만 유지**: 체크박스와 무관하게 지도, Levels, 진영별 추출구와 현재 위치/방향만 표시합니다. 캔버스에 다른 마커가 그려지기 전에 저장된 카테고리를 추출구로 제한합니다
+2. **남길 것을 적는 화이트리스트**: "UI 요소 숨기기" 체크박스는 `.map-cont`의 직계 자식 가운데 맵
+   레이어만 남기고 나머지를 모두 숨깁니다. 숨길 것을 나열하면 사이트가 맵 위에 UI를 얹을 때마다 목록을 고쳐야
+   하지만, 맵 레이어는 그보다 드물게 바뀝니다. 대신 사이트가 맵 레이어를 새로 만들면 그 레이어가
+   체크했을 때만 사라지므로, 그때는 `web-elements-control.js`의 `MAP_LAYER_SELECTORS`에 그 레이어를 추가합니다.
+   현재 위치 마커(`.marker`)를 담은 레이어는 목록과 무관하게 남깁니다
+3. **Local은 코어만 유지**: 체크박스와 무관하게 지도, Levels, 진영별 추출구와 현재 위치/방향만 표시합니다. 화면 요소는 2의 맵 레이어에 우측 패널의 Levels만 더해 남깁니다. 캔버스에 다른 마커가 그려지기 전에 저장된 카테고리를 추출구로 제한합니다
 4. **레이아웃 재계산**: 요소 숨김 후 `window.dispatchEvent(new Event('resize'))` 호출로 검은 영역 방지
 5. **숨김은 스타일시트 규칙으로**: 요소의 `style.display`를 직접 넣지 않습니다. 인라인 방식은 나중에
    만들어진 요소를 놓치고, 다른 스크립트가 `style.cssText`를 대입하면 함께 지워집니다. 0.2.4에서
@@ -671,7 +674,7 @@ sequenceDiagram
 | 용어 | 설명 |
 |------|------|
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
-| **UI 요소 숨김** | JavaScript로 웹페이지 패널 제거 (헤더/푸터 제외) |
+| **UI 요소 숨김** | 맵 컨테이너에서 맵 레이어만 남기고 나머지 UI를 스타일시트로 숨김 (헤더/푸터는 별도로 항상 숨김) |
 | **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |
 | **Pilot 브리지** | 사용 가능한 사이트의 Pilot 서비스로 위치와 퀘스트 완료를 전달하는 어댑터 |
 | **로컬 모드** | 독립된 브라우저 저장 공간에서 앱에 담긴 사본으로 맵을 여는 상태 (실험적 기능) |

@@ -338,8 +338,10 @@ if (LOCAL_CORE) {
       pilotBanner: visible('.maps-site-chrome > .head-pilot'),
       alertBox: visible('.maps-site-chrome > .alert-box'),
       levelCount: document.querySelectorAll('.panel_right .layers [data-layer] input').length,
-      positionMarker: !!document.querySelector('.marker'),
-      directionMarker: !!document.querySelector('.marker .triangle-indicator'),
+      // 있는지가 아니라 보이는지를 본다. 숨김 규칙이 마커를 담은 층을 가리면 요소는 문서에
+      // 남은 채로 화면에서만 사라진다
+      positionMarker: document.querySelector('.marker')?.checkVisibility() === true,
+      directionMarker: document.querySelector('.marker .triangle-indicator')?.checkVisibility() === true,
     };
   })())`));
 
