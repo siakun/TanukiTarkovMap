@@ -1,0 +1,368 @@
+{
+  "schemaVersion": 1,
+  "mapId": "woods",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "1a3ab2dd-603a-4848-867e-d6970f561d8d",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Factory",
+      "levelId": "main",
+      "position": {
+        "x": 2926.941,
+        "y": 3549.6948
+      }
+    },
+    {
+      "id": "41dee2f7-3df5-4210-b398-4e8cab27a144",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 1207.56,
+        "y": 3534.76
+      }
+    },
+    {
+      "id": "9e4c018d-ac0e-4943-b04f-094312df898e",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Reserve",
+      "levelId": "main",
+      "position": {
+        "x": 1704.38,
+        "y": 3546.42
+      }
+    },
+    {
+      "id": "cf72f7fc-fd5a-4e1c-8848-fb4c2b696202",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 2498.032,
+        "y": 3637.0418
+      }
+    },
+    {
+      "id": "5023694b-0a05-40b9-9f38-c6b74a01e4b8",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Northern UN Roadblock",
+      "levelId": "main",
+      "position": {
+        "x": 3316.8742,
+        "y": 2698.51
+      }
+    },
+    {
+      "id": "58d1b10d-42bb-49fe-8d27-00691e22ee80",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Power Line Passage",
+      "levelId": "main",
+      "position": {
+        "x": 1060.6158,
+        "y": 2675.796
+      }
+    },
+    {
+      "id": "8d860360-a643-4dec-918e-815386a08a84",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Bridge V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 3174.9898,
+        "y": 1813.417
+      }
+    },
+    {
+      "id": "a4439495-7c06-4356-96c9-652b66bd742e",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "ZB-014",
+      "levelId": "basement",
+      "position": {
+        "x": 1304.4904,
+        "y": 2949.9594
+      }
+    },
+    {
+      "id": "d0e55cd2-f514-4afc-90a2-f1d7ee9ef44b",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Outskirts",
+      "levelId": "main",
+      "position": {
+        "x": 1500.845,
+        "y": 3505.784
+      }
+    },
+    {
+      "id": "d25cb103-0efb-44f8-a6d4-7a18cf43705c",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Railway Bridge to Tarkov (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 3631.072,
+        "y": 3078.6634
+      }
+    },
+    {
+      "id": "d886a5a9-62e0-4eb4-9089-8e0df2760771",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "UN Roadblock",
+      "levelId": "main",
+      "position": {
+        "x": 3239.0974,
+        "y": 3417.1264
+      }
+    },
+    {
+      "id": "f6baa1d5-39f3-4076-96a0-6f77b06d2240",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "ZB-016",
+      "levelId": "basement",
+      "position": {
+        "x": 2977.1632,
+        "y": 2858.5824
+      }
+    },
+    {
+      "id": "f86b0802-4f45-478d-8df3-0feef7c5c4a2",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "RUAF Gate",
+      "levelId": "main",
+      "position": {
+        "x": 2470.45,
+        "y": 3664.3738
+      }
+    },
+    {
+      "id": "13317101-1c37-4fce-9220-a6035e06da85",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Scav House",
+      "levelId": "main",
+      "position": {
+        "x": 1380.224,
+        "y": 3317.7638
+      }
+    },
+    {
+      "id": "2eaa814b-0005-41cb-a184-0e7ae2c8443e",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "RUAF Roadblock",
+      "levelId": "main",
+      "position": {
+        "x": 2460.0796,
+        "y": 3659.2814
+      }
+    },
+    {
+      "id": "492218ce-bf16-4503-bc03-472fa2232b87",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Scav Bridge",
+      "levelId": "main",
+      "position": {
+        "x": 1993.197,
+        "y": 1167.8924
+      }
+    },
+    {
+      "id": "63e22c3f-e9a2-4716-9da3-a9407eae2590",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Boat",
+      "levelId": "main",
+      "position": {
+        "x": 1830.7522,
+        "y": 3267.2046
+      }
+    },
+    {
+      "id": "668ae20d-72a1-45d0-9208-1b711578a0d7",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Dead Man's Place",
+      "levelId": "main",
+      "position": {
+        "x": 1826.8976,
+        "y": 3343.6604
+      }
+    },
+    {
+      "id": "7bb213d0-b15d-404d-9954-12fd78da7fef",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Scav Bunker",
+      "levelId": "main",
+      "position": {
+        "x": 1745.1562,
+        "y": 1474.9866
+      }
+    },
+    {
+      "id": "9113cf28-eb54-41e6-8d2f-cc920463e179",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "UN Roadblock",
+      "levelId": "main",
+      "position": {
+        "x": 3230.4556,
+        "y": 3415.5236
+      }
+    },
+    {
+      "id": "a3ed88bd-b281-4d34-b1ac-2a5ebe38c931",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Eastern Rocks",
+      "levelId": "main",
+      "position": {
+        "x": 3206.572,
+        "y": 2756.261
+      }
+    },
+    {
+      "id": "c7f0caf7-e0f7-4fe1-bf24-c2516cd07b79",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Outskirts",
+      "levelId": "main",
+      "position": {
+        "x": 1491.3006,
+        "y": 3500.5178
+      }
+    },
+    {
+      "id": "da9f7baf-e49f-43c3-ac7e-0775a1441c20",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Mountain Stash",
+      "levelId": "main",
+      "position": {
+        "x": 2606.9668,
+        "y": 2434.486
+      }
+    },
+    {
+      "id": "dcb50699-3698-4fac-b56b-86c293e31500",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Old Railway Depot",
+      "levelId": "main",
+      "position": {
+        "x": 3226.1284,
+        "y": 3142.3274
+      }
+    },
+    {
+      "id": "fc41d429-48e8-4259-80e0-04bb6fd55c33",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Railway Bridge to Tarkov (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 3632.3636,
+        "y": 3087.1316
+      }
+    },
+    {
+      "id": "9fbc8d1c-ab95-40d9-a18f-7095c19d708a",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Friendship Bridge (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 1998.9724,
+        "y": 1160.6988
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/woods",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "51b7eb9bdcf1e349162d33bb4b6be6592b575c21",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 4,
+        "pmc": 9,
+        "scav": 12,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

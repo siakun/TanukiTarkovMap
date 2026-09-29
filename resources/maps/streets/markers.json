@@ -1,0 +1,313 @@
+{
+  "schemaVersion": 1,
+  "mapId": "streets",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "7604a876-3781-4f1b-b490-bd04c62f9cb0",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Interchange",
+      "levelId": "main",
+      "position": {
+        "x": 1081.4474,
+        "y": 2414.8548
+      }
+    },
+    {
+      "id": "b99a3faf-2961-4377-a9c9-c3f666837900",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Ground Zero",
+      "levelId": "main",
+      "position": {
+        "x": 2181.1704,
+        "y": 1635.1028
+      }
+    },
+    {
+      "id": "c339f3bb-57b5-4436-ae1c-992c49d1e912",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to The Lab",
+      "levelId": "main",
+      "position": {
+        "x": 1240.2492,
+        "y": 1580.199
+      }
+    },
+    {
+      "id": "10707693-315f-4093-8423-715951398aae",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Stylobate Building Elevator",
+      "levelId": "main",
+      "position": {
+        "x": 1760.687,
+        "y": 1260.8048
+      }
+    },
+    {
+      "id": "1edcdaad-2d94-4009-9f44-7623821dd72b",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Damaged House",
+      "levelId": "main",
+      "position": {
+        "x": 2158.3024,
+        "y": 2107.1946
+      }
+    },
+    {
+      "id": "3fbc3c47-f5f1-47b9-8841-3f2fc84e0058",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Expo Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 1230.184,
+        "y": 1203.1414
+      }
+    },
+    {
+      "id": "456bc27f-9b81-4cd2-bafa-909132e5937e",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Primorsky Ave Taxi V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 1653.6994,
+        "y": 2337.495
+      }
+    },
+    {
+      "id": "4794a194-6c46-4c25-a3c3-70c0e25517df",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Klimov Street",
+      "levelId": "main",
+      "position": {
+        "x": 2121.5672,
+        "y": 1512.7132
+      }
+    },
+    {
+      "id": "4de82d78-7316-4979-9d2f-adf6b05c18f4",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Collapsed Crane",
+      "levelId": "main",
+      "position": {
+        "x": 1233.3354,
+        "y": 1959.2696
+      }
+    },
+    {
+      "id": "508d9817-2c7e-429c-838b-44795113ebed",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Courtyard",
+      "levelId": "main",
+      "position": {
+        "x": 1962.3828,
+        "y": 2412.6902
+      }
+    },
+    {
+      "id": "8ecc914d-0261-4682-a106-be8e3cd62fbb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Crash Site",
+      "levelId": "main",
+      "position": {
+        "x": 1041.2032,
+        "y": 2240.5368
+      }
+    },
+    {
+      "id": "a8ff3fe5-5151-4d1c-9f99-5f4a7a05e7b1",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Smugglers' Basement (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1509.8512,
+        "y": 1516.1236
+      }
+    },
+    {
+      "id": "f9ce997b-6f19-4936-9a3a-b59c9dd56cb2",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Sewer River",
+      "levelId": "main",
+      "position": {
+        "x": 2163.1108,
+        "y": 1830.5814
+      }
+    },
+    {
+      "id": "3dfdaa13-fc46-407f-b916-5a1689f19a41",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Cardinal Apartment Complex Parking",
+      "levelId": "main",
+      "position": {
+        "x": 1465.9354,
+        "y": 1101.0884
+      }
+    },
+    {
+      "id": "51772f5d-83f0-4a43-97db-c71550e34884",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Smugglers' Basement (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1510.8738,
+        "y": 1518.1686
+      }
+    },
+    {
+      "id": "5a913ff2-35a8-4d11-a475-79a664446695",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Ventilation Shaft",
+      "levelId": "main",
+      "position": {
+        "x": 1908.2526,
+        "y": 2264.4056
+      }
+    },
+    {
+      "id": "5fd16c93-52b2-4d9c-ada0-df5728e81caa",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Sewer Manhole",
+      "levelId": "main",
+      "position": {
+        "x": 1108.9356,
+        "y": 2106.185
+      }
+    },
+    {
+      "id": "720caef5-8ea1-41d4-aff2-106f9d9841d8",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Near Kamchatskaya Arch",
+      "levelId": "main",
+      "position": {
+        "x": 1136.5308,
+        "y": 1511.9044
+      }
+    },
+    {
+      "id": "da4ed7fe-06d3-4e3e-82dc-88a2eed62c61",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Entrance to Catacombs",
+      "levelId": "main",
+      "position": {
+        "x": 2159.5422,
+        "y": 1903.7644
+      }
+    },
+    {
+      "id": "fb71e4be-d8cf-413d-bf42-5f6fa47066b6",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Klimov Shopping Mall Exfil",
+      "levelId": "main",
+      "position": {
+        "x": 1988.4874,
+        "y": 1386.3376
+      }
+    },
+    {
+      "id": "06e21bb5-82d3-4ba7-9dd6-25d59668b143",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Pinewood Basement (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 1878.7554,
+        "y": 1542.8436
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/streets",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "545ab10529bb2226111d1a1c694ef9ae4d96f107",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 3,
+        "pmc": 10,
+        "scav": 7,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

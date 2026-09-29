@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "mapId": "lighthouse",
+  "title": "Lighthouse",
+  "size": {
+    "width": 3100,
+    "height": 3700
+  },
+  "zoom": 0.65,
+  "minZoom": 0.15,
+  "maxZoom": 10,
+  "transform": {
+    "rotate": 90,
+    "xOffset": 1550,
+    "yOffset": 2050,
+    "invertX": false,
+    "invertY": false,
+    "ratio": 1
+  },
+  "levels": [
+    {
+      "id": "main",
+      "label": "지상",
+      "sourceLevel": 1,
+      "terrainGroupId": null,
+      "defaultVisible": true
+    }
+  ],
+  "source": {
+    "site": "https://tarkov-market.com",
+    "page": "https://tarkov-market.com/maps/lighthouse",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
+    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/B3hqyQkC.js",
+    "terrainBlob": "19be1b0f4b0f54d0702ff7b4b119e81b4c8cad75",
+    "coordinateFormula": {
+      "rotation": "-transform.rotate degrees",
+      "mapX": "xOffset - rotatedX * ratio",
+      "mapY": "yOffset - rotatedY * ratio",
+      "rounding": "4 decimal places"
+    },
+    "directionFormula": {
+      "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
+      "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
+      "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
+    }
+  }
+}

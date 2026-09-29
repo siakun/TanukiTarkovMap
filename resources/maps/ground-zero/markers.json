@@ -1,0 +1,192 @@
+{
+  "schemaVersion": 1,
+  "mapId": "ground-zero",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "5e0afc07-6934-40aa-9244-1cb12d241326",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Streets of Tarkov",
+      "levelId": "main",
+      "position": {
+        "x": 1143.0264,
+        "y": 1430.5784
+      }
+    },
+    {
+      "id": "0d80eff9-6510-49f9-b629-01db20044b0a",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Mira Ave",
+      "levelId": "main",
+      "position": {
+        "x": 1159.0598,
+        "y": 1299.307
+      }
+    },
+    {
+      "id": "36d1b502-c240-409c-8cc1-411003750cf9",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Emercom Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 1289.4534,
+        "y": 1114.0932
+      }
+    },
+    {
+      "id": "44cc5b21-948d-4282-8342-d46f1283bee5",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Nakatani Basement Stairs",
+      "levelId": "main",
+      "position": {
+        "x": 1644.5628,
+        "y": 1965.957
+      }
+    },
+    {
+      "id": "6964cbc0-6a1b-4a3e-a31a-883cc51a18b8",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Police Cordon V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 1635.4738,
+        "y": 1524.1852
+      }
+    },
+    {
+      "id": "c38b5f5e-e79c-446b-81a7-45c5b1bfca48",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Tartowers Sales Office (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1199.98,
+        "y": 1561.08
+      }
+    },
+    {
+      "id": "504907f8-2400-447d-ae75-c228d4d0adaa",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Nakatani Basement Stairs",
+      "levelId": "main",
+      "position": {
+        "x": 1646.7346,
+        "y": 1968.5632
+      }
+    },
+    {
+      "id": "75eda075-75eb-4b87-a0c2-7511ab81f11d",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Tartowers Sales Office (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1225.075,
+        "y": 1558.9736
+      }
+    },
+    {
+      "id": "c9f10751-8a26-47b0-ac72-1055bdd5e62d",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Emercom Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 1292.0748,
+        "y": 1116.387
+      }
+    },
+    {
+      "id": "5790a11e-09e9-42e2-b0d8-312f1e32e0cd",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Scav Checkpoint (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 1543.9832,
+        "y": 1134.1216
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/ground-zero",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "5961836a4fa1762f9df895c97fd3a01311a9ebf8",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 1,
+        "pmc": 5,
+        "scav": 3,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "mapId": "labyrinth",
+  "title": "The Labyrinth",
+  "size": {
+    "width": 3300,
+    "height": 3200
+  },
+  "zoom": 0.8,
+  "minZoom": 0.07,
+  "maxZoom": 10,
+  "transform": {
+    "rotate": 180,
+    "xOffset": 1485,
+    "yOffset": 1602,
+    "invertX": false,
+    "invertY": false,
+    "ratio": 10
+  },
+  "levels": [
+    {
+      "id": "main",
+      "label": "지상",
+      "sourceLevel": 1,
+      "terrainGroupId": "main",
+      "defaultVisible": true
+    }
+  ],
+  "source": {
+    "site": "https://tarkov-market.com",
+    "page": "https://tarkov-market.com/maps/labyrinth",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
+    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/BE5GWKlq.js",
+    "terrainBlob": "ee85036a9cdd5da4b843f2e6262fd6c11f229a03",
+    "coordinateFormula": {
+      "rotation": "-transform.rotate degrees",
+      "mapX": "xOffset - rotatedX * ratio",
+      "mapY": "yOffset - rotatedY * ratio",
+      "rounding": "4 decimal places"
+    },
+    "directionFormula": {
+      "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
+      "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
+      "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
+    }
+  }
+}

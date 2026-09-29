@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "mapId": "woods",
+  "title": "Woods",
+  "size": {
+    "width": 4800,
+    "height": 4800
+  },
+  "zoom": 0.4,
+  "minZoom": 0.07,
+  "maxZoom": 10,
+  "transform": {
+    "rotate": 90,
+    "xOffset": 2200,
+    "yOffset": 2840,
+    "invertX": false,
+    "invertY": false,
+    "ratio": 2
+  },
+  "levels": [
+    {
+      "id": "main",
+      "label": "Main",
+      "sourceLevel": 1,
+      "terrainGroupId": "main",
+      "defaultVisible": true
+    },
+    {
+      "id": "basement",
+      "label": "Basement",
+      "sourceLevel": -1,
+      "terrainGroupId": "basement",
+      "defaultVisible": false
+    }
+  ],
+  "source": {
+    "site": "https://tarkov-market.com",
+    "page": "https://tarkov-market.com/maps/woods",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
+    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/DfEyj6gl.js",
+    "terrainBlob": "327e70c9724db9b18e2d53d6ab08a12662ee8959",
+    "coordinateFormula": {
+      "rotation": "-transform.rotate degrees",
+      "mapX": "xOffset - rotatedX * ratio",
+      "mapY": "yOffset - rotatedY * ratio",
+      "rounding": "4 decimal places"
+    },
+    "directionFormula": {
+      "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
+      "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
+      "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
+    }
+  }
+}

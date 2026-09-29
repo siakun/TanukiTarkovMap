@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "mapId": "lab",
+  "title": "The Lab",
+  "size": {
+    "width": 5500,
+    "height": 4200
+  },
+  "zoom": 0.41,
+  "minZoom": 0.085,
+  "maxZoom": 10,
+  "transform": {
+    "rotate": 180,
+    "xOffset": 6100,
+    "yOffset": 4050,
+    "invertX": false,
+    "invertY": false,
+    "ratio": 10
+  },
+  "levels": [
+    {
+      "id": "level2",
+      "label": "Level 2",
+      "sourceLevel": 2,
+      "terrainGroupId": "level2",
+      "defaultVisible": false
+    },
+    {
+      "id": "main",
+      "label": "Main",
+      "sourceLevel": 1,
+      "terrainGroupId": "main",
+      "defaultVisible": true
+    },
+    {
+      "id": "basement",
+      "label": "Basement",
+      "sourceLevel": -1,
+      "terrainGroupId": "basement",
+      "defaultVisible": false
+    }
+  ],
+  "source": {
+    "site": "https://tarkov-market.com",
+    "page": "https://tarkov-market.com/maps/lab",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
+    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/By0Mgzg2.js",
+    "terrainBlob": "e82bbb614745b264a4975f925bea368313da982a",
+    "coordinateFormula": {
+      "rotation": "-transform.rotate degrees",
+      "mapX": "xOffset - rotatedX * ratio",
+      "mapY": "yOffset - rotatedY * ratio",
+      "rounding": "4 decimal places"
+    },
+    "directionFormula": {
+      "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
+      "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
+      "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
+    }
+  }
+}

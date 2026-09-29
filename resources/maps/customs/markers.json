@@ -1,0 +1,456 @@
+{
+  "schemaVersion": 1,
+  "mapId": "customs",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "18dd0031-7a05-4597-b173-d3c349f45758",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Shoreline",
+      "levelId": "main",
+      "position": {
+        "x": 2558.4102,
+        "y": 1852.7926
+      }
+    },
+    {
+      "id": "5e686c3e-8765-46e6-b529-6e41058d4b2c",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Factory",
+      "levelId": "main",
+      "position": {
+        "x": 1898.5786,
+        "y": 1227.1158
+      }
+    },
+    {
+      "id": "c842756a-2d55-4115-8388-a30c6ac8ad43",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transition to Interchange",
+      "levelId": "main",
+      "position": {
+        "x": 3265.1874,
+        "y": 1197.333
+      }
+    },
+    {
+      "id": "d3bd1b0b-cac2-4958-97dd-a8f1771e9f88",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Reserve",
+      "levelId": "main",
+      "position": {
+        "x": 1297.944,
+        "y": 1845.9002
+      }
+    },
+    {
+      "id": "0f72bbf7-6c78-47aa-8ed6-c8a065574f53",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Smuggler's Boat (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 2678.7516,
+        "y": 1843.171
+      }
+    },
+    {
+      "id": "1a99790b-ad71-4c28-bf40-18318126f97f",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Trailer Park",
+      "levelId": "main",
+      "position": {
+        "x": 3210.1308,
+        "y": 1160.9132
+      }
+    },
+    {
+      "id": "1facaba5-e6c3-4531-9891-c8d0719d86b7",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Railroad Passage",
+      "levelId": "main",
+      "position": {
+        "x": 2208.1886,
+        "y": 1083.3674
+      }
+    },
+    {
+      "id": "20b39f19-bc60-4f74-b4f1-55d421110bed",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "ZB-1011",
+      "levelId": "basement",
+      "position": {
+        "x": 1332.6686,
+        "y": 1332.572
+      }
+    },
+    {
+      "id": "57779415-b95f-4ced-a712-600b6afb91af",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "RUAF Roadblock",
+      "levelId": "main",
+      "position": {
+        "x": 2630.8094,
+        "y": 1337.3076
+      }
+    },
+    {
+      "id": "62946e59-b686-4485-b647-a0be2f504d3b",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Smugglers' Bunker (ZB-1012) (Secret)",
+      "levelId": "basement",
+      "position": {
+        "x": 1658.8286,
+        "y": 1365.6934
+      }
+    },
+    {
+      "id": "749107c1-3d3d-4310-9ef8-d3cac2182901",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Dorms V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 2241.24,
+        "y": 2024.3048
+      }
+    },
+    {
+      "id": "9df013e1-ce5d-4454-a7aa-20c786e785ac",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Old Gas Station",
+      "levelId": "basement",
+      "position": {
+        "x": 1978.0912,
+        "y": 1236.3372
+      }
+    },
+    {
+      "id": "a551b5ac-1199-4bc8-bf6e-99d5d106c4d5",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "ZB-013",
+      "levelId": "basement",
+      "position": {
+        "x": 2200.9684,
+        "y": 1293.013
+      }
+    },
+    {
+      "id": "fb8f37e1-19da-4134-9c58-2aa50afb323e",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Crossroads",
+      "levelId": "main",
+      "position": {
+        "x": 3243.778,
+        "y": 1434.6054
+      }
+    },
+    {
+      "id": "35c5c720-3413-47d1-9543-f8a6458c2e22",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Passage Between Rocks",
+      "levelId": "main",
+      "position": {
+        "x": 1519.6508,
+        "y": 1989.1944
+      }
+    },
+    {
+      "id": "36c4032a-8390-413d-97ce-ca6cbb8c9186",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Railroad to Port",
+      "levelId": "main",
+      "position": {
+        "x": 2884.7216,
+        "y": 1690.1142
+      }
+    },
+    {
+      "id": "59a5df6c-b09d-4abf-beaf-afdc7105cf57",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Old Gas Station Gate",
+      "levelId": "main",
+      "position": {
+        "x": 1999.6952,
+        "y": 1207.732
+      }
+    },
+    {
+      "id": "63169e34-2a5a-42fb-b2af-9e4acc5d0320",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "RUAF Roadblock",
+      "levelId": "main",
+      "position": {
+        "x": 2637.2736,
+        "y": 1336.2098
+      }
+    },
+    {
+      "id": "676b47d4-70ad-422f-a12c-d4dfc9be1ee0",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Railroad to Tarkov",
+      "levelId": "main",
+      "position": {
+        "x": 2930.006,
+        "y": 1168.3114
+      }
+    },
+    {
+      "id": "7e4bb0c6-24fe-49a0-9200-5dd38c8b8c1c",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Smugglers' Bunker (ZB-1012) (Secret)",
+      "levelId": "basement",
+      "position": {
+        "x": 1657.5286,
+        "y": 1363.4934
+      }
+    },
+    {
+      "id": "881d4365-45b3-498f-b4aa-f9d7b3d03483",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Scav Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 1305.6024,
+        "y": 1551.0698
+      }
+    },
+    {
+      "id": "96aea1ab-ceb9-4e6f-9ab0-1933f55b87f1",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Factory Far Corner",
+      "levelId": "main",
+      "position": {
+        "x": 1297.7794,
+        "y": 1275.1312
+      }
+    },
+    {
+      "id": "974cd9d8-e659-4ef1-af4c-2b3712fb722a",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Trailer Park Workers' Shack",
+      "levelId": "main",
+      "position": {
+        "x": 3097.763,
+        "y": 1145.246
+      }
+    },
+    {
+      "id": "a3096125-8fab-4018-b0b7-c0a284d2e096",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Crossroads",
+      "levelId": "main",
+      "position": {
+        "x": 3241.9686,
+        "y": 1439.232
+      }
+    },
+    {
+      "id": "a3f2e7b9-0c4e-40c2-b0ef-950075759110",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Warehouse 17",
+      "levelId": "main",
+      "position": {
+        "x": 2498.0994,
+        "y": 1451.8212
+      }
+    },
+    {
+      "id": "b7003f6b-c1a5-4189-b925-9b67b462f2f0",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Smuggler's Boat (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 2678.0644,
+        "y": 1845.3472
+      }
+    },
+    {
+      "id": "bbae8add-c713-4754-8186-e78cc65c93ce",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Railroad to Military Base",
+      "levelId": "main",
+      "position": {
+        "x": 1617.7916,
+        "y": 2036.2652
+      }
+    },
+    {
+      "id": "bbf44c11-67b1-4e2a-a8e5-b320e13e9a10",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Administration Gate",
+      "levelId": "main",
+      "position": {
+        "x": 1271.2376,
+        "y": 1493.8962
+      }
+    },
+    {
+      "id": "bfa7b3f3-aa7e-41c4-9d4b-0e12e77aad9d",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Old Road Gate",
+      "levelId": "main",
+      "position": {
+        "x": 2232.0514,
+        "y": 2021.0294
+      }
+    },
+    {
+      "id": "bfc2512e-a3bb-46ec-a2fe-9be841f7c147",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Warehouse 4",
+      "levelId": "main",
+      "position": {
+        "x": 1915.5634,
+        "y": 1546.5692
+      }
+    },
+    {
+      "id": "caa92664-735d-4d52-b0a8-7a597b25017f",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Sniper Roadblock",
+      "levelId": "main",
+      "position": {
+        "x": 2558.2008,
+        "y": 1852.0458
+      }
+    },
+    {
+      "id": "d08f8891-e202-45f2-9aae-03ae19c303e3",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Factory Shacks",
+      "levelId": "main",
+      "position": {
+        "x": 2186.8986,
+        "y": 1611.3138
+      }
+    },
+    {
+      "id": "daa135f7-89dd-46b0-9c76-a5304736165d",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Military Base CP",
+      "levelId": "main",
+      "position": {
+        "x": 1312.2484,
+        "y": 1844.9208
+      }
+    },
+    {
+      "id": "d3697ebb-fc4d-4aaf-b8d3-360b6385771b",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Boiler Room Basement (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 2382.1978,
+        "y": 1488.5912
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/customs",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "abc0e03f6f5ec948b66e8c8f9a002e2f4a29269a",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 4,
+        "pmc": 10,
+        "scav": 19,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "mapId": "lighthouse",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "7d056824-8cd5-4c5e-a9ca-2ed13ce18ceb",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Woods",
+      "levelId": "main",
+      "position": {
+        "x": 1440.9175,
+        "y": 1100.5514
+      }
+    },
+    {
+      "id": "a851f33c-164b-45d5-880d-7137f75a6787",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Reserve",
+      "levelId": "main",
+      "position": {
+        "x": 1844.5028,
+        "y": 1265.0359
+      }
+    },
+    {
+      "id": "e2fe9ab4-c122-4ee6-9671-fd9445b78456",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Shoreline",
+      "levelId": "main",
+      "position": {
+        "x": 1841.013,
+        "y": 1905.5282
+      }
+    },
+    {
+      "id": "3feaf149-0bdb-4eb0-a4ad-b0404b7278fb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to Military Base V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 1891.2853,
+        "y": 1267.2558
+      }
+    },
+    {
+      "id": "5ae1cc06-97af-44f5-aa36-31d0fd404ff2",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Passage by the Lake (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1908.4257,
+        "y": 1478.196
+      }
+    },
+    {
+      "id": "7cb21240-9e1a-4171-82e0-4d18728121cb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Mountain Pass",
+      "levelId": "main",
+      "position": {
+        "x": 1718.3317,
+        "y": 2040.8419
+      }
+    },
+    {
+      "id": "8deda3cf-1f35-4cfc-9a12-90d108e89f72",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Northern Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 1434.259,
+        "y": 1073.4634
+      }
+    },
+    {
+      "id": "a1181896-9768-40ca-a1b7-f748e8917be1",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Armored Train",
+      "levelId": "main",
+      "position": {
+        "x": 1545.3574,
+        "y": 1173.4368
+      }
+    },
+    {
+      "id": "e7793b51-a0fb-4f8d-9e15-375769937156",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Path to Shoreline",
+      "levelId": "main",
+      "position": {
+        "x": 1878.1904,
+        "y": 1902.5534
+      }
+    },
+    {
+      "id": "f53ea2cd-c75f-45ca-a43b-418bd9f2b016",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Southern Road",
+      "levelId": "main",
+      "position": {
+        "x": 1817.1395,
+        "y": 2466.8919
+      }
+    },
+    {
+      "id": "03a9eb14-e4a5-4993-abc8-e2c1a020ffb8",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Southern Road Landslide",
+      "levelId": "main",
+      "position": {
+        "x": 1822.9693,
+        "y": 2476.2924
+      }
+    },
+    {
+      "id": "23263d95-34db-4bf1-88df-4db6250b60bc",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Path to Shoreline",
+      "levelId": "main",
+      "position": {
+        "x": 1904.3455,
+        "y": 1909.821
+      }
+    },
+    {
+      "id": "2d08ccac-aabe-4aa1-9e1c-bbe450375a05",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Scav Hideout at the Grotto",
+      "levelId": "main",
+      "position": {
+        "x": 1364.4852,
+        "y": 1557.7411
+      }
+    },
+    {
+      "id": "482c05bc-0552-455a-b8a7-444a387878a9",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Industrial Zone Gates",
+      "levelId": "main",
+      "position": {
+        "x": 1702.0233,
+        "y": 1261.1833
+      }
+    },
+    {
+      "id": "72e54893-0668-4d45-9593-cc6256c04930",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Armored Train",
+      "levelId": "main",
+      "position": {
+        "x": 1547.0093,
+        "y": 1177.9795
+      }
+    },
+    {
+      "id": "a93a9856-6d0f-48ea-833e-f825d97d4474",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Hideout Under the Landing Stage",
+      "levelId": "main",
+      "position": {
+        "x": 1417.8762,
+        "y": 2337.3118
+      }
+    },
+    {
+      "id": "c3f0c873-18a3-4204-a985-c690216e17e4",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Passage by the Lake (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1912.2054,
+        "y": 1481.5032
+      }
+    },
+    {
+      "id": "aaac6cf3-f0c8-4bb5-8421-2d681e7ffbe6",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Side Tunnel (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 1607.2658,
+        "y": 2370.662
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/lighthouse",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "6a60aa923ee2d4dc0d202b9ccd8b4c08f96df51e",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 3,
+        "pmc": 7,
+        "scav": 7,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

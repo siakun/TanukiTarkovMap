@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "mapId": "interchange",
+  "title": "Interchange",
+  "size": {
+    "width": 4000,
+    "height": 3900
+  },
+  "zoom": 0.55,
+  "minZoom": 0.1,
+  "maxZoom": 10,
+  "transform": {
+    "rotate": 90,
+    "xOffset": 2166,
+    "yOffset": 2004,
+    "invertX": false,
+    "invertY": false,
+    "ratio": 2
+  },
+  "levels": [
+    {
+      "id": "level3",
+      "label": "Level 3",
+      "sourceLevel": 3,
+      "terrainGroupId": "level3",
+      "defaultVisible": false
+    },
+    {
+      "id": "level2",
+      "label": "Level 2",
+      "sourceLevel": 2,
+      "terrainGroupId": "level2",
+      "defaultVisible": false
+    },
+    {
+      "id": "main",
+      "label": "Main",
+      "sourceLevel": 1,
+      "terrainGroupId": "main",
+      "defaultVisible": true
+    }
+  ],
+  "source": {
+    "site": "https://tarkov-market.com",
+    "page": "https://tarkov-market.com/maps/interchange",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
+    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
+    "terrainUrl": "https://tarkov-market.com/_nuxt3/Bah-WxBq.js",
+    "terrainBlob": "1466c90299eaa1dbb1f438f8309664186b2c2ca9",
+    "coordinateFormula": {
+      "rotation": "-transform.rotate degrees",
+      "mapX": "xOffset - rotatedX * ratio",
+      "mapY": "yOffset - rotatedY * ratio",
+      "rounding": "4 decimal places"
+    },
+    "directionFormula": {
+      "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
+      "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
+      "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
+    }
+  }
+}

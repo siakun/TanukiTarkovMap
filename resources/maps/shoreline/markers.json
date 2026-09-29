@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "mapId": "shoreline",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "05cc7c93-6d1d-4b14-8eee-40ad1e8ae163",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 1124.2411,
+        "y": 1265.5027
+      }
+    },
+    {
+      "id": "4fcbfffe-6b44-43e6-9377-24614796cff3",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Icebreaker",
+      "levelId": "main",
+      "position": {
+        "x": 1883.4681,
+        "y": 1979.391
+      }
+    },
+    {
+      "id": "afbea725-2d1d-4276-a994-1f52276d51be",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Labyrinth",
+      "levelId": "basement",
+      "position": {
+        "x": 1764.2248,
+        "y": 1374.1344
+      }
+    },
+    {
+      "id": "07d7a578-6fe7-4725-be18-bf8d11e388d5",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Mountain Bunker (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1959.5871,
+        "y": 1071.3924
+      }
+    },
+    {
+      "id": "30eb4935-9544-47ff-9f6d-a97e4bba84f8",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Tunnel",
+      "levelId": "main",
+      "position": {
+        "x": 1186.4682,
+        "y": 1759.1509
+      }
+    },
+    {
+      "id": "3309ee9d-17c1-45a2-84c0-b6d2ddfdf12c",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 2424.5952,
+        "y": 1456.0439
+      }
+    },
+    {
+      "id": "331f7a0b-38e1-4d65-939e-65335ab8d063",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Path to Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 1135.1486,
+        "y": 1209.3132
+      }
+    },
+    {
+      "id": "419feb99-0691-431f-9d0a-c5dec9c62041",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Pier Boat",
+      "levelId": "main",
+      "position": {
+        "x": 1909.0212,
+        "y": 2021.8759
+      }
+    },
+    {
+      "id": "865917c8-52eb-4d51-a4a9-2ed526b33803",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to North V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 2112.6068,
+        "y": 1072.7987
+      }
+    },
+    {
+      "id": "c860e10b-4310-43ec-9b5f-db7531f6d9db",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Railway Bridge",
+      "levelId": "main",
+      "position": {
+        "x": 2593.6635,
+        "y": 1760.9757
+      }
+    },
+    {
+      "id": "eb4d75e9-1852-4515-b1a6-04728167edeb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Climber's Trail",
+      "levelId": "main",
+      "position": {
+        "x": 1794.197,
+        "y": 1098.2366
+      }
+    },
+    {
+      "id": "10034d75-92c9-40e3-ad40-d05000556dc6",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Mountain Bunker (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1958.9505,
+        "y": 1077.5239
+      }
+    },
+    {
+      "id": "2ba9d2b2-ed48-4f07-8a7e-83350ee17ecc",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Ruined Road",
+      "levelId": "main",
+      "position": {
+        "x": 1213.7919,
+        "y": 1780.1046
+      }
+    },
+    {
+      "id": "366d7779-7ab3-4d0d-93b0-53df2c0b715f",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Road to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 2422.3562,
+        "y": 1459.1215
+      }
+    },
+    {
+      "id": "6e03cfdf-1388-416d-a4d0-876ea27e842e",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "East Wing Gym Entrance",
+      "levelId": "main",
+      "position": {
+        "x": 1866.5829,
+        "y": 1349.767
+      }
+    },
+    {
+      "id": "be8f2185-c852-4310-b047-eaff9bed3fa9",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 2028.3071,
+        "y": 2019.5537
+      }
+    },
+    {
+      "id": "ffc86106-c66e-4cd2-959f-1ce189fb9dd5",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Admin Basement",
+      "levelId": "basement",
+      "position": {
+        "x": 1816.9436,
+        "y": 1297.2791
+      }
+    },
+    {
+      "id": "05072375-fb76-4dae-909e-4fe4da7d0a00",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Smuggler's Path (Co-op)",
+      "levelId": "main",
+      "position": {
+        "x": 2278.6718,
+        "y": 1203.2921
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/shoreline",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "b93a02cfe9388bb3748e1e2b5bd6d13676d5f239",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 3,
+        "pmc": 8,
+        "scav": 6,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

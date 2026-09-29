@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "mapId": "interchange",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "19a30c75-b634-4966-af20-f0b09ea52e0e",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 1630.3776,
+        "y": 2850.7126
+      }
+    },
+    {
+      "id": "3260ba4a-0005-4b68-8e43-faa6fa94d564",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Streets of Tarkov",
+      "levelId": "main",
+      "position": {
+        "x": 1660,
+        "y": 1140.8332
+      }
+    },
+    {
+      "id": "b7a929d3-652b-4481-8a6a-1816d0e79179",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Emercom Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 2795.6728,
+        "y": 2529.33
+      }
+    },
+    {
+      "id": "bc0aa123-6ccc-42bc-b22d-12c386ffb7ba",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Railway Exfil",
+      "levelId": "main",
+      "position": {
+        "x": 1212.5,
+        "y": 1118.3332
+      }
+    },
+    {
+      "id": "cc9b7ae3-d33c-4dfd-be5a-6bb585fe080d",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Path to River (Flare)",
+      "levelId": "main",
+      "position": {
+        "x": 1069.8408,
+        "y": 2170.87
+      }
+    },
+    {
+      "id": "d8c1b454-636c-456c-afe7-6f3a76cc0c70",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Saferoom Exfil",
+      "levelId": "main",
+      "position": {
+        "x": 2256.6298,
+        "y": 2089.2454
+      }
+    },
+    {
+      "id": "d8ef4758-472e-43c7-8e5d-8d79ca080150",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Smugglers' Tunnel (secret)",
+      "levelId": "main",
+      "position": {
+        "x": 2436.7654,
+        "y": 1648.8742
+      }
+    },
+    {
+      "id": "d9a7f0fc-e5c8-4e2e-ad07-a88fc9762f54",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Power Station V-EX (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 2782.585,
+        "y": 1261.0512
+      }
+    },
+    {
+      "id": "3787c201-6f65-4955-8d4a-a1985050bb4b",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Railway Exfil",
+      "levelId": "main",
+      "position": {
+        "x": 1222.0278,
+        "y": 1123.0634
+      }
+    },
+    {
+      "id": "7400bc7e-0c46-4fda-acc2-fc8fbbdb346b",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Smugglers' Tunnel",
+      "levelId": "main",
+      "position": {
+        "x": 2444.7884,
+        "y": 1656.9278
+      }
+    },
+    {
+      "id": "86b73c26-7630-4369-8c7b-208417f64ed7",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Emercom Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 2786.9004,
+        "y": 2531.1956
+      }
+    },
+    {
+      "id": "5500ac4b-50d9-48f6-a0c2-adb33cecf96e",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Scav Camp Exfil (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 2358.5478,
+        "y": 1863.4928
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/interchange",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "c6d4f5f5898218064dfd2858ad22fa2e1a6637c1",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 2,
+        "pmc": 6,
+        "scav": 3,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}

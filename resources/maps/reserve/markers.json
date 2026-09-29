@@ -1,0 +1,280 @@
+{
+  "schemaVersion": 1,
+  "mapId": "reserve",
+  "coordinateSpace": "map",
+  "factions": [
+    {
+      "id": "pmc",
+      "label": "PMC",
+      "defaultSelected": true
+    },
+    {
+      "id": "scav",
+      "label": "SCAV",
+      "defaultSelected": false
+    }
+  ],
+  "categories": [
+    {
+      "id": "extraction",
+      "label": "추출구",
+      "sourceCategory": "Extractions",
+      "defaultVisible": true,
+      "subtypes": [
+        {
+          "id": "transit",
+          "label": "Transit",
+          "sourceSubtype": "Transition",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "pmc",
+          "label": "PMC",
+          "sourceSubtype": "PMC Extraction",
+          "factions": [
+            "pmc"
+          ]
+        },
+        {
+          "id": "scav",
+          "label": "SCAV",
+          "sourceSubtype": "Scav Extraction",
+          "factions": [
+            "scav"
+          ]
+        },
+        {
+          "id": "co-op",
+          "label": "Co-Op",
+          "sourceSubtype": "Co-Op Extraction",
+          "factions": [
+            "pmc",
+            "scav"
+          ]
+        }
+      ]
+    }
+  ],
+  "markers": [
+    {
+      "id": "1efe7bd1-0f22-4422-b01e-088b0699bd70",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 1083.2286,
+        "y": 1402.1072
+      }
+    },
+    {
+      "id": "38e2fe56-0bd3-4533-9f8b-2aade21942fc",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 1906.7918,
+        "y": 1202.2542
+      }
+    },
+    {
+      "id": "f490dbe7-bd93-4e1e-9580-ddb9f9ba1c48",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Woods",
+      "levelId": "main",
+      "position": {
+        "x": 1083.7752,
+        "y": 1249.0802
+      }
+    },
+    {
+      "id": "1728f410-82c4-4b5d-b8b9-a44f4a2a033d",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Armored Train",
+      "levelId": "main",
+      "position": {
+        "x": 1280.2898,
+        "y": 1306.0236
+      }
+    },
+    {
+      "id": "50b34bf8-302c-4c62-a07e-76fd8d138b9e",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Cliff Descent",
+      "levelId": "main",
+      "position": {
+        "x": 1728.3462,
+        "y": 1918.884
+      }
+    },
+    {
+      "id": "5612b045-32d5-444a-8cf7-574e4c083c58",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Sewer Manhole",
+      "levelId": "main",
+      "position": {
+        "x": 1560.9912,
+        "y": 1688.4846
+      }
+    },
+    {
+      "id": "70cc2d6c-ef46-42f4-8002-d4a751fe6869",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Exit to Woods (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1417.7522,
+        "y": 1100.3724
+      }
+    },
+    {
+      "id": "9ad7cc89-8e65-4d45-8a42-1e0a35f6a566",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Bunker Hermetic Door",
+      "levelId": "bunker",
+      "position": {
+        "x": 1375.1862,
+        "y": 1072.2352
+      }
+    },
+    {
+      "id": "bb955cf1-8710-48af-8414-27c3d4acad00",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "D-2",
+      "levelId": "bunker",
+      "position": {
+        "x": 1921.9434,
+        "y": 1786.2834
+      }
+    },
+    {
+      "id": "55a84562-c7e6-4891-9cf2-a9605956f2c2",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Checkpoint Fence",
+      "levelId": "main",
+      "position": {
+        "x": 1548.7892,
+        "y": 1807.0134
+      }
+    },
+    {
+      "id": "608bb75f-4603-4c06-a629-ed9aea9ee0ba",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Exit to Woods (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1418.5522,
+        "y": 1098.3724
+      }
+    },
+    {
+      "id": "934ae5b1-e079-4de3-b735-92917f38f5c5",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Heating Pipe",
+      "levelId": "main",
+      "position": {
+        "x": 1578.7492,
+        "y": 1155.3986
+      }
+    },
+    {
+      "id": "ad02a14f-9d78-4eca-bf93-29a934625d55",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Armored Train",
+      "levelId": "main",
+      "position": {
+        "x": 1280.4786,
+        "y": 1308.7226
+      }
+    },
+    {
+      "id": "aea4c2c8-13bc-4c5f-9edd-a76884567d7d",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Sewer Manhole",
+      "levelId": "main",
+      "position": {
+        "x": 1558.0594,
+        "y": 1691.8112
+      }
+    },
+    {
+      "id": "cce35541-6598-4562-a7a5-0ebb540b7e0f",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Depot Hermetic Door",
+      "levelId": "bunker",
+      "position": {
+        "x": 1296.4844,
+        "y": 1343.4206
+      }
+    },
+    {
+      "id": "e1ecac86-324e-4b4b-af89-b6aaadf0a75f",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Bunker Hermetic Door",
+      "levelId": "bunker",
+      "position": {
+        "x": 1377.2326,
+        "y": 1073.7624
+      }
+    },
+    {
+      "id": "f905705b-c531-415d-87f5-3981a51590fe",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Hole in the Wall by the Mountains",
+      "levelId": "main",
+      "position": {
+        "x": 2124.4576,
+        "y": 1477.5368
+      }
+    },
+    {
+      "id": "c141fba9-207d-4a37-87f4-0bb5a34bde39",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Scav Lands (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 1770.4034,
+        "y": 1187.4276
+      }
+    }
+  ],
+  "source": {
+    "page": "https://tarkov-market.com/maps/reserve",
+    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
+    "htmlBlob": "ac65a0707cb4dc199127fc20d9943418bbcc4c8a",
+    "markerResponse": {
+      "url": "https://tarkov-market.com/api/be/markers/list",
+      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
+    },
+    "markerState": "$nuxt.payload.state.$squestsState.markers",
+    "categoryState": "MapLeftPanel.props.categories",
+    "listedCounts": {
+      "extraction": {
+        "transit": 3,
+        "pmc": 6,
+        "scav": 8,
+        "co-op": 1
+      }
+    },
+    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+  }
+}
