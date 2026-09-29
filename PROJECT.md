@@ -399,6 +399,8 @@ ServiceLocator.MapArchive
 
 Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `UpdateService.ApplyOnExit()`으로만 적용합니다.
 
+릴리스를 패키징하는 vpk는 `.config/dotnet-tools.json`에 고정해 CI와 `build.bat`이 같은 버전을 씁니다. 패키지에 들어가는 Update.exe도 vpk 버전을 따라 바뀌므로, 이 버전이나 패키지 버전을 바꾼 뒤에는 [업데이트 실제 설치 검증](docs/20260930-update-install-verification.md)을 거쳐 릴리스합니다. 검증 빌드는 `-p:UpdateRepositoryUrl`로 업데이트를 받을 저장소만 테스트 저장소로 바꿉니다.
+
 업데이트 확인은 메인 창을 띄운 **뒤에** 시작합니다. 시작을 막지 않는 것이 이 앱에서는
 다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은
 [시작 속도와 업데이트 시점](docs/20260816-startup-speed-and-updates.md)에 적어 두었습니다.

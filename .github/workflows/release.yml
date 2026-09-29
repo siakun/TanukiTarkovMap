@@ -68,8 +68,12 @@ jobs:
           --self-contained true `
           -o publish
 
+    # INTENT: vpk 버전은 .config/dotnet-tools.json에 고정한다. 최신을 받으면 릴리스할 때마다 패키징
+    # 도구와 패키지에 들어가는 Update.exe가 검증 없이 바뀐다. 고정한 버전은 앱의 Velopack 라이브러리와
+    # 달라 vpk가 경고를 남기지만, 지금까지의 릴리스가 모두 쓴 조합이라 그대로 둔다. 버전을 바꿀 때는
+    # docs/20260930-update-install-verification.md의 실제 설치 검증을 먼저 거친다.
     - name: Install Velopack
-      run: dotnet tool install -g vpk
+      run: dotnet tool restore
 
     # delta 패키지 생성을 위해 이전 릴리스를 내려받는다.
     # 이 단계가 없으면 매 릴리스가 full 패키지만 포함해 사용자가 전체를 다시 받는다.
@@ -77,7 +81,7 @@ jobs:
     - name: Download previous release (for delta)
       continue-on-error: true
       run: |
-        vpk download github `
+        dotnet vpk download github `
           --repoUrl "https://github.com/siakun/TanukiTarkovMap" `
           --token "${{ secrets.GITHUB_TOKEN }}" `
           --outputDir "releases"
@@ -89,7 +93,7 @@ jobs:
     #   깔도록 선언해 둔다. 개발 PC에서는 이미 깔려 있어 증상이 안 보이므로 지우지 말 것.
     - name: Pack with Velopack
       run: |
-        vpk pack `
+        dotnet vpk pack `
           --packId "TanukiTarkovMap" `
           --packVersion "${{ steps.version.outputs.version }}" `
           --packDir "publish" `

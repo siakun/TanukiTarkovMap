@@ -66,16 +66,14 @@ if !errorlevel! neq 0 (
 )
 
 :: Check vpk tool
+:: INTENT: CI와 같은 vpk를 쓰도록 .config/dotnet-tools.json에 고정한 버전을 복원한다.
+::   전역에 깔린 vpk는 PC마다 버전이 달라 같은 소스에서도 다른 패키지가 나온다.
 echo.
-echo [3/4] Checking vpk tool...
-where vpk >nul 2>&1
+echo [3/4] Restoring vpk tool...
+dotnet tool restore
 if !errorlevel! neq 0 (
-    echo Installing vpk tool...
-    dotnet tool install -g vpk
-    if !errorlevel! neq 0 (
-        echo [ERROR] Failed to install vpk tool!
-        goto :error
-    )
+    echo [ERROR] Failed to restore vpk tool!
+    goto :error
 )
 
 :: Pack with Velopack
@@ -86,7 +84,7 @@ echo [4/4] Packing with Velopack...
 ::   재배포 패키지에만 들어 있어, 개발 도구가 없는 깨끗한 Windows에서는 앱이
 ::   "지정된 모듈을 찾을 수 없습니다"로 죽는다. Setup.exe가 설치 전에 이를 먼저
 ::   깔도록 선언해 둔다. 개발 PC에서는 이미 깔려 있어 증상이 안 보이므로 지우지 말 것.
-vpk pack ^
+dotnet vpk pack ^
     --packId "TanukiTarkovMap" ^
     --packVersion "%VERSION%" ^
     --packDir "%PUBLISH_DIR%" ^
