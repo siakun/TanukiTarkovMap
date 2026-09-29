@@ -66,9 +66,15 @@ gh release list --repo siakun/TanukiTarkovMap-UpdateTest --json tagName --jq '.[
 `C:\UpdateTest`가 `artifacts/update-test`와 연결됩니다. Sandbox는 닫으면 초기화되므로 시나리오마다 새로 엽니다.
 
 - 설치: `C:\UpdateTest\<버전>\releases\TanukiTarkovMap-Setup-<버전>-x64.exe`를 실행합니다. VC++ 재배포
-  패키지를 먼저 설치하므로 Sandbox의 인터넷 연결이 필요합니다.
-- 포터블: Portable.zip에는 VC++ 재배포 패키지 설치 단계가 없습니다. 새 Sandbox에서는 먼저
-  [VC++ 재배포 패키지](https://aka.ms/vs/17/release/vc_redist.x64.exe)를 설치한 뒤 포터블을 실행합니다.
+  패키지가 없으면 Setup이 "추가 구성 요소가 필요합니다" 확인 창을 띄우고 답을 기다리며, 확인을 누르면
+  내려받아 설치하므로 Sandbox의 인터넷 연결이 필요합니다. 아무도 답하지 않으면 Setup은 설치하지 않은 채
+  끝납니다. 창을 거치지 않으려면
+  [VC++ 재배포 패키지](https://aka.ms/vs/17/release/vc_redist.x64.exe)를 `/install /quiet /norestart`로
+  먼저 설치합니다.
+- 포터블: Portable.zip에는 VC++ 재배포 패키지 설치 단계가 없으므로 위와 같이 먼저 설치한 뒤 실행합니다.
+  같은 Sandbox에서 설치본에 이어 포터블을 시험하면 두 앱이 `settings.json`을 함께 씁니다. 한 번에 하나만
+  실행되므로 설치본을 트레이에서 종료하고, 앞 시나리오가 바꾼 자동 업데이트와 베타 설정을 되돌린 뒤
+  포터블을 실행합니다.
 - 앱 종료: 트레이 아이콘의 "종료"로 끝냅니다. 이 정상 종료 경로에서 받아 둔 업데이트가 적용됩니다.
 - 버전 확인: 설정 화면의 앱 버전과 버전 선택 목록의 "현재" 표시로 봅니다.
 - 로그: 앱 로그는 설치 폴더의 `current\Logs`에 쌓이는데, 업데이트를 적용하면 `current`가 통째로 바뀌어
@@ -90,6 +96,10 @@ gh release list --repo siakun/TanukiTarkovMap-UpdateTest --json tagName --jq '.[
 | 상향 버전 전환 | 0.99.1 설치 | 버전 선택에서 0.99.2를 골라 설치 | 앱이 스스로 다시 떠 0.99.2. 최신이 아니므로 자동 업데이트가 꺼짐 |
 | 포터블 자동 업데이트 | 0.99.1 Portable.zip을 `C:\Portable`에 풀고 실행 | 업데이트 표시가 뜨면 트레이에서 종료, 다시 실행 | 0.99.3으로 바뀜. 포터블에는 기준 패키지가 없어 첫 업데이트는 full |
 | 포터블 버전 전환 | 위에서 0.99.3이 된 포터블 | 버전 선택에서 0.99.2를 골라 설치 | 앱이 스스로 다시 떠 0.99.2 |
+
+delta로 받았는지는 `velopack.log`의 `Applying <개수> patches` 줄로, full로 받았는지는
+`Downloading full release` 줄로 구분합니다. `packages` 폴더의 full 크기로도 알 수 있습니다. delta로 조립한
+full은 게시된 full과 크기가 다르고, 그대로 받은 full은 같습니다.
 
 실패하면 그 시점의 앱 로그와 `velopack.log`를 `C:\UpdateTest\logs`에 모아 둡니다. 로그의
 `[UpdateService]`, `[GitHubReleaseCatalog]` 줄이 라이브러리가 남긴 기록입니다.
