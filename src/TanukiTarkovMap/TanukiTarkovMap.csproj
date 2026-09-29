@@ -53,8 +53,10 @@
     <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.0" />
     <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
+    <!-- INTENT: Velopack은 이 패키지의 의존성으로 들어온다. 앱에서 Velopack 버전을 따로 지정하면
+         라이브러리가 동작을 확인한 버전과 어긋날 수 있으므로 직접 참조하지 않는다. -->
+    <PackageReference Include="Siakun.AutoUpdate" Version="0.1.0" />
     <PackageReference Include="System.Drawing.Common" Version="10.0.0" />
-    <PackageReference Include="Velopack" Version="0.0.1298" />
   </ItemGroup>
 
 </Project>

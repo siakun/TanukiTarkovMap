@@ -10,6 +10,7 @@ using CefSharp;
 using CefSharp.Wpf;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Win32;
+using Siakun.AutoUpdate;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.FileSystem;
 using TanukiTarkovMap.Models.Services;
@@ -37,7 +38,7 @@ namespace TanukiTarkovMap
             try
             {
                 var updateManager = new Velopack.UpdateManager(
-                    new Velopack.Sources.GithubSource(UpdateService.GitHubRepoUrl, null, false));
+                    new Velopack.Sources.GithubSource(UpdateServiceFactory.RepositoryUrl, null, false));
 
                 if (updateManager.IsInstalled && updateManager.CurrentVersion != null)
                 {

@@ -8,6 +8,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Win32;
 using NuGet.Versioning;
+using Siakun.AutoUpdate;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Services;
@@ -68,9 +69,9 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary>
         /// 저장소 주소. 업데이트가 바라보는 곳과 화면에 보여 주는 곳이 갈라지지 않도록
-        /// UpdateService가 쓰는 상수를 그대로 읽는다
+        /// UpdateService를 만들 때 쓰는 상수를 그대로 읽는다
         /// </summary>
-        public string RepositoryUrl => UpdateService.GitHubRepoUrl;
+        public string RepositoryUrl => UpdateServiceFactory.RepositoryUrl;
 
         public string SettingsFilePath => AppPaths.SettingsFilePath;
 
@@ -381,7 +382,7 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary>
         /// 버전을 바꿀 수 있는 설치인지 여부.
-        /// 포터블 압축본과 개발 빌드는 설치 관리자가 없어 교체할 수 없다
+        /// 설치본과 포터블 압축본은 바꿀 수 있고, Velopack 패키지가 아닌 개발 빌드는 바꿀 수 없다
         /// </summary>
         public bool CanSwitchVersion
         {
@@ -478,7 +479,7 @@ namespace TanukiTarkovMap.ViewModels
                         isLatest));
                 }
 
-                // 설치 버전을 기본으로 두고, 그 버전을 목록에서 찾지 못하면(포터블/개발 빌드) 최신을 보여준다
+                // 설치 버전을 기본으로 두고, 그 버전을 목록에서 찾지 못하면(개발 빌드 등) 최신을 보여준다
                 SelectedVersion = AvailableVersions.FirstOrDefault(item => item.IsCurrent)
                                   ?? AvailableVersions.FirstOrDefault();
                 UpdateStatusMessage = AvailableVersions.Count > 0

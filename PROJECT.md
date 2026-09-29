@@ -43,7 +43,7 @@ graph TB
         MES[MapEventService]
         HKS[HotkeyService]
         GTS[GoonTrackerService]
-        UPS[UpdateService]
+        UPS[UpdateService - Siakun.AutoUpdate]
     end
 
     subgraph StaticServices["Static Services"]
@@ -234,16 +234,12 @@ graph LR
         MES[MapEventService]
         HKS[HotkeyService]
         GTS[GoonTrackerService]
-        UPS[UpdateService]
+        UPS[UpdateService - Siakun.AutoUpdate]
     end
 
     subgraph Static["Static Class"]
         SET[Settings]
-    end
-
-    subgraph UpdateSources["Update Sources (DI 등록 없음)"]
-        GHS[GithubSource - Velopack 제공]
-        GRS[GitHubReleaseSource - 태그 고정]
+        USF[UpdateServiceFactory]
     end
 
     SL -->|Factory| BUI
@@ -252,10 +248,9 @@ graph LR
     SL -->|Factory| MES
     SL -->|Factory| HKS
     SL -->|Factory| GTS
-    SL -->|Factory| UPS
-
-    UPS -->|자동 갱신, delta| GHS
-    UPS -->|버전 선택, full| GRS
+    SL -->|Factory| USF
+    USF -->|Create| UPS
+    USF -->|설정 어댑터| SET
 
     WSM -->|Load/Save| SET
     SET -->|JSON| FILE[settings.json]
@@ -351,11 +346,14 @@ ServiceLocator.MapArchive
 | `MapEventService` | 맵 변경, 스크린샷, 퀘스트 완료 이벤트 발행 |
 | `HotkeyService` | 전역 단축키 등록 및 토글 처리 (HotkeyManager 래핑) |
 | `GoonTrackerService` | 활성화된 동안 PvE 군즈 최근 목격 제보 조회 |
-| `UpdateService` | Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
+| `UpdateService` | Siakun.AutoUpdate 패키지의 Velopack 업데이트 (백그라운드 자동 갱신, 설정에서 고른 버전 설치) |
+| `UpdateServiceFactory` | 저장소 주소, 설정 저장, 준비 완료 메시지를 연결해 `UpdateService` 구성 |
 | `MapArchive` | 오프라인 맵 사본에서 주소에 해당하는 파일 찾기 |
 | `Settings` | 애플리케이션 설정 로드/저장 (JSON) |
 
-`UpdateService`는 두 경로를 함께 다룹니다. 자동 갱신은 Velopack의 `GithubSource`를 그대로 써서 delta를 받고, 사용자가 버전을 직접 고르는 경로는 `GitHubReleaseSource`를 씁니다. `GitHubReleaseSource`는 DI에 등록하지 않고 설치할 때마다 대상 태그에 고정해 새로 만드는 업데이트 소스로, 그 이유는 [README의 버전 선택과 되돌리기](README.md#9-버전-선택과-되돌리기)에 적어 두었습니다. Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `WaitExitThenApplyUpdates`로만 적용합니다.
+`UpdateService`는 [Siakun.AutoUpdate](https://github.com/siakun/Siakun.AutoUpdate) 패키지가 제공하며, 자동 갱신과 사용자가 고른 버전의 설치를 함께 다룹니다. 두 경로의 동작과 지원하는 배포 구조는 그 패키지의 README에 있고, 버전 선택을 이 방식으로 정한 이유는 [README의 버전 선택과 되돌리기](README.md#9-버전-선택과-되돌리기)에 적어 두었습니다. 앱은 `UpdateServiceFactory`에서 저장소 주소, 자동 업데이트 설정의 저장, 다운로드 완료 메시지를 연결합니다. Velopack은 이 패키지의 의존성으로 들어오므로 앱에서 버전을 따로 지정하지 않습니다.
+
+Velopack의 시작 시 자동 적용과 `ApplyUpdatesAndRestart`는 쓰지 않습니다. 둘 다 앱의 정상 종료 경로를 우회할 수 있으므로, 다운로드한 패키지는 `App`이 CEF를 닫은 뒤 `UpdateService.ApplyOnExit()`으로만 적용합니다.
 
 업데이트 확인은 메인 창을 띄운 **뒤에** 시작합니다. 시작을 막지 않는 것이 이 앱에서는
 다른 무엇보다 앞서기 때문이며, 그렇게 정한 근거와 뒤집을 조건은

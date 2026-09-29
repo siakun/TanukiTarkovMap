@@ -85,7 +85,7 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 | 웹 연동 | CefSharp JavaScript 주입 (window.pilot 브리지) |
 | DI | Microsoft.Extensions.DependencyInjection |
 | 트레이 | Hardcodet.NotifyIcon.Wpf |
-| 배포, 자동 업데이트 | Velopack, GitHub Actions |
+| 배포, 자동 업데이트 | Velopack, Siakun.AutoUpdate, GitHub Actions |
 
 ---
 
@@ -186,7 +186,7 @@ Velopack 패키지에 함께 넣습니다. 태그와 프로젝트 버전이 다�
 
 자동 업데이트는 최신 버전으로만 흐릅니다. 새 버전에서 문제를 만난 사용자가 스스로 빠져나올 길이 없다는 뜻이라, 설정에서 자동 업데이트를 끄고 원하는 버전을 직접 고를 수 있게 했습니다.
 
-여기에는 Velopack의 기본 경로를 쓸 수 없습니다. `GithubSource`는 "최신 릴리스 하나에 모든 패키지가 모여 있다"를 전제로 그 릴리스의 `releases.win.json`만 읽고 다운로드 주소도 그 안에서만 찾습니다. 이 저장소는 전체 패키지가 250MB를 넘어 태그마다 자기 버전만 올리므로, 기본 경로로는 최신과 그 직전까지 두 버전만 보입니다. 그래서 릴리스 목록은 GitHub Releases API로 직접 조회하고, 고른 태그 하나에 고정된 `IUpdateSource`(`GitHubReleaseSource`)를 만들어 Velopack의 다운로드, 체크섬 검증, 적용 절차에 태웁니다.
+여기에는 Velopack의 기본 경로를 쓸 수 없습니다. `GithubSource`는 "최신 릴리스 하나에 모든 패키지가 모여 있다"를 전제로 그 릴리스의 `releases.win.json`만 읽고 다운로드 주소도 그 안에서만 찾습니다. 이 저장소는 전체 패키지가 250MB를 넘어 태그마다 자기 버전만 올리므로, 기본 경로로는 최신과 그 직전까지 두 버전만 보입니다. 그래서 릴리스 목록은 GitHub Releases API로 직접 조회하고, 고른 태그 하나에 고정된 `IUpdateSource`(`GitHubReleaseSource`)를 만들어 Velopack의 다운로드, 체크섬 검증, 적용 절차에 태웁니다. 이 업데이트 코드는 다른 앱에서도 쓸 수 있도록 [Siakun.AutoUpdate](https://github.com/siakun/Siakun.AutoUpdate) 패키지로 분리했습니다.
 
 패키지 메타데이터를 직접 조립하지 않고 릴리스가 이미 담고 있는 피드 JSON을 파싱하는 것도 이 때문입니다. Velopack은 받은 패키지의 SHA를 피드 값과 대조하는데, 손으로 만든 값에는 그 해시가 없어 검증을 통과시킬 방법이 없습니다.
 

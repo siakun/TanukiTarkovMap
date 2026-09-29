@@ -106,7 +106,7 @@ namespace TanukiTarkovMap.Messages
     }
 
     /// <summary>
-    /// 업데이트 다운로드 완료 메시지 (UpdateService → MainWindowViewModel)
+    /// 업데이트 다운로드 완료 메시지 (UpdateServiceFactory → MainWindowViewModel)
     /// 값 = 적용 대기 중인 새 버전 문자열
     /// </summary>
     public class UpdateReadyMessage : ValueChangedMessage<string>

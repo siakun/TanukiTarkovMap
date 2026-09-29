@@ -683,7 +683,7 @@ namespace TanukiTarkovMap.ViewModels
         }
 
         /// <summary>
-        /// 업데이트 다운로드 완료 메시지 핸들러 (UpdateService → MainWindowViewModel)
+        /// 업데이트 다운로드 완료 메시지 핸들러 (UpdateServiceFactory → MainWindowViewModel)
         /// 백그라운드 스레드에서 발행되므로 UI 스레드로 전환해 TopBar 표시를 켠다
         /// </summary>
         public void Receive(UpdateReadyMessage message)

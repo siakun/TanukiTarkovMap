@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Siakun.AutoUpdate;
 using TanukiTarkovMap.Models.Offline;
 using TanukiTarkovMap.ViewModels;
 
@@ -29,7 +30,7 @@ namespace TanukiTarkovMap.Models.Services
             services.AddSingleton(_ => new WindowStateManager());
             services.AddSingleton(_ => new HotkeyService());
             services.AddSingleton(_ => new GoonTrackerService());
-            services.AddSingleton(_ => new UpdateService());
+            services.AddSingleton(_ => UpdateServiceFactory.Create());
             services.AddSingleton(_ => new MapArchive());
 
             // ViewModels 등록
