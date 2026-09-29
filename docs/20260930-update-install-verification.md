@@ -65,6 +65,9 @@ gh release list --repo siakun/TanukiTarkovMap-UpdateTest --json tagName --jq '.[
 스크립트가 만든 `artifacts/update-test/update-test.wsb`를 열면 Sandbox가 뜨고, Sandbox 안의
 `C:\UpdateTest`가 `artifacts/update-test`와 연결됩니다. Sandbox는 닫으면 초기화되므로 시나리오마다 새로 엽니다.
 
+사람 대신 스크립트로 조작할 때의 명령 전달 방법과 막히는 지점, 결과 판정 근거는
+[Windows Sandbox에서 앱 업데이트를 자동으로 검증하기](20260930-windows-sandbox-update-automation.md)에 있습니다.
+
 - 설치: `C:\UpdateTest\<버전>\releases\TanukiTarkovMap-Setup-<버전>-x64.exe`를 실행합니다. VC++ 재배포
   패키지가 없으면 Setup이 "추가 구성 요소가 필요합니다" 확인 창을 띄우고 답을 기다리며, 확인을 누르면
   내려받아 설치하므로 Sandbox의 인터넷 연결이 필요합니다. 아무도 답하지 않으면 Setup은 설치하지 않은 채
