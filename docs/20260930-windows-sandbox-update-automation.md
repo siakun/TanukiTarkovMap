@@ -62,6 +62,18 @@ wsb exec --id $id -c "powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:
 추가하고 긴 단계를 백그라운드 실행으로 전환한 뒤에는 다시 나타나지 않았습니다. 두 변경 중 무엇이
 원인을 없앴는지는 가려내지 못했으므로, 둘 다 적용해 둡니다.
 
+### 화면 캡처와 원격 세션 창
+
+Sandbox 안에서 `Graphics.CopyFromScreen`으로 화면을 캡처하던 단계가 "핸들이 잘못되었습니다"로 실패한 적이
+있습니다. 그때 호스트에는 `wsb connect`가 연 원격 세션 창(`WindowsSandboxRemoteSession` 프로세스)이 없었고,
+`wsb connect`로 다시 연결한 뒤 같은 캡처가 성공했습니다. 캡처나 실제 마우스 입력이 필요한 단계를 보내기 전에
+이 프로세스가 떠 있는지 확인하고, 없으면 다시 연결합니다. `wsb connect`는 창이 열려 있는 동안 끝나지 않으므로
+호스트에서는 별도 프로세스로 띄웁니다.
+
+다시 연결한 뒤에는 세션의 DPI 배율이 바뀔 수 있습니다(150%이던 세션이 재연결 후 100%로 바뀐 것을 확인했습니다).
+좌표는 미리 저장해 두지 말고, DPI를 인식하는 프로세스(`SetProcessDPIAware`)에서 조작 직전에 UIA의
+`BoundingRectangle`로 다시 읽습니다.
+
 ## Setup이 종료 코드 0으로 끝났는데 설치되지 않을 때
 
 **증상**: 사람 없이 Setup을 실행했더니 몇 분 뒤 종료 코드 0으로 끝났지만 `%LOCALAPPDATA%\<앱 ID>`가
