@@ -31,7 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 모든 Resources 폴더의 파일을 exe에 임베드 -->
+    <!-- 모든 Resources 폴더의 파일을 exe에 임베드.
+         Resources\Styles의 XAML도 여기에 걸려 Page에서 빠지므로 BAML로 컴파일되지 않고 원문 그대로 들어가
+         실행 중에 해석된다. 빌드가 그 XAML의 오류를 잡지 못하고, 로컬 형식은 assembly=까지 적어야 찾는다
+         (docs/20261002-wpf-xaml-resource-not-compiled.md) -->
     <Resource Include="Resources\**\*.*" />
   </ItemGroup>
 
