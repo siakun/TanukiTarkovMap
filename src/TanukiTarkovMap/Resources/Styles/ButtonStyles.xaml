@@ -52,6 +52,7 @@
     모서리는 둥글리지 않는다. 닫기 버튼이 창 모서리를 채우는데 그 반경은 바깥 클리핑이 정하고
     (메인 창은 ContentClipBorder, 설정 패널은 BorderClipBehavior), 가운데 버튼들도 같은 모양으로
     두면 올렸을 때 배경이 나란히 이어진다. 덕분에 닫기 버튼이 템플릿을 새로 쓰지 않아도 된다.
+    다운로드 버튼만 예외로 템플릿을 덮어써 둥근 사각형을 칠한다 (DownloadIconButton 주석 참고).
     -->
     <Style x:Key="TitleBarIconButton" TargetType="Button">
         <Setter Property="Background" Value="Transparent"/>
@@ -83,9 +84,31 @@
         </Style.Triggers>
     </Style>
 
-    <!-- 업데이트 아이콘. 도형 색이 Foreground를 따르므로 올렸을 때 그 값만 밝게 바꾼다 -->
+    <!--
+    업데이트 아이콘. 도형 색이 Foreground를 따르므로 올렸을 때 그 값만 밝게 바꾼다.
+
+    다른 타이틀 바 버튼과 달리 올렸을 때 칸 전체가 아니라 아이콘 둘레의 둥근 사각형만 칠한다.
+    아래에 뜨는 말풍선 툴팁(CalloutToolTip)의 꼬리가 이 사각형을 가리켜, 둘이 한 덩어리로 읽힌다.
+    누를 수 있는 범위는 바깥 투명 칸이 맡아 다른 버튼과 같은 30px 폭 그대로다.
+    배경색은 기반 스타일의 트리거가 바꾼 Background를 그대로 받는다.
+    -->
     <Style x:Key="DownloadIconButton" TargetType="Button" BasedOn="{StaticResource TitleBarIconButton}">
         <Setter Property="Foreground" Value="#FF3BA55D"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent">
+                        <Border Width="18"
+                                Height="17"
+                                Background="{TemplateBinding Background}"
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center"
+                                              VerticalAlignment="Center"/>
+                        </Border>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
         <Style.Triggers>
             <Trigger Property="IsMouseOver" Value="True">
                 <Setter Property="Foreground" Value="#FF57D68D"/>

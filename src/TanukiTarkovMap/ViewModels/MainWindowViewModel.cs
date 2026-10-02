@@ -175,9 +175,6 @@ namespace TanukiTarkovMap.ViewModels
 
         /// <summary> 타이틀 바에 업데이트 아이콘을 보일지 여부 </summary>
         public bool ShowUpdateIcon => IsUpdateReady || IsUpdateIconForced;
-
-        /// <summary> 적용 대기 중인 업데이트 버전 문자열 </summary>
-        [ObservableProperty] public partial string UpdateReadyVersion { get; set; } = string.Empty;
         #endregion
 
         #region Settings Properties
@@ -688,11 +685,7 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public void Receive(UpdateReadyMessage message)
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                UpdateReadyVersion = message.Value;
-                IsUpdateReady = true;
-            });
+            Application.Current.Dispatcher.Invoke(() => IsUpdateReady = true);
             Logger.SimpleLog($"[MainWindowViewModel] Update ready indicator shown: v{message.Value}");
         }
 
@@ -702,16 +695,7 @@ namespace TanukiTarkovMap.ViewModels
         /// </summary>
         public void Receive(UpdateIconPreviewMessage message)
         {
-            Application.Current.Dispatcher.Invoke(() =>
-            {
-                // 실제 업데이트가 없을 때는 툴팁에 버전이 비어 보이므로 미리보기임을 적어 둔다
-                if (message.Value && string.IsNullOrEmpty(UpdateReadyVersion))
-                {
-                    UpdateReadyVersion = "미리보기";
-                }
-
-                IsUpdateIconForced = message.Value;
-            });
+            Application.Current.Dispatcher.Invoke(() => IsUpdateIconForced = message.Value);
         }
 
         #endregion
