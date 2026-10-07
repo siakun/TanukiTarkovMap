@@ -1,107 +1,49 @@
 <!doctype html>
 <!--
-이 화면은 로컬 맵 리소스의 지형, 추출구, 현재 위치와 방향을 읽는 독립 뷰어다. 지도 자체를 화면의
-중심에 두고, 왼쪽 계기판에는 레벨과 PMC/SCAV 추출구 구분, 좌표 조작만 둔다. 데이터는 resources에서
-읽으므로 맵을 갱신할 때 이 파일을 고치지 않는다.
+INTENT
+앱의 Local 모드가 여는 오버레이 미니맵이다. Online(사이트 지도 페이지에서 UI를 숨긴 화면)과 같아
+보이도록 사이트 지도 페이지의 구조와 클래스 이름을 그대로 따른다. 지형(.map-wrap), 마커 캔버스
+(.markers-canvas), 내 위치(.squad-layer > .marker), 오른쪽 Levels 패널(.panel_right)이다.
+조작 패널은 앱의 "UI 요소 숨기기" 설정이 꺼졌을 때만 보이며, 숨긴 상태로 시작해 로딩 중에도
+잠깐 노출되지 않게 한다. 지도 데이터는 ../resources에서 읽고 외부 요청은 CSP로 막는다.
 -->
-<html lang="ko" data-viewer-state="loading">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="dark">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'">
   <title>Tanuki Local Map</title>
   <link rel="stylesheet" href="./style.css">
 </head>
 <body>
-  <div class="viewer-shell">
-    <aside class="control-panel" aria-label="지도 조작">
-      <header class="viewer-header">
-        <p class="viewer-kicker">Tanuki local map</p>
-        <h1 id="mapTitle">지도 불러오는 중</h1>
-        <p class="viewer-subtitle">오프라인 전술 지도</p>
-      </header>
-
-      <section class="control-section" aria-labelledby="levelHeading">
-        <div class="section-heading">
-          <h2 id="levelHeading">레벨 표시</h2>
-          <span class="section-code">LAYERS</span>
+  <div id="mapCont" class="map-cont bg-grid controls-hidden">
+    <div id="mapWrap" class="map-wrap"></div>
+    <canvas id="markersCanvas" class="markers-canvas"></canvas>
+    <div class="squad-layer">
+      <div id="playerMarker" class="marker" hidden></div>
+    </div>
+    <div class="panel_right">
+      <div id="levelsPanel" class="d-flex h-space-between layers" hidden>
+        <div>
+          <div class="d-flex caption-row mb-5"><div class="bold big">Levels</div></div>
+          <div id="levelsList" class="levels-list scroll"></div>
         </div>
-        <div id="levelControls" class="visibility-controls"></div>
-      </section>
-
-      <section class="control-section" aria-labelledby="markerHeading">
-        <div class="section-heading">
-          <h2 id="markerHeading">마커 표시</h2>
-          <span class="section-code">MARKERS</span>
-        </div>
-        <div
-          id="factionControls"
-          class="faction-controls"
-          role="radiogroup"
-          aria-label="추출구 진영"
-        ></div>
-        <div id="markerControls" class="visibility-controls"></div>
-      </section>
-
-      <section class="control-section" aria-labelledby="positionHeading">
-        <div class="section-heading">
-          <h2 id="positionHeading">게임 좌표</h2>
-          <span class="section-code">POSITION</span>
-        </div>
-        <form id="positionForm" class="position-form">
-          <div class="coordinate-fields">
-            <label>
-              <span>X</span>
-              <input id="gameX" name="gameX" type="number" step="any" inputmode="decimal" placeholder="0" required>
-            </label>
-            <label>
-              <span>Y</span>
-              <input id="gameY" name="gameY" type="number" step="any" inputmode="decimal" placeholder="0" required>
-            </label>
+        <div>
+          <div class="d-flex h-center" title="Alt + Wheel">
+            <div class="no-wrap bold">Alt + </div>
+            <svg class="icon icon_mid_mouse" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100" aria-hidden="true">
+              <rect x="6.377" y="18.032" width="37.246" height="63.935" rx="18.623" ry="18.623" class="mouse-outline"></rect>
+              <rect x="20.946" y="24.937" width="8.107" height="19.87" rx="2.859" ry="2.859" class="mouse-outline"></rect>
+              <path d="m25,96.196l-12.897-9.522c-.889-.656-1.077-1.908-.421-2.797.656-.889,1.908-1.078,2.797-.422l10.521,7.769,10.522-7.769c.89-.656,2.141-.467,2.797.422.655.889.467,2.141-.422,2.797l-12.897,9.522Z"></path>
+              <path d="m36.708,16.936c-.412,0-.828-.127-1.186-.391l-10.522-7.768-10.521,7.768c-.889.657-2.141.468-2.797-.421s-.468-2.141.421-2.797L25,3.805l12.897,9.522c.889.656,1.077,1.908.422,2.797-.393.531-.998.812-1.611.812Z"></path>
+            </svg>
           </div>
-          <button type="submit" class="position-submit">위치 표시</button>
-        </form>
-        <output id="coordinateResult" class="coordinate-result" aria-live="polite">
-          좌표를 입력하면 변환한 지도 좌표를 표시합니다.
-        </output>
-      </section>
-
-      <div class="interaction-guide" aria-label="지도 조작법">
-        <span><kbd>휠</kbd> 확대</span>
-        <span><kbd>끌기</kbd> 이동</span>
-        <span><kbd>0</kbd> 초기화</span>
+          <div class="bold text-center mt-5 layers-hint">Switch Level</div>
+        </div>
       </div>
-
-      <footer class="source-note">
-        <span>지도 데이터</span>
-        <strong>tarkov-market / HighTek 레이어</strong>
-      </footer>
-    </aside>
-
-    <main class="map-panel">
-      <div class="map-readout" aria-hidden="true">
-        <span id="mapCode">SHORELINE</span>
-        <span class="readout-rule"></span>
-        <span id="zoomReadout">080%</span>
-      </div>
-
-      <div
-        id="mapViewport"
-        class="map-viewport"
-        tabindex="0"
-        aria-label="지도. 마우스 휠로 확대하고 끌어서 이동합니다."
-      ></div>
-
-      <nav class="map-toolbar" aria-label="지도 배율">
-        <button id="zoomOut" type="button" aria-label="축소">−</button>
-        <button id="resetView" type="button">초기화</button>
-        <button id="zoomIn" type="button" aria-label="확대">+</button>
-      </nav>
-
-      <div id="loadStatus" class="load-status" role="status">지형을 불러오는 중입니다.</div>
-    </main>
+    </div>
+    <div id="loadStatus" class="load-status" role="status">지도를 불러오는 중입니다</div>
   </div>
-
   <script type="module" src="./main.js"></script>
 </body>
 </html>

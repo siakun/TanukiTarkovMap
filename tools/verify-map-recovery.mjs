@@ -2,15 +2,17 @@
 /**
  * INTENT
  * 앱과 게임 창을 열지 않고 실제 DOM에서 위치 전달과 방향 복구를 검사한다.
- * 사이트의 이전/새 Pilot 계약은 작은 페이지로 재현해 사이트 접속 상태와 무관하게 검사한다.
+ * 사이트가 판마다 바꾼 위치 입력 경로(전역 Pilot, Nuxt Pilot 서비스, "Where am i" 입력 처리기)는
+ * 작은 페이지로 재현해 사이트 접속 상태와 무관하게 검사한다. 지금 온라인 사이트와 맞는지는
+ * tools/verify-online.mjs가 따로 확인한다.
  * Chromium은 임시 프로필과 자동 할당 포트로 실행해 사용 중인 앱의 CDP에 연결하지 않는다.
- * 실행: node tools/verify-map-recovery.mjs --archive archive
- * Node 22+, CHROME_PATH로 브라우저 지정 가능. --archive 생략 시 재현 페이지만 검사한다.
+ * 실행: node tools/verify-map-recovery.mjs
+ * Node 22+, CHROME_PATH로 브라우저 지정 가능.
  */
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, readdir, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { once } from 'node:events';
 import os from 'node:os';
 import path from 'node:path';
@@ -26,8 +28,6 @@ const scripts = new URL('../src/TanukiTarkovMap/Models/JavaScript/Scripts/', imp
 const direction = await readFile(new URL('map-markers.js', scripts), 'utf8');
 const bridge = await readFile(new URL('pilot-bridge.js', scripts), 'utf8');
 const filename = '2026-09-09[14-14]_179.10, 3.29, -717.65_0, 0.70710678, 0, 0.70710678_15.67 (0).png';
-const archiveArgument = process.argv.indexOf('--archive');
-const archive = archiveArgument < 0 ? null : path.resolve(process.argv[archiveArgument + 1] ?? 'archive');
 const origin = 'https://tarkov-market.com';
 const profile = await mkdtemp(path.join(os.tmpdir(), 'tanuki-recovery-'));
 const browser = spawn(executable, ['--headless=new', '--disable-gpu', '--no-first-run',
@@ -139,10 +139,29 @@ try {
     await setup();
     await evaluate('window.originalUpdate = update; window.update = () => {}');
     assert.equal(await send(), false);
-    assert.equal(await evaluate('tanukiPilot.status()'), 'position-not-rendered');
+    assert.equal(await evaluate('tanukiPilot.status()'), 'position-not-rendered (pilot-service)');
     await evaluate('window.update = originalUpdate');
     assert.equal(await send(), true);
     assert.deepEqual(await evaluate('map.playerPos'), { x: -717.65, y: 179.1, z: 3.29 });
+  });
+  await check('"Where am i" input handler when Pilot input functions are gone', async () => {
+    await setup();
+    // 2026-10 판처럼 Pilot 서비스에는 구독 함수만 남고, 위치는 상단 패널의 파일명 입력 처리기가 받는다.
+    await evaluate(`(() => {
+      document.getElementById('__nuxt').__vue_app__.config.globalProperties.$nuxt.$pilot = { onPositionUpdate() {} };
+      window.playerData = { isWhereIAmVisible: false, isPlayerMarkerVisible: false, playerMarkerPing: false };
+      window.panel = { playerData, map,
+        onScreenPositionChange: event => {
+          const [y, z, x] = event.target.value.split('_')[1].split(', ').map(Number);
+          map.playerPos = { x, y, z };
+        },
+        onMakePlayerMarkerPing: () => { playerData.playerMarkerPing = true; } };
+      document.getElementById('__nuxt')._vnode = { component: { subTree: { children: [{ props: { map } }, { props: panel }] } } };
+    })()`);
+    assert.equal(await evaluate('tanukiPilot.input()'), 'where-am-i');
+    assert.equal(await send(), true);
+    assert.deepEqual(await evaluate('map.playerPos'), { x: -717.65, y: 179.1, z: 3.29 });
+    assert.deepEqual(await evaluate('[playerData.isPlayerMarkerVisible, playerData.playerMarkerPing]'), [true, true]);
   });
   await check('C# health probes accept the shipped JavaScript APIs', async () => {
     await setup();
@@ -242,63 +261,6 @@ try {
     assert.equal(await evaluate('tanukiDirection.ensure()'), true);
   });
 
-  if (archive) {
-    const index = new Map();
-    for (const file of await readdir(path.join(archive, 'maps'))) {
-      if (!file.endsWith('.json')) continue;
-      for (const [url, entry] of Object.entries(JSON.parse(await readFile(path.join(archive, 'maps', file), 'utf8'))))
-        if (!index.has(url)) index.set(url, entry);
-    }
-    assert.ok(index.size, 'Archive must contain map responses');
-    // Online 역할의 임시 프로필에 데이터를 남긴다. Local용 컨텍스트를 없애도 보존되어야 한다.
-    await evaluate(`localStorage.setItem('tanuki-regression-profile', 'online');
-      new Promise((resolve,reject) => {const request=indexedDB.open('tanuki-regression-profile');
-        request.onsuccess=()=>{request.result.close();resolve(true)}; request.onerror=()=>reject(request.error);})`);
-    const versionInfo = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
-    const controller = await connect(versionInfo.webSocketDebuggerUrl);
-    for (const map of ['lighthouse', 'reserve']) {
-      await check(`isolated archived ${map}: storage and position with network blocked`, async () => {
-        const { browserContextId } = await controller.send('Target.createBrowserContext');
-        try {
-          const { targetId } = await controller.send('Target.createTarget', { url: 'about:blank', browserContextId });
-          const pages = await (await fetch(`http://127.0.0.1:${port}/json/list`)).json();
-          const local = await connect(pages.find(page => page.id === targetId).webSocketDebuggerUrl);
-          const inspect = async expression => {
-            const result = await local.send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
-            if (result.exceptionDetails) throw new Error(result.exceptionDetails.exception?.description ?? result.exceptionDetails.text);
-            return result.result.value;
-          };
-          local.on('Fetch.requestPaused', async ({ requestId, request }) => {
-            try {
-              const entry = index.get(request.url) ?? index.get(request.url.split('?')[0]);
-              await local.send('Fetch.fulfillRequest', { requestId, responseCode: entry?.status || (entry ? 200 : 404),
-                responseHeaders: [{ name: 'content-type', value: entry?.mime || 'text/plain' }],
-                body: entry ? (await readFile(path.join(archive, 'blobs', entry.blob))).toString('base64') : '',
-              });
-            } catch (error) { console.error(error); failed++; }
-          });
-          await local.send('Page.enable');
-          await local.send('Fetch.enable', { patterns: [{ urlPattern: '*' }] });
-          await local.send('Page.navigate', { url: `${origin}/maps/${map}` });
-          let rendered = false;
-          for (let attempt = 0; attempt < 60; attempt++) {
-            try {
-              await inspect(direction); await inspect(bridge);
-              rendered = await inspect(`window.tanukiPilot.sendScreenshot(${JSON.stringify(filename)})`);
-              if (rendered) break;
-            } catch { /* 문서와 지도 서비스가 준비되면 재시도한다. */ }
-            await delay(200);
-          }
-          assert.equal(rendered, true, `Archived ${map} did not render position`);
-          assert.equal(await inspect(`tanukiPilot.isRendered(${JSON.stringify(filename)})`), true);
-          assert.equal(await inspect(`localStorage.getItem('tanuki-regression-profile')`), null);
-          assert.equal(await inspect(`indexedDB.databases().then(dbs=>dbs.some(db=>db.name==='tanuki-regression-profile'))`), false);
-        } finally { await controller.send('Target.disposeBrowserContext', { browserContextId }); }
-        assert.equal(await evaluate(`localStorage.getItem('tanuki-regression-profile')`), 'online');
-        assert.equal(await evaluate(`indexedDB.databases().then(dbs=>dbs.some(db=>db.name==='tanuki-regression-profile'))`), true);
-      });
-    }
-  }
 } finally {
   for (const socket of sockets) socket.close();
   if (browser.exitCode === null) { const closed = once(browser, 'exit'); browser.kill(); await closed; }

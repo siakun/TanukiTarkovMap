@@ -18,16 +18,20 @@
  *   없는 것처럼 된다. 그래서 우리가 더 엄한 규칙을 얹는다.
  *
  * 우리 규칙: 화면 한가운데에는 언제나 맵이 있어야 한다.
+ * 드래그는 움직이는 동안 막고, 휠 확대와 창 크기 변경은 사이트가 처리한 다음 프레임에 범위로
+ * 되돌린다. 휠은 커서 자리를 기준으로 확대하므로 지형 바깥에서 확대하면 지형이 화면 밖으로 밀린다.
  *
  * 무엇을 "맵"으로 보는가: .map-wrap 상자가 아니라 그 안에 실제로 그려진 영역이다.
  * 상자는 여백까지 포함한 맵 좌표 공간 전체(예: Ground Zero는 2800x3100)이고 그림은 그 안의
  * 일부(800x1100)뿐이라, 상자를 기준으로 막으면 상자가 가운데를 덮은 채로 그림만 화면 밖으로
  * 나간다. 실제로 겪은 증상이 그것이다.
  *
- * 그림을 재는 곳은 사이트 판마다 다르다. 앱에 담긴 사본(예전 판)은 바닥 맵을 svg.svg-map으로
- * 그리므로 svg 자식들의 bbox를 합치고, 뷰박스 전체를 덮는 배경은 뺀다. 지금 온라인 판은 그 svg가
- * 없고 바닥 맵을 canvas.doc-map-canvas에 그리므로, 캔버스에서 투명하지 않은 픽셀의 범위를 잰다.
- * 어느 쪽이든 .map-wrap 상자에 대한 비율로 저장한다. 사이트는 캔버스와 상자를 같은 변환으로
+ * 그림은 사이트가 바닥 맵을 그리는 canvas.doc-map-canvas에서 투명하지 않은 픽셀의 범위로 잰다.
+ * 같은 클래스의 캔버스가 둘이다. 지도 전체를 담은 캔버스와 창보다 조금 큰 캔버스이고, 사이트가
+ * 배율에 따라 하나만 보인다(보통 배율에서는 첫째가 display: none, 많이 줄이면 둘째가 visibility:
+ * hidden). 그래서 DOM 순서가 아니라 화면에 표시된 하나를 골라 잰다. 예전 판은 바닥 맵을
+ * svg.svg-map으로 그렸고 그때는 svg 자식의 bbox를 쟀지만, 지금 판에는 그 svg가 없어 그 경로는 뺐다.
+ * 잰 범위는 .map-wrap 상자에 대한 비율로 저장한다. 사이트는 캔버스와 상자를 같은 변환으로
  * 움직이므로 이 비율은 끌고 확대해도 그대로다(실측: 확대와 이동 뒤 차이 0.001 미만).
  *
  * 그림을 재지 못하면 상자로 대신하지 않는다. 예전에는 대신했는데, 사이트가 바닥 맵을 캔버스로
@@ -48,15 +52,21 @@
  * 크다 (Streets 기준 좌표 공간 3260x3500, 그림 1260x1700으로 면적의 19%). 그래서 맵을 열면 그림이
  * 작게 뜨고 둘레가 비어 보인다. 그림이 창을 채우도록 배율과 위치를 한 번 맞춰 준다.
  *
- * 맞추기는 휠만으로 한다. 드래그는 쓰지 않는다. 사이트는 누른 자리에 마커나 그린 도형이
- * 있으면 그것을 옮기는 동작으로 보고 panzoom의 이동을 꺼 버린다(번들의 마커 층 mousedown에서
- * togglePanEnabled(false)). 중심을 맞추려면 화면 한가운데에서 끌어야 하는데 거기가 바로
- * 마커가 몰려 있는 자리라, 맵과 위치에 따라 되기도 하고 안 되기도 했다. 휠에는 그 차단이 없다.
+ * 맞추기는 배율을 휠로, 위치를 사이트 panzoom의 moveBy로 옮긴다. 드래그는 쓰지 않는다. 사이트는
+ * 누른 자리에 마커나 그린 도형이 있으면 그것을 옮기는 동작으로 보고 panzoom의 이동을 꺼 버린다
+ * (번들의 마커 층 mousedown에서 togglePanEnabled(false)). 중심을 맞추려면 화면 한가운데에서
+ * 끌어야 하는데 거기가 바로 마커가 몰려 있는 자리라, 맵과 위치에 따라 되기도 하고 안 되기도 했다.
  *
  * 휠 한 칸의 배율은 사이트가 정한다. deltaY 25.6이면 0.8배, -32면 1.25배다(실측, 오차 없음).
- * 두 칸을 서로 다른 자리에서 연달아 걸면 배율은 0.8 x 1.25 = 1로 돌아오고 두 자리의 차이에
- * 비례한 평행이동만 남는다. 이 성질로 배율과 위치를 따로 맞춘다. 자세한 식은 shiftContent에
- * 적어 두었다.
+ * 예전에는 위치도 휠 두 칸(서로 다른 자리에서 축소와 확대)으로 옮겼는데, 최소 배율에서는 축소
+ * 칸이 막혀 배율까지 바뀌었다. 최소 배율에서도 지형이 창보다 큰 맵(Icebreaker처럼 세로로 긴 맵)
+ * 에서 가운데 맞추기가 어긋나고 배율이 한 칸씩 올라갔다. moveBy는 배율을 건드리지 않는다.
+ *
+ * 내 위치가 표시되면 화면 가운데는 위치가 정한다. 맞추기는 그림 가운데를 창 가운데에 두는데,
+ * 지형이 창보다 크면 그 자리에서 마커가 화면 밖에 남는다. 앱은 맵을 열자마자 위치를 보내고 이
+ * 스크립트는 그 뒤에 맞추므로 열 때마다 겪는 순서다. 그래서 맞추기가 끝날 때마다 Pilot 브리지에
+ * 마커를 보이게 하라고 맡기고(revealPosition), 맞춘 뒤의 재확인은 위치가 표시된 동안 그림
+ * 가운데로 다시 옮기지 않는다. 다시 옮기면 마커를 보이려고 옮긴 화면과 번갈아 움직인다.
  */
 
 (function () {
@@ -85,13 +95,9 @@
     var FIT_MIN = 0.75;
     var FIT_MAX = 0.98;
 
-    // 휠 한 칸의 deltaY. 사이트는 이 값을 0.8배와 1.25배로 받아들이며 둘은 서로의 역수다.
-    // 역수가 아니면 위치를 맞추는 짝이 배율까지 바꿔 버린다
+    // 휠 한 칸의 deltaY. 사이트는 이 값을 0.8배와 1.25배로 받아들인다
     var WHEEL_OUT = 25.6;
     var WHEEL_IN = -32;
-
-    // 축소 자리를 확대 자리에서 얼마나 떨어뜨릴지. 한 짝의 이동량이 두 자리 차이의 1/4이라 4다
-    var PAIR_SHIFT_FACTOR = 4;
 
     // 중심이 이만큼 안에 들면 맞은 것으로 본다 (px)
     var CENTER_TOLERANCE = 3;
@@ -122,6 +128,10 @@
     // 사용자가 직접 끌거나 휠을 돌리면 그 뒤의 화면은 사용자 것이다. 맞추기를 더 하지 않는다
     var userTookOver = false;
 
+    // 맞추기가 사이트의 최소나 최대 배율에 닿아 더 맞출 수 없는지. 그러면 채움 비율이 범위 밖이어도
+    // 재확인이 다시 맞추지 않는다. 다시 맞춰 봐야 배율은 그대로이고 화면만 다시 가운데로 옮긴다
+    var zoomLimited = false;
+
     // 사이트가 마지막으로 본 커서 위치. 사이트는 이 값과의 차이로 맵을 옮긴다
     var deliveredX = 0;
     var deliveredY = 0;
@@ -131,7 +141,7 @@
     var offsetY = 0;
 
     // 재 둔 그림 범위. .map-wrap 상자에 대한 비율(0~1)이라 끌고 확대해도 그대로 쓴다.
-    // source는 잰 곳(svg, canvas)이고, complete는 그림 전체가 보일 때 쟀는지다.
+    // source는 잰 곳(canvas)이고, complete는 그림 전체가 보일 때 쟀는지다.
     // 한 번 재는 비용은 작지만, 끄는 도중 이동마다 캔버스를 다시 읽지 않으려고 담아 둔다
     var contentCache = null;
 
@@ -139,53 +149,36 @@
     var sampleCanvas = null;
 
     /**
-     * 사본(예전 판): svg 안에 실제로 그려진 범위를 뷰박스에 대한 비율로 구한다.
+     * 같은 맵 컨테이너에서 화면에 표시된 지형 캔버스를 찾는다.
      *
-     * 뷰박스 전체를 덮는 자식(배경, 격자)은 제외한다. 그것까지 넣으면 상자와 같아져
-     * 이 계산의 의미가 없어진다
+     * 사이트는 같은 클래스의 캔버스 둘을 배율에 따라 맞바꿔 보이므로 DOM 순서로 고르지 않는다.
+     * 숨은 쪽은 display: none이라 화면 크기가 0이거나, visibility: hidden이라 크기는 있어도 보이지
+     * 않는다. 표시된 후보가 여러 개면 어느 것이 지형인지 보장할 수 없어 측정을 중단한다.
      */
-    function readSvgPicture(svg) {
-        if (!svg.viewBox || !svg.viewBox.baseVal) return null;
+    function findTerrainCanvas(wrap) {
+        var container = wrap.closest('.map-cont');
+        if (!container) return null;
 
-        var view = svg.viewBox.baseVal;
-        if (!view.width || !view.height) return null;
+        var canvases = container.querySelectorAll(CANVAS_SELECTOR);
+        var terrain = null;
 
-        var left = null, top = null, right = null, bottom = null;
+        for (var index = 0; index < canvases.length; index++) {
+            var canvas = canvases[index];
+            var screen = canvas.getBoundingClientRect();
+            if (!canvas.width || !canvas.height || !screen.width || !screen.height) continue;
 
-        Array.prototype.forEach.call(svg.children, function (child) {
-            if (!child.getBBox) return;
+            var style = getComputedStyle(canvas);
+            if (style.visibility === 'hidden' || style.visibility === 'collapse' || style.opacity === '0') continue;
 
-            var box;
-            try { box = child.getBBox(); } catch (e) { return; }
-            if (!box || !box.width || !box.height) return;
-
-            // 뷰박스를 거의 다 덮는 자식은 배경이다
-            if (box.width >= view.width * 0.98 && box.height >= view.height * 0.98) return;
-
-            left = left === null ? box.x : Math.min(left, box.x);
-            top = top === null ? box.y : Math.min(top, box.y);
-            right = right === null ? box.x + box.width : Math.max(right, box.x + box.width);
-            bottom = bottom === null ? box.y + box.height : Math.max(bottom, box.y + box.height);
-        });
-
-        // 배경만 있는 맵이면 뷰박스 전체를 그림으로 본다
-        if (left === null) {
-            left = view.x; top = view.y; right = view.x + view.width; bottom = view.y + view.height;
+            if (terrain) return null;
+            terrain = canvas;
         }
 
-        // svg는 화면 밖 도형까지 재므로 언제나 그림 전체다
-        return {
-            source: 'svg',
-            left: (left - view.x) / view.width,
-            top: (top - view.y) / view.height,
-            width: (right - left) / view.width,
-            height: (bottom - top) / view.height,
-            complete: true
-        };
+        return terrain;
     }
 
     /**
-     * 지금 온라인 판: 캔버스에서 투명하지 않은 픽셀의 범위를 .map-wrap 상자에 대한 비율로 구한다.
+     * 캔버스에서 투명하지 않은 픽셀의 범위를 .map-wrap 상자에 대한 비율로 구한다.
      *
      * 캔버스는 창에 보이는 부분만 그리므로, 그림이 창 밖으로 이어지면 가장자리에서 잘린다.
      * 그때는 complete를 false로 두어 맞추기가 먼저 줄여서 다시 재게 한다.
@@ -194,8 +187,7 @@
      * 읽는 양이 줄고, 브라우저는 자주 읽히는 캔버스를 그리기보다 읽기에 맞춰 다룰 수 있으므로
      * (willReadFrequently) 사이트의 그리기에 영향을 줄 여지를 남기지 않는다
      */
-    function readCanvasPicture(wrap) {
-        var canvas = document.querySelector(CANVAS_SELECTOR);
+    function readCanvasPicture(wrap, canvas) {
         if (!canvas || !canvas.width || !canvas.height) return null;
 
         var width = Math.max(1, Math.round(canvas.width / PICTURE_SAMPLE_DIVISOR));
@@ -255,16 +247,17 @@
      * transform으로 안다. 끌고 확대하는 변환은 .map-wrap에 걸리고 회전만 이 요소에 걸린다
      */
     function readPicture(wrap, allowMeasure) {
-        var svg = wrap.querySelector('svg.svg-map');
         var scene = wrap.querySelector(SCENE_SELECTOR);
-        var owner = svg || wrap;
+        // 캔버스가 교체되거나 사이트가 배율에 따라 보이는 캔버스를 맞바꾸면 이전 그림 범위를 버린다.
+        var owner = findTerrainCanvas(wrap);
         var turn = scene ? getComputedStyle(scene).transform : '';
 
         if (contentCache && (contentCache.owner !== owner || contentCache.turn !== turn)) contentCache = null;
+        if (!owner) return null;
         if (contentCache && (contentCache.complete || !allowMeasure)) return contentCache;
         if (!allowMeasure) return null;
 
-        var picture = svg ? readSvgPicture(svg) : readCanvasPicture(wrap);
+        var picture = readCanvasPicture(wrap, owner);
         if (!picture) return null;
 
         picture.owner = owner;
@@ -343,10 +336,79 @@
 
         var room = delta < 0 ? min - value : max - value;
 
-        // 이미 범위 밖이면 안쪽으로 가는 이동만 허용한다 (축소로 밀려난 경우가 여기다)
+        // 이미 범위 밖이면 안쪽으로 가는 이동만 허용한다 (휠 보정 전에 끌기 시작한 경우가 여기다)
         if ((delta < 0 && room >= 0) || (delta > 0 && room <= 0)) return 0;
 
         return delta < 0 ? Math.max(delta, room) : Math.min(delta, room);
+    }
+
+    /**
+     * 범위로 되돌리는 데 필요한 이동량. 범위 안이면 0이다
+     */
+    function overflow(value, min, max) {
+        if (value < min) return min - value;
+        if (value > max) return max - value;
+        return 0;
+    }
+
+    /**
+     * 배율은 그대로 두고 화면을 dx, dy(px)만큼 옮긴다. 옮겼으면 true.
+     *
+     * 사이트의 panzoom이 공개한 moveBy를 쓴다. panzoom이 변환을 바꾸면 사이트가 캔버스와 마커를
+     * 함께 다시 그리므로 층이 어긋나지 않는다. panzoom은 Pilot 브리지가 찾은 지도 객체에서 얻으며,
+     * 찾지 못하면 옮기지 않는다. 변환은 panzoom이 다음 프레임에 DOM에 쓴다
+     */
+    function panBy(dx, dy) {
+        var map = window.tanukiPilot && window.tanukiPilot.getMap && window.tanukiPilot.getMap();
+        var panzoom = map && map.panzoom;
+        if (!panzoom || typeof panzoom.moveBy !== 'function') return false;
+
+        panzoom.moveBy(dx, dy, false);
+        return true;
+    }
+
+    function hasPosition() {
+        var pilot = window.tanukiPilot;
+        return !!pilot && typeof pilot.hasPosition === 'function' && pilot.hasPosition();
+    }
+
+    /**
+     * 내 위치 마커가 화면 안쪽에 오게 Pilot 브리지에 맡긴다. 위치가 없거나 마커가 이미 안쪽에
+     * 있으면 브리지는 화면을 옮기지 않는다
+     */
+    function revealPosition(reason) {
+        var pilot = window.tanukiPilot;
+        if (!pilot || typeof pilot.revealPosition !== 'function') return;
+        if (pilot.revealPosition()) note({ 단계: 'reveal', 이유: reason });
+    }
+
+    var correctionPending = false;
+
+    /**
+     * 휠 확대와 창 크기 변경 뒤에 그림을 범위로 되돌린다. 끄는 동안은 onMove가 막는다.
+     *
+     * 두 프레임 뒤에 잰다. 캡처 단계의 이 처리기가 사이트보다 먼저 프레임을 예약하므로, 한
+     * 프레임 뒤에는 panzoom이 휠의 변환을 아직 DOM에 쓰지 않았다. 그때 재면 직전 휠의 화면으로
+     * 계산한 이동량이 새 화면에 더해져 보정이 한 칸씩 늦는다(실측: 이동량이 앞 휠의 값과 일치)
+     */
+    function correctLater(reason) {
+        if (correctionPending) return;
+        correctionPending = true;
+
+        requestAnimationFrame(function () { requestAnimationFrame(function () {
+            correctionPending = false;
+            if (dragging) return;
+
+            var bounds = readBounds(false);
+            if (!bounds) return;
+
+            var dx = overflow(bounds.x, bounds.minX, bounds.maxX);
+            var dy = overflow(bounds.y, bounds.minY, bounds.maxY);
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+
+            var moved = panBy(dx, dy);
+            note({ 단계: 'correct', 이유: reason, dx: Math.round(dx), dy: Math.round(dy), 이동: moved });
+        }); });
     }
 
     /**
@@ -481,44 +543,26 @@
     }
 
     /**
-     * 배율은 그대로 두고 그림만 옮긴다.
-     *
-     * 휠 한 칸은 커서 자리 a를 고정점으로 삼아 위치를 x' = r*x + (1-r)*a 로 바꾼다.
-     * 축소(r = 0.8)를 a에서, 확대(1/r = 1.25)를 b에서 연달아 걸면
-     *   x'' = x + (1/r - 1) * (a - b) = x + (a - b) / 4
-     * 가 되어 배율은 제자리로 돌아오고 평행이동만 남는다. 그래서 a를 b에서 옮길 거리의 4배만큼
-     * 떨어뜨린다 (실측: 목표 200,120 -> 결과 200,120, 배율 변화 없음).
-     *
-     * 두 칸을 같은 틱에 보내는 이유는 중간의 축소된 화면이 그려지지 않게 하기 위해서다
-     */
-    function shiftContent(bounds, shift) {
-        var baseX = bounds.viewLeft + bounds.viewWidth / 2;
-        var baseY = bounds.viewTop + bounds.viewHeight / 2;
-
-        fireWheel(baseX + shift.x * PAIR_SHIFT_FACTOR, baseY + shift.y * PAIR_SHIFT_FACTOR, WHEEL_OUT);
-        fireWheel(baseX, baseY, WHEEL_IN);
-    }
-
-    /**
-     * 그림 중심을 창 중심으로 옮긴다.
+     * 그림 중심을 창 중심으로 옮기고, 끝나면 내 위치 마커가 화면 안쪽에 있는지 확인한다.
      *
      * 한 번이면 맞지만, 사이트가 경계로 잘라 내거나 층이 늦게 그려져 값이 달라질 수 있어
-     * 남은 어긋남이 없어질 때까지 몇 번 더 확인한다
+     * 남은 어긋남이 없어질 때까지 몇 번 더 확인한다. 맞추기의 모든 갈래가 여기서 끝난다
      */
     function centerStep(remaining) {
         if (userTookOver) return;
 
         var bounds = readBounds(true);
-        if (!bounds) return;
+        var shift = bounds && centerShift(bounds);
+        if (bounds) note({ 단계: 'center', shiftX: Math.round(shift.x), shiftY: Math.round(shift.y), 남은시도: remaining });
 
-        var shift = centerShift(bounds);
+        var finished = !bounds || remaining <= 0
+            || (Math.abs(shift.x) < CENTER_TOLERANCE && Math.abs(shift.y) < CENTER_TOLERANCE);
 
-        note({ 단계: 'center', shiftX: Math.round(shift.x), shiftY: Math.round(shift.y), 남은시도: remaining });
-
-        if (Math.abs(shift.x) < CENTER_TOLERANCE && Math.abs(shift.y) < CENTER_TOLERANCE) return;
-        if (remaining <= 0) return;
-
-        shiftContent(bounds, shift);
+        // 지도 객체를 찾지 못해 옮길 수 없을 때도 맞추기는 여기서 끝난다
+        if (finished || !panBy(shift.x, shift.y)) {
+            revealPosition('fit');
+            return;
+        }
 
         setTimeout(function () { centerStep(remaining - 1); }, 120);
     }
@@ -563,6 +607,7 @@
 
             // 배율이 더 움직이지 않으면 사이트의 한계에 닿은 것이다
             if (!after || Math.abs(after.boxWidth - before) < 1) {
+                if (after) zoomLimited = true;
                 centerStep(CENTER_MAX_TRIES);
                 return;
             }
@@ -575,7 +620,9 @@
      * 맞춘 뒤 사이트가 다시 옮겨 놓았는지 확인한다.
      *
      * 사이트도 맵을 열 때 자기 방식으로 가운데를 잡고, 층이 늦게 그려지는 맵(Streets의 tramway
-     * 등)은 처음 잰 그림 범위가 낡는다. 그때는 다시 맞춘다
+     * 등)은 처음 잰 그림 범위가 낡는다. 그때는 다시 맞춘다. 배율 한계에 닿았으면 다시 맞춰도
+     * 배율이 그대로라 채움과 잘림은 따지지 않고, 내 위치가 표시된 동안은 가운데를 위치가 정하므로
+     * 그림 가운데에서 벗어난 것도 따지지 않는다. 대신 마커가 화면 안쪽에 있는지 확인한다
      */
     function verifyFit(remaining) {
         if (remaining <= 0 || userTookOver) return;
@@ -594,13 +641,18 @@
 
             var fill = fillRatio(bounds);
             var shift = centerShift(bounds);
-            var drifted = !bounds.complete || fill < FIT_MIN || fill > FIT_MAX
-                || Math.abs(shift.x) > FIT_CENTER_TOLERANCE || Math.abs(shift.y) > FIT_CENTER_TOLERANCE;
+            var positionShown = hasPosition();
+            var refit = !zoomLimited && (!bounds.complete || fill < FIT_MIN || fill > FIT_MAX);
+            var recenter = !positionShown
+                && (Math.abs(shift.x) > FIT_CENTER_TOLERANCE || Math.abs(shift.y) > FIT_CENTER_TOLERANCE);
 
             note({ 단계: 'verify', 채움: +fill.toFixed(3), 전체: bounds.complete, source: bounds.source,
-                offX: Math.round(shift.x), offY: Math.round(shift.y), 다시: drifted });
+                offX: Math.round(shift.x), offY: Math.round(shift.y), 한계: zoomLimited, 위치: positionShown,
+                다시: refit ? 'fit' : recenter ? 'center' : false });
 
-            if (drifted) fitStep(FIT_MAX_STEPS);
+            if (refit) fitStep(FIT_MAX_STEPS);
+            else if (recenter) centerStep(CENTER_MAX_TRIES);
+            else revealPosition('verify');
 
             verifyFit(remaining - 1);
         }, 1200);
@@ -644,20 +696,24 @@
             fittedPath = location.pathname;
             if (fittedPath.indexOf('/maps/') === -1) return;
 
-            // 새 맵은 그림이 다르므로 범위를 다시 잰다
+            // 새 맵은 그림과 배율 한계가 다르므로 다시 잰다
             contentCache = null;
             userTookOver = false;
+            zoomLimited = false;
             setTimeout(function () { fitWhenReady(Date.now() + FIT_WAIT); }, 600);
         }, 500);
     }
 
     /**
-     * 사용자가 배율을 직접 바꾸면 맞추기를 그만둔다.
+     * 사용자가 배율을 직접 바꾸면 맞추기를 그만두고, 바뀐 화면을 범위로 되돌린다.
      *
-     * 우리가 보내는 휠은 isTrusted가 false라 여기에 걸리지 않는다
+     * 우리가 보내는 휠은 isTrusted가 false라 여기에 걸리지 않는다.
+     * Alt 휠은 사이트가 배율 대신 층 전환에 쓰므로 화면이 움직이지 않는다
      */
     function onWheel(event) {
-        if (event.isTrusted) userTookOver = true;
+        if (!event.isTrusted) return;
+        userTookOver = true;
+        if (!event.altKey) correctLater('wheel');
     }
 
     // 캡처 단계에서 먼저 받아야 사이트 처리보다 앞선다
@@ -668,13 +724,16 @@
     window.addEventListener('pointerdown', onDown, true);
     window.addEventListener('pointerup', onUp, true);
     window.addEventListener('pointercancel', onUp, true);
+    window.addEventListener('resize', function () { correctLater('resize'); });
 
     // 앱 안에서 어떤 판이 도는지 CDP로 바로 확인하기 위한 표시.
     // 옛 판이 남아 있는 채로 증상을 쫓다 시간을 버린 적이 있어 둔다
     window.__tanukiKeepVisible = {
-        version: 6,
-        rule: 'fit-on-open + center-clamp, picture from svg or canvas',
+        version: 9,
+        rule: 'fit-on-open + center-clamp on drag, wheel and resize, picture from the displayed terrain canvas, position owns the center once shown',
         marginRatio: MARGIN_RATIO,
+        // 맞추기가 사이트의 배율 한계에 닿아 채움 비율을 맞추지 못했는지
+        zoomLimited: function () { return zoomLimited; },
         // 지금 무엇으로 잰 그림 범위를 쓰는지. null이면 아직 재지 못해 맞추기와 이동 제한이 쉬는 중이다
         picture: function () {
             return contentCache && {
@@ -693,5 +752,5 @@
     setTimeout(function () { fitWhenReady(Date.now() + FIT_WAIT); }, 600);
     watchMapChange();
 
-    console.log('[Map Keep Visible] Ready (v6 fit-on-open + center-clamp, picture from svg or canvas)');
+    console.log('[Map Keep Visible] Ready (v9 fit-on-open + center-clamp on drag, wheel and resize)');
 })();

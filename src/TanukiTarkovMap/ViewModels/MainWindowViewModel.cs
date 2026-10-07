@@ -187,12 +187,11 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool IsPmcExtraction { get; set; } = true;
 
         /// <summary>
-        /// 상단바에 Online/Local 전환을 보일지 여부.
-        /// 설정에서 실험적 기능을 켜고, 사본이 실제로 있을 때만 참이다
+        /// 상단바에 Online/Local 전환을 보일지 여부. 설정의 "로컬 맵 사용"을 따른다
         /// </summary>
         [ObservableProperty] public partial bool IsLocalMapAvailable { get; set; } = false;
 
-        /// <summary> 지금 사본으로 보고 있는지 여부 </summary>
+        /// <summary> 지금 자체 미니맵(Local)으로 보고 있는지 여부 </summary>
         [ObservableProperty] public partial bool IsLocalMapMode { get; set; } = false;
 
         /// <summary> 현재 선택된 맵이 최근 군즈 목격 제보의 맵인지 여부 </summary>
@@ -569,23 +568,21 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// 상단바에 전환을 보일지 정하고, 보이지 않게 되면 온라인으로 되돌린다.
         ///
-        /// 사본이 없을 때 전환을 감추는 이유: Local로 바꿔도 빈 화면만 남는다.
-        /// 기능을 끌 때 모드까지 되돌리는 이유: 스위치가 사라진 채로 사본을 보고 있으면
+        /// 기능을 끌 때 모드까지 되돌리는 이유: 스위치가 사라진 채로 Local을 보고 있으면
         /// 사용자가 온라인으로 돌아갈 방법이 없다
         /// </summary>
         private void ApplyLocalMapAvailability(bool featureEnabled, bool modeActive)
         {
-            IsLocalMapAvailable = featureEnabled && ServiceLocator.MapArchive.IsAvailable;
+            IsLocalMapAvailable = featureEnabled;
             IsLocalMapMode = IsLocalMapAvailable && modeActive;
 
             Logger.SimpleLog(
-                $"[MainWindowViewModel] Local map available: {IsLocalMapAvailable} " +
-                $"(setting: {featureEnabled}, archive: {ServiceLocator.MapArchive.IsAvailable})");
+                $"[MainWindowViewModel] Local map available: {IsLocalMapAvailable} (mode: {(IsLocalMapMode ? "Local" : "Online")})");
         }
 
         /// <summary>
         /// 전환 상태를 저장하고 브라우저에 알린다.
-        /// 이미 그려진 페이지에는 가로채기가 걸리지 않으므로 수신 측이 페이지를 다시 읽는다
+        /// 모드마다 브라우저 저장 공간이 다르므로 수신 측이 브라우저를 바꿔 페이지를 다시 연다
         /// </summary>
         private void OnLocalMapModeChanged()
         {

@@ -44,8 +44,10 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- 오프라인 맵 사본. tools/archive-maps.mjs가 만들고, 앱은 실행 파일 옆에서 읽는다 -->
-    <Content Include="..\..\archive\**\*" Exclude="..\..\archive\README.md" LinkBase="archive" CopyToOutputDirectory="PreserveNewest" />
+    <!-- Local 모드의 자체 미니맵과 지도 리소스. LocalViewer가 실행 파일 옆 LocalMap 폴더를
+         https://tanuki-map.local/ 로 응답하므로 두 폴더를 그 아래에 나란히 둔다 -->
+    <Content Include="..\..\viewer\**\*" LinkBase="LocalMap\viewer" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="..\..\resources\**\*" LinkBase="LocalMap\resources" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 
   <!-- INTENT: 업데이트 실제 설치 검증 빌드만 업데이트를 받을 저장소를 바꾼다

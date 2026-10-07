@@ -82,15 +82,17 @@
     }
   ],
   "source": {
+    "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/labyrinth",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "4a82de9c4d8860250c13e15a6027a6ca0f86cb1c",
-    "markerResponse": {
-      "url": "https://tarkov-market.com/api/be/markers/list",
-      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
-    },
-    "markerState": "$nuxt.payload.state.$squestsState.markers",
-    "categoryState": "MapLeftPanel.props.categories",
+    "collectedAt": "2026-10-07T16:41:53.870Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=labyrinth&bundle=1",
+    "documentHash": "6fae15c671bcd4c59c4baeb9cb662dac",
+    "documentSha256": "f7c67bd31ced7cb3e40a1a69330df1bc1cd212ffb75a69bb6314d014bde88324",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "listedCounts": {
       "extraction": {
         "transit": 0,
@@ -99,6 +101,7 @@
         "co-op": 0
       }
     },
-    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+    "mapPosition": "Observed page gamePosToMapPos(geometry.x, geometry.y)",
+    "markerSha256": "ceeac9fe1ee75e879577aa5fe101919c6e861957bb1d90e41b199d19400536a7"
   }
 }

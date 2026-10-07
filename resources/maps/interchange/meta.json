@@ -20,34 +20,78 @@
   "levels": [
     {
       "id": "level3",
-      "label": "Level 3",
       "sourceLevel": 3,
+      "label": "Level 3",
+      "defaultVisible": false,
       "terrainGroupId": "level3",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            36,
+            100
+          ],
+          "rect": [
+            [
+              -182,
+              109
+            ],
+            [
+              73,
+              -76
+            ]
+          ]
+        }
+      ]
     },
     {
       "id": "level2",
-      "label": "Level 2",
       "sourceLevel": 2,
+      "label": "Level 2",
+      "defaultVisible": false,
       "terrainGroupId": "level2",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            27,
+            36
+          ],
+          "rect": [
+            [
+              -318,
+              103
+            ],
+            [
+              207,
+              -199
+            ]
+          ]
+        }
+      ]
     },
     {
       "id": "main",
-      "label": "Main",
       "sourceLevel": 1,
+      "label": "Main",
+      "defaultVisible": true,
       "terrainGroupId": "main",
-      "defaultVisible": true
+      "height": [
+        -100,
+        100
+      ]
     }
   ],
   "source": {
     "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/interchange",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
-    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
-    "terrainUrl": "https://tarkov-market.com/_nuxt3/Bah-WxBq.js",
-    "terrainBlob": "1466c90299eaa1dbb1f438f8309664186b2c2ca9",
+    "collectedAt": "2026-10-07T16:41:35.470Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=interchange&bundle=1",
+    "documentHash": "43fd94b51030087e8e78920f8fd79595",
+    "documentSha256": "9fb601e67736a1a7d6365dd69c66ca971a837e5fe23dc5224d637a1e2ac7e2e7",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "coordinateFormula": {
       "rotation": "-transform.rotate degrees",
       "mapX": "xOffset - rotatedX * ratio",
@@ -58,6 +102,48 @@
       "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
       "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
       "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
-    }
+    },
+    "coordinateChecks": [
+      {
+        "game": {
+          "x": 0,
+          "y": 0
+        },
+        "map": {
+          "x": 2166,
+          "y": 2004
+        }
+      },
+      {
+        "game": {
+          "x": 125.25,
+          "y": -84.875
+        },
+        "map": {
+          "x": 2335.75,
+          "y": 2254.5
+        }
+      },
+      {
+        "game": {
+          "x": -313.625,
+          "y": 211.5
+        },
+        "map": {
+          "x": 1743,
+          "y": 1376.75
+        }
+      },
+      {
+        "game": {
+          "x": 1000,
+          "y": 1000
+        },
+        "map": {
+          "x": 166,
+          "y": 4004
+        }
+      }
+    ]
   }
 }

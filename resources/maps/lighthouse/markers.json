@@ -59,116 +59,6 @@
   ],
   "markers": [
     {
-      "id": "7d056824-8cd5-4c5e-a9ca-2ed13ce18ceb",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Woods",
-      "levelId": "main",
-      "position": {
-        "x": 1440.9175,
-        "y": 1100.5514
-      }
-    },
-    {
-      "id": "a851f33c-164b-45d5-880d-7137f75a6787",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Reserve",
-      "levelId": "main",
-      "position": {
-        "x": 1844.5028,
-        "y": 1265.0359
-      }
-    },
-    {
-      "id": "e2fe9ab4-c122-4ee6-9671-fd9445b78456",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Shoreline",
-      "levelId": "main",
-      "position": {
-        "x": 1841.013,
-        "y": 1905.5282
-      }
-    },
-    {
-      "id": "3feaf149-0bdb-4eb0-a4ad-b0404b7278fb",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Road to Military Base V-Ex (Paid)",
-      "levelId": "main",
-      "position": {
-        "x": 1891.2853,
-        "y": 1267.2558
-      }
-    },
-    {
-      "id": "5ae1cc06-97af-44f5-aa36-31d0fd404ff2",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Passage by the Lake (Secret)",
-      "levelId": "main",
-      "position": {
-        "x": 1908.4257,
-        "y": 1478.196
-      }
-    },
-    {
-      "id": "7cb21240-9e1a-4171-82e0-4d18728121cb",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Mountain Pass",
-      "levelId": "main",
-      "position": {
-        "x": 1718.3317,
-        "y": 2040.8419
-      }
-    },
-    {
-      "id": "8deda3cf-1f35-4cfc-9a12-90d108e89f72",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Northern Checkpoint",
-      "levelId": "main",
-      "position": {
-        "x": 1434.259,
-        "y": 1073.4634
-      }
-    },
-    {
-      "id": "a1181896-9768-40ca-a1b7-f748e8917be1",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Armored Train",
-      "levelId": "main",
-      "position": {
-        "x": 1545.3574,
-        "y": 1173.4368
-      }
-    },
-    {
-      "id": "e7793b51-a0fb-4f8d-9e15-375769937156",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Path to Shoreline",
-      "levelId": "main",
-      "position": {
-        "x": 1878.1904,
-        "y": 1902.5534
-      }
-    },
-    {
-      "id": "f53ea2cd-c75f-45ca-a43b-418bd9f2b016",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Southern Road",
-      "levelId": "main",
-      "position": {
-        "x": 1817.1395,
-        "y": 2466.8919
-      }
-    },
-    {
       "id": "03a9eb14-e4a5-4993-abc8-e2c1a020ffb8",
       "category": "extraction",
       "subtype": "scav",
@@ -202,6 +92,17 @@
       }
     },
     {
+      "id": "3feaf149-0bdb-4eb0-a4ad-b0404b7278fb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to Military Base V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 1891.2853,
+        "y": 1267.2558
+      }
+    },
+    {
       "id": "482c05bc-0552-455a-b8a7-444a387878a9",
       "category": "extraction",
       "subtype": "scav",
@@ -210,6 +111,17 @@
       "position": {
         "x": 1702.0233,
         "y": 1261.1833
+      }
+    },
+    {
+      "id": "5ae1cc06-97af-44f5-aa36-31d0fd404ff2",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Passage by the Lake (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1914.06,
+        "y": 1415.92
       }
     },
     {
@@ -224,6 +136,61 @@
       }
     },
     {
+      "id": "7cb21240-9e1a-4171-82e0-4d18728121cb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Mountain Pass",
+      "levelId": "main",
+      "position": {
+        "x": 1732.93,
+        "y": 1979.9
+      }
+    },
+    {
+      "id": "7d056824-8cd5-4c5e-a9ca-2ed13ce18ceb",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Woods",
+      "levelId": "main",
+      "position": {
+        "x": 1440.9175,
+        "y": 1100.5514
+      }
+    },
+    {
+      "id": "8deda3cf-1f35-4cfc-9a12-90d108e89f72",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Northern Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 1434.259,
+        "y": 1073.4634
+      }
+    },
+    {
+      "id": "a1181896-9768-40ca-a1b7-f748e8917be1",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Armored Train",
+      "levelId": "main",
+      "position": {
+        "x": 1545.3574,
+        "y": 1173.4368
+      }
+    },
+    {
+      "id": "a851f33c-164b-45d5-880d-7137f75a6787",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Reserve",
+      "levelId": "main",
+      "position": {
+        "x": 1844.5028,
+        "y": 1265.0359
+      }
+    },
+    {
       "id": "a93a9856-6d0f-48ea-833e-f825d97d4474",
       "category": "extraction",
       "subtype": "scav",
@@ -232,6 +199,17 @@
       "position": {
         "x": 1417.8762,
         "y": 2337.3118
+      }
+    },
+    {
+      "id": "aaac6cf3-f0c8-4bb5-8421-2d681e7ffbe6",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Side Tunnel (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 1607.2658,
+        "y": 2370.662
       }
     },
     {
@@ -246,27 +224,51 @@
       }
     },
     {
-      "id": "aaac6cf3-f0c8-4bb5-8421-2d681e7ffbe6",
+      "id": "e2fe9ab4-c122-4ee6-9671-fd9445b78456",
       "category": "extraction",
-      "subtype": "co-op",
-      "name": "Side Tunnel (Co-Op)",
+      "subtype": "transit",
+      "name": "Transit to Shoreline",
       "levelId": "main",
       "position": {
-        "x": 1607.2658,
-        "y": 2370.662
+        "x": 1841.013,
+        "y": 1905.5282
+      }
+    },
+    {
+      "id": "e7793b51-a0fb-4f8d-9e15-375769937156",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Path to Shoreline",
+      "levelId": "main",
+      "position": {
+        "x": 1878.1904,
+        "y": 1902.5534
+      }
+    },
+    {
+      "id": "f53ea2cd-c75f-45ca-a43b-418bd9f2b016",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Southern Road",
+      "levelId": "main",
+      "position": {
+        "x": 1817.1395,
+        "y": 2466.8919
       }
     }
   ],
   "source": {
+    "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/lighthouse",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "6a60aa923ee2d4dc0d202b9ccd8b4c08f96df51e",
-    "markerResponse": {
-      "url": "https://tarkov-market.com/api/be/markers/list",
-      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
-    },
-    "markerState": "$nuxt.payload.state.$squestsState.markers",
-    "categoryState": "MapLeftPanel.props.categories",
+    "collectedAt": "2026-10-07T16:41:47.304Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=lighthouse&bundle=1",
+    "documentHash": "01ba6d4e3730ef31308ecb5bfaac79bd",
+    "documentSha256": "19688a99b41c80428d5674908e0429d53979273df7f7d8b4d2c7274d70722122",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "listedCounts": {
       "extraction": {
         "transit": 3,
@@ -275,6 +277,7 @@
         "co-op": 1
       }
     },
-    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+    "mapPosition": "Observed page gamePosToMapPos(geometry.x, geometry.y)",
+    "markerSha256": "57df420e51b149c17abd67f778d079d0d5b289cffd3cb64559f921835a34068a"
   }
 }

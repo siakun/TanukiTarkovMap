@@ -46,7 +46,7 @@ namespace TanukiTarkovMap.Messages
 
     /// <summary>
     /// 로컬 맵 전환 메시지 (MainWindowViewModel → WebBrowserViewModel)
-    /// true면 사본으로 응답하고, false면 사이트를 그대로 연다
+    /// true면 앱에 담긴 미니맵(Local)으로, false면 사이트(Online)로 연다
     /// </summary>
     public class LocalMapModeChangedMessage : ValueChangedMessage<bool>
     {

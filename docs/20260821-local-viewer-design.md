@@ -1,238 +1,211 @@
-# 로컬 맵 뷰어 재구성 설계와 인수인계
+# 로컬 맵 뷰어 설계
 
 <!--
-이 문서는 로컬 뷰어의 조사와 설계 결과, 단계별 구현 결정을 다음 세션에 넘깁니다. 결정된 사항과
-이미 확인한 사실을 적어, 받는 쪽이 같은 조사를 되풀이하지 않게 하는 것이 목적입니다.
-2026-08-21에 처음 기록하고 3단계 결과까지 갱신했습니다.
+INTENT
+Local 모드가 무엇이 되려 하는지와 왜 이 구조인지를 남긴다. 결과물만 보면 "사이트가 이미 그리는
+지도를 왜 다시 그리나", "왜 사이트 사본을 담아 두지 않나"가 이상해 보이기 때문이다. 화면과 동작의
+작업 기준은 AGENTS.md, 파일별 세부는 각 파일의 머리 주석이 원천이고, 이 문서는 구조와 계약, 버린
+대안과 다시 검토할 조건을 맡는다. 2026-08-21에 처음 기록했다.
 -->
 
 ## 목표
 
-지금 로컬 모드는 tarkov-market이 컴파일한 사이트를 통째로 사본으로 두고 요청을 가로채 돌려줍니다.
-동작하지만 사본이 압축된 번들 덩어리라 무엇이 들어 있는지 사람이 읽을 수 없고, 갱신하면 `git diff`가
-의미를 주지 못하며, 사이트가 구조를 바꾸면 통째로 다시 받는 것 말고는 방법이 없습니다.
+Local 모드는 사이트가 바뀌거나 죽어도 코어(지형, 탈출구, 내 위치와 방향)를 보여 주는 비상
+경로입니다. 이유와 우선순위는 [CLAUDE.md](../CLAUDE.md)의 "로컬 모드가 존재하는 이유"에 있습니다.
 
-이것을 우리가 읽고 고칠 수 있는 형태로 재구성합니다.
+첫 Local은 사이트가 내려보낸 응답을 통째로 저장한 사본을 요청 가로채기로 돌려줬습니다
+([오프라인 맵 설계](20260818-offline-map.md)). 동작은 했지만 사본이 압축된 번들 덩어리라 무엇이
+들었는지 읽을 수 없었고, 갱신하면 `git diff`가 의미를 주지 못했으며, 사이트가 구조를 바꾸면 통째로
+다시 받는 것 말고는 방법이 없었습니다. 다시 받은 사본은 그 판의 사이트 런타임을 그대로 물려받으므로
+사이트가 위치 입력을 바꾸면 사본에서도 함께 깨집니다.
 
-- 맵 데이터는 `resources/` 아래 폴더별로 두고, 갱신은 그 폴더의 파일만 갈아끼우면 끝나게 합니다
-- 뷰어는 우리가 만든 HTML/CSS/JS로 그 데이터를 읽어 그립니다
-- 사이트에서 최신을 받아오는 수집 도구와, 받은 것이 온전한지 보는 검사 도구를 함께 둡니다
+지금 Local은 사이트에서 **지도 데이터만** 받아 앱이 그립니다. 데이터는 `resources/`의 SVG와 JSON이고,
+그리는 쪽은 앱에 포함한 미니맵 `viewer/`입니다.
 
-## 이미 확인한 사실
+## 사이트 변경을 견디는 세 가지 방식
 
-조사는 끝나 있습니다. 아래는 실측으로 확인한 내용이니 다시 확인할 필요가 없습니다.
-모든 원본은 저장소의 `archive/` 안에 있으므로 네트워크 없이도 추출을 시작할 수 있습니다.
+| 방식 | 실행 중 사이트에 기대는 것 | 사이트가 바뀌면 |
+|---|---|---|
+| 사이트 페이지에 스크립트 주입 (Online) | 위치 입력 함수, 지도 객체와 캔버스 구조, UI | 배포마다 브리지와 맞춤 스크립트를 다시 맞춘다 |
+| 사이트 사본 재생 (첫 Local) | 저장한 사이트 런타임과 주입 스크립트의 호환 | 사본을 새로 받으면 그 판의 변경을 그대로 물려받는다 |
+| 지도 데이터만 받아 앱이 그림 (지금 Local) | 없음. 앱에 담긴 리소스만 읽는다 | 지도 문서 형식이 바뀔 때만 수집기와 변환기를 고친다 |
 
-### 1. 맵 지형은 완결된 SVG 하나입니다
+Online은 퀘스트처럼 사이트에만 있는 기능 때문에 유지하고, 사이트가 바뀌면 브리지와 맞춤 스크립트로
+따라갑니다. Local은 세 번째 방식입니다. 이 방식에서도 유지보수가 사라지지는 않습니다. 지도 문서
+형식이 바뀌면 수집기와 변환기를, 좌표계나 표시할 데이터의 의미가 바뀌면 뷰어를 고쳐야 합니다.
+달라지는 것은 그 수리가 끝날 때까지 이미 설치된 앱의 Local이 계속 돈다는 점입니다. 실행 경로와
+갱신 경로가 분리되어 있기 때문입니다.
 
-브라우저에서 `document.querySelector('svg.svg-map').outerHTML`이 그대로 지형 전체입니다.
-shoreline 기준 254,965바이트이고, 자식이 레이어별로 id를 갖습니다.
-
-```
-defs, #wrapper, #map-bg, #water, #swamp, #mines, #roads, #roads-space,
-#fence, #rocks, #grid, #buildings, #basement, #main, #level2, #level3, #border
-```
-
-`#basement`, `#main`, `#level2`, `#level3`이 층 구분이므로 레벨 전환은 이 그룹의 표시만 바꾸면 됩니다.
-`#wrapper`는 캔버스 전체를 덮는 배경이라 그림 범위 계산에서 제외해야 합니다(뷰박스의 98% 이상을
-덮는 자식이 배경입니다).
-
-사본 안 어느 blob이 어느 맵의 지형인지는 내용으로 찾습니다. 예를 들어 shoreline은 뷰박스가
-`0 0 3700 3100`이라 `3700 3100` 문자열을 담은 js가 그 맵의 지형 조각입니다.
-
-### 2. 맵 설정은 평범한 객체 리터럴입니다
-
-사본의 js 조각 하나(`xOffset` 문자열을 담은 파일, 525KB)에 맵별 설정이 들어 있습니다.
-
-```js
-{
-  "ground-zero": { size: {width:2800, height:3100}, zoom: 1, minZoom: 0.2, maxZoom: 10,
-                   transform: { rotate: 90, xOffset: 1600, yOffset: 1300,
-                                invertX: false, invertY: false, ratio: 2 } },
-  factory:      { size: {width:3600, height:3600}, zoom: 0.7, minZoom: 0.12, maxZoom: 10,
-                   transform: { rotate: 0, xOffset: 1800, yOffset: 1850,
-                                invertX: false, invertY: false, ratio: 10 } },
-  ...
-}
-```
-
-12개 맵 전부 이 형태입니다. 정규식으로 뽑거나 브라우저에서 평가해 JSON으로 저장하면 됩니다.
-
-### 3. 좌표 변환은 스무 줄 남짓입니다
-
-게임 좌표를 맵 좌표로 옮기는 함수가 사본에 있습니다(최소화된 이름은 빌드마다 바뀌므로 이름이 아니라
-규칙을 근거로 삼습니다).
-
-```js
-gamePosToMapPos = (x, y, t) => {
-  let p = [x, y];
-  if (t.rotate) p = rotate(p, t.rotate);   // 회전
-  return { x: round(applyX(p[0], t)), y: round(applyY(p[1], t)) };
-};
-// 방향 각도 보정: 화면각 = 게임각 + (270 - t.rotate)
-// 맵 좌표 -> 화면 좌표: screen = viewOrigin + mapPos * zoom
-```
-
-`applyX`, `applyY`는 `xOffset`, `yOffset`, `ratio`, `invertX`, `invertY`를 쓰는 1차식입니다.
-정확한 식은 사본에서 확인해 재구현하고, **반드시 사이트와 대조 검증**합니다(검증 방법은 아래).
-
-### 4. 마커는 사본 페이지가 복원한 상태에서 읽습니다
-
-2026-08-22에 새 Chrome 프로필로 다시 확인한 결과, Shoreline HTML의 초기 Nuxt 상태에는 마커가
-들어 있지 않았습니다. Shoreline 색인의 해시가 붙은 `/api/be/markers/list` 응답은 "변경 없음"
-껍데기지만, `archive/maps/ground-zero.json`에는 새 프로필이 요청하는 질의 없는 최초 응답이 있습니다.
-기존 `verify-archive.mjs`가 맵별 색인을 모두 합쳐 재생하는 것도 이 전역 캐시 응답을 함께 제공하려는
-구조입니다.
-
-`extract-resources.mjs`는 맵별 색인을 모두 합쳐 별도 headless Chrome에만 응답하고 외부 요청은
-차단합니다. 페이지가 자체 압축 형식과 Nuxt payload를 풀어 hydration을 마치면
-`$nuxt.payload.state.$squestsState.markers`에서 현재 맵의 마커를 읽습니다. 좌표는 같은 페이지의
-`MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)`로 변환하고, 좌측 목록에 쓰이는
-`MapLeftPanel.props.categories`와 세부 종류별 수량도 대조합니다. 압축된 API 본문이나 Nuxt의
-직렬화 형식을 도구가 따로 구현하지 않아 사이트의 내부 저장 형식과 데이터 의미를 혼동하지 않습니다.
-
-## 결정된 사항
-
-사용자와 합의한 내용입니다. 바꾸려면 먼저 사용자에게 확인하십시오.
-
-| 항목 | 결정 |
-|---|---|
-| 뷰어 기술 | 생 JS(ES 모듈) + SVG. 빌드 단계 없음. 릴리스에 npm이 끼지 않게 함 |
-| 3단계 범위 | 지형, 레벨 전환, 현재 위치와 방향, PMC/SCAV별 추출구. 스폰과 퀘스트는 제외 |
-| 기존 로컬 모드 | 3단계까지 그대로 둠. 새 뷰어가 안정된 뒤 4단계에서 교체 |
-| 출처 표기 | 데이터 출처(tarkov-market, HighTek 레이어)를 뷰어 어딘가에 남김. 맵 위에 겹치지 않는 자리로 |
-
-UI가 커져 프레임워크가 필요해지면 Preact + htm을 import 한 줄로 붙이는 쪽을 씁니다. 빌드 도입은
-그때 다시 논의합니다.
-
-3단계에서는 맵 수를 늘리기 전에 코어 우선순위에 맞춰 범위를 줄였습니다. 현재 위치만 표시하면
-바라보는 방향이 빠져 코어의 절반만 구현한 상태이므로, 스크린샷 파일명의 쿼터니언을 읽어 방향까지
-표시합니다. 그다음 필요한 지도와 추출구에는 PMC/SCAV 구분을 남깁니다. 스폰은 세 번째 우선순위이고
-퀘스트는 부가 기능이므로 `markers.json`에서 모두 뺐습니다. 사이트 기능을 그대로 복제하지 않고
-로컬 모드가 반드시 지켜야 할 기능부터 완결하려는 선택입니다.
-
-## 리소스 구조
-
-```
-resources/
-  manifest.json              스키마 판, 수집 시각, 맵 목록
-  maps/
-    <map-id>/
-      map.svg                지형 (레이어 id 유지)
-      meta.json              size, zoom, minZoom, maxZoom, transform, levels
-      markers.json           PMC/SCAV별 추출구 마커
-viewer/
-  index.html
-  main.js                    진입점, 맵 선택과 초기화
-  map-view.js                SVG 로드, 팬/줌, 레벨 전환
-  markers.js                 마커 그리기와 필터
-  coords.js                  좌표 변환 (게임 <-> 맵 <-> 화면)
-  style.css
-```
-
-원칙은 하나입니다. **`resources/` 아래에는 데이터만 두고 코드를 섞지 않습니다.** 갱신이 이 폴더를
-갈아끼우는 일이 되어야 뷰어 코드를 건드리지 않고 최신을 따라갈 수 있습니다.
-
-`meta.json`에는 스키마 판 번호를 둡니다. 뷰어는 아는 판만 읽고 모르는 필드는 무시합니다.
-
-`markers.json`도 독립된 스키마 판 번호를 둡니다. `factions`는 뷰어가 고를 PMC와 SCAV를,
-`categories`는 추출구와 세부 종류의 안정된 ID, 표시 이름, 원본 사이트 이름과 해당 진영을 연결합니다.
-`markers`는 원본 UID, 종류 ID, 이름, `levelId`, 변환이 끝난 지도 좌표만 담습니다. 원본 이름이 비어
-있으면 값을 만들지 않고 뷰어가 세부 종류의 표시 이름을 대신 사용합니다. `source.listedCounts`에는
-사이트 좌측 목록에서 읽은 세부 종류별 수량을 넣어 추출 결과가 원본 목록과 같은지 검사합니다.
-
-`meta.json`의 `levels`는 사이트가 복원한 실제 레벨 목록에서 만듭니다. 각 항목의 `sourceLevel`은
-마커가 쓰는 원본 숫자이고 `terrainGroupId`는 SVG에서 켜고 끌 그룹입니다. 단층 지도처럼 전환할 SVG
-그룹이 없으면 `terrainGroupId`를 `null`로 두어 레벨 필터와 지형 제어를 구분합니다.
-
-스크린샷 파일명은 좌표를 `Y, Z, X` 순서로 담습니다. 이어지는 쿼터니언 `(x, y, z, w)`에서 다음
-벡터를 구해 북쪽 기준 게임 각도로 바꾸고, 맵의 회전값을 보정해 화면 각도를 얻습니다.
+## 구조
 
 ```text
-directionX = 2 * (x * z + w * y)
-directionZ = 1 - 2 * (x * x + y * y)
-화면 각도 = normalize(게임 각도 + 270 - transform.rotate)
+수집할 때 (유지보수자가 실행)
+  사이트 지도 페이지
+    -> tools/collect-map-docs.mjs     지도 문서, 렌더러, 사이트가 계산한 좌표와 파일명 해석값, 마커
+    -> tools/build-map-resources.mjs  map-doc-svg.mjs로 SVG 변환, meta와 markers 정규화, 계약 검사
+    -> tools/verify-map-docs.mjs      수집한 사이트 렌더러와 층마다 대조
+    -> resources/                     검토 뒤 교체해 커밋
+
+앱 실행 중
+  빌드가 viewer/와 resources/를 실행 파일 옆 LocalMap/으로 복사
+  WebBrowserViewModel -> LocalViewer: 전용 메모리 RequestContext + FolderSchemeHandlerFactory
+    -> https://tanuki-map.local/viewer/index.html?map=<MapInfo.Name>
+    -> viewer/main.js가 resources를 읽어 지형, 추출구, 내 위치를 그림
+  앱은 window.tanukiViewer의 함수만 부른다
 ```
 
-앱 통합 때는 `window.tanukiViewer.showPosition({ x, y, z, look })`을 부릅니다. 파일명만 넘길 때는
-`window.tanukiViewer.showPositionFromScreenshot(filename)`이 같은 파서와 표시 경로를 씁니다.
+미니맵을 `https://tanuki-map.local/`에서 여는 이유는 ES 모듈과 `fetch`를 그대로 쓰기 위해서입니다.
+`file://`에서는 모듈과 fetch가 막힙니다. 앱마다 루프백 서버를 띄우지 않고, CefSharp가 제공하는
+`FolderSchemeHandlerFactory`를 Local 저장 공간에만 등록합니다. 이 처리기는 폴더 밖으로 나가는 경로를
+막고 확장자로 MIME을 정합니다. 미니맵의 CSP는 같은 주소 밖의 요청을 모두 막습니다.
 
-## 도구
+실행 중에는 리소스를 다시 검증하지 않습니다. 리소스는 PR과 릴리스의 검사가 확인하고(릴리스는
+publish 결과까지), 실행 중에 읽지 못하면 미니맵이 오류를 화면에 표시합니다. Online으로 자동 전환하지 않습니다.
+사용자가 모르는 사이 다른 경로로 바뀌면 무엇이 보이는지 알 수 없기 때문입니다.
 
-저장소에 이미 같은 성격의 도구가 셋 있습니다. 그 형태를 따르십시오
-(의존성 없음, Node 22 내장 fetch/WebSocket만, `--json` 없이 사람이 읽는 출력, 실패 시 종료 코드 1).
+버린 대안은 실행 중 검증입니다. 앱이 시작할 때 모든 파일의 SHA-256을 계산하고 SVG를 XML로 파싱해
+메모리에 들고 응답하는 번들 계층은 CI 검사와 같은 일을 사용자 PC에서 실행할 때마다 되풀이하고,
+해시를 맞추려면 Git의 줄바꿈 변환까지 꺼야 합니다.
 
-- `tools/cdp-debug.mjs` 실행 중인 앱에 붙어 DOM과 스크린샷 조회
-- `tools/archive-maps.mjs` 실제 브라우저로 페이지를 열어 응답 저장 (수집 도구의 본보기)
-- `tools/verify-archive.mjs` 네트워크를 막고 사본만으로 맵이 뜨는지 검사 (검사 도구의 본보기)
+## 앱과의 계약
 
-로컬 뷰어용 도구:
+미니맵은 `window.tanukiViewer`를 엽니다. Online의 `window.tanukiPilot`과 같은 모양이라
+`WebBrowserViewModel.MaintainPositionAsync`가 두 모드를 한 흐름으로 다룹니다. 호출문은
+[LocalViewer](../src/TanukiTarkovMap/Models/Offline/LocalViewer.cs)에 있습니다.
 
-- `tools/extract-resources.mjs` 저장한 사이트 사본에서 리소스를 다시 만듭니다. 대상 맵은
-  `MapConfiguration.cs`에서 읽고 `--maps lab,customs`로 일부만 고를 수 있습니다
-- `tools/verify-resources.mjs` 맵 목록, 스키마, 추출구 수량과 진영, 레벨, 좌표, 방향, 팬과 줌을
-  실제 브라우저에서 검사합니다
-- `tools/verify-directions.mjs` 파일명 쿼터니언으로 구한 각도를 온라인 사이트의 마커 CSS 회전값과
-  북, 동, 남, 서에서 대조합니다
-- `tools/verify-coordinates.mjs` 게임 좌표 변환값을 온라인 사이트의 실제 마커 위치와 대조합니다
+| 함수 | 동작 |
+|---|---|
+| `showScreenshot(파일명)` | 위치와 방향을 표시하고, 마커가 실제로 보이면 true. 로딩 중이면 기억했다가 준비되면 표시한다 |
+| `isRendered(파일명)` | 마지막으로 표시한 파일명이고 마커가 보이면 true. 화면을 옮기지 않는다 |
+| `setFaction(isPmc)` | 진영에 맞는 추출구만 그린다 |
+| `setControlsVisible(visible)` | 조작 UI(Levels 패널, Alt 휠 안내)를 보이거나 숨긴다 |
+| `status()` | `loading`, `ready`, `error: <사유>` |
 
-**포트 자리**: 9222는 실행 중인 앱, 9223은 재현용 브라우저, 9224는 archive-maps, 9225는 verify-archive,
-9226~9229는 1단계 도구와 검사가 씁니다. `extract-resources.mjs`는 9230,
-`verify-resources.mjs`는 9231, `verify-directions.mjs`는 9232, `verify-coordinates.mjs`는 9233을
-기본값으로 씁니다. 같은 포트를 쓰면 명령이 실행 중인 앱으로 흘러 사용자가 보는 화면을 조작하게
-됩니다(실제 사고 사례). 새 도구도 9230 이후의 빈 포트를 써야 합니다.
+준비 전에 받은 호출은 모두 기억했다가 준비되면 적용합니다. 최신 입력의 보관, 맵 이름에 묶은 재전달,
+이전 문서의 응답 무시는 C#의 `WebBrowserViewModel`이 Online과 같은 코드로 맡습니다. 요청 ID와
+`queued` 상태를 가진 Local 전용 전달 프로토콜은 버렸습니다. 같은 보장을 이 흐름이 이미 주므로
+전달 개념만 두 벌이 됩니다.
 
-## 단계와 완료 기준
+## 화면
 
-### 1단계 스파이크: 맵 하나
+Local은 사용자에게 같은 앱의 다른 화면일 뿐이므로 사이트 지도 화면(Online에서 UI를 숨긴 모습)과
+같아 보여야 합니다. 그래서 디자인을 새로 하지 않고 사이트에서 옮겼습니다.
 
-산출물: `resources/maps/shoreline/`(map.svg, meta.json)와 최소 뷰어, 추출 도구의 뼈대.
+- 요소 구조와 클래스 이름: `.map-cont.bg-grid`, `.map-wrap`, `.markers-canvas`,
+  `.squad-layer > .marker`, `.panel_right`의 Levels 패널. 색과 크기는 사이트 스타일시트의 값입니다
+- 추출구: 사이트의 마커 캔버스 그리기 규칙(아이콘 경로, 진영별 색, 그림자, 배율에 따른 축소, 라벨 겹침
+  처리, 다른 층 표시)을 [markers.js](../viewer/markers.js)가 옮깁니다
+- 내 위치: 사이트의 `.marker`(보라 원, 초록 테두리)에 앱의 방향 삼각형을 붙입니다. Online에서
+  `map-markers.js`가 붙이는 삼각형과 같은 모양입니다
+- 카메라: 사이트가 쓰는 anvaka/panzoom의 휠 배율과 끌기 감각에, 화면 가운데에 지형이 있어야 한다는
+  규칙을 더했습니다([camera.js](../viewer/camera.js))
+- 층: 위치의 높이로 자동으로 고릅니다. 각 층의 구역(`zones`)이 먼저이고 그다음 높이 범위입니다.
+  사이트처럼 Levels 패널과 Alt 휠로 직접 바꿀 수도 있습니다
+- 오버레이: 조작 UI는 기본으로 숨기고 상단바의 "UI 요소 숨기기"를 끄면 보입니다
 
-완료 기준:
-- 브라우저에서 `viewer/index.html?map=shoreline`을 열면 지형이 뜨고 휠 확대와 끌기가 됩니다
-- 레벨 그룹(`#basement`, `#main`, `#level2`, `#level3`)을 켜고 끌 수 있습니다
-- 게임 좌표를 넣으면 그 자리에 마커가 찍힙니다
-- **좌표 검증**: 같은 게임 좌표를 사이트(온라인)와 우리 뷰어에 각각 넣어 맵 좌표가 일치하는지 대조한
-  결과를 숫자로 보고합니다. 사이트 쪽 값은 실행 중인 페이지에서 얻을 수 있습니다
+## 리소스 계약
 
-### 2단계: 데이터
+정확한 규칙은 [resource-bundle.mjs](../tools/resource-bundle.mjs)의 `check`가 원천입니다. 아래는
+규칙만 봐서는 알기 어려운 의미입니다.
 
-당시 산출물: 추출구와 스폰을 담은 `markers.json` 스키마와 추출 경로, 마커 그리기와 종류별 켜고
-끄기. 스폰은 3단계에서 코어 범위를 다시 정하며 제거했습니다.
+- 맵 목록은 `MapConfiguration.cs`가 정하고 `resources/manifest.json`의 맵 집합이 이와 같아야 합니다.
+  맵마다 `maps/<맵 ID>/`에 `map.svg`, `meta.json`, `markers.json`을 둡니다. 맵 ID는 `MapInfo.Name`입니다
+- `map.svg`는 데이터입니다. 스크립트, 이벤트 속성, 외부 참조가 있으면 검사가 거부합니다. 캔버스 전체를
+  덮는 배경에는 `data-map-background="true"`를 붙여 지형 범위 계산에서 뺍니다. 층 그룹의 id는
+  `meta.json`의 `levels[].terrainGroupId`가 가리킵니다
+- `meta.json`의 `size`, `zoom`, `minZoom`, `maxZoom`, `transform`은 사이트 지도 설정의 값입니다.
+  `levels[]`의 `height`와 `zones`가 자동 층 선택의 근거입니다. `source.coordinateChecks`는 수집할 때
+  사이트의 `gamePosToMapPos`가 낸 값이라 뷰어의 좌표식을 검사하는 기준이 됩니다
+- `markers.json`은 진영(`factions`), 추출구 세부 종류와 진영의 연결(`categories`), 사이트 UID와 층과
+  변환이 끝난 지도 좌표를 가진 마커(`markers`)를 담습니다
+- `manifest.json`의 `collectedAt`은 설정 화면에 "지도 데이터: 날짜 기준"으로 보입니다.
+  `screenshotChecks`는 수집할 때 사이트의 파일명 해석기가 낸 값으로, 뷰어의 해석기를 검사하는 기준입니다
 
-현재 완료 기준: 추출구가 사이트와 같은 자리에 같은 개수로 뜨고 PMC/SCAV 선택에 맞게 걸러집니다.
-개수는 사이트의 좌측 목록 숫자와 대조합니다.
+## 좌표와 방향
 
-### 3단계: 전체와 도구
+식은 사이트 지도 번들의 식을 연산 그대로 옮깁니다([coords.js](../viewer/coords.js)). 같은 파일명이
+Online과 Local에서 같은 자리, 같은 방향에 찍혀야 하기 때문입니다.
 
-산출물: `MapConfiguration.cs`가 정한 12개 맵, 위치 방향 표시, 추출구 진영 필터,
-`extract-resources.mjs`, `verify-resources.mjs`, `verify-directions.mjs`.
+- 사이트의 파일명 정규식은 좌표 세 수를 y, z, x 순서로 읽고 z가 높이입니다
+- 시선은 쿼터니언을 정규화하지 않고 수평 시선 벡터 `(2(xz + wy), 1 - 2(x² + y²))`의 각을 잽니다.
+  단위 쿼터니언에서는 정규화 여부가 드러나지 않으므로, 비단위 입력을 사이트 해석기에 넣은 값과
+  대조해야 차이를 잡을 수 있습니다
+- 지도 좌표는 게임 좌표를 `-transform.rotate`만큼 돌린 뒤 `xOffset - x * ratio`,
+  `yOffset - y * ratio`이고, 회전 결과와 최종 좌표를 사이트와 같은 자리에서 반올림합니다
+- 지도 위 방향은 `시선 각 + 270 - transform.rotate`입니다
 
-완료 기준: 빈 출력 폴더에 도구만으로 `resources/`를 다시 만들었을 때 저장소의 리소스와 같고,
-검사 도구가 12개 맵을 모두 통과합니다. 망가뜨린 리소스에서는 검사가 실패해야 합니다. 방향은 서로
-다른 여러 쿼터니언에서 사이트의 CSS 회전값과 각도 차이를 숫자로 대조합니다.
+## 지도 문서 변환
 
-### 4단계: 앱 통합 (여기부터는 사용자 확인 후)
+사이트는 지형을 캔버스에 그리고, 원본은 `/api/be/map-doc?map=<맵 ID>&bundle=1`이 내려보내는 인코딩된
+문서(`{ hash, data }`)입니다. 화면에 `svg.svg-map`이 없어도 지도 데이터가 없는 것은 아닙니다. 이
+경로와 번들의 export 이름은 공개된 안정 계약이 아니므로 수집기는 의미가 모호하면 멈춥니다. 사이트의
+디코더와 렌더러는 수집할 때만 쓰고 리소스나 앱에는 들어가지 않습니다.
 
-로컬 모드가 사이트 사본 대신 우리 뷰어를 열게 바꿉니다. 이때 `MapArchive`,
-`ArchiveResourceRequestHandlerFactory`, `archive/`가 필요 없어집니다. 위치 표시는 `window.pilot` 대신
-뷰어의 함수를 부릅니다(스크린샷 파일명 파싱은 앱에 이미 있습니다).
+문서 버전 2에는 층, 그룹의 그리기 순서, 다각형, 벽, 텍스트, 타원과 사각형이 있습니다.
+[map-doc-svg.mjs](../tools/map-doc-svg.mjs)가 이를 정적 SVG로 옮기며, 점 목록만 경로로 옮기면 그림이
+달라지는 자리가 있습니다.
 
-## 지켜야 할 것
+- 그룹 불투명도: 사이트는 그룹 전체를 별도 표면에 그린 뒤 합성합니다. 자식마다 불투명도를 곱하면
+  겹친 부분이 여러 번 합성되어 벽과 방의 색이 달라지므로 SVG에서도 그룹에 적용합니다
+- 벽의 틈: 출입구 틈의 구간이 선분 하나의 구간인지 전체 polyline 길이의 구간인지 구분해야 합니다.
+  틀리면 출입구가 막힌 벽으로 그려집니다
+- 구멍이 있는 다각형, 층별 컨텍스트, 그리기 순서를 보존합니다
+- 모르는 문서 버전이나 도형 종류는 건너뛰지 않고 후보 전체를 거절합니다
 
-- 저장소 루트의 `CLAUDE.md`를 먼저 읽으십시오. 커밋 메시지 컨벤션, 문체, MVVM과 문서 동기화 규칙이
-  거기 있습니다
-- **push하지 마십시오.** 커밋까지만 하고 사용자가 직접 올립니다
-- **앱을 실행하지 마십시오.** 빌드는 해도 됩니다
-- main에 직접 커밋하지 말고 작업 브랜치에서 진행하십시오
-- 실측한 값은 근거와 함께 그 값을 쓰는 파일 안에 주석으로 적으십시오. 별도 문서에만 적힌 근거는 다음
-  사람이 찾지 못합니다
-- 사이트 구조를 다룰 때는 `docs/20260818-embedded-site-control.md`(임베디드 웹페이지 제어 레퍼런스)를
-  참고하십시오. 주입, CDP 관측, 개입 기법과 이미 밟은 함정이 정리돼 있습니다
+변환이 맞는지는 [verify-map-docs.mjs](../tools/verify-map-docs.mjs)가 수집한 사이트 렌더러를 headless
+브라우저에서 그대로 실행해 층마다 도형, 순서와 픽셀을 대조해 판정합니다. 대조용 구현을 변환기와 같은
+추정으로 만들면 같은 실수를 해도 통과하므로, 사이트의 렌더링 함수를 직접 씁니다. 캔버스와 SVG의
+안티앨리어싱 차이는 알려진 경계에서만 허용하고, 그 차이 때문에 전체 오차 기준을 느슨하게 하지
+않습니다.
 
-## 참고 문서
+## 수집
 
-- `docs/20260818-offline-map.md` 지금 로컬 모드의 설계 근거와 한계
-- `docs/20260818-embedded-site-control.md` 사이트를 다루는 기법 레퍼런스
-- `archive/README.md` 사본을 다시 만드는 절차
-- `PROJECT.md` 앱 구조와 스크립트 주입 흐름
+[collect-map-docs.mjs](../tools/collect-map-docs.mjs)는 실제 사이트를 일회용 headless Chrome에서
+엽니다. 사이트는 User-Agent에 HeadlessChrome이 있으면 Cloudflare 확인 화면에서 멈추고, 자동화
+표시(`navigator.webdriver`)가 켜진 브라우저에는 페이지와 캔버스는 그려도 지도 데이터 상태를 채우지
+않습니다. [headless-chrome.mjs](../tools/headless-chrome.mjs)가 실제 사이트에 접속할 때 두 표시를
+끕니다. 수집기는 캔버스가 그려지고 사이트 상태의 맵이 요청한 맵과 같아질 때까지 기다립니다.
+
+수집과 후보 생성은 비어 있는 새 폴더에 쓰고, 기존 폴더는 덮어쓰지 않습니다. 마지막 맵에서 변환이
+실패해도 정상 리소스가 반쯤 바뀐 채로 남지 않게 하려는 것입니다. `resources/` 교체는 검토를 거친
+별도 단계입니다. 명령 순서는 [AGENTS.md](../AGENTS.md)의 "지도 리소스 갱신"에 있습니다.
+
+## 한계
+
+- 퀘스트, 스폰, 키를 비롯한 부가 기능은 넣지 않습니다. 코어 우선순위에서 3순위입니다
+- 추출구는 이름, 진영, 층과 점 좌표만 있습니다. 조건 설명, 이미지, 영역 형상은 없고, 진영 표시가 그
+  레이드에서 쓸 수 있는 탈출구라는 뜻도 아닙니다
+- 데이터는 `collectedAt` 시점의 지도입니다. 그 뒤 사이트 지도가 바뀌면 앱을 업데이트할 때 반영됩니다
+- 사이트의 장소 이름 라벨(사용자 레이어 데이터)은 넣지 않았습니다
+- 사이트는 라벨에 Bender 글꼴을 쓰지만 미니맵은 글꼴 파일을 담지 않아 다음 후보 글꼴로 그립니다
+- headless 검사는 실제 WPF 창의 CEF 통합(폴더 응답 처리기, 모드 전환 때의 브라우저 교체, 창 크기)을
+  검증하지 않습니다. 그 부분은 Debug 빌드를 실행해 확인합니다
+
+## 출처와 이용 조건
+
+지도 문서와 마커의 출처는 tarkov-market.com이고 저작권과 이용 조건은 그 사이트에 있습니다. 앱의
+라이선스가 이 데이터에 적용되지 않으며, 출처를 표시하는 것과 이용 허락을 받는 것은 별개입니다.
+사이트 이용약관은 자동 수집과 사이트 자산의 권리를 따로 다루므로, 수집 자동화와 앱에 담아 배포하는
+범위의 허락은 유지보수자가 확인해야 합니다.
+
+## 다시 검토할 조건
+
+- Local을 기본 모드로 올리는 경우. 지금은 설정에서 켜는 실험적 기능입니다. 실제 앱에서 맵 전환, 모드
+  전환, 오버레이 표시를 확인한 뒤 정합니다
+- 지도 문서 형식이 바뀌어 변환기가 후보를 거절하는 경우. 수집기와 변환기를 고칩니다. 그동안 설치된
+  앱의 Local은 계속 동작합니다
+- 리소스 크기가 설치 파일에 부담이 되는 경우. 맵별 내려받기로 바꿉니다
+- 사이트가 데이터 수집이나 배포에 이의를 제기하는 경우. 리소스를 빼고 Online만 남기거나 사용자 PC에서
+  수집하는 방식으로 옮깁니다
+
+## 검증
+
+| 도구 | 보는 것 |
+|---|---|
+| `resource-bundle.mjs check` | 리소스 계약 (CI) |
+| `test-resource-pipeline.mjs` | 잘못된 문서와 파일을 변환기와 검사가 거절하는지 (CI) |
+| `verify-viewer.mjs` | 미니맵과 리소스를 실제 Chromium에서 열어 사이트 기준값, 마커의 자리와 방향, 카메라, 오버레이, 층, 진영 색 (CI, 릴리스는 `--root publish/LocalMap`) |
+| `verify-map-docs.mjs` | 변환 결과와 사이트 렌더러의 층별 대조 (리소스를 갱신할 때) |
+
+사이트 구조를 조사하고 다룰 때의 기법과 함정은
+[임베디드 웹페이지 제어 레퍼런스](20260818-embedded-site-control.md)에 있습니다.

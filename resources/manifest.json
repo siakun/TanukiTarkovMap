@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "https://tarkov-market.com",
-  "collectedAt": "2026-08-19T01:04:08.749Z",
+  "collectedAt": "2026-10-07T16:41:55.988Z",
   "maps": [
     "ground-zero",
     "factory",
@@ -15,5 +15,133 @@
     "lab",
     "labyrinth",
     "icebreaker"
+  ],
+  "converterVersion": "map-doc-v2/1",
+  "sourceRevisions": {
+    "ground-zero": {
+      "documentHash": "a7d5e416345c34f39b09d0605f0bc528",
+      "documentSha256": "956cf2c24400b374136a3ce7554e01d59bde6a5ff0ddabbee9aa13217f69fa5e",
+      "markerSha256": "210e117c7e22b00a8e895e2e1547fad35fc0c59dd9ae4c3cb53ccdfc4cce6995"
+    },
+    "factory": {
+      "documentHash": "70561eb6a95cd0e32ba0172c4eb83383",
+      "documentSha256": "e14efd8ce160d1a639a98a504ab20a71240765a6356d3cd8ce442ada9c641dda",
+      "markerSha256": "8646af43e78bad2562b5a5b7c0bf4141d888ab42232f4136d9a900f8ef7c6aac"
+    },
+    "customs": {
+      "documentHash": "7e5a9c0f79f79670b696c5c9b0230869",
+      "documentSha256": "d3e0aa5447e1062f35311738c135494f9a1ea4a6f0b7b1cb892ca94210f41647",
+      "markerSha256": "62ed0be2ed8ee4992133d6e2b8c8905fa60c54028a45b3706ce4c7600fd5d415"
+    },
+    "interchange": {
+      "documentHash": "43fd94b51030087e8e78920f8fd79595",
+      "documentSha256": "9fb601e67736a1a7d6365dd69c66ca971a837e5fe23dc5224d637a1e2ac7e2e7",
+      "markerSha256": "e4ef2c49fd65e57cd13832c07e339d2fcb4228faebe628848f2068945cae91c9"
+    },
+    "woods": {
+      "documentHash": "ceb84c9f98c740b6c19de6026907f010",
+      "documentSha256": "eef542d47be2a13f7d7de942349e6ee18d74adc02fd9d63a83f4ebbc63f5decb",
+      "markerSha256": "15f2100106ef660308476453d7b17125b69d86760eb7c4e43725ff4f7f639619"
+    },
+    "shoreline": {
+      "documentHash": "1fd2e9a9f549927fdd7d9e6573dcfd2b",
+      "documentSha256": "1648d5093b88446d23b482605551965a25f0915cbc8d089dbe1d17737fd16a7e",
+      "markerSha256": "447e81a828e7ba29734936c810e24c40e05f835cdd99c2c9882d64e1597d0c2c"
+    },
+    "reserve": {
+      "documentHash": "edf1e7685a35269792b9c58715ec2894",
+      "documentSha256": "3c1c2511907579d60a72a4f90aabad409bfbe15cb5778e7d3bd960559c022bb2",
+      "markerSha256": "39def1768cabca5dc28e36c3774c0e86cef7025ffc4e048adda830fe1d0d918b"
+    },
+    "lighthouse": {
+      "documentHash": "01ba6d4e3730ef31308ecb5bfaac79bd",
+      "documentSha256": "19688a99b41c80428d5674908e0429d53979273df7f7d8b4d2c7274d70722122",
+      "markerSha256": "57df420e51b149c17abd67f778d079d0d5b289cffd3cb64559f921835a34068a"
+    },
+    "streets": {
+      "documentHash": "6ee4d557eed73c8f89d4e57eea746e35",
+      "documentSha256": "ec92386394596393b12d14e7a688907f217aab4906d57eb7266e0636ccd87a22",
+      "markerSha256": "42c468e157abe5947e984d5fb0ce51af11acc03e73e3557c2d12e1e79c7d0a45"
+    },
+    "lab": {
+      "documentHash": "44cafa551f1b75fd86304ead304e3cfb",
+      "documentSha256": "ad530a8bd45cbaed11304b732d75987c85db398ae82ffd06cd50e906c3accffe",
+      "markerSha256": "04f15bda4c1b24cf963aff11b5632c35be12644102249b6edf02f41967251b9c"
+    },
+    "labyrinth": {
+      "documentHash": "6fae15c671bcd4c59c4baeb9cb662dac",
+      "documentSha256": "f7c67bd31ced7cb3e40a1a69330df1bc1cd212ffb75a69bb6314d014bde88324",
+      "markerSha256": "ceeac9fe1ee75e879577aa5fe101919c6e861957bb1d90e41b199d19400536a7"
+    },
+    "icebreaker": {
+      "documentHash": "663f6371662a57f48156917776fc3352",
+      "documentSha256": "df681ada3dcd59b96c14a089c52261f4cce0ac386cf6472ac194483e7a2d1ecf",
+      "markerSha256": "3eb7cebb70f729a91b70ec17d6e57b5fbcd620696c62bd1386e98a01ebe3fdc7"
+    }
+  },
+  "screenshotChecks": [
+    {
+      "filename": "2000-01-01[00-00]_125.25, -3.5, -84.875_0, 0, 0, 1_0.png",
+      "result": {
+        "x": -84.875,
+        "y": 125.25,
+        "z": -3.5,
+        "look": 0
+      }
+    },
+    {
+      "filename": "2000-01-01[00-00]_125.25, -3.5, -84.875_0, 0.7071067811865476, 0, 0.7071067811865476_0.png",
+      "result": {
+        "x": -84.875,
+        "y": 125.25,
+        "z": -3.5,
+        "look": 90.00000000000001
+      }
+    },
+    {
+      "filename": "2000-01-01[00-00]_125.25, -3.5, -84.875_0, 1, 0, 0_0.png",
+      "result": {
+        "x": -84.875,
+        "y": 125.25,
+        "z": -3.5,
+        "look": 180
+      }
+    },
+    {
+      "filename": "2000-01-01[00-00]_125.25, -3.5, -84.875_0, -0.7071067811865476, 0, 0.7071067811865476_0.png",
+      "result": {
+        "x": -84.875,
+        "y": 125.25,
+        "z": -3.5,
+        "look": 270
+      }
+    },
+    {
+      "filename": "2000-01-01[00-00]_125.25, -3.5, -84.875_0, 1, 0, 1_0.png",
+      "result": {
+        "x": -84.875,
+        "y": 125.25,
+        "z": -3.5,
+        "look": 116.56505117707799
+      }
+    },
+    {
+      "filename": "2000-01-01[00-00]_125.25, -3.5, -84.875_0, -3, 0, 3_0.png",
+      "result": {
+        "x": -84.875,
+        "y": 125.25,
+        "z": -3.5,
+        "look": 226.63657704161673
+      }
+    },
+    {
+      "filename": "2000-01-01[00-00]_125.25, -3.5, -84.875_0.23, 0.38, -0.09, 0.7_0.png",
+      "result": {
+        "x": -84.875,
+        "y": 125.25,
+        "z": -3.5,
+        "look": 39.02038542281402
+      }
+    }
   ]
 }

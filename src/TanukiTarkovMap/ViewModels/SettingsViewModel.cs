@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
@@ -11,6 +12,7 @@ using NuGet.Versioning;
 using Siakun.AutoUpdate;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
+using TanukiTarkovMap.Models.Offline;
 using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.Models.Utils;
 
@@ -334,18 +336,24 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool LocalMapEnabled { get; set; } = false;
 
         /// <summary>
-        /// 사본의 상태 문구. 사본이 없으면 그 사실을 알려야 체크만 켜고 왜 안 되는지 묻지 않는다
+        /// Local 지도 데이터를 사이트에서 받은 날짜. 그 뒤에 바뀐 사이트 지도와 차이가 날 수 있음을 알린다
         /// </summary>
-        public string LocalMapArchiveStatus
+        public string LocalMapDataStatus
         {
             get
             {
-                var archive = ServiceLocator.MapArchive;
-
-                if (!archive.IsAvailable) return "이 빌드에는 사본이 없어 Local 전환이 나타나지 않습니다";
-
-                var created = archive.CreatedAt?.ToLocalTime().ToString("yyyy-MM-dd") ?? "알 수 없음";
-                return $"사본: 응답 {archive.EntryCount}개, 만든 날짜 {created}";
+                try
+                {
+                    var path = Path.Combine(LocalViewer.Root, "resources", "manifest.json");
+                    using var manifest = JsonDocument.Parse(File.ReadAllText(path));
+                    var collected = manifest.RootElement.GetProperty("collectedAt").GetDateTime();
+                    return $"지도 데이터: {collected.ToLocalTime():yyyy-MM-dd} 기준";
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException
+                    or KeyNotFoundException or InvalidOperationException or FormatException)
+                {
+                    return "앱에 담긴 지도 데이터를 찾지 못했습니다. 앱을 다시 설치해 주세요";
+                }
             }
         }
 

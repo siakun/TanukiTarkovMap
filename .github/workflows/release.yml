@@ -26,6 +26,11 @@ jobs:
       with:
         dotnet-version: '8.0.x'
 
+    - name: Setup Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+
     - name: Extract version from tag
       id: version
       shell: bash
@@ -67,6 +72,11 @@ jobs:
           -r win-x64 `
           --self-contained true `
           -o publish
+
+    # INTENT: 소스 검사는 verify 작업이 했다. 여기서는 publish 결과의 LocalMap 폴더에서 미니맵이
+    # 그대로 뜨는지 본다. csproj의 Content 포함이 깨져 파일이 빠지면 Local 모드가 빈 화면이 된다.
+    - name: Verify published Local minimap
+      run: node tools/verify-viewer.mjs --root publish/LocalMap
 
     # INTENT: vpk 버전은 .config/dotnet-tools.json에 고정한다. 최신을 받으면 릴리스할 때마다 패키징
     # 도구와 패키지에 들어가는 Update.exe가 검증 없이 바뀐다. 고정한 버전은 앱의 Velopack 라이브러리와

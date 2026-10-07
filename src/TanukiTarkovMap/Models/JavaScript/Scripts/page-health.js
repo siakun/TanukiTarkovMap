@@ -62,14 +62,42 @@
         report('promise', reason && reason.message ? reason.message : reason);
     });
 
-    // 맵 페이지에서만 확인한다. 바닥 맵은 svg.svg-map, 마커와 이름표는 svg.map-layer에 그려진다
+    // 바닥 맵은 canvas.doc-map-canvas에 그려진다. 같은 클래스의 캔버스가 둘이고 사이트가 배율에 따라
+    // 하나만 보이므로(숨은 쪽은 display: none이거나 visibility: hidden), 표시된 캔버스에 투명하지 않은
+    // 픽셀이 있는지로 판정한다. 예전 판처럼 svg.svg-map의 존재로 보면 캔버스 판에서는 늘 실패로 보고한다
+    function baseMapDrawn() {
+        var canvases = document.querySelectorAll('.map-cont canvas.doc-map-canvas');
+        for (var index = 0; index < canvases.length; index++) {
+            var canvas = canvases[index];
+            var box = canvas.getBoundingClientRect();
+            if (!canvas.width || !canvas.height || !box.width || !box.height) continue;
+            if (getComputedStyle(canvas).visibility === 'hidden') continue;
+
+            // 줄인 사본에서 읽어 사이트 캔버스에는 getImageData를 부르지 않는다
+            var sample = document.createElement('canvas');
+            sample.width = 64;
+            sample.height = 64;
+            var context = sample.getContext('2d', { willReadFrequently: true });
+            try {
+                context.drawImage(canvas, 0, 0, sample.width, sample.height);
+                var pixels = context.getImageData(0, 0, sample.width, sample.height).data;
+                for (var alpha = 3; alpha < pixels.length; alpha += 4) if (pixels[alpha]) return true;
+            } catch (e) {
+                // 읽기가 막혀도 표시된 캔버스는 있다. 그린 내용을 알 수 없으므로 실패로 보고하지 않는다
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // 맵 페이지에서만 확인한다. 마커는 canvas.markers-canvas에 그려진다
     if (location.pathname.indexOf('/maps/') !== -1) {
         setTimeout(function () {
             send({
                 type: 'page-health',
                 path: location.pathname,
-                baseMap: !!document.querySelector('svg.svg-map'),
-                markerLayer: !!document.querySelector('svg.map-layer')
+                baseMap: baseMapDrawn(),
+                markerLayer: !!document.querySelector('.map-cont canvas.markers-canvas')
             });
         }, HEALTH_DELAY);
     }

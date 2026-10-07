@@ -5,7 +5,6 @@ using CefSharp;
 using CefSharp.Wpf;
 using Microsoft.Xaml.Behaviors;
 using TanukiTarkovMap.Models.Offline;
-using TanukiTarkovMap.Models.Services;
 using TanukiTarkovMap.ViewModels;
 
 namespace TanukiTarkovMap.Behaviors
@@ -20,7 +19,7 @@ namespace TanukiTarkovMap.Behaviors
     Core Functionality:
     - 브라우저 설정: CEF가 초기화되기 전에 WindowlessFrameRate를 60fps로 설정
     - ViewModel 연결: DataContext가 준비되거나 모드가 바뀌면 새 브라우저를 ViewModel에 전달
-    - 저장 공간 분리: Online은 기존 프로필, Local은 독립된 메모리 RequestContext 사용
+    - 저장 공간 분리: Online은 기존 프로필, Local은 자체 미니맵 파일을 응답하는 독립된 메모리 RequestContext 사용
     - 개발자 도구: 브라우저가 받은 F12 입력으로 CefSharp 개발자 도구 표시
 
     State Management:
@@ -118,10 +117,8 @@ namespace TanukiTarkovMap.Behaviors
         private void OnBrowserModeChanged(object? sender, EventArgs e) => ReplaceBrowser();
 
         // INTENT
-        // Online과 Local은 주소가 같아도 사이트 자산과 DB 형식이 다를 수 있다. 요청 처리기만
-        // 바꾸거나 공용 DB를 지우면 사본이 최신 캐시를 읽거나 온라인 설정을 잃는다.
-        // Local은 진입할 때마다 독립된 메모리 저장 공간에서 시작해 사본 갱신 뒤에도 이전 DB를
-        // 읽지 않게 한다. 앱이 보관한 맵, 진영, 확대 설정과 마지막 좌표는 ViewModel에서 복원한다.
+        // Local은 자체 미니맵 파일을 응답하는 메모리 RequestContext를 사용한다. Online의 프로필을 공유하거나
+        // 초기화하지 않아 사이트의 쿠키와 설정을 보존한다. 앱의 맵/진영/최신 입력은 ViewModel이 복원한다.
         private void ReplaceBrowser()
         {
             ReleaseBrowser();
@@ -129,19 +126,16 @@ namespace TanukiTarkovMap.Behaviors
 
             if (_viewModel.IsLocalMapMode)
             {
-                // RequestContext가 전달받은 settings의 해제도 맡는다.
-                _localContext = new RequestContext(new RequestContextSettings { CachePath = string.Empty });
+                _localContext = LocalViewer.CreateRequestContext();
                 // Behavior 해제 없이 앱이 종료되어도 CEF 종료 전에 네이티브 참조를 놓는다.
                 Cef.AddDisposable(_localContext);
             }
 
-            // 요청 처리기와 저장 공간은 CEF 생성 전에 함께 정한다. Online의 null은 기존 전역
-            // 프로필을 사용하므로 쿠키와 사이트 설정을 보존한다.
+            // 저장 공간은 CEF 생성 전에 정한다. Online의 null은 기존 전역 프로필을 사용하므로
+            // 쿠키와 사이트 설정을 보존한다.
             _browser = new ChromiumWebBrowser
             {
                 RequestContext = _localContext,
-                ResourceRequestHandlerFactory = new ArchiveResourceRequestHandlerFactory(
-                    ServiceLocator.MapArchive, _viewModel.IsLocalMapMode),
                 Address = "about:blank",
             };
             _browser.BrowserSettings.WindowlessFrameRate = 60;

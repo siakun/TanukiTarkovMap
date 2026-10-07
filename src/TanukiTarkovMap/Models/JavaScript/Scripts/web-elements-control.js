@@ -7,7 +7,6 @@
  * - 각 함수는 window 객체에 등록되어 C#에서 호출 가능
  * - 헤더/푸터는 항상 숨김 유지
  * - "UI 요소 숨기기" 체크 시 맵 컨테이너에서 맵 레이어만 남기고 나머지 UI를 숨김
- * - 로컬 모드에서는 지도, 층 전환, 추출구와 현재 위치/방향 외의 UI와 마커를 숨김
  */
 
 (function() {
@@ -23,9 +22,6 @@
     // ============================================================
     var STYLE_ID = 'tanuki-visibility-rules';
     var PANEL_HIDDEN_CLASS = 'tanuki-panels-hidden';
-    var LOCAL_CORE_CLASS = 'tanuki-local-core';
-    var SELECTED_CATEGORIES_KEY = 'sel_cats_map';
-    var ONLINE_CATEGORIES_BACKUP_KEY = 'tanuki-online-map-categories';
 
     // ------------------------------------------------------------
     // 맵 컨테이너(.map-cont)의 직계 자식 가운데 맵을 그리는 레이어
@@ -67,10 +63,7 @@
             // position: fixed로 지도 아래쪽을 덮고 있어, 이 창에서는 지도를 가리는 방해물이다
             '.cookie-consent { display: none !important; }' +
             // 맵 위 UI는 <html>의 클래스로 켜고 끈다. 좌우와 상단 패널을 비롯해 맵 레이어가
-            // 아닌 직계 자식이 모두 여기에 걸린다. 로컬 모드에서도 그대로 적용한다.
-            // 로컬 모드는 "부가 UI를 늘 감추는 것"이고 이 체크박스는 "남은 UI까지 감추는 것"이라
-            // 둘은 층이 다르다. 로컬에서 이 규칙을 빼면 체크를 해도 Levels가 남아, 사용자에게는
-            // 체크박스가 고장난 것으로 보인다.
+            // 아닌 직계 자식이 모두 여기에 걸린다.
             // 창이 좁으면 사이트가 데스크톱 패널을 접고 대신 모바일 UI(위 검색 줄, 아래 탭 줄)를
             // 편다. 이 요소들은 폭과 상관없이 늘 문서에 있고 사이트의 미디어 쿼리가 display만
             // 바꾸므로(실측: 넓을 때 none, 좁을 때 block), 만들어지고 지워지는 것이 아니라
@@ -78,13 +71,7 @@
             // 지우는 쪽은 사이트가 다시 그릴 때마다 되살아나고, 우리가 지운 자리를 사이트가
             // 참조하면 그쪽이 깨진다
             'html.' + PANEL_HIDDEN_CLASS + ' .map-cont > :not(' + MAP_LAYER_SELECTORS + ')' +
-            ' { display: none !important; }' +
-            // 로컬 모드는 코어만 남긴다. 맵 레이어에 더해 우측 패널의 층 전환(Levels)을
-            // 남긴다. 층마다 탈출구가 달라 층 전환은 코어에 속한다. 우측 패널 안도 남길 것을 적는다
-            'html.' + LOCAL_CORE_CLASS + ' .map-cont > :not(' + MAP_LAYER_SELECTORS + ', .panel_right),' +
-            'html.' + LOCAL_CORE_CLASS + ' .panel_right > :not(.layers),' +
-            'html.' + LOCAL_CORE_CLASS + ' .maps-site-chrome > .head-pilot,' +
-            'html.' + LOCAL_CORE_CLASS + ' .maps-site-chrome > .alert-box { display: none !important; }';
+            ' { display: none !important; }';
 
         (document.head || document.documentElement).appendChild(style);
     }
@@ -154,74 +141,6 @@
         }
     };
 
-    // ============================================================
-    // 로컬 모드 코어 화면과 마커 선택
-    //
-    // 사이트는 모듈을 평가할 때 sel_cats_map을 한 번 읽어 마커를 그린다. 렌더 뒤 DOM을
-    // 지우면 캔버스에 그린 마커가 남으므로, 페이지 스크립트보다 먼저 저장값을 바꾼다.
-    // 현재 앱은 모드마다 저장 공간을 분리한다. 아래 백업 복원은 저장 공간을 공유하던 버전에서
-    // 남긴 온라인 선택값도 복구하려고 유지한다.
-    // ============================================================
-    function applyLocalMarkerSelection(enabled, isPmc) {
-        var backupText = localStorage.getItem(ONLINE_CATEGORIES_BACKUP_KEY);
-
-        if (enabled) {
-            if (backupText === null) {
-                var onlineValue = localStorage.getItem(SELECTED_CATEGORIES_KEY);
-                localStorage.setItem(ONLINE_CATEGORIES_BACKUP_KEY, JSON.stringify({
-                    exists: onlineValue !== null,
-                    value: onlineValue
-                }));
-            }
-
-            // archive의 지도 bundle은 Transition을 PMC Extraction과 같은 색으로 분류한다.
-            // Co-Op은 두 진영이 함께 쓰므로 PMC와 SCAV 양쪽에서 남긴다.
-            var localCategories = { 'Extractions_Co-Op Extraction': true };
-            if (isPmc) {
-                localCategories['Extractions_Transition'] = true;
-                localCategories['Extractions_PMC Extraction'] = true;
-            } else {
-                localCategories['Extractions_Scav Extraction'] = true;
-            }
-            localStorage.setItem(SELECTED_CATEGORIES_KEY, JSON.stringify(localCategories));
-            return;
-        }
-
-        if (backupText === null) return;
-
-        var backup = JSON.parse(backupText);
-        if (backup.exists) {
-            localStorage.setItem(SELECTED_CATEGORIES_KEY, backup.value);
-        } else {
-            localStorage.removeItem(SELECTED_CATEGORIES_KEY);
-        }
-        localStorage.removeItem(ONLINE_CATEGORIES_BACKUP_KEY);
-    }
-
-    window.setLocalMapMode = function(enabled, isPmc) {
-        try {
-            // 이 함수는 FrameLoadStart에서 실행된다. 저장값은 사이트 모듈보다 먼저 바꾸고,
-            // DOM이 아직 없으면 클래스와 스타일만 DOMContentLoaded까지 미룬다.
-            applyLocalMarkerSelection(enabled, isPmc);
-
-            var applyClass = function() {
-                ensureRules();
-                document.documentElement.classList.toggle(LOCAL_CORE_CLASS, enabled);
-                window.dispatchEvent(new Event('resize'));
-            };
-
-            if (document.documentElement) {
-                applyClass();
-            } else {
-                document.addEventListener('DOMContentLoaded', applyClass, { once: true });
-            }
-            return true;
-        } catch (e) {
-            console.error('[WebElements] setLocalMapMode error:', e);
-            return false;
-        }
-    };
-
     function findExtractionFilter(items, name) {
         if (!items) return null;
 
@@ -249,24 +168,16 @@
                 return false;
             }
 
-            // 저장 키는 Transition이지만 사이트가 화면에 붙이는 이름은 Transit이다.
-            var transitionFilter = findExtractionFilter(items, 'Transit');
             var pmcFilter = findExtractionFilter(items, 'PMC Extraction');
             var scavFilter = findExtractionFilter(items, 'Scav Extraction');
-            var coOpFilter = findExtractionFilter(items, 'Co-Op Extraction');
-            var localMode = document.documentElement.classList.contains(LOCAL_CORE_CLASS);
 
-            if (!localMode && (!pmcFilter || !scavFilter)) {
+            if (!pmcFilter || !scavFilter) {
                 console.warn('[WebElements] PMC or SCAV filter not found');
                 return false;
             }
 
             setFilterActive(pmcFilter, true);
             setFilterActive(scavFilter, false);
-            if (localMode) {
-                setFilterActive(transitionFilter, true);
-                setFilterActive(coOpFilter, true);
-            }
 
             console.log('[WebElements] PMC Extraction filter activated');
             return true;
@@ -287,24 +198,16 @@
                 return false;
             }
 
-            // 저장 키는 Transition이지만 사이트가 화면에 붙이는 이름은 Transit이다.
-            var transitionFilter = findExtractionFilter(items, 'Transit');
             var pmcFilter = findExtractionFilter(items, 'PMC Extraction');
             var scavFilter = findExtractionFilter(items, 'Scav Extraction');
-            var coOpFilter = findExtractionFilter(items, 'Co-Op Extraction');
-            var localMode = document.documentElement.classList.contains(LOCAL_CORE_CLASS);
 
-            if (!localMode && (!pmcFilter || !scavFilter)) {
+            if (!pmcFilter || !scavFilter) {
                 console.warn('[WebElements] PMC or SCAV filter not found');
                 return false;
             }
 
             setFilterActive(pmcFilter, false);
             setFilterActive(scavFilter, true);
-            if (localMode) {
-                setFilterActive(transitionFilter, false);
-                setFilterActive(coOpFilter, true);
-            }
 
             console.log('[WebElements] SCAV Extraction filter activated');
             return true;

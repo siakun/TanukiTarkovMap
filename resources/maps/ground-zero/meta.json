@@ -20,41 +20,335 @@
   "levels": [
     {
       "id": "level3",
-      "label": "Level 3",
       "sourceLevel": 3,
+      "label": "Level 3",
+      "defaultVisible": false,
       "terrainGroupId": "level3",
-      "defaultVisible": false
+      "height": [
+        32,
+        50
+      ]
     },
     {
       "id": "level2",
-      "label": "Level 2",
       "sourceLevel": 2,
+      "label": "Level 2",
+      "defaultVisible": false,
       "terrainGroupId": "level2",
-      "defaultVisible": false
+      "height": [
+        29,
+        32
+      ],
+      "zones": [
+        {
+          "height": [
+            32,
+            50
+          ],
+          "rect": [
+            [
+              163,
+              33
+            ],
+            [
+              124,
+              65
+            ]
+          ]
+        },
+        {
+          "height": [
+            28,
+            50
+          ],
+          "rect": [
+            [
+              83,
+              137
+            ],
+            [
+              122,
+              96
+            ]
+          ]
+        },
+        {
+          "height": [
+            26.5,
+            32
+          ],
+          "rect": [
+            [
+              207,
+              100
+            ],
+            [
+              178,
+              133
+            ]
+          ]
+        },
+        {
+          "height": [
+            27.2,
+            32
+          ],
+          "rect": [
+            [
+              215,
+              101
+            ],
+            [
+              230,
+              89
+            ]
+          ]
+        },
+        {
+          "height": [
+            27,
+            32
+          ],
+          "rect": [
+            [
+              250,
+              143
+            ],
+            [
+              320,
+              90
+            ]
+          ]
+        }
+      ]
     },
     {
       "id": "main",
-      "label": "Main",
       "sourceLevel": 1,
+      "label": "Main",
+      "defaultVisible": true,
       "terrainGroupId": "main",
-      "defaultVisible": true
+      "height": [
+        -20,
+        29
+      ],
+      "zones": [
+        {
+          "height": [
+            17.5,
+            29
+          ],
+          "rect": [
+            [
+              73,
+              93
+            ],
+            [
+              58,
+              187
+            ]
+          ]
+        }
+      ]
     },
     {
       "id": "basement",
-      "label": "Basement",
       "sourceLevel": -1,
+      "label": "Basement",
+      "defaultVisible": false,
       "terrainGroupId": "basement",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              46,
+              171
+            ],
+            [
+              83,
+              93
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              98,
+              54
+            ],
+            [
+              113,
+              72
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              140,
+              73
+            ],
+            [
+              171,
+              42
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              165,
+              109
+            ],
+            [
+              182,
+              91
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              38,
+              73
+            ],
+            [
+              20,
+              60
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              -62,
+              98
+            ],
+            [
+              186,
+              67
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              34,
+              110
+            ],
+            [
+              55,
+              89
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              0,
+              121
+            ],
+            [
+              21,
+              91
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              -102,
+              105
+            ],
+            [
+              -56,
+              85
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              -14,
+              106
+            ],
+            [
+              3,
+              92
+            ]
+          ]
+        },
+        {
+          "height": [
+            -20,
+            23
+          ],
+          "rect": [
+            [
+              -39,
+              72
+            ],
+            [
+              -22,
+              50
+            ]
+          ]
+        }
+      ]
     }
   ],
   "source": {
     "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/ground-zero",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
-    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
-    "terrainUrl": "https://tarkov-market.com/_nuxt3/C8qChSC_.js",
-    "terrainBlob": "08fbb47babef5c9aefdf1872f1e5b3b056da0043",
+    "collectedAt": "2026-10-07T16:41:27.511Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=ground-zero&bundle=1",
+    "documentHash": "a7d5e416345c34f39b09d0605f0bc528",
+    "documentSha256": "956cf2c24400b374136a3ce7554e01d59bde6a5ff0ddabbee9aa13217f69fa5e",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "coordinateFormula": {
       "rotation": "-transform.rotate degrees",
       "mapX": "xOffset - rotatedX * ratio",
@@ -65,6 +359,48 @@
       "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
       "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
       "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
-    }
+    },
+    "coordinateChecks": [
+      {
+        "game": {
+          "x": 0,
+          "y": 0
+        },
+        "map": {
+          "x": 1600,
+          "y": 1300
+        }
+      },
+      {
+        "game": {
+          "x": 125.25,
+          "y": -84.875
+        },
+        "map": {
+          "x": 1769.75,
+          "y": 1550.5
+        }
+      },
+      {
+        "game": {
+          "x": -313.625,
+          "y": 211.5
+        },
+        "map": {
+          "x": 1177,
+          "y": 672.75
+        }
+      },
+      {
+        "game": {
+          "x": 1000,
+          "y": 1000
+        },
+        "map": {
+          "x": -400,
+          "y": 3300
+        }
+      }
+    ]
   }
 }

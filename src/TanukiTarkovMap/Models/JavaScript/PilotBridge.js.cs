@@ -3,11 +3,11 @@ using System.Text.Json;
 namespace TanukiTarkovMap.Models.JavaScript
 {
     /// <summary>
-    /// 페이지 안의 Pilot 서비스로 게임 사건을 넘기는 스크립트
+    /// 온라인 페이지에 게임 사건을 넘기는 스크립트
     ///
     /// 왜 이 방식인가:
     /// 2026-08-17 Pilot v2부터 사이트가 로컬 앱의 WebSocket(포트 5123)에 접속하지 않는다.
-    /// 앱은 페이지 안의 함수를 직접 호출하며, 전역 객체와 Nuxt 서비스의 차이는 JS 어댑터가 맡는다.
+    /// 앱은 페이지 안의 입력 경로를 직접 호출하며, 사이트 판마다 다른 경로의 차이는 JS 어댑터가 맡는다.
     ///
     /// 동작 원리 (WebElementsControl과 같은 방식):
     /// 1. 상태 확인에 응답하지 않으면 INIT_SCRIPT로 window.tanukiPilot 복구
@@ -23,10 +23,11 @@ namespace TanukiTarkovMap.Models.JavaScript
         public static string INIT_SCRIPT => JavaScriptLoader.Load("pilot-bridge.js");
 
         public const string IS_INSTALLED_SCRIPT =
-            "window.tanukiPilot?.version === 3 && typeof window.tanukiPilot.sendScreenshot === 'function' " +
+            "window.tanukiPilot?.version === 4 && typeof window.tanukiPilot.sendScreenshot === 'function' " +
             "&& typeof window.tanukiPilot.isReady === 'function' && typeof window.tanukiPilot.status === 'function' " +
             "&& typeof window.tanukiPilot.getMapHeading === 'function' " +
-            "&& typeof window.tanukiPilot.isRendered === 'function';";
+            "&& typeof window.tanukiPilot.isRendered === 'function' " +
+            "&& typeof window.tanukiPilot.revealPosition === 'function';";
         public const string STATUS_SCRIPT = "window.tanukiPilot?.status() ?? 'bridge-unavailable';";
 
         /// <summary>

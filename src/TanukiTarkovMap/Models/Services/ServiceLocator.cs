@@ -1,6 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
 using Siakun.AutoUpdate;
-using TanukiTarkovMap.Models.Offline;
 using TanukiTarkovMap.ViewModels;
 
 namespace TanukiTarkovMap.Models.Services
@@ -31,7 +30,6 @@ namespace TanukiTarkovMap.Models.Services
             services.AddSingleton(_ => new HotkeyService());
             services.AddSingleton(_ => new GoonTrackerService());
             services.AddSingleton(_ => UpdateServiceFactory.Create());
-            services.AddSingleton(_ => new MapArchive());
 
             // ViewModels 등록
             services.AddTransient<MainWindowViewModel>();
@@ -40,14 +38,6 @@ namespace TanukiTarkovMap.Models.Services
         }
 
         #region Service Accessors (Static)
-        /// <summary>
-        /// MapArchive 싱글톤 인스턴스 (오프라인 맵 사본)
-        /// </summary>
-        public static MapArchive MapArchive
-            => _serviceProvider?.GetRequiredService<MapArchive>()
-               ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
-
-
         /// <summary>
         /// BrowserUIService 싱글톤 인스턴스
         /// </summary>

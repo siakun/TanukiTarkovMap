@@ -20,20 +20,24 @@
   "levels": [
     {
       "id": "main",
-      "label": "지상",
       "sourceLevel": 1,
-      "terrainGroupId": "main",
-      "defaultVisible": true
+      "label": "main",
+      "defaultVisible": true,
+      "terrainGroupId": "main"
     }
   ],
   "source": {
     "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/labyrinth",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
-    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
-    "terrainUrl": "https://tarkov-market.com/_nuxt3/BE5GWKlq.js",
-    "terrainBlob": "ee85036a9cdd5da4b843f2e6262fd6c11f229a03",
+    "collectedAt": "2026-10-07T16:41:53.870Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=labyrinth&bundle=1",
+    "documentHash": "6fae15c671bcd4c59c4baeb9cb662dac",
+    "documentSha256": "f7c67bd31ced7cb3e40a1a69330df1bc1cd212ffb75a69bb6314d014bde88324",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "coordinateFormula": {
       "rotation": "-transform.rotate degrees",
       "mapX": "xOffset - rotatedX * ratio",
@@ -44,6 +48,48 @@
       "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
       "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
       "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
-    }
+    },
+    "coordinateChecks": [
+      {
+        "game": {
+          "x": 0,
+          "y": 0
+        },
+        "map": {
+          "x": 1485,
+          "y": 1602
+        }
+      },
+      {
+        "game": {
+          "x": 125.25,
+          "y": -84.875
+        },
+        "map": {
+          "x": 2737.5,
+          "y": 753.25
+        }
+      },
+      {
+        "game": {
+          "x": -313.625,
+          "y": 211.5
+        },
+        "map": {
+          "x": -1651.25,
+          "y": 3717
+        }
+      },
+      {
+        "game": {
+          "x": 1000,
+          "y": 1000
+        },
+        "map": {
+          "x": 11485,
+          "y": 11602
+        }
+      }
+    ]
   }
 }

@@ -59,6 +59,17 @@
   ],
   "markers": [
     {
+      "id": "05072375-fb76-4dae-909e-4fe4da7d0a00",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Smuggler's Path (Co-op)",
+      "levelId": "main",
+      "position": {
+        "x": 2278.6718,
+        "y": 1203.2921
+      }
+    },
+    {
       "id": "05cc7c93-6d1d-4b14-8eee-40ad1e8ae163",
       "category": "extraction",
       "subtype": "transit",
@@ -70,28 +81,6 @@
       }
     },
     {
-      "id": "4fcbfffe-6b44-43e6-9377-24614796cff3",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Icebreaker",
-      "levelId": "main",
-      "position": {
-        "x": 1883.4681,
-        "y": 1979.391
-      }
-    },
-    {
-      "id": "afbea725-2d1d-4276-a994-1f52276d51be",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Labyrinth",
-      "levelId": "basement",
-      "position": {
-        "x": 1764.2248,
-        "y": 1374.1344
-      }
-    },
-    {
       "id": "07d7a578-6fe7-4725-be18-bf8d11e388d5",
       "category": "extraction",
       "subtype": "pmc",
@@ -100,83 +89,6 @@
       "position": {
         "x": 1959.5871,
         "y": 1071.3924
-      }
-    },
-    {
-      "id": "30eb4935-9544-47ff-9f6d-a97e4bba84f8",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Tunnel",
-      "levelId": "main",
-      "position": {
-        "x": 1186.4682,
-        "y": 1759.1509
-      }
-    },
-    {
-      "id": "3309ee9d-17c1-45a2-84c0-b6d2ddfdf12c",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Road to Customs",
-      "levelId": "main",
-      "position": {
-        "x": 2424.5952,
-        "y": 1456.0439
-      }
-    },
-    {
-      "id": "331f7a0b-38e1-4d65-939e-65335ab8d063",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Path to Lighthouse",
-      "levelId": "main",
-      "position": {
-        "x": 1135.1486,
-        "y": 1209.3132
-      }
-    },
-    {
-      "id": "419feb99-0691-431f-9d0a-c5dec9c62041",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Pier Boat",
-      "levelId": "main",
-      "position": {
-        "x": 1909.0212,
-        "y": 2021.8759
-      }
-    },
-    {
-      "id": "865917c8-52eb-4d51-a4a9-2ed526b33803",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Road to North V-Ex (Paid)",
-      "levelId": "main",
-      "position": {
-        "x": 2112.6068,
-        "y": 1072.7987
-      }
-    },
-    {
-      "id": "c860e10b-4310-43ec-9b5f-db7531f6d9db",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Railway Bridge",
-      "levelId": "main",
-      "position": {
-        "x": 2593.6635,
-        "y": 1760.9757
-      }
-    },
-    {
-      "id": "eb4d75e9-1852-4515-b1a6-04728167edeb",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Climber's Trail",
-      "levelId": "main",
-      "position": {
-        "x": 1794.197,
-        "y": 1098.2366
       }
     },
     {
@@ -202,6 +114,39 @@
       }
     },
     {
+      "id": "30eb4935-9544-47ff-9f6d-a97e4bba84f8",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Tunnel",
+      "levelId": "main",
+      "position": {
+        "x": 1214.71,
+        "y": 1784.97
+      }
+    },
+    {
+      "id": "3309ee9d-17c1-45a2-84c0-b6d2ddfdf12c",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to Customs",
+      "levelId": "main",
+      "position": {
+        "x": 2424.5952,
+        "y": 1456.0439
+      }
+    },
+    {
+      "id": "331f7a0b-38e1-4d65-939e-65335ab8d063",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Path to Lighthouse",
+      "levelId": "main",
+      "position": {
+        "x": 1135.1486,
+        "y": 1209.3132
+      }
+    },
+    {
       "id": "366d7779-7ab3-4d0d-93b0-53df2c0b715f",
       "category": "extraction",
       "subtype": "scav",
@@ -210,6 +155,28 @@
       "position": {
         "x": 2422.3562,
         "y": 1459.1215
+      }
+    },
+    {
+      "id": "419feb99-0691-431f-9d0a-c5dec9c62041",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Pier Boat",
+      "levelId": "main",
+      "position": {
+        "x": 1909.0212,
+        "y": 2021.8759
+      }
+    },
+    {
+      "id": "4fcbfffe-6b44-43e6-9377-24614796cff3",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Icebreaker",
+      "levelId": "main",
+      "position": {
+        "x": 1883.4681,
+        "y": 1979.391
       }
     },
     {
@@ -224,6 +191,28 @@
       }
     },
     {
+      "id": "865917c8-52eb-4d51-a4a9-2ed526b33803",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Road to North V-Ex (Paid)",
+      "levelId": "main",
+      "position": {
+        "x": 2112.6068,
+        "y": 1072.7987
+      }
+    },
+    {
+      "id": "afbea725-2d1d-4276-a994-1f52276d51be",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Labyrinth",
+      "levelId": "basement",
+      "position": {
+        "x": 1764.2248,
+        "y": 1374.1344
+      }
+    },
+    {
       "id": "be8f2185-c852-4310-b047-eaff9bed3fa9",
       "category": "extraction",
       "subtype": "scav",
@@ -232,6 +221,28 @@
       "position": {
         "x": 2028.3071,
         "y": 2019.5537
+      }
+    },
+    {
+      "id": "c860e10b-4310-43ec-9b5f-db7531f6d9db",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Railway Bridge",
+      "levelId": "main",
+      "position": {
+        "x": 2593.6635,
+        "y": 1760.9757
+      }
+    },
+    {
+      "id": "eb4d75e9-1852-4515-b1a6-04728167edeb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Climber's Trail",
+      "levelId": "main",
+      "position": {
+        "x": 1794.197,
+        "y": 1098.2366
       }
     },
     {
@@ -244,29 +255,20 @@
         "x": 1816.9436,
         "y": 1297.2791
       }
-    },
-    {
-      "id": "05072375-fb76-4dae-909e-4fe4da7d0a00",
-      "category": "extraction",
-      "subtype": "co-op",
-      "name": "Smuggler's Path (Co-op)",
-      "levelId": "main",
-      "position": {
-        "x": 2278.6718,
-        "y": 1203.2921
-      }
     }
   ],
   "source": {
+    "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/shoreline",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "b93a02cfe9388bb3748e1e2b5bd6d13676d5f239",
-    "markerResponse": {
-      "url": "https://tarkov-market.com/api/be/markers/list",
-      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
-    },
-    "markerState": "$nuxt.payload.state.$squestsState.markers",
-    "categoryState": "MapLeftPanel.props.categories",
+    "collectedAt": "2026-10-07T16:41:42.509Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=shoreline&bundle=1",
+    "documentHash": "1fd2e9a9f549927fdd7d9e6573dcfd2b",
+    "documentSha256": "1648d5093b88446d23b482605551965a25f0915cbc8d089dbe1d17737fd16a7e",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "listedCounts": {
       "extraction": {
         "transit": 3,
@@ -275,6 +277,7 @@
         "co-op": 1
       }
     },
-    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+    "mapPosition": "Observed page gamePosToMapPos(geometry.x, geometry.y)",
+    "markerSha256": "447e81a828e7ba29734936c810e24c40e05f835cdd99c2c9882d64e1597d0c2c"
   }
 }

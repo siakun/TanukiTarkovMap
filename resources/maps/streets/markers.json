@@ -59,36 +59,14 @@
   ],
   "markers": [
     {
-      "id": "7604a876-3781-4f1b-b490-bd04c62f9cb0",
+      "id": "06e21bb5-82d3-4ba7-9dd6-25d59668b143",
       "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Interchange",
+      "subtype": "co-op",
+      "name": "Pinewood Basement (Co-Op)",
       "levelId": "main",
       "position": {
-        "x": 1081.4474,
-        "y": 2414.8548
-      }
-    },
-    {
-      "id": "b99a3faf-2961-4377-a9c9-c3f666837900",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Ground Zero",
-      "levelId": "main",
-      "position": {
-        "x": 2181.1704,
-        "y": 1635.1028
-      }
-    },
-    {
-      "id": "c339f3bb-57b5-4436-ae1c-992c49d1e912",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to The Lab",
-      "levelId": "main",
-      "position": {
-        "x": 1240.2492,
-        "y": 1580.199
+        "x": 1878.7554,
+        "y": 1542.8436
       }
     },
     {
@@ -96,7 +74,7 @@
       "category": "extraction",
       "subtype": "pmc",
       "name": "Stylobate Building Elevator",
-      "levelId": "main",
+      "levelId": "level3",
       "position": {
         "x": 1760.687,
         "y": 1260.8048
@@ -111,6 +89,17 @@
       "position": {
         "x": 2158.3024,
         "y": 2107.1946
+      }
+    },
+    {
+      "id": "3dfdaa13-fc46-407f-b916-5a1689f19a41",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Cardinal Apartment Complex Parking",
+      "levelId": "main",
+      "position": {
+        "x": 1465.9354,
+        "y": 1101.0884
       }
     },
     {
@@ -169,50 +158,6 @@
       }
     },
     {
-      "id": "8ecc914d-0261-4682-a106-be8e3cd62fbb",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Crash Site",
-      "levelId": "main",
-      "position": {
-        "x": 1041.2032,
-        "y": 2240.5368
-      }
-    },
-    {
-      "id": "a8ff3fe5-5151-4d1c-9f99-5f4a7a05e7b1",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Smugglers' Basement (Secret)",
-      "levelId": "main",
-      "position": {
-        "x": 1509.8512,
-        "y": 1516.1236
-      }
-    },
-    {
-      "id": "f9ce997b-6f19-4936-9a3a-b59c9dd56cb2",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Sewer River",
-      "levelId": "main",
-      "position": {
-        "x": 2163.1108,
-        "y": 1830.5814
-      }
-    },
-    {
-      "id": "3dfdaa13-fc46-407f-b916-5a1689f19a41",
-      "category": "extraction",
-      "subtype": "scav",
-      "name": "Cardinal Apartment Complex Parking",
-      "levelId": "main",
-      "position": {
-        "x": 1465.9354,
-        "y": 1101.0884
-      }
-    },
-    {
       "id": "51772f5d-83f0-4a43-97db-c71550e34884",
       "category": "extraction",
       "subtype": "scav",
@@ -257,6 +202,61 @@
       }
     },
     {
+      "id": "7604a876-3781-4f1b-b490-bd04c62f9cb0",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Interchange",
+      "levelId": "main",
+      "position": {
+        "x": 1081.4474,
+        "y": 2414.8548
+      }
+    },
+    {
+      "id": "8ecc914d-0261-4682-a106-be8e3cd62fbb",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Crash Site",
+      "levelId": "main",
+      "position": {
+        "x": 1041.2032,
+        "y": 2240.5368
+      }
+    },
+    {
+      "id": "a8ff3fe5-5151-4d1c-9f99-5f4a7a05e7b1",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Smugglers' Basement (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1509.8512,
+        "y": 1516.1236
+      }
+    },
+    {
+      "id": "b99a3faf-2961-4377-a9c9-c3f666837900",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Ground Zero",
+      "levelId": "main",
+      "position": {
+        "x": 2181.1704,
+        "y": 1635.1028
+      }
+    },
+    {
+      "id": "c339f3bb-57b5-4436-ae1c-992c49d1e912",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to The Lab",
+      "levelId": "main",
+      "position": {
+        "x": 1240.2492,
+        "y": 1580.199
+      }
+    },
+    {
       "id": "da4ed7fe-06d3-4e3e-82dc-88a2eed62c61",
       "category": "extraction",
       "subtype": "scav",
@@ -265,6 +265,17 @@
       "position": {
         "x": 2159.5422,
         "y": 1903.7644
+      }
+    },
+    {
+      "id": "f9ce997b-6f19-4936-9a3a-b59c9dd56cb2",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Sewer River",
+      "levelId": "main",
+      "position": {
+        "x": 2163.1108,
+        "y": 1830.5814
       }
     },
     {
@@ -277,29 +288,20 @@
         "x": 1988.4874,
         "y": 1386.3376
       }
-    },
-    {
-      "id": "06e21bb5-82d3-4ba7-9dd6-25d59668b143",
-      "category": "extraction",
-      "subtype": "co-op",
-      "name": "Pinewood Basement (Co-Op)",
-      "levelId": "main",
-      "position": {
-        "x": 1878.7554,
-        "y": 1542.8436
-      }
     }
   ],
   "source": {
+    "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/streets",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "545ab10529bb2226111d1a1c694ef9ae4d96f107",
-    "markerResponse": {
-      "url": "https://tarkov-market.com/api/be/markers/list",
-      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
-    },
-    "markerState": "$nuxt.payload.state.$squestsState.markers",
-    "categoryState": "MapLeftPanel.props.categories",
+    "collectedAt": "2026-10-07T16:41:49.649Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=streets&bundle=1",
+    "documentHash": "6ee4d557eed73c8f89d4e57eea746e35",
+    "documentSha256": "ec92386394596393b12d14e7a688907f217aab4906d57eb7266e0636ccd87a22",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "listedCounts": {
       "extraction": {
         "transit": 3,
@@ -308,6 +310,7 @@
         "co-op": 1
       }
     },
-    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+    "mapPosition": "Observed page gamePosToMapPos(geometry.x, geometry.y)",
+    "markerSha256": "42c468e157abe5947e984d5fb0ce51af11acc03e73e3557c2d12e1e79c7d0a45"
   }
 }

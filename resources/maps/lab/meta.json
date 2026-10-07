@@ -20,34 +20,50 @@
   "levels": [
     {
       "id": "level2",
-      "label": "Level 2",
       "sourceLevel": 2,
+      "label": "Level 2",
+      "defaultVisible": false,
       "terrainGroupId": "level2",
-      "defaultVisible": false
+      "height": [
+        4,
+        20
+      ]
     },
     {
       "id": "main",
-      "label": "Main",
       "sourceLevel": 1,
+      "label": "Main",
+      "defaultVisible": true,
       "terrainGroupId": "main",
-      "defaultVisible": true
+      "height": [
+        -0.5,
+        4
+      ]
     },
     {
       "id": "basement",
-      "label": "Basement",
       "sourceLevel": -1,
+      "label": "Basement",
+      "defaultVisible": false,
       "terrainGroupId": "basement",
-      "defaultVisible": false
+      "height": [
+        -20,
+        -0.5
+      ]
     }
   ],
   "source": {
     "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/lab",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
-    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
-    "terrainUrl": "https://tarkov-market.com/_nuxt3/By0Mgzg2.js",
-    "terrainBlob": "e82bbb614745b264a4975f925bea368313da982a",
+    "collectedAt": "2026-10-07T16:41:51.644Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=lab&bundle=1",
+    "documentHash": "44cafa551f1b75fd86304ead304e3cfb",
+    "documentSha256": "ad530a8bd45cbaed11304b732d75987c85db398ae82ffd06cd50e906c3accffe",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "coordinateFormula": {
       "rotation": "-transform.rotate degrees",
       "mapX": "xOffset - rotatedX * ratio",
@@ -58,6 +74,48 @@
       "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
       "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
       "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
-    }
+    },
+    "coordinateChecks": [
+      {
+        "game": {
+          "x": 0,
+          "y": 0
+        },
+        "map": {
+          "x": 6100,
+          "y": 4050
+        }
+      },
+      {
+        "game": {
+          "x": 125.25,
+          "y": -84.875
+        },
+        "map": {
+          "x": 7352.5,
+          "y": 3201.25
+        }
+      },
+      {
+        "game": {
+          "x": -313.625,
+          "y": 211.5
+        },
+        "map": {
+          "x": 2963.75,
+          "y": 6165
+        }
+      },
+      {
+        "game": {
+          "x": 1000,
+          "y": 1000
+        },
+        "map": {
+          "x": 16100,
+          "y": 14050
+        }
+      }
+    ]
   }
 }

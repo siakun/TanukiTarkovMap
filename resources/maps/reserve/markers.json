@@ -59,6 +59,17 @@
   ],
   "markers": [
     {
+      "id": "1728f410-82c4-4b5d-b8b9-a44f4a2a033d",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Armored Train",
+      "levelId": "main",
+      "position": {
+        "x": 1280.2898,
+        "y": 1306.0236
+      }
+    },
+    {
       "id": "1efe7bd1-0f22-4422-b01e-088b0699bd70",
       "category": "extraction",
       "subtype": "transit",
@@ -81,28 +92,6 @@
       }
     },
     {
-      "id": "f490dbe7-bd93-4e1e-9580-ddb9f9ba1c48",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to Woods",
-      "levelId": "main",
-      "position": {
-        "x": 1083.7752,
-        "y": 1249.0802
-      }
-    },
-    {
-      "id": "1728f410-82c4-4b5d-b8b9-a44f4a2a033d",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Armored Train",
-      "levelId": "main",
-      "position": {
-        "x": 1280.2898,
-        "y": 1306.0236
-      }
-    },
-    {
       "id": "50b34bf8-302c-4c62-a07e-76fd8d138b9e",
       "category": "extraction",
       "subtype": "pmc",
@@ -111,50 +100,6 @@
       "position": {
         "x": 1728.3462,
         "y": 1918.884
-      }
-    },
-    {
-      "id": "5612b045-32d5-444a-8cf7-574e4c083c58",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Sewer Manhole",
-      "levelId": "main",
-      "position": {
-        "x": 1560.9912,
-        "y": 1688.4846
-      }
-    },
-    {
-      "id": "70cc2d6c-ef46-42f4-8002-d4a751fe6869",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Exit to Woods (Secret)",
-      "levelId": "main",
-      "position": {
-        "x": 1417.7522,
-        "y": 1100.3724
-      }
-    },
-    {
-      "id": "9ad7cc89-8e65-4d45-8a42-1e0a35f6a566",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Bunker Hermetic Door",
-      "levelId": "bunker",
-      "position": {
-        "x": 1375.1862,
-        "y": 1072.2352
-      }
-    },
-    {
-      "id": "bb955cf1-8710-48af-8414-27c3d4acad00",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "D-2",
-      "levelId": "bunker",
-      "position": {
-        "x": 1921.9434,
-        "y": 1786.2834
       }
     },
     {
@@ -169,6 +114,17 @@
       }
     },
     {
+      "id": "5612b045-32d5-444a-8cf7-574e4c083c58",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Sewer Manhole",
+      "levelId": "main",
+      "position": {
+        "x": 1560.9912,
+        "y": 1688.4846
+      }
+    },
+    {
       "id": "608bb75f-4603-4c06-a629-ed9aea9ee0ba",
       "category": "extraction",
       "subtype": "scav",
@@ -180,6 +136,17 @@
       }
     },
     {
+      "id": "70cc2d6c-ef46-42f4-8002-d4a751fe6869",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Exit to Woods (Secret)",
+      "levelId": "main",
+      "position": {
+        "x": 1417.7522,
+        "y": 1100.3724
+      }
+    },
+    {
       "id": "934ae5b1-e079-4de3-b735-92917f38f5c5",
       "category": "extraction",
       "subtype": "scav",
@@ -188,6 +155,17 @@
       "position": {
         "x": 1578.7492,
         "y": 1155.3986
+      }
+    },
+    {
+      "id": "9ad7cc89-8e65-4d45-8a42-1e0a35f6a566",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Bunker Hermetic Door",
+      "levelId": "bunker",
+      "position": {
+        "x": 1375.1862,
+        "y": 1072.2352
       }
     },
     {
@@ -213,6 +191,28 @@
       }
     },
     {
+      "id": "bb955cf1-8710-48af-8414-27c3d4acad00",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "D-2",
+      "levelId": "bunker",
+      "position": {
+        "x": 1921.9434,
+        "y": 1786.2834
+      }
+    },
+    {
+      "id": "c141fba9-207d-4a37-87f4-0bb5a34bde39",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Scav Lands (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 1770.4034,
+        "y": 1187.4276
+      }
+    },
+    {
       "id": "cce35541-6598-4562-a7a5-0ebb540b7e0f",
       "category": "extraction",
       "subtype": "scav",
@@ -235,6 +235,17 @@
       }
     },
     {
+      "id": "f490dbe7-bd93-4e1e-9580-ddb9f9ba1c48",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to Woods",
+      "levelId": "main",
+      "position": {
+        "x": 1083.7752,
+        "y": 1249.0802
+      }
+    },
+    {
       "id": "f905705b-c531-415d-87f5-3981a51590fe",
       "category": "extraction",
       "subtype": "scav",
@@ -244,29 +255,20 @@
         "x": 2124.4576,
         "y": 1477.5368
       }
-    },
-    {
-      "id": "c141fba9-207d-4a37-87f4-0bb5a34bde39",
-      "category": "extraction",
-      "subtype": "co-op",
-      "name": "Scav Lands (Co-Op)",
-      "levelId": "main",
-      "position": {
-        "x": 1770.4034,
-        "y": 1187.4276
-      }
     }
   ],
   "source": {
+    "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/reserve",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "ac65a0707cb4dc199127fc20d9943418bbcc4c8a",
-    "markerResponse": {
-      "url": "https://tarkov-market.com/api/be/markers/list",
-      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
-    },
-    "markerState": "$nuxt.payload.state.$squestsState.markers",
-    "categoryState": "MapLeftPanel.props.categories",
+    "collectedAt": "2026-10-07T16:41:44.886Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=reserve&bundle=1",
+    "documentHash": "edf1e7685a35269792b9c58715ec2894",
+    "documentSha256": "3c1c2511907579d60a72a4f90aabad409bfbe15cb5778e7d3bd960559c022bb2",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "listedCounts": {
       "extraction": {
         "transit": 3,
@@ -275,6 +277,7 @@
         "co-op": 1
       }
     },
-    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+    "mapPosition": "Observed page gamePosToMapPos(geometry.x, geometry.y)",
+    "markerSha256": "39def1768cabca5dc28e36c3774c0e86cef7025ffc4e048adda830fe1d0d918b"
   }
 }

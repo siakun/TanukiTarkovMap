@@ -259,7 +259,7 @@
                             </Grid>
                         </Border>
 
-                        <!-- Online/Local 전환 (실험적 기능을 켜고 사본이 있을 때만 보인다) -->
+                        <!-- Online/Local 전환 (설정의 "로컬 맵 사용"을 켰을 때 보인다) -->
                         <Border Margin="8,0,0,0"
                                 Background="#FF3A3A3A"
                                 CornerRadius="3"
@@ -295,7 +295,7 @@
                                         CornerRadius="0,3,3,0"
                                         Padding="6,0"
                                         Cursor="Hand"
-                                        ToolTip="앱에 담긴 사본으로 엽니다. 사이트가 죽어 있어도 맵과 위치가 동작합니다">
+                                        ToolTip="앱에 담긴 지도로 엽니다. 사이트가 바뀌거나 죽어 있어도 위치와 방향이 동작합니다">
                                     <Border.InputBindings>
                                         <MouseBinding MouseAction="LeftClick"
                                                       Command="{Binding SetLocalMapModeCommand}"

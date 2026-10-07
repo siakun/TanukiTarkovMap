@@ -1,4 +1,4 @@
-name: Verify map recovery
+name: Verify map behavior
 
 on:
   pull_request:
@@ -11,7 +11,7 @@ permissions:
 jobs:
   verify:
     runs-on: windows-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -20,9 +20,20 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
+      # INTENT: Local 미니맵이 읽는 지도 리소스가 계약(meta, markers, 층 높이와 구역)을 지키는지,
+      # 변환기가 잘못된 입력을 조용히 통과시키지 않는지 먼저 본다.
+      - name: Verify map resources
+        run: node tools/resource-bundle.mjs check resources
+      - name: Verify resource conversion failures
+        run: node --test tools/test-resource-pipeline.mjs
       # INTENT: 함수 존재 검사만 통과하고 실제 위치 표시가 끊기는 변경을 배포 전에 잡는다.
       # 브라우저는 임시 프로필에서 headless로 실행하며 앱과 게임은 실행하지 않는다.
-      - name: Verify script recovery and archived maps
-        run: node tools/verify-map-recovery.mjs --archive archive
+      # 지금 온라인 사이트와의 호환은 네트워크와 봇 확인 때문에 여기서 보지 않는다(verify-online.mjs).
+      - name: Verify Online position recovery
+        run: node tools/verify-map-recovery.mjs
+      - name: Verify Online map fit and clamp
+        run: node tools/verify-map-keep-visible.mjs
+      - name: Verify Local minimap
+        run: node tools/verify-viewer.mjs
       - name: Build application without launching
         run: dotnet build src/TanukiTarkovMap.sln -c Release

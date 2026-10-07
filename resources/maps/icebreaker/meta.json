@@ -20,111 +20,171 @@
   "levels": [
     {
       "id": "bridge_roof",
-      "label": "Bridge Roof",
       "sourceLevel": 10,
+      "label": "Bridge Roof",
+      "defaultVisible": false,
       "terrainGroupId": "bridge_roof",
-      "defaultVisible": false
+      "height": [
+        44.5,
+        60
+      ]
     },
     {
       "id": "bridge",
-      "label": "Bridge",
       "sourceLevel": 9,
+      "label": "Bridge",
+      "defaultVisible": false,
       "terrainGroupId": "bridge",
-      "defaultVisible": false
+      "height": [
+        41.2,
+        44.5
+      ]
     },
     {
       "id": "stairs_blocked",
-      "label": "Stairs (blocked)",
       "sourceLevel": 8,
+      "label": "Stairs (blocked)",
+      "defaultVisible": false,
       "terrainGroupId": "stairs_blocked",
-      "defaultVisible": false
+      "height": [
+        38.5,
+        41.2
+      ]
     },
     {
       "id": "officers_deck",
-      "label": "Officers Deck",
       "sourceLevel": 7,
+      "label": "Officers Deck",
+      "defaultVisible": false,
       "terrainGroupId": "officers_deck",
-      "defaultVisible": false
+      "height": [
+        35.8,
+        38.5
+      ]
     },
     {
       "id": "accomodation_6",
-      "label": "Accomodation 3",
       "sourceLevel": 6,
+      "label": "Accomodation 3",
+      "defaultVisible": false,
       "terrainGroupId": "accomodation_6",
-      "defaultVisible": false
+      "height": [
+        33,
+        35.8
+      ]
     },
     {
       "id": "accomodation_5",
-      "label": "Accomodation 2",
       "sourceLevel": 5,
+      "label": "Accomodation 2",
+      "defaultVisible": false,
       "terrainGroupId": "accomodation_5",
-      "defaultVisible": false
+      "height": [
+        30.4,
+        33
+      ]
     },
     {
       "id": "accomodation_4",
-      "label": "Accomodation 1",
       "sourceLevel": 4,
+      "label": "Accomodation 1",
+      "defaultVisible": false,
       "terrainGroupId": "accomodation_4",
-      "defaultVisible": false
+      "height": [
+        27.7,
+        30.4
+      ]
     },
     {
       "id": "gym_canteen",
-      "label": "Gym / Canteen",
       "sourceLevel": 3,
+      "label": "Gym / Canteen",
+      "defaultVisible": false,
       "terrainGroupId": "gym_canteen",
-      "defaultVisible": false
+      "height": [
+        25,
+        27.7
+      ]
     },
     {
       "id": "helipad",
-      "label": "Helipad",
       "sourceLevel": 2,
+      "label": "Helipad",
+      "defaultVisible": false,
       "terrainGroupId": "helipad",
-      "defaultVisible": false
+      "height": [
+        22.3,
+        25
+      ]
     },
     {
       "id": "main_infirmary",
-      "label": "Main - Infirmary",
       "sourceLevel": 1,
+      "label": "Main - Infirmary",
+      "defaultVisible": true,
       "terrainGroupId": "main_infirmary",
-      "defaultVisible": true
+      "height": [
+        19.1,
+        22.3
+      ]
     },
     {
       "id": "storage_security",
-      "label": "Storage & Security",
       "sourceLevel": 0,
+      "label": "Storage & Security",
+      "defaultVisible": false,
       "terrainGroupId": "storage_security",
-      "defaultVisible": false
+      "height": [
+        16.9,
+        19.1
+      ]
     },
     {
       "id": "fuel_pumps",
-      "label": "Fuel Pumps",
       "sourceLevel": -1,
+      "label": "Fuel Pumps",
+      "defaultVisible": false,
       "terrainGroupId": "fuel_pumps",
-      "defaultVisible": false
+      "height": [
+        14.2,
+        16.9
+      ]
     },
     {
       "id": "engine_room",
-      "label": "Engine Room",
       "sourceLevel": -2,
+      "label": "Engine Room",
+      "defaultVisible": false,
       "terrainGroupId": "engine_room",
-      "defaultVisible": false
+      "height": [
+        11,
+        14.2
+      ]
     },
     {
       "id": "lower_automation",
-      "label": "Lower Automation",
       "sourceLevel": -3,
+      "label": "Lower Automation",
+      "defaultVisible": false,
       "terrainGroupId": "lower_automation",
-      "defaultVisible": false
+      "height": [
+        -10,
+        11
+      ]
     }
   ],
   "source": {
     "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/icebreaker",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
-    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
-    "terrainUrl": "https://tarkov-market.com/_nuxt3/M44xNwy0.js",
-    "terrainBlob": "fc6483253e9ebba1c6da7c6073585237c4554d3a",
+    "collectedAt": "2026-10-07T16:41:55.988Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=icebreaker&bundle=1",
+    "documentHash": "663f6371662a57f48156917776fc3352",
+    "documentSha256": "df681ada3dcd59b96c14a089c52261f4cce0ac386cf6472ac194483e7a2d1ecf",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "coordinateFormula": {
       "rotation": "-transform.rotate degrees",
       "mapX": "xOffset - rotatedX * ratio",
@@ -135,6 +195,48 @@
       "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
       "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
       "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
-    }
+    },
+    "coordinateChecks": [
+      {
+        "game": {
+          "x": 0,
+          "y": 0
+        },
+        "map": {
+          "x": 2500,
+          "y": 4200
+        }
+      },
+      {
+        "game": {
+          "x": 125.25,
+          "y": -84.875
+        },
+        "map": {
+          "x": 4621.875,
+          "y": 7331.25
+        }
+      },
+      {
+        "game": {
+          "x": -313.625,
+          "y": 211.5
+        },
+        "map": {
+          "x": -2787.5,
+          "y": -3640.625
+        }
+      },
+      {
+        "game": {
+          "x": 1000,
+          "y": 1000
+        },
+        "map": {
+          "x": -22500,
+          "y": 29200
+        }
+      }
+    ]
   }
 }

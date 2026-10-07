@@ -40,6 +40,13 @@ if not exist "%RELEASE_NOTES%" (
     exit /b 1
 )
 
+:: INTENT: 기존 출력물을 지우기 전에 Local 미니맵의 지도 리소스와 검사 도구가 동작하는지 확인한다.
+node tools/resource-bundle.mjs check resources
+if !errorlevel! neq 0 (
+    echo [ERROR] Map resources failed verification. Node.js 22 or later is required.
+    exit /b 1
+)
+
 echo Version: %VERSION%
 echo.
 
@@ -62,6 +69,13 @@ dotnet publish "%PROJECT_PATH%" ^
 if !errorlevel! neq 0 (
     echo.
     echo [ERROR] Publish failed!
+    goto :error
+)
+
+:: publish 결과의 LocalMap 폴더에서 미니맵이 뜨는지 확인해 파일이 빠진 패키지를 만들지 않는다.
+node tools/verify-viewer.mjs --root "%PUBLISH_DIR%\LocalMap"
+if !errorlevel! neq 0 (
+    echo [ERROR] Published Local minimap failed verification.
     goto :error
 )
 

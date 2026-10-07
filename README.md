@@ -82,7 +82,8 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 | UI | WPF, MVVM (CommunityToolkit.Mvvm), Microsoft.Xaml.Behaviors |
 | 웹뷰 | CefSharp.Wpf.NETCore (Chromium) |
 | 네이티브 제어 | P/Invoke (user32.dll) |
-| 웹 연동 | CefSharp JavaScript 주입 (window.pilot 브리지) |
+| 웹 연동 | CefSharp JavaScript 주입 (Pilot 브리지) |
+| 로컬 지도 | SVG와 ES 모듈 미니맵, CefSharp 폴더 응답 처리기 |
 | DI | Microsoft.Extensions.DependencyInjection |
 | 트레이 | Hardcodet.NotifyIcon.Wpf |
 | 배포, 자동 업데이트 | Velopack, Siakun.AutoUpdate, GitHub Actions |
@@ -111,21 +112,19 @@ Escape from Tarkov은 인게임에서 스크린샷을 찍으면 파일명에 플
 
 스크린샷 폴더를 `FileSystemWatcher`로 실시간 감시하다가 새 파일이 생기면, 파일명을 내장 브라우저의 Pilot 브리지에 전달합니다. 브리지는 파일명에서 좌표와 회전값을 읽고 사이트의 지도 기능으로 위치를 표시합니다. 게임 로그도 함께 감시(`LogsWatcher`)해 플레이어가 입장한 맵을 자동으로 전환합니다.
 
-`PilotBridge`는 페이지에서 사용 가능한 Pilot 서비스를 확인해 좌표를 전달합니다. 이전 `window.pilot` 경로와 Nuxt의 Pilot 서비스를 지원하며, 좌표가 지도에 반영됐는지 확인한 뒤 전달을 마칩니다. 로딩 중 놓친 최신 입력은 다시 보내고, 새로고침이나 페이지 이동으로 사라진 방향 스크립트도 복구합니다.
+`PilotBridge`는 페이지에 실제로 있는 위치 입력 경로를 찾아 좌표를 전달합니다. 이전 `window.pilot` 경로, Nuxt의 Pilot 서비스, 그리고 둘이 사라진 뒤의 "Where am i" 입력 처리기를 지원하며, 좌표가 지도에 반영됐는지 확인한 뒤 전달을 마칩니다. 로딩 중 놓친 최신 입력은 다시 보내고, 새로고침이나 페이지 이동으로 사라진 방향 스크립트도 복구합니다.
 
 2026-08-17까지는 앱 안에서 ASP.NET Core Kestrel로 포트 `5123`에 WebSocket 서버를 띄우고, 사이트가 그 서버에 접속해 파일명을 받아 갔습니다. 같은 날 tarkov-market이 Pilot v2를 배포하면서 사이트가 로컬 앱 대신 자기 서버(`wss://tarkov-market.com/ws/pilot`)로만 붙게 바뀌어, 서버를 띄워도 접속하는 클라이언트가 없어졌습니다. 서버 중계 규약을 따라가려면 계정 인증까지 구현해야 하는데 `window.pilot`은 그것 없이 같은 일을 하므로, WebSocket 서버와 ASP.NET Core 의존을 걷어내고 브리지 호출로 갈아탔습니다. 진단 근거와 버린 대안, 사이트 변경을 알아차리는 방법은 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에 정리했습니다.
 
+2026-10-07에는 사이트가 `window.pilot`의 위치 함수와 Pilot 서비스의 위치 입력을 모두 없앴습니다. 남은 것은 사용자가 스크린샷 파일명을 붙여 넣는 "Where am i" 입력뿐이었으므로, 브리지가 화면에 렌더 중인 Vue 컴포넌트에서 그 입력의 처리기를 찾아 같은 파일명을 넘기게 했습니다. 압축된 번들의 함수 이름은 배포마다 바뀌지만 템플릿의 prop 이름은 남는다는 점을 이용했습니다.
+
 ### 4. 오프라인 맵 (실험적 기능)
 
-설정에서 "로컬 맵 사용"을 켜면 상단 바에 Online/Local 전환이 생깁니다. Local은 사이트에 접속하지 않고 앱에 담긴 사본으로 맵을 엽니다. 지도와 Levels, 선택한 진영의 추출구, 현재 위치와 방향만 남기므로 사이트가 죽어 있어도 레이드에 필요한 정보가 동작합니다.
+설정에서 "로컬 맵 사용"을 켜면 상단 바에 Online/Local 전환이 생깁니다. Local은 사이트에 접속하지 않고 앱에 담긴 지도 데이터로 맵을 엽니다. 지도와 층, 선택한 진영의 추출구, 현재 위치와 방향만 남기므로 사이트가 죽어 있거나 사이트의 위치 입력이 바뀌어도 레이드에 필요한 정보가 동작합니다.
 
-사본은 `tools/archive-maps.mjs`가 실제 브라우저로 맵 페이지를 열어 받은 응답을 저장한 것이고, 앱은 CefSharp의 요청 가로채기로 그 응답을 돌려줍니다. 주소는 온라인과 같지만 Local은 독립된 임시 저장 공간에서 열어 온라인의 DB와 캐시가 사본에 섞이지 않게 합니다. 모드를 전환하면 같은 맵을 다시 열고 마지막 위치를 전달하며, 앱의 진영과 확대 설정도 다시 적용합니다. 브라우저의 방문 기록과 Local 페이지 안에서만 저장한 설정은 전환할 때 초기화됩니다. 설계 근거와 한계는 [오프라인 맵 설계](docs/20260818-offline-map.md)에 정리했습니다.
+처음에는 사이트가 내려보낸 응답을 통째로 저장한 사본을 요청 가로채기로 돌려줬습니다. 동작은 했지만 사본이 압축된 번들 덩어리라 무엇이 들었는지 읽을 수 없었고, 사이트가 구조를 바꾸면 통째로 다시 받는 것 말고는 방법이 없었습니다. 지금은 사이트의 지도 문서만 수집해 SVG와 JSON(`resources/`)으로 변환하고, 앱에 포함한 미니맵(`viewer/`)이 사이트의 지도 화면과 같은 모양으로 그립니다. 변환한 SVG는 수집한 사이트 렌더러로 그린 결과와 층마다 픽셀로 대조하고, 좌표 변환은 사이트가 계산한 값과 비교해 검증합니다.
 
-사이트 사본을 읽을 수 있는 SVG와 JSON으로 바꾸는 자체 뷰어는 `resources/`와 `viewer/`에 독립
-구현으로 마련했습니다. 현재 위치와 방향, PMC/SCAV별 추출구를 지원하는 전체 맵 리소스도 사본에서
-다시 만들고 검사할 수 있습니다. 아직 앱의 로컬 모드에는 연결하지 않았으므로 위 동작은 바뀌지
-않습니다. 전환 단계와 완료 기준은 [로컬 맵 뷰어 재구성 설계](docs/20260821-local-viewer-design.md)에
-있습니다.
+Local은 독립된 임시 저장 공간에서 열어 온라인의 DB와 캐시가 섞이지 않게 합니다. 모드를 전환하면 같은 맵을 다시 열고 마지막 위치를 전달하며, 앱의 진영, 확대와 UI 숨김 설정도 다시 적용합니다. 설계 근거와 한계는 [로컬 맵 뷰어 설계](docs/20260821-local-viewer-design.md)에 정리했습니다.
 
 ### 5. 게임 로그 파싱으로 자동 맵 전환
 
@@ -161,12 +160,13 @@ scene preset 줄 감지
 
 <!-- INTENT: 수정 직후 수동 확인에 그치지 않고, 사이트 접속 여부와 무관하게 같은 실패 조건을 다시 검사할 경로를 남긴다. -->
 위치 및 방향 연동을 수정한 뒤에는 Node 22 이상과 Chromium 계열 브라우저가 설치된 환경에서
-`node tools/verify-map-recovery.mjs --archive archive`를 실행합니다. 브라우저는 창 없이 임시
-프로필에서 실행되며, 재현 페이지의 복구 동작과 네트워크를 차단한 지도 사본을 검사합니다.
-이 검사는 PR과 릴리스에서도 실행되고, 실패하면 배포가 중단됩니다. 실제 게임에서의 창 순서와
-포커스, WPF에서의 모드 전환은 별도로 확인해야 합니다.
+`node tools/verify-map-recovery.mjs`를 실행합니다. 브라우저는 창 없이 임시 프로필에서 실행되며,
+사이트가 판마다 바꾼 위치 입력 경로와 복구 동작을 재현 페이지로 검사합니다. 지도 맞춤
+(`verify-map-keep-visible.mjs`)과 Local 미니맵(`verify-viewer.mjs`) 검사와 함께 PR과 릴리스에서도
+실행되고, 실패하면 배포가 중단됩니다. 지금 온라인 사이트와의 호환은 `node tools/verify-online.mjs`로
+따로 확인합니다. 실제 게임에서의 창 순서와 포커스, WPF에서의 모드 전환은 별도로 확인해야 합니다.
 
-웹 UI를 앱에 맞게 다듬는 로직은 JavaScript로 주입합니다. `.js` 파일을 Embedded Resource로 묶어 `JavaScriptLoader`로 읽고, 페이지 로드 후 `EvaluateScriptAsync`로 실행합니다(헤더와 푸터 제거, 패널 토글, 위치 마커에 방향 표시 추가 등). 반대로 웹에서 일어난 사건(맵 변경, 연결 상태)은 `postMessage`로 보내 `JavascriptMessageReceived`에서 받고, CommunityToolkit.Mvvm의 `WeakReferenceMessenger`로 ViewModel에 전달합니다. C#과 JS의 경계를 메시지로 느슨하게 연결했습니다. 남의 사이트를 앱 안에서 고쳐 쓸 때 쓰는 기법과 겪은 함정은 [임베디드 웹페이지 제어 레퍼런스](docs/20260818-embedded-site-control.md)에 정리했습니다.
+웹 UI를 앱에 맞게 다듬는 로직은 JavaScript로 주입합니다. `.js` 파일을 Embedded Resource로 묶어 `JavaScriptLoader`로 읽고, 페이지 로드 후 `EvaluateScriptAsync`로 실행합니다(헤더와 푸터 제거, 패널 토글, 위치 마커에 방향 표시 추가 등). 반대로 웹에서 일어난 사건(맵 변경, 연결 상태)은 `postMessage`로 보내 `JavascriptMessageReceived`에서 받고, CommunityToolkit.Mvvm의 `WeakReferenceMessenger`로 ViewModel에 전달합니다. C#과 JS의 경계를 메시지로 느슨하게 연결했습니다. Local 미니맵에는 주입하지 않고 미니맵이 공개한 `window.tanukiViewer`의 함수만 부릅니다. 남의 사이트를 앱 안에서 고쳐 쓸 때 쓰는 기법과 겪은 함정은 [임베디드 웹페이지 제어 레퍼런스](docs/20260818-embedded-site-control.md)에 정리했습니다.
 
 ### 7. MVVM 아키텍처와 DI
 
@@ -208,7 +208,7 @@ Velopack 패키지에 함께 넣습니다. 태그와 프로젝트 버전이 다�
 
 ## 개발 안내
 
-.NET 8 SDK 설치 후 `src` 폴더에서 `dotnet build`로 빌드할 수 있습니다. 아키텍처와 설계 등 개발 관련 내용은 [`PROJECT.md`](PROJECT.md)를 참고하세요.
+.NET 8 SDK 설치 후 `src` 폴더에서 `dotnet build`로 빌드할 수 있습니다. 리소스 검사와 `build.bat` 패키징에는 Node 22 이상이 필요합니다. 아키텍처와 설계 등 개발 관련 내용은 [`PROJECT.md`](PROJECT.md)를 참고하세요.
 
 ---
 

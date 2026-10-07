@@ -1,769 +1,269 @@
-/**
- * 지도 제작소의 플로터와 현장용 계기판을 시각 기준으로 삼는다. 지형의 회색과 충돌하지 않는
- * 황동색 조작부와 주황색 위치 표식만 강조하고, 나머지는 지도 뒤로 물러나게 한다.
+/*
+ * 사이트(tarkov-market) 지도 페이지의 CSS 값을 옮긴다. 규칙마다 사이트에서 같은 일을 하는
+ * 클래스 이름을 그대로 써서, 사이트 화면을 다시 조사할 때 값을 바로 대조할 수 있게 한다.
+ * 사이트에 없는 것은 로딩과 오류 안내(.load-status)와 앱의 방향 삼각형(.triangle-indicator)뿐이다.
  */
 :root {
-  --bunker: #0b0f12;
-  --panel: #141a1d;
-  --panel-raised: #1b2326;
-  --line: #364045;
-  --brass: #b8a77c;
-  --paper: #e3dfd2;
-  --muted: #889499;
-  --signal: #f1a33b;
-  --extraction: #76b9ad;
-  --pmc: #70a800;
-  --scav: #aeaeb0;
-  --danger: #d86d5a;
-  font-family: "Segoe UI", "Malgun Gothic", sans-serif;
-  color: var(--paper);
-  background: var(--bunker);
-}
-
-* {
-  box-sizing: border-box;
+  /* 사이트 :root의 글자색, 선택한 층 색, 초록, 내 위치 색 */
+  --tm-text: hsl(39, 20%, 50%);
+  --tm-story: hsl(205, 16%, 59%);
+  --tm-plus: hsl(80, 100%, 33%);
+  --tm-marker-player: #8a2be2;
+  --marker-size: 20px;
+  --tm-font: bender, pretendard, "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
 }
 
 html,
 body {
-  width: 100%;
   height: 100%;
   margin: 0;
   overflow: hidden;
+  background: #000;
+  color: var(--tm-text);
+  font-family: var(--tm-font);
+  font-size: 16px;
 }
 
-button,
-input {
-  font: inherit;
-}
-
-button {
-  color: inherit;
-}
-
-button:focus-visible,
-input:focus-visible,
-.map-viewport:focus-visible {
-  outline: 2px solid var(--signal);
-  outline-offset: 2px;
-}
-
-.viewer-shell {
-  display: grid;
-  grid-template-columns: clamp(280px, 22vw, 330px) minmax(0, 1fr);
-  width: 100%;
+/* 지도 컨테이너와 격자 배경. 격자는 지도와 함께 움직이지 않는다 */
+.map-cont {
+  position: relative;
   height: 100%;
-  background: var(--bunker);
-}
-
-.control-panel {
-  position: relative;
-  z-index: 4;
-  display: flex;
-  min-height: 0;
-  flex-direction: column;
-  overflow: auto;
-  border-right: 1px solid var(--line);
-  background:
-    linear-gradient(90deg, transparent calc(100% - 5px), rgb(184 167 124 / 14%) calc(100% - 5px)),
-    var(--panel);
-  box-shadow: 14px 0 36px rgb(0 0 0 / 28%);
-}
-
-.viewer-header {
-  padding: 28px 26px 24px;
-  border-bottom: 1px solid var(--line);
-}
-
-.viewer-kicker,
-.section-code,
-.source-note span,
-.map-readout,
-.coordinate-result,
-kbd,
-code {
-  font-family: "Cascadia Mono", Consolas, monospace;
-}
-
-.viewer-kicker {
-  margin: 0 0 10px;
-  color: var(--brass);
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
-h1,
-h2,
-p {
-  margin-top: 0;
-}
-
-h1 {
-  margin-bottom: 7px;
-  font-family: Bahnschrift, "Arial Narrow", "Malgun Gothic", sans-serif;
-  font-size: clamp(2rem, 3.2vw, 2.9rem);
-  font-stretch: condensed;
-  font-weight: 600;
-  letter-spacing: -0.045em;
-  line-height: 0.98;
-}
-
-.viewer-subtitle {
-  margin-bottom: 0;
-  color: var(--muted);
-  font-size: 0.77rem;
-}
-
-.control-section {
-  padding: 22px 26px;
-  border-bottom: 1px solid var(--line);
-}
-
-.section-heading {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 14px;
-}
-
-.section-heading h2 {
-  margin: 0;
-  font-size: 0.92rem;
-  font-weight: 650;
-}
-
-.section-code {
-  color: var(--muted);
-  font-size: 0.58rem;
-  letter-spacing: 0.12em;
-}
-
-.visibility-controls {
-  display: grid;
-  gap: 7px;
-}
-
-.faction-controls {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.faction-control {
-  --faction-color: var(--paper);
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr auto;
-  align-items: center;
-  min-height: 34px;
-  gap: 8px;
-  padding: 0 10px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  cursor: pointer;
-}
-
-.faction-control[data-marker-faction="pmc"] {
-  --faction-color: var(--pmc);
-}
-
-.faction-control[data-marker-faction="scav"] {
-  --faction-color: var(--scav);
-}
-
-.faction-control input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-
-.faction-control span {
-  font-size: 0.72rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-}
-
-.faction-control code {
-  color: var(--muted);
-  font-size: 0.6rem;
-}
-
-.faction-control:hover {
-  background: var(--panel-raised);
-}
-
-.faction-control:has(input:checked) {
-  border-color: var(--faction-color);
-  background: color-mix(in srgb, var(--faction-color) 13%, transparent);
-  color: var(--paper);
-}
-
-.faction-control:has(input:checked) code {
-  color: var(--faction-color);
-}
-
-.faction-control:has(input:focus-visible) {
-  outline: 2px solid var(--signal);
-  outline-offset: 2px;
-}
-
-.visibility-control {
-  --control-accent: var(--signal);
-  display: grid;
-  grid-template-columns: 20px 1fr auto;
-  align-items: center;
-  min-height: 36px;
-  gap: 9px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  background: rgb(255 255 255 / 2.5%);
-  cursor: pointer;
-}
-
-.visibility-control:hover {
-  border-color: var(--line);
-  background: var(--panel-raised);
-}
-
-.visibility-control input {
-  width: 14px;
-  height: 14px;
-  margin: 0;
-  accent-color: var(--control-accent);
-}
-
-.visibility-control span {
-  font-size: 0.82rem;
-}
-
-.visibility-control code {
-  color: var(--muted);
-  font-size: 0.62rem;
-}
-
-.visibility-control[data-marker-category] {
-  border-left-color: var(--control-accent);
-}
-
-.visibility-control[data-marker-category] code {
-  color: var(--control-accent);
-}
-
-.visibility-control[data-marker-category="extraction"] {
-  --control-accent: var(--extraction);
-}
-
-.position-form {
-  display: grid;
-  gap: 10px;
-}
-
-.coordinate-fields {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
-
-.coordinate-fields label {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr);
-  align-items: center;
-  border: 1px solid var(--line);
-  background: var(--bunker);
-}
-
-.coordinate-fields label:focus-within {
-  border-color: var(--brass);
-}
-
-.coordinate-fields label > span {
-  display: grid;
-  height: 100%;
-  place-items: center;
-  border-right: 1px solid var(--line);
-  color: var(--brass);
-  font-family: "Cascadia Mono", Consolas, monospace;
-  font-size: 0.72rem;
-}
-
-.coordinate-fields input {
-  width: 100%;
-  min-width: 0;
-  padding: 9px 8px;
-  border: 0;
-  outline: 0;
-  color: var(--paper);
-  background: transparent;
-  font-family: "Cascadia Mono", Consolas, monospace;
-  font-size: 0.78rem;
-}
-
-.position-submit {
-  min-height: 38px;
-  border: 1px solid #d58a28;
-  background: var(--signal);
-  color: #17110a;
-  font-weight: 750;
-  cursor: pointer;
-}
-
-.position-submit:hover {
-  background: #ffb24e;
-}
-
-.coordinate-result {
-  display: block;
-  min-height: 35px;
-  margin-top: 11px;
-  color: var(--muted);
-  font-size: 0.66rem;
-  line-height: 1.55;
-}
-
-.interaction-guide {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 17px 26px;
-  color: var(--muted);
-  font-size: 0.66rem;
-}
-
-.interaction-guide span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-}
-
-kbd {
-  padding: 2px 5px;
-  border: 1px solid var(--line);
-  background: var(--bunker);
-  color: var(--paper);
-  font-size: 0.58rem;
-}
-
-.source-note {
-  display: grid;
-  gap: 5px;
-  margin-top: auto;
-  padding: 18px 26px 22px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-}
-
-.source-note span {
-  color: var(--brass);
-  font-size: 0.55rem;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-.source-note strong {
-  font-size: 0.68rem;
-  font-weight: 500;
-}
-
-.map-panel {
-  position: relative;
-  min-width: 0;
-  min-height: 0;
   overflow: hidden;
-  background: #080b0d;
-}
-
-.map-viewport {
-  position: absolute;
-  inset: 0;
-  overflow: hidden;
-  touch-action: none;
+  outline: none;
   user-select: none;
   cursor: grab;
-  background-color: #0c1012;
-  background-image:
-    linear-gradient(rgb(184 167 124 / 5%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(184 167 124 / 5%) 1px, transparent 1px),
-    linear-gradient(rgb(184 167 124 / 2.5%) 1px, transparent 1px),
-    linear-gradient(90deg, rgb(184 167 124 / 2.5%) 1px, transparent 1px);
-  background-size: 100px 100px, 100px 100px, 20px 20px, 20px 20px;
+  touch-action: none;
 }
 
-.map-viewport.is-dragging {
+.map-cont.panning {
   cursor: grabbing;
 }
 
-.map-stage {
-  --inverse-zoom: 1;
+.bg-grid {
+  --bgc: 6%;
+  --fgc: calc(var(--bgc) + 10%);
+  --bgv: hsl(0, 0%, var(--fgc));
+  background-color: hsl(0, 0%, var(--bgc));
+  background-image: linear-gradient(var(--bgv) 2px, transparent 0), linear-gradient(90deg, var(--bgv) 2px, transparent 0),
+    linear-gradient(var(--bgv) 1px, transparent 0), linear-gradient(90deg, var(--bgv) 1px, transparent 0);
+  background-position: -2px -2px;
+  background-size: 250.5px 250.5px, 250.5px 250.5px, 50.1px 50.1px, 50.1px 50.1px;
+}
+
+/* 확대와 이동은 이 요소의 transform 하나로 한다. 사이트의 panzoom도 같은 기준점(0 0)을 쓴다 */
+.map-wrap {
   position: absolute;
   top: 0;
   left: 0;
   transform-origin: 0 0;
-  will-change: transform;
 }
 
-.map-svg,
-.marker-layer {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.map-svg {
+.map-wrap > svg {
   display: block;
   overflow: visible;
-  pointer-events: none;
 }
 
-.marker-layer {
-  z-index: 3;
-  pointer-events: none;
-}
-
-.map-marker {
-  --marker-color: var(--paper);
+.markers-canvas {
   position: absolute;
-  z-index: 1;
-  width: 26px;
-  height: 26px;
-  transform: translate(-50%, -50%) scale(var(--inverse-zoom));
-  transform-origin: 50% 50%;
-  cursor: help;
-  filter: drop-shadow(0 2px 3px rgb(0 0 0 / 90%));
-  pointer-events: auto;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  pointer-events: none;
 }
 
-.map-marker[hidden] {
-  display: none;
+.squad-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 7;
 }
 
-.map-marker[data-marker-category="extraction"] {
-  --marker-color: var(--extraction);
+/* 내 위치: 사이트의 .marker */
+.marker {
+  position: absolute;
+  z-index: 15;
+  box-sizing: border-box;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  border: 2px solid var(--tm-plus);
+  border-radius: 50%;
+  background: var(--tm-marker-player);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
-.map-marker[data-marker-factions="pmc"] {
-  --marker-color: var(--pmc);
+.marker.ping {
+  animation: markerSizeAnimation 0.7s ease-in-out;
 }
 
-.map-marker[data-marker-factions="scav"] {
-  --marker-color: var(--scav);
+@keyframes markerSizeAnimation {
+  0% { width: var(--marker-size); height: var(--marker-size); }
+  50% { width: calc(var(--marker-size) * 2.5); height: calc(var(--marker-size) * 2.5); }
+  100% { width: var(--marker-size); height: var(--marker-size); }
 }
 
-.map-marker[data-marker-factions="pmc scav"] {
-  --marker-color: var(--brass);
-}
-
-.map-marker__symbol {
+/* 방향 삼각형: Online에서 map-markers.js가 사이트 마커에 붙이는 규칙과 같은 크기와 위치 */
+.triangle-indicator {
   position: absolute;
   top: 50%;
   left: 50%;
-  width: 10px;
-  height: 10px;
-  transform: translate(-50%, -50%);
-  border: 2px solid #091012;
-  background: var(--marker-color);
-  box-shadow: 0 0 0 1px var(--marker-color);
-}
-
-.map-marker[data-marker-category="extraction"] .map-marker__symbol {
-  transform: translate(-50%, -50%) rotate(45deg);
-}
-
-.map-marker__label {
-  position: absolute;
-  bottom: 25px;
-  left: 50%;
-  padding: 4px 6px;
-  transform: translate(-50%, 3px);
-  border: 1px solid color-mix(in srgb, var(--marker-color) 65%, transparent);
-  background: rgb(11 15 18 / 94%);
-  color: var(--paper);
-  font-family: "Cascadia Mono", Consolas, monospace;
-  font-size: 8px;
-  line-height: 1.25;
-  opacity: 0;
+  width: 25px;
+  height: 25px;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
   pointer-events: none;
-  transition: opacity 100ms ease-out, transform 100ms ease-out;
-  visibility: hidden;
+  transform: translate(-50%, -50%) rotate(var(--tanuki-direction, 0deg))
+    translateY(calc(-25% - var(--marker-size) / 2 - 1px));
+  transform-origin: 50% 50%;
+}
+
+/* 오른쪽 패널과 Levels: 사이트의 .panel_right, .layers, .levels-list */
+.panel_right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  pointer-events: none;
+}
+
+.panel_right > div {
+  padding: 5px 15px;
+  border: 1px solid rgb(51, 51, 51);
+  background-color: rgba(0, 0, 0, 0.9);
+  cursor: default;
+  pointer-events: auto;
+}
+
+.controls-hidden .panel_right,
+[hidden] {
+  display: none !important;
+}
+
+.d-flex {
+  display: flex;
+  align-items: center;
+  gap: 0 5px;
+}
+
+.h-space-between {
+  justify-content: space-between;
+}
+
+.h-center {
+  justify-content: center;
+}
+
+.layers {
+  gap: 30px;
+}
+
+.caption-row {
+  gap: 8px;
+}
+
+.levels-list {
+  position: relative;
+  max-height: 80px;
+  padding-right: 10px;
+  overflow-y: auto;
+}
+
+.layers-hint {
+  max-width: 90px;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.big {
+  font-size: 1.2rem;
+}
+
+.mb-5 {
+  margin-bottom: 5px;
+}
+
+.mt-5 {
+  margin-top: 5px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.no-wrap {
   white-space: nowrap;
 }
 
-.map-marker:hover {
-  z-index: 4;
-}
-
-.map-marker:hover .map-marker__label {
-  transform: translate(-50%, 0);
-  opacity: 1;
-  visibility: visible;
-}
-
-.position-marker {
-  position: absolute;
-  width: 54px;
-  height: 54px;
-  transform: translate(-50%, -50%) scale(var(--inverse-zoom));
-  transform-origin: 50% 50%;
-  filter: drop-shadow(0 2px 5px rgb(0 0 0 / 85%));
-}
-
-.position-marker[hidden] {
-  display: none;
-}
-
-.position-marker__direction {
-  position: absolute;
-  inset: 0;
-  transform: rotate(var(--direction-angle, 0deg));
-  transform-origin: 50% 50%;
-}
-
-.position-marker__direction[hidden] {
-  display: none;
-}
-
-.position-marker__direction::before {
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  width: 18px;
-  height: 27px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, #d9821d, #ffd08b 48%, #f1a33b 52%);
-  clip-path: polygon(50% 0, 100% 100%, 50% 79%, 0 100%);
-  content: "";
-  filter: drop-shadow(0 0 1px #22170b);
-}
-
-.position-marker__ring,
-.position-marker__core {
-  position: absolute;
-  inset: 50% auto auto 50%;
-  border-radius: 50%;
-  transform: translate(-50%, -50%);
-}
-
-.position-marker__ring {
-  z-index: 1;
-  width: 30px;
-  height: 30px;
-  border: 2px solid var(--signal);
-  background: rgb(241 163 59 / 10%);
-}
-
-.position-marker__core {
-  z-index: 2;
-  width: 8px;
-  height: 8px;
-  border: 2px solid #22170b;
-  background: #ffd08b;
-  box-shadow: 0 0 0 2px var(--signal);
-}
-
-.position-marker__label {
-  position: absolute;
-  top: 43px;
-  left: 50%;
-  padding: 2px 4px;
-  transform: translateX(-50%);
-  border: 1px solid rgb(241 163 59 / 55%);
-  background: rgb(11 15 18 / 88%);
-  color: #ffd08b;
-  font-family: "Cascadia Mono", Consolas, monospace;
-  font-size: 7px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-}
-
-.position-marker.is-pinging .position-marker__ring {
-  animation: marker-ping 700ms ease-out;
-}
-
-@keyframes marker-ping {
-  from {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(0.55);
-  }
-  to {
-    opacity: 0.15;
-    transform: translate(-50%, -50%) scale(1.65);
-  }
-}
-
-.map-readout {
-  position: absolute;
-  top: 16px;
-  left: 18px;
-  z-index: 5;
-  display: grid;
-  grid-template-columns: auto minmax(38px, 100px) auto;
-  align-items: center;
-  gap: 9px;
-  padding: 7px 9px;
-  border: 1px solid rgb(184 167 124 / 28%);
-  background: rgb(11 15 18 / 82%);
-  color: var(--brass);
-  font-size: 0.6rem;
-  letter-spacing: 0.1em;
-  pointer-events: none;
-  backdrop-filter: blur(5px);
-}
-
-.readout-rule {
-  height: 1px;
-  background: rgb(184 167 124 / 34%);
-}
-
-.map-toolbar {
-  position: absolute;
-  right: 18px;
-  bottom: 18px;
-  z-index: 5;
-  display: grid;
-  grid-template-columns: 38px auto 38px;
-  border: 1px solid var(--line);
-  background: rgb(11 15 18 / 88%);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 35%);
-  backdrop-filter: blur(5px);
-}
-
-.map-toolbar button {
-  min-height: 36px;
-  padding: 0 11px;
-  border: 0;
-  border-right: 1px solid var(--line);
-  background: transparent;
-  font-size: 0.72rem;
+.pointer {
   cursor: pointer;
 }
 
-.map-toolbar button:last-child {
-  border-right: 0;
+.story {
+  color: var(--tm-story);
 }
 
-.map-toolbar button:hover {
-  background: var(--panel-raised);
-  color: var(--signal);
+.levels-list input[type="radio"] {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  border: 1px solid #9a8866;
+  background: #000;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
 }
 
+.levels-list input[type="radio"]:checked {
+  background: #9a8866;
+}
+
+.icon {
+  fill: #9a8866;
+}
+
+.icon_mid_mouse {
+  display: block;
+  width: 20px;
+  height: 40px;
+}
+
+.mouse-outline {
+  stroke: #000;
+  stroke-miterlimit: 10;
+  stroke-width: 3px;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+/* 앱이 더한 것: 로딩과 오류 안내. 오류는 UI 숨김 설정과 관계없이 보인다 */
 .load-status {
   position: absolute;
   top: 50%;
   left: 50%;
-  z-index: 7;
-  max-width: min(440px, calc(100% - 40px));
-  padding: 14px 18px;
-  transform: translate(-50%, -50%);
-  border: 1px solid var(--line);
-  background: var(--panel);
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.55;
+  z-index: 30;
+  max-width: calc(100% - 32px);
+  padding: 8px 12px;
+  border: 1px solid rgb(51, 51, 51);
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--tm-text);
+  font-size: 14px;
   text-align: center;
+  transform: translate(-50%, -50%);
 }
 
 .load-status.is-error {
-  border-color: var(--danger);
+  border-color: #b33;
   color: #f2b4a9;
-}
-
-@media (max-width: 720px) {
-  .viewer-shell {
-    grid-template-columns: 1fr;
-    grid-template-rows: auto minmax(0, 1fr);
-  }
-
-  .control-panel {
-    display: grid;
-    grid-template-columns:
-      minmax(130px, 0.65fr) minmax(160px, 0.8fr)
-      minmax(150px, 0.75fr) minmax(210px, 1.1fr);
-    max-height: 42vh;
-    border-right: 0;
-    border-bottom: 1px solid var(--line);
-    background: var(--panel);
-  }
-
-  .viewer-header,
-  .control-section {
-    padding: 16px;
-    border-right: 1px solid var(--line);
-    border-bottom: 0;
-  }
-
-  h1 {
-    font-size: 1.75rem;
-  }
-
-  .viewer-subtitle,
-  .interaction-guide,
-  .source-note {
-    display: none;
-  }
-}
-
-@media (max-width: 520px) {
-  .control-panel {
-    grid-template-columns: 1fr 1.15fr;
-  }
-
-  .viewer-header {
-    display: none;
-  }
-
-  .control-section {
-    padding: 12px;
-  }
-
-  .visibility-controls {
-    grid-template-columns: 1fr 1fr;
-    gap: 5px;
-  }
-
-  .visibility-control {
-    grid-template-columns: 16px 1fr;
-    min-height: 32px;
-    padding: 0 7px;
-  }
-
-  .visibility-control code {
-    display: none;
-  }
-
-  .coordinate-fields label {
-    grid-template-columns: 23px minmax(0, 1fr);
-  }
-
-  .coordinate-fields input {
-    padding: 7px 5px;
-  }
-
-  .coordinate-result {
-    display: none;
-  }
-
-  .map-readout {
-    top: 10px;
-    left: 10px;
-  }
-
-  .map-toolbar {
-    right: 10px;
-    bottom: 10px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .map-marker__label {
-    transition: none;
-  }
-
-  .position-marker.is-pinging .position-marker__ring {
-    animation: none;
-  }
 }

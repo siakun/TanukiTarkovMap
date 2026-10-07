@@ -81,6 +81,50 @@
       }
     },
     {
+      "id": "3787c201-6f65-4955-8d4a-a1985050bb4b",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Railway Exfil",
+      "levelId": "main",
+      "position": {
+        "x": 1222.0278,
+        "y": 1123.0634
+      }
+    },
+    {
+      "id": "5500ac4b-50d9-48f6-a0c2-adb33cecf96e",
+      "category": "extraction",
+      "subtype": "co-op",
+      "name": "Scav Camp Exfil (Co-Op)",
+      "levelId": "main",
+      "position": {
+        "x": 2358.5478,
+        "y": 1863.4928
+      }
+    },
+    {
+      "id": "7400bc7e-0c46-4fda-acc2-fc8fbbdb346b",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Smugglers' Tunnel",
+      "levelId": "main",
+      "position": {
+        "x": 2444.7884,
+        "y": 1656.9278
+      }
+    },
+    {
+      "id": "86b73c26-7630-4369-8c7b-208417f64ed7",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Emercom Checkpoint",
+      "levelId": "main",
+      "position": {
+        "x": 2786.9004,
+        "y": 2531.1956
+      }
+    },
+    {
       "id": "b7a929d3-652b-4481-8a6a-1816d0e79179",
       "category": "extraction",
       "subtype": "pmc",
@@ -145,62 +189,20 @@
         "x": 2782.585,
         "y": 1261.0512
       }
-    },
-    {
-      "id": "3787c201-6f65-4955-8d4a-a1985050bb4b",
-      "category": "extraction",
-      "subtype": "scav",
-      "name": "Railway Exfil",
-      "levelId": "main",
-      "position": {
-        "x": 1222.0278,
-        "y": 1123.0634
-      }
-    },
-    {
-      "id": "7400bc7e-0c46-4fda-acc2-fc8fbbdb346b",
-      "category": "extraction",
-      "subtype": "scav",
-      "name": "Smugglers' Tunnel",
-      "levelId": "main",
-      "position": {
-        "x": 2444.7884,
-        "y": 1656.9278
-      }
-    },
-    {
-      "id": "86b73c26-7630-4369-8c7b-208417f64ed7",
-      "category": "extraction",
-      "subtype": "scav",
-      "name": "Emercom Checkpoint",
-      "levelId": "main",
-      "position": {
-        "x": 2786.9004,
-        "y": 2531.1956
-      }
-    },
-    {
-      "id": "5500ac4b-50d9-48f6-a0c2-adb33cecf96e",
-      "category": "extraction",
-      "subtype": "co-op",
-      "name": "Scav Camp Exfil (Co-Op)",
-      "levelId": "main",
-      "position": {
-        "x": 2358.5478,
-        "y": 1863.4928
-      }
     }
   ],
   "source": {
+    "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/interchange",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "c6d4f5f5898218064dfd2858ad22fa2e1a6637c1",
-    "markerResponse": {
-      "url": "https://tarkov-market.com/api/be/markers/list",
-      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
-    },
-    "markerState": "$nuxt.payload.state.$squestsState.markers",
-    "categoryState": "MapLeftPanel.props.categories",
+    "collectedAt": "2026-10-07T16:41:35.470Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=interchange&bundle=1",
+    "documentHash": "43fd94b51030087e8e78920f8fd79595",
+    "documentSha256": "9fb601e67736a1a7d6365dd69c66ca971a837e5fe23dc5224d637a1e2ac7e2e7",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "listedCounts": {
       "extraction": {
         "transit": 2,
@@ -209,6 +211,7 @@
         "co-op": 1
       }
     },
-    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+    "mapPosition": "Observed page gamePosToMapPos(geometry.x, geometry.y)",
+    "markerSha256": "e4ef2c49fd65e57cd13832c07e339d2fcb4228faebe628848f2068945cae91c9"
   }
 }

@@ -20,55 +20,1127 @@
   "levels": [
     {
       "id": "level5",
-      "label": "Level 5",
       "sourceLevel": 5,
+      "label": "Level 5",
+      "defaultVisible": false,
       "terrainGroupId": "level5",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            13.8,
+            100
+          ],
+          "rect": [
+            [
+              126,
+              141
+            ],
+            [
+              151,
+              113
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            9.6,
+            100
+          ],
+          "rect": [
+            [
+              75,
+              184
+            ],
+            [
+              90,
+              166
+            ]
+          ],
+          "rotate": 90
+        }
+      ]
     },
     {
       "id": "level4",
-      "label": "Level 4",
       "sourceLevel": 4,
+      "label": "Level 4",
+      "defaultVisible": false,
       "terrainGroupId": "level4",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            12.5,
+            100
+          ],
+          "rect": [
+            [
+              200,
+              80
+            ],
+            [
+              238,
+              36
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            10.4,
+            100
+          ],
+          "rect": [
+            [
+              57,
+              59
+            ],
+            [
+              165,
+              29
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            10.4,
+            13.8
+          ],
+          "rect": [
+            [
+              138,
+              135
+            ],
+            [
+              152,
+              116
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.1,
+            9.6
+          ],
+          "rect": [
+            [
+              45,
+              189
+            ],
+            [
+              85,
+              170
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            11.4,
+            100
+          ],
+          "rect": [
+            [
+              269,
+              -214
+            ],
+            [
+              291,
+              -238
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            13.2,
+            100
+          ],
+          "rect": [
+            [
+              263,
+              -127
+            ],
+            [
+              277,
+              -142
+            ]
+          ],
+          "rotate": 90
+        }
+      ]
     },
     {
       "id": "level3",
-      "label": "Level 3",
       "sourceLevel": 3,
+      "label": "Level 3",
+      "defaultVisible": false,
       "terrainGroupId": "level3",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            9.8,
+            100
+          ],
+          "rect": [
+            [
+              392,
+              267
+            ],
+            [
+              417,
+              192
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            9.8,
+            100
+          ],
+          "rect": [
+            [
+              202,
+              161
+            ],
+            [
+              240,
+              89
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            14.3,
+            100
+          ],
+          "rect": [
+            [
+              377,
+              -159
+            ],
+            [
+              424,
+              -183
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            9.5,
+            12.5
+          ],
+          "rect": [
+            [
+              201,
+              78
+            ],
+            [
+              239,
+              37
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            8.9,
+            10.4
+          ],
+          "rect": [
+            [
+              152,
+              42
+            ],
+            [
+              164,
+              55
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            7.5,
+            10.4
+          ],
+          "rect": [
+            [
+              57,
+              58
+            ],
+            [
+              137,
+              29
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            7.5,
+            10.4
+          ],
+          "rect": [
+            [
+              116,
+              141
+            ],
+            [
+              153,
+              93
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            3.2,
+            100
+          ],
+          "rect": [
+            [
+              86,
+              216
+            ],
+            [
+              51,
+              234
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            2.6,
+            6.1
+          ],
+          "rect": [
+            [
+              75,
+              184
+            ],
+            [
+              85,
+              173
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            12.9,
+            100
+          ],
+          "rect": [
+            [
+              -167,
+              79
+            ],
+            [
+              -114,
+              32
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            8.4,
+            11.4
+          ],
+          "rect": [
+            [
+              274,
+              -216
+            ],
+            [
+              294,
+              -236
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            8.6,
+            13.2
+          ],
+          "rect": [
+            [
+              263,
+              -82
+            ],
+            [
+              302,
+              -141
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            8.6,
+            13.2
+          ],
+          "rect": [
+            [
+              280,
+              -141
+            ],
+            [
+              302,
+              -160
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            8.2,
+            100
+          ],
+          "rect": [
+            [
+              185,
+              -6
+            ],
+            [
+              32,
+              -135
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            9.8,
+            100
+          ],
+          "rect": [
+            [
+              -91,
+              -9
+            ],
+            [
+              7,
+              -181
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            9.5,
+            100
+          ],
+          "rect": [
+            [
+              -165,
+              -41
+            ],
+            [
+              -140,
+              -78
+            ]
+          ],
+          "rotate": 90
+        }
+      ]
     },
     {
       "id": "level2",
-      "label": "Level 2",
       "sourceLevel": 2,
+      "label": "Level 2",
+      "defaultVisible": false,
       "terrainGroupId": "level2",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            6.5,
+            100
+          ],
+          "rect": [
+            [
+              436,
+              156
+            ],
+            [
+              462,
+              125
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.8,
+            9.8
+          ],
+          "rect": [
+            [
+              348,
+              281
+            ],
+            [
+              401,
+              249
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.8,
+            9.8
+          ],
+          "rect": [
+            [
+              390,
+              212
+            ],
+            [
+              402,
+              195
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.8,
+            9.8
+          ],
+          "rect": [
+            [
+              339,
+              157
+            ],
+            [
+              382,
+              131
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            7.4,
+            100
+          ],
+          "rect": [
+            [
+              279,
+              226
+            ],
+            [
+              317,
+              182
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.8,
+            9.8
+          ],
+          "rect": [
+            [
+              202,
+              161
+            ],
+            [
+              239,
+              90
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.8,
+            100
+          ],
+          "rect": [
+            [
+              327,
+              44
+            ],
+            [
+              267,
+              133
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.4,
+            14.3
+          ],
+          "rect": [
+            [
+              363,
+              -118
+            ],
+            [
+              439,
+              -204
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.8,
+            100
+          ],
+          "rect": [
+            [
+              450,
+              -189
+            ],
+            [
+              474,
+              -172
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.8,
+            100
+          ],
+          "rect": [
+            [
+              447,
+              -35
+            ],
+            [
+              467,
+              -64
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.3,
+            100
+          ],
+          "rect": [
+            [
+              480,
+              -162
+            ],
+            [
+              494,
+              -174
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6,
+            100
+          ],
+          "rect": [
+            [
+              329,
+              70
+            ],
+            [
+              352,
+              53
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.5,
+            9.5
+          ],
+          "rect": [
+            [
+              195,
+              78
+            ],
+            [
+              241,
+              31
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            5.9,
+            8.9
+          ],
+          "rect": [
+            [
+              144,
+              57
+            ],
+            [
+              164,
+              30
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.4,
+            7.5
+          ],
+          "rect": [
+            [
+              138,
+              58
+            ],
+            [
+              57,
+              30
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.1,
+            7.5
+          ],
+          "rect": [
+            [
+              110,
+              139
+            ],
+            [
+              162,
+              71
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.1,
+            7.5
+          ],
+          "rect": [
+            [
+              164,
+              210
+            ],
+            [
+              180,
+              236
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.1,
+            7.5
+          ],
+          "rect": [
+            [
+              146,
+              224
+            ],
+            [
+              95,
+              199
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            2,
+            7.5
+          ],
+          "rect": [
+            [
+              90,
+              197
+            ],
+            [
+              126,
+              178
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            -0.9,
+            2.6
+          ],
+          "rect": [
+            [
+              46,
+              173
+            ],
+            [
+              84,
+              196
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            -0.2,
+            3.2
+          ],
+          "rect": [
+            [
+              63,
+              233
+            ],
+            [
+              76,
+              214
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            -1,
+            100
+          ],
+          "rect": [
+            [
+              42,
+              256
+            ],
+            [
+              64,
+              239
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            3.4,
+            100
+          ],
+          "rect": [
+            [
+              -81,
+              161
+            ],
+            [
+              -11,
+              95
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            9.1,
+            12.9
+          ],
+          "rect": [
+            [
+              -167,
+              63
+            ],
+            [
+              -116,
+              34
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            7.4,
+            100
+          ],
+          "rect": [
+            [
+              308,
+              -195
+            ],
+            [
+              265,
+              -165
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            7.2,
+            100
+          ],
+          "rect": [
+            [
+              234,
+              -186
+            ],
+            [
+              264,
+              -214
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            5.4,
+            8.4
+          ],
+          "rect": [
+            [
+              268,
+              -215
+            ],
+            [
+              290,
+              -237
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.3,
+            100
+          ],
+          "rect": [
+            [
+              215,
+              -159
+            ],
+            [
+              233,
+              -191
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.4,
+            100
+          ],
+          "rect": [
+            [
+              258,
+              -142
+            ],
+            [
+              274,
+              -156
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.7,
+            8.6
+          ],
+          "rect": [
+            [
+              263,
+              -128
+            ],
+            [
+              276,
+              -141
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.7,
+            8.6
+          ],
+          "rect": [
+            [
+              267,
+              -81
+            ],
+            [
+              299,
+              -117
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            4.7,
+            8.6
+          ],
+          "rect": [
+            [
+              286,
+              -134
+            ],
+            [
+              305,
+              -155
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            5.3,
+            8.2
+          ],
+          "rect": [
+            [
+              188,
+              -8
+            ],
+            [
+              33,
+              -136
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            5.3,
+            9.8
+          ],
+          "rect": [
+            [
+              -101,
+              -9
+            ],
+            [
+              6,
+              -180
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.4,
+            9.5
+          ],
+          "rect": [
+            [
+              -165,
+              -43
+            ],
+            [
+              -139,
+              -79
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            6.9,
+            100
+          ],
+          "rect": [
+            [
+              -131,
+              -21
+            ],
+            [
+              -109,
+              -55
+            ]
+          ],
+          "rotate": 90
+        }
+      ]
     },
     {
       "id": "main",
-      "label": "Main",
       "sourceLevel": 1,
+      "label": "Main",
+      "defaultVisible": true,
       "terrainGroupId": "main",
-      "defaultVisible": true
+      "height": [
+        -100,
+        100
+      ]
     },
     {
       "id": "basement",
-      "label": "Basement",
       "sourceLevel": -1,
+      "label": "Basement",
+      "defaultVisible": false,
       "terrainGroupId": "basement",
-      "defaultVisible": false
+      "zones": [
+        {
+          "height": [
+            -100,
+            1.9
+          ],
+          "rect": [
+            [
+              338,
+              277
+            ],
+            [
+              416,
+              147
+            ]
+          ],
+          "rotate": 90
+        },
+        {
+          "height": [
+            -100,
+            -1.2
+          ],
+          "rect": [
+            [
+              -25,
+              37
+            ],
+            [
+              31,
+              -20
+            ]
+          ],
+          "rotate": 90
+        }
+      ]
     }
   ],
   "source": {
     "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/streets",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "settingsUrl": "https://tarkov-market.com/_nuxt3/BZ9Jm2nU.js",
-    "settingsBlob": "0ffa064bd2bb71f9b8d8b674a36422adb097bf67",
-    "terrainUrl": "https://tarkov-market.com/_nuxt3/BMFHrbtw.js",
-    "terrainBlob": "d2e8b67d22c462c600be5eedd379eabce84cc794",
+    "collectedAt": "2026-10-07T16:41:49.649Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=streets&bundle=1",
+    "documentHash": "6ee4d557eed73c8f89d4e57eea746e35",
+    "documentSha256": "ec92386394596393b12d14e7a688907f217aab4906d57eb7266e0636ccd87a22",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "coordinateFormula": {
       "rotation": "-transform.rotate degrees",
       "mapX": "xOffset - rotatedX * ratio",
@@ -79,6 +1151,48 @@
       "directionX": "2 * (quaternion.x * quaternion.z + quaternion.w * quaternion.y)",
       "directionZ": "1 - 2 * (quaternion.x^2 + quaternion.y^2)",
       "screenDegrees": "normalize(gameDegrees + 270 - transform.rotate)"
-    }
+    },
+    "coordinateChecks": [
+      {
+        "game": {
+          "x": 0,
+          "y": 0
+        },
+        "map": {
+          "x": 1660,
+          "y": 1420
+        }
+      },
+      {
+        "game": {
+          "x": 125.25,
+          "y": -84.875
+        },
+        "map": {
+          "x": 1829.75,
+          "y": 1670.5
+        }
+      },
+      {
+        "game": {
+          "x": -313.625,
+          "y": 211.5
+        },
+        "map": {
+          "x": 1237,
+          "y": 792.75
+        }
+      },
+      {
+        "game": {
+          "x": 1000,
+          "y": 1000
+        },
+        "map": {
+          "x": -340,
+          "y": 3420
+        }
+      }
+    ]
   }
 }

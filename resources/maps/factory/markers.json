@@ -59,6 +59,28 @@
   ],
   "markers": [
     {
+      "id": "366ef3f5-64da-4f7a-8390-9f92b57338b2",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Smugglers' Passage (Secret)",
+      "levelId": "basement",
+      "position": {
+        "x": 2096.135,
+        "y": 1373.014
+      }
+    },
+    {
+      "id": "563c7d99-140b-4861-97ac-a6ada89aaddf",
+      "category": "extraction",
+      "subtype": "pmc",
+      "name": "Gate 0",
+      "levelId": "main",
+      "position": {
+        "x": 1240.359,
+        "y": 2475.192
+      }
+    },
+    {
       "id": "573f3b47-d9a9-4bf6-b06a-62466154b2d1",
       "category": "extraction",
       "subtype": "transit",
@@ -81,28 +103,6 @@
       }
     },
     {
-      "id": "e868f23f-0ada-4d79-a1e1-73785ea7070b",
-      "category": "extraction",
-      "subtype": "transit",
-      "name": "Transit to The Lab",
-      "levelId": "basement",
-      "position": {
-        "x": 2226.412,
-        "y": 2128.142
-      }
-    },
-    {
-      "id": "563c7d99-140b-4861-97ac-a6ada89aaddf",
-      "category": "extraction",
-      "subtype": "pmc",
-      "name": "Gate 0",
-      "levelId": "main",
-      "position": {
-        "x": 1240.359,
-        "y": 2475.192
-      }
-    },
-    {
       "id": "682cde45-7700-48ce-86d6-25bfa693c775",
       "category": "extraction",
       "subtype": "pmc",
@@ -111,6 +111,17 @@
       "position": {
         "x": 1144.593,
         "y": 1607.818
+      }
+    },
+    {
+      "id": "6f14d12a-6bd9-47f9-b021-56fd6a534f93",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Camera Bunker Door",
+      "levelId": "basement",
+      "position": {
+        "x": 1385.618,
+        "y": 1988.572
       }
     },
     {
@@ -136,6 +147,17 @@
       }
     },
     {
+      "id": "b2f7881f-bdce-4ab4-a84f-c2e333531e5e",
+      "category": "extraction",
+      "subtype": "scav",
+      "name": "Gate 3",
+      "levelId": "main",
+      "position": {
+        "x": 1161.339,
+        "y": 1263.418
+      }
+    },
+    {
       "id": "d69414d0-4916-4779-b30b-9b3a8596f744",
       "category": "extraction",
       "subtype": "pmc",
@@ -147,6 +169,17 @@
       }
     },
     {
+      "id": "e868f23f-0ada-4d79-a1e1-73785ea7070b",
+      "category": "extraction",
+      "subtype": "transit",
+      "name": "Transit to The Lab",
+      "levelId": "basement",
+      "position": {
+        "x": 2226.412,
+        "y": 2128.142
+      }
+    },
+    {
       "id": "ea939080-61b2-4b73-9e15-ef07f02f5ad6",
       "category": "extraction",
       "subtype": "pmc",
@@ -155,39 +188,6 @@
       "position": {
         "x": 1163.359,
         "y": 1258.002
-      }
-    },
-    {
-      "id": "366ef3f5-64da-4f7a-8390-9f92b57338b2",
-      "category": "extraction",
-      "subtype": "scav",
-      "name": "Smugglers' Passage (Secret)",
-      "levelId": "basement",
-      "position": {
-        "x": 2096.135,
-        "y": 1373.014
-      }
-    },
-    {
-      "id": "6f14d12a-6bd9-47f9-b021-56fd6a534f93",
-      "category": "extraction",
-      "subtype": "scav",
-      "name": "Camera Bunker Door",
-      "levelId": "basement",
-      "position": {
-        "x": 1385.618,
-        "y": 1988.572
-      }
-    },
-    {
-      "id": "b2f7881f-bdce-4ab4-a84f-c2e333531e5e",
-      "category": "extraction",
-      "subtype": "scav",
-      "name": "Gate 3",
-      "levelId": "main",
-      "position": {
-        "x": 1161.339,
-        "y": 1263.418
       }
     },
     {
@@ -203,15 +203,17 @@
     }
   ],
   "source": {
+    "site": "https://tarkov-market.com",
     "page": "https://tarkov-market.com/maps/factory",
-    "archiveCreatedAt": "2026-08-19T01:04:08.749Z",
-    "htmlBlob": "491a066af7d6f741f83d332b5006064935962a08",
-    "markerResponse": {
-      "url": "https://tarkov-market.com/api/be/markers/list",
-      "blob": "374e7354961fe67447d45783ccd1722321b3bb33"
-    },
-    "markerState": "$nuxt.payload.state.$squestsState.markers",
-    "categoryState": "MapLeftPanel.props.categories",
+    "collectedAt": "2026-10-07T16:41:29.672Z",
+    "documentUrl": "https://tarkov-market.com/api/be/map-doc?map=factory&bundle=1",
+    "documentHash": "70561eb6a95cd0e32ba0172c4eb83383",
+    "documentSha256": "e14efd8ce160d1a639a98a504ab20a71240765a6356d3cd8ce442ada9c641dda",
+    "rendererUrl": "https://tarkov-market.com/_nuxt3/CA5sgnTp.js",
+    "rendererSha256": "2c77d67d7a1d9eb7646e4846bea41e8b44581dea40eb488106f6b5fc50980968",
+    "settingsUrl": "https://tarkov-market.com/_nuxt3/BQzFpK49.js",
+    "settingsSha256": "b76dc0a9dc4941c85c9f138cfffe1f2db4e5569913e2ffba9ff819d49095a7ac",
+    "converterVersion": "map-doc-v2/1",
     "listedCounts": {
       "extraction": {
         "transit": 3,
@@ -220,6 +222,7 @@
         "co-op": 0
       }
     },
-    "mapPosition": "MapLeftPanel.props.map.gamePosToMapPos(geometry.x, geometry.y)"
+    "mapPosition": "Observed page gamePosToMapPos(geometry.x, geometry.y)",
+    "markerSha256": "8646af43e78bad2562b5a5b7c0bf4141d888ab42232f4136d9a900f8ef7c6aac"
   }
 }
