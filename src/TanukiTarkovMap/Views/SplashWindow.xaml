@@ -3,7 +3,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:loc="clr-namespace:TanukiTarkovMap.Localization"
         mc:Ignorable="d"
+        Language="{DynamicResource {x:Static loc:AppLanguage.XmlLanguageKey}}"
         Title="TanukiTarkovMap"
         Width="280" Height="360"
         WindowStartupLocation="CenterScreen"
@@ -41,7 +43,7 @@
             <!-- Status Text -->
             <TextBlock Grid.Row="1"
                       x:Name="StatusText"
-                      Text="시작하는 중..."
+                      Text="{loc:Text Startup_Starting}"
                       FontSize="12"
                       Foreground="#a0a0b0"
                       HorizontalAlignment="Center"

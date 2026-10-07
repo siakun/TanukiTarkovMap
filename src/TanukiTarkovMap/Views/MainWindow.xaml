@@ -9,8 +9,10 @@
         xmlns:converters="clr-namespace:TanukiTarkovMap.Converters"
         xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
         xmlns:views="clr-namespace:TanukiTarkovMap.Views"
+        xmlns:loc="clr-namespace:TanukiTarkovMap.Localization"
         mc:Ignorable="d"
         DataContext="{Binding MainWindowViewModel, Source={StaticResource Locator}}"
+        Language="{DynamicResource {x:Static loc:AppLanguage.XmlLanguageKey}}"
         Title="Tanuki Tarkov Map"
         Icon="pack://application:,,,/Resources/icon.ico"
         Width="{Binding CurrentWindowWidth, Mode=TwoWay}"
@@ -106,9 +108,9 @@
                         CornerRadius="4"
                         Padding="8,4"
                         Panel.ZIndex="100"
-                        ToolTip="PvE 최근 목격 제보입니다. 군즈는 확률에 따라 스폰하므로 제보와 실제 출현이 다를 수 있습니다."
+                        ToolTip="{loc:Text Goons_ToolTip}"
                         Visibility="{Binding GoonsOnCurrentMap, Converter={StaticResource BoolToVisibilityConverter}}">
-                    <TextBlock Text="군즈 최근 목격 제보"
+                    <TextBlock Text="{loc:Text Goons_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="#FFFF4444"/>
@@ -203,7 +205,7 @@
                                   Foreground="White"
                                   WindowChrome.IsHitTestVisibleInChrome="True">
                             <CheckBox.Content>
-                                <TextBlock Text="UI 요소 숨기기"
+                                <TextBlock Text="{loc:Text TopBar_HideUi}"
                                            Foreground="#FF888888"
                                            FontSize="12"/>
                             </CheckBox.Content>
@@ -277,7 +279,7 @@
                                         CornerRadius="3,0,0,3"
                                         Padding="6,0"
                                         Cursor="Hand"
-                                        ToolTip="tarkov-market.com을 그대로 엽니다">
+                                        ToolTip="{loc:Text TopBar_Online_ToolTip}">
                                     <Border.InputBindings>
                                         <MouseBinding MouseAction="LeftClick"
                                                       Command="{Binding SetLocalMapModeCommand}"
@@ -295,7 +297,7 @@
                                         CornerRadius="0,3,3,0"
                                         Padding="6,0"
                                         Cursor="Hand"
-                                        ToolTip="앱에 담긴 지도로 엽니다. 사이트가 바뀌거나 죽어 있어도 위치와 방향이 동작합니다">
+                                        ToolTip="{loc:Text TopBar_Local_ToolTip}">
                                     <Border.InputBindings>
                                         <MouseBinding MouseAction="LeftClick"
                                                       Command="{Binding SetLocalMapModeCommand}"
@@ -319,7 +321,7 @@
                                    VerticalAlignment="Center"
                                    Margin="0,0,4,0"
                                    FontSize="10"
-                                   ToolTip="창 투명도"
+                                   ToolTip="{loc:Text TopBar_Opacity_ToolTip}"
                                    WindowChrome.IsHitTestVisibleInChrome="True"/>
                         <Slider x:Name="OpacitySlider"
                                 Width="60"
@@ -329,7 +331,7 @@
                                 Value="{Binding WindowOpacity, Mode=TwoWay}"
                                 VerticalAlignment="Center"
                                 WindowChrome.IsHitTestVisibleInChrome="True"
-                                ToolTip="창 투명도 조절">
+                                ToolTip="{loc:Text TopBar_OpacitySlider_ToolTip}">
                             <i:Interaction.Behaviors>
                                 <behaviors:OpacitySliderDragBehavior/>
                             </i:Interaction.Behaviors>
@@ -373,15 +375,20 @@
                     </StackPanel>
 
                     <!-- 업데이트 준비됨 표시 (백그라운드 다운로드 완료 시 나타나고, 클릭하면 재시작하여 적용) -->
+                    <!--
+                    INTENT: 문구는 버튼의 ToolTip 속성에 두고 말풍선 모양은 이 버튼 범위의 암시적 스타일로 입힌다.
+                    ToolTip 요소 안에 문구를 두면 그 요소가 창의 트리에 속하지 않아 화면 언어를 바꿔도 이전 문구로 남는다
+                    -->
                     <Button x:Name="UpdateReadyButton"
                             Grid.Column="2"
                             Style="{StaticResource DownloadIconButton}"
                             Command="{Binding RestartToApplyUpdateCommand}"
                             Visibility="{Binding ShowUpdateIcon, Converter={StaticResource BoolToVisibilityConverter}}"
+                            ToolTip="{loc:Text TopBar_UpdateReady_ToolTip}"
                             WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Button.ToolTip>
-                            <ToolTip Style="{StaticResource CalloutToolTip}" Content="업데이트 준비 완료!"/>
-                        </Button.ToolTip>
+                        <Button.Resources>
+                            <Style TargetType="ToolTip" BasedOn="{StaticResource CalloutToolTip}"/>
+                        </Button.Resources>
                         <!-- 받침선으로 떨어지는 아래 화살표 (16x16 좌표계에 그린다) -->
                         <Path Data="M8,2.5 L8,9.5 M4.5,6.5 L8,10 L11.5,6.5 M3.5,13 L12.5,13"
                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
@@ -396,7 +403,7 @@
                     <Button x:Name="SettingsButton"
                             Grid.Column="3"
                             Style="{StaticResource TitleBarIconButton}"
-                            ToolTip="설정"
+                            ToolTip="{loc:Text Common_Settings}"
                             Command="{Binding ToggleSettingsCommand}"
                             WindowChrome.IsHitTestVisibleInChrome="True">
                         <!-- 톱니 6개 기어와 가운데 구멍 (16x16 좌표계, 톱니 하나가 위를 향한다) -->
@@ -520,7 +527,7 @@
                             Height="24">
                         <!-- 닫기 버튼이 오른쪽 위 모서리까지 닿도록 오른쪽 여백은 두지 않는다 -->
                         <Grid Margin="8,0,0,0">
-                            <TextBlock Text="설정"
+                            <TextBlock Text="{loc:Text Common_Settings}"
                                        FontSize="11"
                                        FontWeight="SemiBold"
                                        Foreground="White"
@@ -558,7 +565,7 @@
                            Foreground="White"
                            HorizontalAlignment="Center"
                            Margin="0,0,0,20"/>
-                <TextBlock Text="초기화 중..."
+                <TextBlock Text="{loc:Text Startup_Initializing}"
                            FontSize="16" 
                            Foreground="#FF888888"
                            HorizontalAlignment="Center"/>

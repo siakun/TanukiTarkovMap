@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+INTENT
+일본어 화면 문구. 키는 기본 원본인 Strings.resx와 같아야 한다.
+일본어 문장 안의 괄호와 콜론은 전각(（）, ：)을 쓰고, 게임 용어는 일본 커뮤니티 표기(グーンズ, 脱出地点, レイド)를 따른다.
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Common_Settings" xml:space="preserve">
+    <value>設定</value>
+  </data>
+  <data name="Common_Browse" xml:space="preserve">
+    <value>参照</value>
+  </data>
+  <data name="Startup_Starting" xml:space="preserve">
+    <value>起動しています...</value>
+  </data>
+  <data name="Startup_Initializing" xml:space="preserve">
+    <value>初期化しています...</value>
+  </data>
+  <data name="Startup_StartingWatchers" xml:space="preserve">
+    <value>監視を開始しています...</value>
+  </data>
+  <data name="Startup_ErrorTitle" xml:space="preserve">
+    <value>エラー</value>
+  </data>
+  <data name="Startup_ErrorMessage" xml:space="preserve">
+    <value>アプリの起動中にエラーが発生しました：
+{0}</value>
+  </data>
+  <data name="Tray_ToggleWindow" xml:space="preserve">
+    <value>ウィンドウの表示/非表示</value>
+  </data>
+  <data name="Tray_OpenTarkovMarket" xml:space="preserve">
+    <value>Tarkov Market を開く</value>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>終了</value>
+  </data>
+  <data name="TopBar_HideUi" xml:space="preserve">
+    <value>UI 要素を隠す</value>
+  </data>
+  <data name="TopBar_Online_ToolTip" xml:space="preserve">
+    <value>tarkov-market.com をそのまま開きます</value>
+  </data>
+  <data name="TopBar_Local_ToolTip" xml:space="preserve">
+    <value>アプリに同梱された地図で開きます。サイトが変わったり停止していても、位置と向きの表示は動作します</value>
+  </data>
+  <data name="TopBar_Opacity_ToolTip" xml:space="preserve">
+    <value>ウィンドウの透明度</value>
+  </data>
+  <data name="TopBar_OpacitySlider_ToolTip" xml:space="preserve">
+    <value>ウィンドウの透明度を調整</value>
+  </data>
+  <data name="TopBar_UpdateReady_ToolTip" xml:space="preserve">
+    <value>アップデートの準備ができました！</value>
+  </data>
+  <data name="Goons_Title" xml:space="preserve">
+    <value>グーンズの最近の目撃情報</value>
+  </data>
+  <data name="Goons_ToolTip" xml:space="preserve">
+    <value>PvE の最近の目撃情報です。グーンズは確率でスポーンするため、情報と実際の出現場所が異なることがあります。</value>
+  </data>
+  <data name="Browser_Loading" xml:space="preserve">
+    <value>読み込み中...</value>
+  </data>
+  <data name="Hotkey_PressKey" xml:space="preserve">
+    <value>キーを押してください...</value>
+  </data>
+  <data name="Settings_Language_Title" xml:space="preserve">
+    <value>言語 / Language</value>
+  </data>
+  <data name="Settings_Language_FollowWindows" xml:space="preserve">
+    <value>Windows の設定に従う（{0}）</value>
+  </data>
+  <data name="Settings_Language_Hint" xml:space="preserve">
+    <value>Online マップの文字は tarkov-market.com サイトの表示に従います</value>
+  </data>
+  <data name="Settings_Paths_Title" xml:space="preserve">
+    <value>タルコフのパス設定</value>
+  </data>
+  <data name="Settings_GameFolder" xml:space="preserve">
+    <value>ゲームフォルダーのパス</value>
+  </data>
+  <data name="Settings_ScreenshotsFolder" xml:space="preserve">
+    <value>スクリーンショットフォルダーのパス</value>
+  </data>
+  <data name="Dialog_SelectGameFolder" xml:space="preserve">
+    <value>Escape From Tarkov のゲームフォルダーを選択</value>
+  </data>
+  <data name="Dialog_SelectScreenshotsFolder" xml:space="preserve">
+    <value>スクリーンショットフォルダーを選択</value>
+  </data>
+  <data name="Settings_Program_Title" xml:space="preserve">
+    <value>一般</value>
+  </data>
+  <data name="Settings_Hotkey_Title" xml:space="preserve">
+    <value>ミニマップウィンドウの表示/非表示ショートカット</value>
+  </data>
+  <data name="Settings_Hotkey_Enable" xml:space="preserve">
+    <value>ショートカットキーでウィンドウを表示/非表示にする</value>
+  </data>
+  <data name="Settings_Hotkey_TrayHint" xml:space="preserve">
+    <value>このキーはミニマップウィンドウ全体を非表示にしたり、再び表示したりします。非表示にしてもアプリは終了せず、タスクトレイで動作し続けます。</value>
+  </data>
+  <data name="Settings_Hotkey_ScreenshotHint" xml:space="preserve">
+    <value>位置を更新するには、タルコフの設定にある Screenshot キーを押してください。Steam の F12 スクリーンショットキーとは異なります。</value>
+  </data>
+  <data name="Settings_Hotkey_PinHint" xml:space="preserve">
+    <value>1台のモニターでゲームの上に表示し続けるには、上部のピン（常に手前に表示）をオンにしてください。ピンがオフだと、ほかのウィンドウに隠れることがあります。</value>
+  </data>
+  <data name="Settings_Hotkey_Key" xml:space="preserve">
+    <value>ショートカット：</value>
+  </data>
+  <data name="Settings_Hotkey_CaptureHint" xml:space="preserve">
+    <value>（クリックしてからキーを押してください）</value>
+  </data>
+  <data name="Settings_Cleanup_Title" xml:space="preserve">
+    <value>ファイルの自動整理</value>
+  </data>
+  <data name="Settings_Cleanup_Logs" xml:space="preserve">
+    <value>ログフォルダーを自動で整理</value>
+  </data>
+  <data name="Settings_Cleanup_LogsHint" xml:space="preserve">
+    <value>プログラムの起動時に古いログフォルダーを自動で削除します</value>
+  </data>
+  <data name="Settings_Cleanup_Screenshots" xml:space="preserve">
+    <value>スクリーンショットを自動で整理</value>
+  </data>
+  <data name="Settings_Cleanup_ScreenshotsHint" xml:space="preserve">
+    <value>レイドの終了時にスクリーンショットを自動で削除します</value>
+  </data>
+  <data name="Settings_AutoMap_Title" xml:space="preserve">
+    <value>マップの自動切り替え</value>
+  </data>
+  <data name="Settings_AutoMap_RaidEntry" xml:space="preserve">
+    <value>レイドに入ったマップへ自動で切り替える</value>
+  </data>
+  <data name="Settings_AutoMap_RaidEntryHint" xml:space="preserve">
+    <value>ゲームログから入ったマップを検出し、表示をそのマップに切り替えます</value>
+  </data>
+  <data name="Settings_AutoMap_Screenshot" xml:space="preserve">
+    <value>スクリーンショット撮影時にログ上の現在のマップへ移動</value>
+  </data>
+  <data name="Settings_AutoMap_ScreenshotHint" xml:space="preserve">
+    <value>レイド中にアプリを起動して入場を検出できなかったときのための補正です。ゲームログを読めないと、前のマップに戻ることがあります</value>
+  </data>
+  <data name="Settings_Goons_Enable" xml:space="preserve">
+    <value>最近の目撃情報を表示</value>
+  </data>
+  <data name="Settings_Goons_Hint" xml:space="preserve">
+    <value>tarkov-goon-tracker.com の PvE の最近の目撃情報を表示します。グーンズは確率でスポーンするため、情報と実際の出現場所が異なることがあります。</value>
+  </data>
+  <data name="Settings_Storage_Title" xml:space="preserve">
+    <value>ストレージ</value>
+  </data>
+  <data name="Settings_Storage_BrowserCache" xml:space="preserve">
+    <value>ブラウザーキャッシュ</value>
+  </data>
+  <data name="Settings_Storage_Hint" xml:space="preserve">
+    <value>マップのタイル画像とページのスクリプトが保存される場所です。消去しても設定はそのままで、マップを開き直すと新しくダウンロードします</value>
+  </data>
+  <data name="Settings_Storage_ClearOnExit" xml:space="preserve">
+    <value>プログラムを閉じるときに消去します</value>
+  </data>
+  <data name="Cache_Reset" xml:space="preserve">
+    <value>キャッシュを消去</value>
+  </data>
+  <data name="Cache_CancelReset" xml:space="preserve">
+    <value>消去を取り消す</value>
+  </data>
+  <data name="Cache_CodeCacheLimitNotice" xml:space="preserve">
+    <value>ページスクリプトのキャッシュが {0}MB を超えると、起動時に自動で整理します。マップのタイルは残すので遅くなりません</value>
+  </data>
+  <data name="Cache_Measuring" xml:space="preserve">
+    <value>確認中...</value>
+  </data>
+  <data name="Cache_Empty" xml:space="preserve">
+    <value>空</value>
+  </data>
+  <data name="Settings_Update_Title" xml:space="preserve">
+    <value>アップデート</value>
+  </data>
+  <data name="Settings_Update_Auto" xml:space="preserve">
+    <value>自動アップデート</value>
+  </data>
+  <data name="Settings_Update_AutoHint" xml:space="preserve">
+    <value>新しいバージョンが出たらバックグラウンドでダウンロードしておき、プログラムを閉じるときに適用します</value>
+  </data>
+  <data name="Settings_Update_Version" xml:space="preserve">
+    <value>バージョンの選択</value>
+  </data>
+  <data name="Settings_Update_Refresh" xml:space="preserve">
+    <value>一覧を更新</value>
+  </data>
+  <data name="Settings_Update_Install" xml:space="preserve">
+    <value>選択したバージョンをインストール</value>
+  </data>
+  <data name="Settings_Update_OlderVersionHint" xml:space="preserve">
+    <value>最新ではないバージョンを選ぶと、自動アップデートも一緒にオフになります。ただし、この設定がない古いバージョンは自分で最新版をダウンロードするため、そのバージョンに留まることはできません</value>
+  </data>
+  <data name="Settings_Update_FullPackageHint" xml:space="preserve">
+    <value>バージョンの切り替えはパッケージ全体をダウンロードするため、時間がかかります</value>
+  </data>
+  <data name="Settings_Update_NotInstalled" xml:space="preserve">
+    <value>バージョンを変更できるのはインストール版だけです。現在はポータブル版または開発ビルドで実行中です</value>
+  </data>
+  <data name="Update_NoVersions" xml:space="preserve">
+    <value>インストールできるバージョンがありません</value>
+  </data>
+  <data name="Update_RateLimited" xml:space="preserve">
+    <value>GitHub のリクエスト上限を超えました。1時間ほど後にもう一度お試しください</value>
+  </data>
+  <data name="Update_ListFailed" xml:space="preserve">
+    <value>バージョン一覧を取得できませんでした。接続を確認して、もう一度お試しください</value>
+  </data>
+  <data name="Update_InstallFailed" xml:space="preserve">
+    <value>v{0} のインストールに失敗しました：{1}</value>
+  </data>
+  <data name="Update_Installing" xml:space="preserve">
+    <value>インストールしています。まもなく再起動します</value>
+  </data>
+  <data name="Version_Current" xml:space="preserve">
+    <value>現在</value>
+  </data>
+  <data name="Version_Latest" xml:space="preserve">
+    <value>最新</value>
+  </data>
+  <data name="Version_Beta" xml:space="preserve">
+    <value>ベータ</value>
+  </data>
+  <data name="Settings_Experimental_Title" xml:space="preserve">
+    <value>試験的な機能</value>
+  </data>
+  <data name="Settings_Beta_Enable" xml:space="preserve">
+    <value>ベータ版を受け取る</value>
+  </data>
+  <data name="Settings_Beta_Hint" xml:space="preserve">
+    <value>v0.1.1-beta のような正式リリース前のバージョンを、バージョン一覧と自動アップデートの対象に含めます</value>
+  </data>
+  <data name="Settings_Beta_RollbackHint" xml:space="preserve">
+    <value>テスト中のビルドのため、問題があるかもしれません。元に戻すには、この項目をオフにしてバージョン一覧から正式版を選んでインストールしてください</value>
+  </data>
+  <data name="Settings_LocalMap_Enable" xml:space="preserve">
+    <value>ローカルマップを使用</value>
+  </data>
+  <data name="Settings_LocalMap_Hint" xml:space="preserve">
+    <value>上部バーに Online/Local の切り替えが表示されます。Local はアプリに同梱された地図で地形、階層、陣営別の脱出地点、現在の位置と向きを表示し、サイトが変わってもそのまま動作します。クエストなどのサイトの機能は Online で利用します</value>
+  </data>
+  <data name="Settings_LocalMap_DataUpdateHint" xml:space="preserve">
+    <value>地図データはアプリを新しいバージョンにアップデートするときに一緒に更新されます</value>
+  </data>
+  <data name="LocalMap_DataDate" xml:space="preserve">
+    <value>地図データ：{0} 時点</value>
+  </data>
+  <data name="LocalMap_DataMissing" xml:space="preserve">
+    <value>アプリに同梱された地図データが見つかりませんでした。アプリを再インストールしてください</value>
+  </data>
+  <data name="Settings_Developer_Title" xml:space="preserve">
+    <value>開発者ツール</value>
+  </data>
+  <data name="Settings_Developer_UpdateUi" xml:space="preserve">
+    <value>アップデート UI の確認</value>
+  </data>
+  <data name="Settings_Developer_UpdateIcon" xml:space="preserve">
+    <value>タイトルバーのダウンロードアイコンを常に表示</value>
+  </data>
+  <data name="Settings_Developer_UpdateIconHint" xml:space="preserve">
+    <value>設定ファイルに保存しないため、プログラムを再起動するとオフになります</value>
+  </data>
+  <data name="Settings_Developer_PreviewProgress" xml:space="preserve">
+    <value>ダウンロード進行状況のプレビュー</value>
+  </data>
+  <data name="Settings_Developer_PreviewProgressHint" xml:space="preserve">
+    <value>上のアップデート欄の進行状況バーを、実際にインストールせずに再生します。押してから上にスクロールして確認してください</value>
+  </data>
+  <data name="Settings_Developer_OpenPilot" xml:space="preserve">
+    <value>Tarkov Market の設定ページへ移動</value>
+  </data>
+  <data name="Settings_Developer_OpenPilotHint" xml:space="preserve">
+    <value>tarkov-market.com/pilot ページを表示します</value>
+  </data>
+  <data name="Settings_Developer_CustomUrl" xml:space="preserve">
+    <value>URL へ直接移動</value>
+  </data>
+  <data name="Settings_Developer_Go" xml:space="preserve">
+    <value>移動</value>
+  </data>
+  <data name="Settings_Developer_CustomUrlHint" xml:space="preserve">
+    <value>デバッグモードで指定の URL へ移動します（JavaScript 無効）</value>
+  </data>
+  <data name="Settings_Developer_SettingsFile" xml:space="preserve">
+    <value>設定ファイルのパス</value>
+  </data>
+  <data name="Settings_Developer_OpenFolder" xml:space="preserve">
+    <value>フォルダーを開く</value>
+  </data>
+  <data name="Settings_Developer_SettingsFileHint" xml:space="preserve">
+    <value>settings.json が保存されているフォルダーを開きます</value>
+  </data>
+  <data name="Settings_About_ViewOnGitHub" xml:space="preserve">
+    <value>GitHub で見る</value>
+  </data>
+</root>

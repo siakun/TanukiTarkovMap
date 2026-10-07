@@ -15,10 +15,11 @@ namespace TanukiTarkovMap.Models.Offline
     그 폴더로 응답하게 한다. Online 브라우저의 프로필에는 등록하지 않는다.
 
     Core Functionality:
-    - PageUrl(mapName): 맵의 미니맵 주소. mapName은 MapInfo.Name(리소스 폴더 이름)이다
+    - PageUrl(mapName, language): 맵의 미니맵 주소. mapName은 MapInfo.Name(리소스 폴더 이름)이고,
+      language는 미니맵이 로딩과 오류 안내를 처음부터 그 언어로 그리도록 넘기는 화면 언어 코드다
     - MapName(address): 미니맵 주소에서 맵 이름을 되읽는다. 미니맵 주소가 아니면 null
     - CreateRequestContext(): Local 브라우저가 쓸 저장 공간을 만들고 파일 응답을 등록한다
-    - ShowScreenshot/IsRendered/SetFaction/SetControlsVisible: 미니맵의 window.tanukiViewer 호출문
+    - ShowScreenshot/IsRendered/SetFaction/SetControlsVisible/SetLanguage: 미니맵의 window.tanukiViewer 호출문
 
     Dependencies:
     - FolderSchemeHandlerFactory: 경로가 폴더 밖으로 나가는 요청을 막고 확장자로 MIME을 정한다
@@ -33,7 +34,7 @@ namespace TanukiTarkovMap.Models.Offline
     런타임을 그대로 실행했다. 사이트가 위치 입력 경로를 바꾸면 사본을 새로 받을 때 함께 깨지는 구조라
     리소스만 받아 앱이 그리는 방식으로 바꿨다. 이유와 대안은 docs/20260821-local-viewer-design.md에 있다.
 
-    Last Updated: 2026-10-08 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합
+    Last Updated: 2026-10-08 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합, 안내 문구 언어 전달
     */
     public static class LocalViewer
     {
@@ -42,8 +43,8 @@ namespace TanukiTarkovMap.Models.Offline
         /// <summary>실행 파일 옆에서 미니맵과 리소스를 담는 폴더</summary>
         public static string Root => Path.Combine(AppContext.BaseDirectory, "LocalMap");
 
-        public static string PageUrl(string mapName) =>
-            $"https://{Host}/viewer/index.html?map={Uri.EscapeDataString(mapName)}";
+        public static string PageUrl(string mapName, string language) =>
+            $"https://{Host}/viewer/index.html?map={Uri.EscapeDataString(mapName)}&lang={Uri.EscapeDataString(language)}";
 
         public static string? MapName(string? address)
         {
@@ -88,5 +89,8 @@ namespace TanukiTarkovMap.Models.Offline
 
         public static string SetControlsVisible(bool visible) =>
             $"window.tanukiViewer?.setControlsVisible({(visible ? "true" : "false")}) === true;";
+
+        public static string SetLanguage(string language) =>
+            $"window.tanukiViewer?.setLanguage({JsonSerializer.Serialize(language)}) === true;";
     }
 }

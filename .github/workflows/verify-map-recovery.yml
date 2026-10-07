@@ -35,5 +35,9 @@ jobs:
         run: node tools/verify-map-keep-visible.mjs
       - name: Verify Local minimap
         run: node tools/verify-viewer.mjs
+      # INTENT: 화면 문구의 번역이 언어마다 빠지거나 자리 표시자가 어긋나지 않았는지 본다.
+      # XAML의 {loc:Text 키} 오타는 빌드가 잡지 못하므로 여기서 잡는다.
+      - name: Verify UI translations
+        run: node tools/verify-localization.mjs
       - name: Build application without launching
         run: dotnet build src/TanukiTarkovMap.sln -c Release

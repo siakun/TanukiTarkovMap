@@ -4,6 +4,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Xaml.Behaviors;
+using TanukiTarkovMap.Localization;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Utils;
 
@@ -130,7 +131,7 @@ namespace TanukiTarkovMap.Behaviors
         private void EnterInputMode()
         {
             IsInInputMode = true;
-            AssociatedObject.Content = "키를 눌러주세요...";
+            AssociatedObject.Content = Strings.Hotkey_PressKey;
             AssociatedObject.Background = _inputModeBrush;
             AssociatedObject.Focus();
             Logger.SimpleLog("[HotkeyInputBehavior] Entered input mode");

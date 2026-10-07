@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Windows.Threading;
+using TanukiTarkovMap.Localization;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.JavaScript;
@@ -23,8 +24,8 @@ Core Functionality:
 - 브라우저 연결: SetBrowser()로 이벤트를 먼저 구독하고 CEF 준비 완료를 확인
 - 탐색 조정: Navigate()가 모든 URL 요청의 준비 상태를 판정하고 준비 전 마지막 요청만 보관
 - 시작 탐색: App.StartupUrl을 Navigate()에 전달해 다른 탐색 요청과 같은 준비 경로 사용
-- 모드별 주소: 같은 맵을 Online은 사이트 주소로, Local은 LocalViewer.PageUrl로 연다
-- 페이지 로드 후처리: Online은 UI 요소 제거, 마진 제거, 줌 적용. Local은 UI 숨김과 진영만 전달
+- 모드별 주소: 같은 맵을 Online은 사이트 주소로, Local은 LocalViewer.PageUrl(화면 언어 포함)로 연다
+- 페이지 로드 후처리: Online은 UI 요소 제거, 마진 제거, 줌 적용. Local은 UI 숨김, 진영, 화면 언어만 전달
 - 로컬 모드: Behavior에 브라우저 교체를 요청하고 현재 맵과 마지막 좌표를 새 모드로 이어 간다
 - 상태 보고: 로드 시작 시점에 page-health.js를 넣어 페이지 오류와 맵 렌더 여부를 로그로 받기
 - JavaScript 통신: CefSharp.PostMessage로 맵 정보/연결 상태 수신
@@ -57,6 +58,7 @@ Message Flow:
   MapEventService(ScreenshotTaken) -> 최신 입력 보관 -> MaintainPositionAsync
     -> Online: window.tanukiPilot (사이트의 위치 입력 경로) / Local: window.tanukiViewer
   MapEventService(QuestCompleted) -> SendToPilot -> 페이지의 Pilot 서비스 (Online만)
+  AppLanguage -> LanguageChangedMessage -> Local 미니맵의 안내 문구 언어 변경 (페이지는 다시 열지 않는다)
 
 Design Rationale: 시작 주소는 설정에서 계산하는 App.StartupUrl을 명령 값으로 사용하고, Address는
 브라우저가 알려 주는 현재 상태로만 다룬다. 시작, 맵 선택과 디버그 URL을 모두 Navigate()에서
@@ -72,7 +74,7 @@ CEF 준비 전에 들어온 자동 맵 전환이 사라지는 남은 경합을 �
 Local은 주입 없이 미니맵의 API만 부르고, 위치 입력은 주소 대신 맵 이름으로 묶어 모드 전환 뒤에도 잇는다.
 Known Limitations: 모드 전환 때 브라우저를 교체하므로 웹 페이지의 뒤로/앞으로 이동 기록은 초기화된다.
 
-Last Updated: 2026-10-08 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합과 Online 위치 입력 복구
+Last Updated: 2026-10-08 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합과 Online 위치 입력 복구, 화면 언어 전달
 */
 namespace TanukiTarkovMap.ViewModels
 {
@@ -83,7 +85,8 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<ExtractionFilterChangedMessage>,
         IRecipient<NavigateToUrlMessage>,
         IRecipient<MonitorRefreshRateChangedMessage>,
-        IRecipient<LocalMapModeChangedMessage>
+        IRecipient<LocalMapModeChangedMessage>,
+        IRecipient<LanguageChangedMessage>
     {
         private readonly BrowserUIService _browserUIService;
         private readonly MapEventService _mapEventService;
@@ -355,6 +358,9 @@ namespace TanukiTarkovMap.ViewModels
                         await ApplyUIVisibilityAsync();
                         if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
                         await ApplyExtractionFilterAsync(IsPmcExtraction);
+                        if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
+                        // 주소의 lang으로 처음부터 그 언어로 그리지만, 로딩 중에 언어를 바꿨으면 그 변경은 여기서 반영된다
+                        await ExecuteScriptAsync(LocalViewer.SetLanguage(AppLanguage.Current), documentVersion: version);
                         if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
                         await MaintainPositionAsync();
                         Logger.SimpleLog($"[WebBrowserViewModel] Local viewer loaded: {loadedUrl}");
@@ -743,6 +749,19 @@ namespace TanukiTarkovMap.ViewModels
             BrowserModeChanged?.Invoke(this, EventArgs.Empty);
         }
 
+        /// <summary>
+        /// 화면 언어 변경 메시지 핸들러 (AppLanguage → WebBrowserViewModel)
+        ///
+        /// Local 미니맵은 앱이 그리는 안내 문구(로딩, 오류)만 언어를 따르므로 그 문구만 바꾸게 한다.
+        /// 페이지를 다시 열면 레이드 중에 지도가 잠깐 사라지므로 새로 고치지 않는다. Online 사이트의 문구는
+        /// 사이트가 정하므로 손대지 않는다
+        /// </summary>
+        public void Receive(LanguageChangedMessage message)
+        {
+            if (LocalViewer.MapName(Address) == null) return;
+            _ = ExecuteScriptAsync(LocalViewer.SetLanguage(message.Value));
+        }
+
         #endregion
 
         #region Private Methods
@@ -798,7 +817,7 @@ namespace TanukiTarkovMap.ViewModels
         private string AddressForMode(string url)
         {
             if (MapKey(url) is not { } map) return url;
-            return IsLocalMapMode ? LocalViewer.PageUrl(map) : MapConfiguration.GetByName(map)?.Url ?? url;
+            return IsLocalMapMode ? LocalViewer.PageUrl(map, AppLanguage.Current) : MapConfiguration.GetByName(map)?.Url ?? url;
         }
 
         private void AcceptPageAddress(string url)

@@ -8,9 +8,12 @@ using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using CefSharp;
 using CefSharp.Wpf;
+using CommunityToolkit.Mvvm.Messaging;
 using Hardcodet.Wpf.TaskbarNotification;
 using Microsoft.Win32;
 using Siakun.AutoUpdate;
+using TanukiTarkovMap.Localization;
+using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.FileSystem;
 using TanukiTarkovMap.Models.Services;
@@ -256,11 +259,17 @@ namespace TanukiTarkovMap
                 //    CEF가 캐시 폴더를 열고 나면 손댈 수 없으므로 InitializeCef보다 먼저 한다
                 AppPaths.PrepareOnStartup();
 
-                // 1. CEF 초기화. 시작에서 가장 오래 걸리는 단계다
+                // 1. 설정을 읽고 화면 언어를 정한다. 스플래시, 트레이 메뉴, 창이 처음부터 고른 언어로 뜨도록
+                //    어떤 화면보다 먼저 한다. 설정 파일은 위에서 정돈한 위치에서 읽는다
+                Logger.SimpleLog("Loading settings...");
+                Settings.Load();
+                ApplyLanguage();
+
+                // 2. CEF 초기화. 시작에서 가장 오래 걸리는 단계다
                 Logger.SimpleLog("Initializing CEF...");
                 InitializeCef();
                 Logger.SimpleLog("CEF initialized.");
-                ShowSplashIfStartupIsSlow("초기화 중...");
+                ShowSplashIfStartupIsSlow(Strings.Startup_Initializing);
 
                 // DI 컨테이너 초기화
                 ServiceLocator.Initialize();
@@ -276,17 +285,12 @@ namespace TanukiTarkovMap
                 Logger.SimpleLog("Creating tray icon...");
                 CreateTrayIcon();
 
-                // 설정 로드
-                Logger.SimpleLog("Loading settings...");
-                ShowSplashIfStartupIsSlow("설정을 불러오는 중...");
-                Settings.Load();
-
                 // GoonTracker 설정 적용
                 ServiceLocator.GoonTrackerService.Enabled = GetSettings().GoonTrackerEnabled;
 
                 // 파일/로그 모니터링 시작 (스크린샷, 게임 로그 감시)
                 Logger.SimpleLog("Starting file watchers...");
-                ShowSplashIfStartupIsSlow("감시를 시작하는 중...");
+                ShowSplashIfStartupIsSlow(Strings.Startup_StartingWatchers);
                 ScreenshotsWatcher.Start();
                 LogsWatcher.Start();
 
@@ -317,8 +321,25 @@ namespace TanukiTarkovMap
                 _splashWindow = null;
 
                 Logger.SimpleLog($"ERROR in Application_Startup: {ex}");
-                MessageBox.Show($"앱 시작 중 오류 발생:\n{ex.Message}", "오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                MessageBox.Show(string.Format(Strings.Startup_ErrorMessage, ex.Message), Strings.Startup_ErrorTitle,
+                    MessageBoxButton.OK, MessageBoxImage.Error);
                 Shutdown();
+            }
+        }
+
+        /// <summary>
+        /// 설정의 화면 언어를 적용한다.
+        /// 언어는 부가 기능이라 적용이 실패해도 지도는 떠야 한다. 실패하면 문구만 비고 시작은 계속한다
+        /// </summary>
+        private static void ApplyLanguage()
+        {
+            try
+            {
+                AppLanguage.Apply(GetSettings().Language);
+            }
+            catch (Exception ex)
+            {
+                Logger.SimpleLog($"[AppLanguage] Failed to apply language: {ex}");
             }
         }
 
@@ -331,26 +352,39 @@ namespace TanukiTarkovMap
             _trayIcon = new TaskbarIcon
             {
                 IconSource = new BitmapImage(iconUri),
-                ToolTipText = "Tanuki Tarkov Map"
+                ToolTipText = "Tanuki Tarkov Map",
+                ContextMenu = CreateTrayMenu()
             };
 
-            // 컨텍스트 메뉴 생성
-            var contextMenu = new ContextMenu();
+            // INTENT: 트레이 메뉴는 어느 창에도 속하지 않아 AppLanguage가 문구 사전을 바꿔도 WPF가 다시 그리지 않는다.
+            // 메뉴는 처음 열 때 만든 팝업을 계속 쓰므로 열릴 때 다시 읽기를 기대할 수도 없다. 언어가 바뀌면 새로 만든다
+            WeakReferenceMessenger.Default.Register<App, LanguageChangedMessage>(this,
+                static (app, _) => { if (app._trayIcon != null) app._trayIcon.ContextMenu = app.CreateTrayMenu(); });
+
+            // 트레이 아이콘 더블클릭 시 메인 창 토글
+            _trayIcon.TrayMouseDoubleClick += (s, args) => ToggleMainWindow();
+        }
+
+        /// <summary> 지금 화면 언어로 트레이 메뉴를 만든다 </summary>
+        private ContextMenu CreateTrayMenu()
+        {
+            // 창과 같은 글꼴 언어(xml:lang)를 직접 준다. 어느 창에도 속하지 않아 창의 값을 물려받지 못한다
+            var contextMenu = new ContextMenu { Language = AppLanguage.CurrentXmlLanguage };
 
             // 메인 창 열기/숨기기
-            var toggleWindowItem = new MenuItem { Header = "창 표시/숨기기" };
+            var toggleWindowItem = new MenuItem { Header = Strings.Tray_ToggleWindow };
             toggleWindowItem.Click += (s, args) => ToggleMainWindow();
             contextMenu.Items.Add(toggleWindowItem);
 
             // 설정 열기
-            var settingsItem = new MenuItem { Header = "설정" };
+            var settingsItem = new MenuItem { Header = Strings.Common_Settings };
             settingsItem.Click += (s, args) => ShowSettings();
             contextMenu.Items.Add(settingsItem);
 
             contextMenu.Items.Add(new Separator());
 
             // Tarkov Market 웹사이트 열기
-            var openWebItem = new MenuItem { Header = "Tarkov Market 열기" };
+            var openWebItem = new MenuItem { Header = Strings.Tray_OpenTarkovMarket };
             openWebItem.Click += (s, args) =>
             {
                 Process.Start(new ProcessStartInfo
@@ -364,14 +398,11 @@ namespace TanukiTarkovMap
             contextMenu.Items.Add(new Separator());
 
             // 종료
-            var exitItem = new MenuItem { Header = "종료" };
+            var exitItem = new MenuItem { Header = Strings.Tray_Exit };
             exitItem.Click += (s, args) => ExitApplication();
             contextMenu.Items.Add(exitItem);
 
-            _trayIcon.ContextMenu = contextMenu;
-
-            // 트레이 아이콘 더블클릭 시 메인 창 토글
-            _trayIcon.TrayMouseDoubleClick += (s, args) => ToggleMainWindow();
+            return contextMenu;
         }
 
         private void ShowMainWindow()
@@ -577,7 +608,9 @@ namespace TanukiTarkovMap
                 // 로그 비활성화 (프로덕션용)
                 LogSeverity = LogSeverity.Disable,
 
-                // 언어 설정
+                // Chromium 내장 화면(오류 페이지 등)의 언어.
+                // 화면 언어(AppLanguage)와 묶지 않는다. CEF 로캘은 초기화할 때만 정할 수 있어 설정 화면의
+                // 즉시 전환을 따라가지 못한다
                 Locale = "ko",
 
                 // GPU 가속 활성화

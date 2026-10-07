@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+INTENT
+앱 화면 문구의 기본 원본이며 영어다. Windows 언어가 지원 언어가 아니면 이 문구를 보여 준다.
+키는 빌드가 만드는 Localization.Strings의 속성 이름이 되어 C#은 Strings.키, XAML은 {loc:Text 키}로 읽는다.
+번역은 같은 키로 Strings.<언어 코드>.resx에 둔다. 키와 {0} 같은 자리 표시자가 언어마다 맞는지는
+tools/verify-localization.mjs가 확인한다. 로그와 예외 메시지는 화면 문구가 아니므로 여기에 두지 않는다.
+-->
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Common_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Common_Browse" xml:space="preserve">
+    <value>Browse</value>
+  </data>
+  <data name="Startup_Starting" xml:space="preserve">
+    <value>Starting...</value>
+  </data>
+  <data name="Startup_Initializing" xml:space="preserve">
+    <value>Initializing...</value>
+  </data>
+  <data name="Startup_StartingWatchers" xml:space="preserve">
+    <value>Starting file watchers...</value>
+  </data>
+  <data name="Startup_ErrorTitle" xml:space="preserve">
+    <value>Error</value>
+  </data>
+  <data name="Startup_ErrorMessage" xml:space="preserve">
+    <value>An error occurred while starting the app:
+{0}</value>
+  </data>
+  <data name="Tray_ToggleWindow" xml:space="preserve">
+    <value>Show/hide window</value>
+  </data>
+  <data name="Tray_OpenTarkovMarket" xml:space="preserve">
+    <value>Open Tarkov Market</value>
+  </data>
+  <data name="Tray_Exit" xml:space="preserve">
+    <value>Exit</value>
+  </data>
+  <data name="TopBar_HideUi" xml:space="preserve">
+    <value>Hide UI elements</value>
+  </data>
+  <data name="TopBar_Online_ToolTip" xml:space="preserve">
+    <value>Opens tarkov-market.com as it is</value>
+  </data>
+  <data name="TopBar_Local_ToolTip" xml:space="preserve">
+    <value>Opens the map bundled with the app. Your position and direction keep working even if the site changes or is down</value>
+  </data>
+  <data name="TopBar_Opacity_ToolTip" xml:space="preserve">
+    <value>Window opacity</value>
+  </data>
+  <data name="TopBar_OpacitySlider_ToolTip" xml:space="preserve">
+    <value>Adjust window opacity</value>
+  </data>
+  <data name="TopBar_UpdateReady_ToolTip" xml:space="preserve">
+    <value>Update ready!</value>
+  </data>
+  <data name="Goons_Title" xml:space="preserve">
+    <value>Recent Goons sightings</value>
+  </data>
+  <data name="Goons_ToolTip" xml:space="preserve">
+    <value>Recent PvE sighting reports. The Goons spawn by chance, so reports may differ from where they actually appear.</value>
+  </data>
+  <data name="Browser_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="Hotkey_PressKey" xml:space="preserve">
+    <value>Press a key...</value>
+  </data>
+  <data name="Settings_Language_Title" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Settings_Language_FollowWindows" xml:space="preserve">
+    <value>Use Windows language ({0})</value>
+  </data>
+  <data name="Settings_Language_Hint" xml:space="preserve">
+    <value>Text on the Online map follows the tarkov-market.com site</value>
+  </data>
+  <data name="Settings_Paths_Title" xml:space="preserve">
+    <value>Tarkov paths</value>
+  </data>
+  <data name="Settings_GameFolder" xml:space="preserve">
+    <value>Game folder path</value>
+  </data>
+  <data name="Settings_ScreenshotsFolder" xml:space="preserve">
+    <value>Screenshots folder path</value>
+  </data>
+  <data name="Dialog_SelectGameFolder" xml:space="preserve">
+    <value>Select Escape From Tarkov game folder</value>
+  </data>
+  <data name="Dialog_SelectScreenshotsFolder" xml:space="preserve">
+    <value>Select Screenshots folder</value>
+  </data>
+  <data name="Settings_Program_Title" xml:space="preserve">
+    <value>General</value>
+  </data>
+  <data name="Settings_Hotkey_Title" xml:space="preserve">
+    <value>Hotkey to show or hide the minimap window</value>
+  </data>
+  <data name="Settings_Hotkey_Enable" xml:space="preserve">
+    <value>Use a hotkey to show or hide the window</value>
+  </data>
+  <data name="Settings_Hotkey_TrayHint" xml:space="preserve">
+    <value>This key hides or shows the whole minimap window. Hiding it does not close the app; it keeps running in the tray.</value>
+  </data>
+  <data name="Settings_Hotkey_ScreenshotHint" xml:space="preserve">
+    <value>To update your position, press the Screenshot key set in Tarkov's settings. It is not Steam's F12 screenshot key.</value>
+  </data>
+  <data name="Settings_Hotkey_PinHint" xml:space="preserve">
+    <value>To keep the map above the game on a single monitor, turn on the pin (always on top) in the top bar. With the pin off, other windows can cover it.</value>
+  </data>
+  <data name="Settings_Hotkey_Key" xml:space="preserve">
+    <value>Hotkey:</value>
+  </data>
+  <data name="Settings_Hotkey_CaptureHint" xml:space="preserve">
+    <value>(Click, then press a key)</value>
+  </data>
+  <data name="Settings_Cleanup_Title" xml:space="preserve">
+    <value>Automatic file cleanup</value>
+  </data>
+  <data name="Settings_Cleanup_Logs" xml:space="preserve">
+    <value>Clean up log folders automatically</value>
+  </data>
+  <data name="Settings_Cleanup_LogsHint" xml:space="preserve">
+    <value>Deletes old log folders when the program starts</value>
+  </data>
+  <data name="Settings_Cleanup_Screenshots" xml:space="preserve">
+    <value>Clean up screenshots automatically</value>
+  </data>
+  <data name="Settings_Cleanup_ScreenshotsHint" xml:space="preserve">
+    <value>Deletes screenshots when a raid ends</value>
+  </data>
+  <data name="Settings_AutoMap_Title" xml:space="preserve">
+    <value>Automatic map switching</value>
+  </data>
+  <data name="Settings_AutoMap_RaidEntry" xml:space="preserve">
+    <value>Switch maps automatically when entering a raid</value>
+  </data>
+  <data name="Settings_AutoMap_RaidEntryHint" xml:space="preserve">
+    <value>Detects the map you entered from the game log and switches the view to it</value>
+  </data>
+  <data name="Settings_AutoMap_Screenshot" xml:space="preserve">
+    <value>Go to the current map from the log when taking a screenshot</value>
+  </data>
+  <data name="Settings_AutoMap_ScreenshotHint" xml:space="preserve">
+    <value>A correction for when you started the app mid-raid and missed the entry. If the game log cannot be read, it may go back to the previous map</value>
+  </data>
+  <data name="Settings_Goons_Enable" xml:space="preserve">
+    <value>Show recent sightings</value>
+  </data>
+  <data name="Settings_Goons_Hint" xml:space="preserve">
+    <value>Shows recent PvE sighting reports from tarkov-goon-tracker.com. The Goons spawn by chance, so reports may differ from where they actually appear.</value>
+  </data>
+  <data name="Settings_Storage_Title" xml:space="preserve">
+    <value>Storage</value>
+  </data>
+  <data name="Settings_Storage_BrowserCache" xml:space="preserve">
+    <value>Browser cache</value>
+  </data>
+  <data name="Settings_Storage_Hint" xml:space="preserve">
+    <value>Map tile images and page scripts are stored here. Clearing it keeps your settings, and the files are downloaded again when you reopen a map</value>
+  </data>
+  <data name="Settings_Storage_ClearOnExit" xml:space="preserve">
+    <value>Cleared when the program closes</value>
+  </data>
+  <data name="Cache_Reset" xml:space="preserve">
+    <value>Clear cache</value>
+  </data>
+  <data name="Cache_CancelReset" xml:space="preserve">
+    <value>Cancel clearing</value>
+  </data>
+  <data name="Cache_CodeCacheLimitNotice" xml:space="preserve">
+    <value>When the page script cache exceeds {0} MB, it is cleaned up at startup. Map tiles are kept, so maps do not load more slowly</value>
+  </data>
+  <data name="Cache_Measuring" xml:space="preserve">
+    <value>Checking...</value>
+  </data>
+  <data name="Cache_Empty" xml:space="preserve">
+    <value>Empty</value>
+  </data>
+  <data name="Settings_Update_Title" xml:space="preserve">
+    <value>Updates</value>
+  </data>
+  <data name="Settings_Update_Auto" xml:space="preserve">
+    <value>Automatic updates</value>
+  </data>
+  <data name="Settings_Update_AutoHint" xml:space="preserve">
+    <value>Downloads new versions in the background and applies them when the program closes</value>
+  </data>
+  <data name="Settings_Update_Version" xml:space="preserve">
+    <value>Choose version</value>
+  </data>
+  <data name="Settings_Update_Refresh" xml:space="preserve">
+    <value>Refresh list</value>
+  </data>
+  <data name="Settings_Update_Install" xml:space="preserve">
+    <value>Install selected version</value>
+  </data>
+  <data name="Settings_Update_OlderVersionHint" xml:space="preserve">
+    <value>Choosing a version other than the latest also turns off automatic updates. Old versions that lack this setting update themselves to the latest, so you cannot stay on them</value>
+  </data>
+  <data name="Settings_Update_FullPackageHint" xml:space="preserve">
+    <value>Switching versions downloads the full package, so it takes a while</value>
+  </data>
+  <data name="Settings_Update_NotInstalled" xml:space="preserve">
+    <value>Versions can only be changed in the installed app. It is running as a portable or development build now</value>
+  </data>
+  <data name="Update_NoVersions" xml:space="preserve">
+    <value>No versions are available to install</value>
+  </data>
+  <data name="Update_RateLimited" xml:space="preserve">
+    <value>GitHub request limit reached. Try again in about an hour</value>
+  </data>
+  <data name="Update_ListFailed" xml:space="preserve">
+    <value>Could not get the version list. Check your connection and try again</value>
+  </data>
+  <data name="Update_InstallFailed" xml:space="preserve">
+    <value>Failed to install v{0}: {1}</value>
+  </data>
+  <data name="Update_Installing" xml:space="preserve">
+    <value>Installing. The program will restart shortly</value>
+  </data>
+  <data name="Version_Current" xml:space="preserve">
+    <value>current</value>
+  </data>
+  <data name="Version_Latest" xml:space="preserve">
+    <value>latest</value>
+  </data>
+  <data name="Version_Beta" xml:space="preserve">
+    <value>beta</value>
+  </data>
+  <data name="Settings_Experimental_Title" xml:space="preserve">
+    <value>Experimental features</value>
+  </data>
+  <data name="Settings_Beta_Enable" xml:space="preserve">
+    <value>Get beta versions</value>
+  </data>
+  <data name="Settings_Beta_Hint" xml:space="preserve">
+    <value>Adds pre-release versions such as v0.1.1-beta to the version list and automatic updates</value>
+  </data>
+  <data name="Settings_Beta_RollbackHint" xml:space="preserve">
+    <value>These are test builds and may have problems. To go back, turn this off and install a stable version from the version list</value>
+  </data>
+  <data name="Settings_LocalMap_Enable" xml:space="preserve">
+    <value>Use local map</value>
+  </data>
+  <data name="Settings_LocalMap_Hint" xml:space="preserve">
+    <value>Adds an Online/Local switch to the top bar. Local shows the terrain, levels, extracts for each faction, and your current position and direction from the map bundled with the app, and keeps working even when the site changes. Site features such as quests are available in Online</value>
+  </data>
+  <data name="Settings_LocalMap_DataUpdateHint" xml:space="preserve">
+    <value>Map data is updated together with the app when you update to a new version</value>
+  </data>
+  <data name="LocalMap_DataDate" xml:space="preserve">
+    <value>Map data: as of {0}</value>
+  </data>
+  <data name="LocalMap_DataMissing" xml:space="preserve">
+    <value>Could not find the map data bundled with the app. Please reinstall the app</value>
+  </data>
+  <data name="Settings_Developer_Title" xml:space="preserve">
+    <value>Developer tools</value>
+  </data>
+  <data name="Settings_Developer_UpdateUi" xml:space="preserve">
+    <value>Update UI preview</value>
+  </data>
+  <data name="Settings_Developer_UpdateIcon" xml:space="preserve">
+    <value>Always show the download icon in the title bar</value>
+  </data>
+  <data name="Settings_Developer_UpdateIconHint" xml:space="preserve">
+    <value>Not saved to the settings file, so it turns off when the program restarts</value>
+  </data>
+  <data name="Settings_Developer_PreviewProgress" xml:space="preserve">
+    <value>Preview download progress</value>
+  </data>
+  <data name="Settings_Developer_PreviewProgressHint" xml:space="preserve">
+    <value>Plays the progress bar of the Updates section above without installing anything. Click it, then scroll up to watch</value>
+  </data>
+  <data name="Settings_Developer_OpenPilot" xml:space="preserve">
+    <value>Go to the Tarkov Market settings page</value>
+  </data>
+  <data name="Settings_Developer_OpenPilotHint" xml:space="preserve">
+    <value>Opens the tarkov-market.com/pilot page</value>
+  </data>
+  <data name="Settings_Developer_CustomUrl" xml:space="preserve">
+    <value>Go to URL</value>
+  </data>
+  <data name="Settings_Developer_Go" xml:space="preserve">
+    <value>Go</value>
+  </data>
+  <data name="Settings_Developer_CustomUrlHint" xml:space="preserve">
+    <value>Opens the URL in debug mode (JavaScript disabled)</value>
+  </data>
+  <data name="Settings_Developer_SettingsFile" xml:space="preserve">
+    <value>Settings file path</value>
+  </data>
+  <data name="Settings_Developer_OpenFolder" xml:space="preserve">
+    <value>Open folder</value>
+  </data>
+  <data name="Settings_Developer_SettingsFileHint" xml:space="preserve">
+    <value>Opens the folder that contains settings.json</value>
+  </data>
+  <data name="Settings_About_ViewOnGitHub" xml:space="preserve">
+    <value>View on GitHub</value>
+  </data>
+</root>

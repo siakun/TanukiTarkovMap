@@ -10,6 +10,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+    <!-- INTENT: 기본 Strings.resx가 영어다. 지원하지 않는 Windows 언어는 영어로 대체되고,
+         영어로 실행할 때는 위성 어셈블리를 찾지 않고 본 어셈블리의 문구를 읽는다. -->
+    <NeutralLanguage>en</NeutralLanguage>
 
     <!-- Velopack: 커스텀 Main 메서드 사용 -->
     <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
@@ -42,6 +45,33 @@
     <!-- JavaScript 파일을 Embedded Resource로 포함 -->
     <EmbeddedResource Include="Models\JavaScript\Scripts\*.js" />
   </ItemGroup>
+
+  <!-- INTENT: 화면 문구 클래스(Localization.Strings)를 Strings.resx에서 빌드할 때마다 만든다.
+       Visual Studio의 ResXFileCodeGenerator는 디자이너에서 저장할 때만 Strings.Designer.cs를 갱신해,
+       resx만 고치고 dotnet build를 하면 클래스가 뒤처진다. EmbeddedResource에 StronglyTyped 메타데이터를
+       다는 표준 생성은 리소스 단계에서 돌아 WPF 임시 어셈블리(_wpftmp) 컴파일이 클래스를 보지 못하고 실패한다.
+       그래서 XAML 컴파일보다 먼저 직접 생성하고 결과를 고정 경로의 Compile 항목으로 넣는다.
+       번역 resx(Strings.ko.resx 등)는 기본 리소스 처리로 위성 어셈블리가 된다.
+       Inputs/Outputs는 Strings.resx가 문자열만 담아 다른 파일을 링크하지 않는다는 전제다. 링크(ResXFileRef)를 넣으면
+       그 파일이 바뀌어도 다시 만들지 않으므로 이 조건을 지운다. -->
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)Strings.g.cs" />
+  </ItemGroup>
+
+  <Target Name="GenerateLocalizedStrings"
+          BeforeTargets="MarkupCompilePass1;CoreCompile"
+          Inputs="Localization\Strings.resx"
+          Outputs="$(IntermediateOutputPath)Strings.g.cs">
+    <GenerateResource Sources="Localization\Strings.resx"
+                      OutputResources="$(IntermediateOutputPath)Strings.class-only.resources"
+                      StronglyTypedLanguage="CSharp"
+                      StronglyTypedNamespace="TanukiTarkovMap.Localization"
+                      StronglyTypedClassName="Strings"
+                      StronglyTypedManifestPrefix="TanukiTarkovMap.Localization"
+                      StronglyTypedFileName="$(IntermediateOutputPath)Strings.g.cs"
+                      PublicClass="true"
+                      ExecuteAsTool="false" />
+  </Target>
 
   <ItemGroup>
     <!-- Local 모드의 자체 미니맵과 지도 리소스. LocalViewer가 실행 파일 옆 LocalMap 폴더를

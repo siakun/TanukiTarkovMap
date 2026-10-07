@@ -8,6 +8,8 @@
  * - 위치와 방향: 스크린샷 파일명을 넣으면 마커가 SVG의 그 지점 위에 보이고 삼각형이 그 방향을 가리키는지
  * - 카메라: 지형 밖에서 휠 확대, 멀리 끌기, 창 크기 변경 뒤에도 지형이 화면 가운데를 덮는지
  * - 오버레이: UI가 기본으로 숨고, 켜면 Levels가 보이고, Alt 휠과 높이로 층이 바뀌는지, 진영 필터가 맞는지
+ * - 안내 언어: 앱이 넘긴 언어(?lang=, setLanguage)로 오류 안내를 그리는지, 언어를 넘겨도 지도가 열리는지.
+ *   번역 사전을 다시 적지 않고 화면에 그려진 글자의 문자 종류(가나, 한글, ASCII)로 판정한다
  * 앱과 게임은 실행하지 않으며 네트워크로 나가는 요청도 없다.
  * Usage: node tools/verify-viewer.mjs [--root <folder with viewer/ and resources/>] [--maps a,b] [--artifacts dir]
  *   배포 결과를 검사할 때는 --root publish/LocalMap
@@ -88,6 +90,28 @@ try {
       for (const key of ['x', 'y', 'z']) assert.equal(parsed[key], result[key], `${filename} ${key}`);
       assert.ok(Math.abs(parsed.look - result.look) < 1e-6, `${filename} look ${parsed.look} != ${result.look}`);
     }
+  });
+
+  await check('loading and error notices follow the app language', async () => {
+    const kana = /[぀-ヿ]/, hangul = /[가-힣]/;
+    const notice = `document.getElementById('loadStatus').textContent`;
+    // 언어를 넘겨도 지도는 그대로 열리고, 글꼴 선택에 쓰는 문서 언어가 따라온다
+    assert.ok(await browser.navigate(`${origin}/viewer/index.html?map=${maps[0]}&lang=ja`, `window.tanukiViewer?.status() === 'ready'`), 'viewer did not load with lang');
+    assert.equal(await browser.evaluate('document.documentElement.lang'), 'ja');
+    // 없는 맵을 열어 오류 안내를 띄운다. 안내는 화면 언어로, 앱 로그에 남는 status()는 영어로 나온다
+    assert.ok(await browser.navigate(`${origin}/viewer/index.html?map=__missing__&lang=ja`, `window.tanukiViewer?.status().startsWith('error')`), 'missing map did not fail');
+    const japanese = await browser.evaluate(notice);
+    assert.ok(kana.test(japanese) && japanese.includes('__missing__'), `ja notice: ${japanese}`);
+    const status = await browser.evaluate('window.tanukiViewer.status()');
+    assert.ok(!kana.test(status) && !hangul.test(status) && status.includes('__missing__'), `status: ${status}`);
+    // 실행 중 전환과 모르는 언어(영어로 대체)
+    assert.equal(await browser.evaluate(`window.tanukiViewer.setLanguage('ko')`), true);
+    const korean = await browser.evaluate(notice);
+    assert.ok(hangul.test(korean) && korean.includes('__missing__'), `ko notice: ${korean}`);
+    await browser.evaluate(`window.tanukiViewer.setLanguage('xx')`);
+    const fallback = await browser.evaluate(notice);
+    assert.ok(/^[\x20-\x7e]+$/.test(fallback) && fallback.includes('__missing__'), `fallback notice: ${fallback}`);
+    assert.equal(await browser.evaluate('document.documentElement.lang'), 'en');
   });
 
   for (const mapId of maps) {

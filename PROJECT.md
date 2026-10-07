@@ -54,6 +54,7 @@ graph TB
 
     subgraph StaticServices["Static Services"]
         SET[Settings]
+        LANG[AppLanguage]
     end
 
     subgraph FileSystem["FileSystem Watchers"]
@@ -116,13 +117,16 @@ graph TB
     SL --> UPS
 
     SPVM --> SET
+    SPVM -->|언어 선택| LANG
     WSM --> SET
 
     APP -->|Initialize| SL
     APP -->|Start| LW
     APP -->|Start| SW
     APP -->|Load| SET
+    APP -->|Apply| LANG
     APP -->|Create| MW
+    LANG -->|LanguageChangedMessage| WBVM
 
     LW --> MES
     SW --> MES
@@ -318,6 +322,7 @@ resources/                  # Local 미니맵이 읽는 지도 데이터 (사이
 tools/                      # 지도 데이터 수집과 변환, 검증 도구
 viewer/                     # Local 모드의 미니맵 (생 JavaScript와 SVG, 빌드 단계 없음)
 src/TanukiTarkovMap/
+├── Localization/       # 화면 문구(Strings*.resx)와 화면 언어 적용 (AppLanguage, {loc:Text})
 ├── Models/
 │   ├── Data/           # 데이터 모델 (MapInfo, Settings 등)
 │   ├── FileSystem/     # 파일 시스템 감시 (LogsWatcher, ScreenshotsWatcher)
@@ -413,6 +418,29 @@ internal ServiceName() { }
 // ServiceLocator에서 Factory 패턴으로 생성
 services.AddSingleton(_ => new ServiceName());
 ```
+
+---
+
+## 화면 언어
+
+화면 문구는 `Localization/Strings.resx`(기본 언어)와 언어별 번역 파일에 있고, 빌드가 기본 resx에서 `Strings`
+클래스를 만듭니다. `AppLanguage`는 시작할 때 창보다 먼저 설정의 언어(빈 값이면 Windows 표시 언어)를 적용하고,
+설정 화면에서 언어를 바꾸면 Application 리소스의 문구 사전을 새 언어의 사전으로 교체합니다.
+
+```mermaid
+flowchart LR
+    SPVM[SettingsViewModel 언어 선택] --> LANG[AppLanguage.Apply]
+    LANG -->|문구 사전 교체| XAML["XAML의 {loc:Text 키}"]
+    LANG -->|Strings.Culture| CODE[C#의 Strings.키]
+    LANG -->|LanguageChangedMessage| VM[SettingsViewModel 계산 문구]
+    LANG -->|LanguageChangedMessage| TRAY[App 트레이 메뉴 다시 만들기]
+    LANG -->|LanguageChangedMessage| WBVM[WebBrowserViewModel -> Local 미니맵 setLanguage]
+```
+
+XAML 문구는 DynamicResource로 사전을 가리키므로 창 안의 문구는 사전 교체만으로 바뀝니다. 사전 교체가 닿지
+않는 곳(ViewModel이 계산하는 문구, 창 밖에서 만드는 트레이 메뉴, 브라우저 안의 Local 미니맵)만 메시지를 받아
+다시 만듭니다. Online 사이트와 CEF 로캘은 이 언어를 따르지 않습니다. 작업 규칙과 그 이유는
+[AGENTS.md](AGENTS.md)의 "화면 언어"에 있습니다.
 
 ---
 

@@ -1,17 +1,19 @@
 import { createCamera } from './camera.js';
 import { gameDirectionToMapDirection, gamePositionToMapPosition, parseScreenshot } from './coords.js';
+import { message, resolveLanguage } from './i18n.js';
 import { createExtractionLayer, createPlayerMarker } from './markers.js';
 
 /**
  * Local 미니맵의 진입점. 주소의 ?map=<맵 ID>로 resources의 지형, 설정, 추출구를 읽어 조립하고,
- * 앱이 부르는 window.tanukiViewer를 연다.
+ * 앱이 부르는 window.tanukiViewer를 연다. ?lang=<코드>는 로딩과 오류 안내의 언어다.
  *
  * window.tanukiViewer는 Online의 window.tanukiPilot과 같은 모양이라 앱은 두 모드를 같은 흐름으로 다룬다.
  * - showScreenshot(파일명): 위치와 방향을 표시하고, 마커가 실제로 보이면 true. 로딩 중이면 기억했다가
  *   준비되는 즉시 표시하고 false를 돌려준다. 앱은 isRendered가 true가 될 때까지 다시 부른다.
  * - isRendered(파일명): 마지막으로 표시한 파일명이고 마커가 보이면 true. 화면은 옮기지 않는다.
  * - setFaction(isPmc), setControlsVisible(visible): 로딩 전에 불러도 준비 뒤 적용한다.
- * - status(): 'loading', 'ready', 'error: <사유>'
+ * - setLanguage(코드): 안내 문구를 그 언어로 다시 그린다. 지도와 위치는 건드리지 않는다.
+ * - status(): 'loading', 'ready', 'error: <사유>'. 사유는 앱 로그에 남으므로 화면 언어와 관계없이 영어다.
  */
 const RESOURCE_ROOT = new URL('../resources/', import.meta.url);
 
@@ -28,18 +30,46 @@ const elements = {
   status: document.getElementById('loadStatus'),
 };
 
-const state = { status: 'loading', faction: 'pmc', pendingScreenshot: null, renderedScreenshot: null, map: null };
+const state = {
+  status: 'loading', faction: 'pmc', pendingScreenshot: null, renderedScreenshot: null, map: null,
+  language: resolveLanguage(new URLSearchParams(location.search).get('lang')), error: null,
+};
+
+/**
+ * 미니맵이 아는 실패. 화면에는 사유를 화면 언어로 다시 만들어 보여 주려고 문구 대신 키와 값을 들고 다니고,
+ * message는 앱 로그(status())에 남길 영어 문장이다.
+ */
+class ViewerError extends Error {
+  constructor(key, params = {}) {
+    super(message('en', key, params));
+    this.key = key;
+    this.params = params;
+  }
+}
+
+/** 로딩이나 오류 안내를 지금 언어로 그린다. 준비가 끝나면 안내를 숨기므로 그릴 것이 없다 */
+function renderStatus() {
+  document.documentElement.lang = state.language;
+  if (state.status === 'loading') {
+    elements.status.textContent = message(state.language, 'loading');
+  } else if (state.error) {
+    const reason = state.error instanceof ViewerError
+      ? message(state.language, state.error.key, state.error.params)
+      : state.error.message;
+    elements.status.textContent = message(state.language, 'failed', { reason });
+  }
+}
 
 async function fetchResource(path, type) {
   const response = await fetch(new URL(path, RESOURCE_ROOT));
-  if (!response.ok) throw new Error(`${path}를 읽지 못했습니다 (HTTP ${response.status})`);
+  if (!response.ok) throw new ViewerError('resourceUnreadable', { path, status: response.status });
   return type === 'json' ? response.json() : response.text();
 }
 
 function insertTerrain(svgText) {
   const parsed = new DOMParser().parseFromString(svgText, 'image/svg+xml');
   const root = parsed.documentElement;
-  if (root.localName !== 'svg' || parsed.querySelector('parsererror')) throw new Error('map.svg를 해석하지 못했습니다');
+  if (root.localName !== 'svg' || parsed.querySelector('parsererror')) throw new ViewerError('terrainInvalid');
   const svg = document.importNode(root, true);
   elements.wrap.replaceChildren(svg);
   return svg;
@@ -203,12 +233,20 @@ window.tanukiViewer = Object.freeze({
     elements.container.classList.toggle('controls-hidden', !visible);
     return true;
   },
+  setLanguage(code) {
+    state.language = resolveLanguage(code);
+    renderStatus();
+    return true;
+  },
 });
+
+// 모듈이 실행되는 즉시 로딩 안내를 그 언어로 채운다. index.html은 언어를 모르므로 안내를 비워 둔다
+renderStatus();
 
 async function initialize() {
   const mapId = new URLSearchParams(location.search).get('map');
   const manifest = await fetchResource('manifest.json', 'json');
-  if (!manifest.maps.includes(mapId)) throw new Error(`리소스에 ${mapId} 맵이 없습니다`);
+  if (!manifest.maps.includes(mapId)) throw new ViewerError('mapMissing', { map: mapId });
   const [meta, markerData, svgText] = await Promise.all([
     fetchResource(`maps/${mapId}/meta.json`, 'json'),
     fetchResource(`maps/${mapId}/markers.json`, 'json'),
@@ -248,6 +286,7 @@ async function initialize() {
 initialize().catch((error) => {
   console.error(error);
   state.status = `error: ${error.message}`;
+  state.error = error;
   elements.status.classList.add('is-error');
-  elements.status.textContent = `지도를 열지 못했습니다. ${error.message}`;
+  renderStatus();
 });

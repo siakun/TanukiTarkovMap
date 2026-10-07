@@ -6,6 +6,7 @@
              xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
              xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
              xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
+             xmlns:loc="clr-namespace:TanukiTarkovMap.Localization"
              mc:Ignorable="d"
              d:DesignHeight="460" d:DesignWidth="620"
              Background="#FF000000">
@@ -18,13 +19,50 @@
                   HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,8">
 
+            <!--
+            INTENT
+            언어 섹션을 맨 위에 둔다. 지금 화면 언어를 읽지 못하는 사람도 그 언어로 적은 언어 이름을 보고
+            바로 찾아야 한다. 고르는 즉시 앱 전체 문구가 바뀌므로 확인 버튼이나 다시 시작 안내를 두지 않는다.
+            선택지 문구 길이가 언어마다 달라 폭을 고정해 언어를 바꿀 때 상자가 늘었다 줄지 않게 한다
+            -->
+            <Border Background="#FF1A1A1A"
+                    CornerRadius="4"
+                    Padding="10"
+                    Margin="0,0,0,8">
+                <StackPanel>
+                    <TextBlock Text="{loc:Text Settings_Language_Title}"
+                               FontSize="12"
+                               FontWeight="Bold"
+                               Foreground="White"
+                               Margin="0,0,0,6"/>
+                    <ComboBox ItemsSource="{Binding LanguageOptions}"
+                              SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+                              DisplayMemberPath="DisplayName"
+                              Style="{StaticResource DarkComboBox}"
+                              Width="240"
+                              Height="24"
+                              FontSize="10"
+                              Foreground="White"
+                              HorizontalAlignment="Left">
+                        <ComboBox.ItemContainerStyle>
+                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
+                        </ComboBox.ItemContainerStyle>
+                    </ComboBox>
+                    <TextBlock Text="{loc:Text Settings_Language_Hint}"
+                               Foreground="#FF888888"
+                               FontSize="8"
+                               Margin="0,4,0,0"
+                               TextWrapping="Wrap"/>
+                </StackPanel>
+            </Border>
+
             <!-- 타르코프 경로 설정 섹션 -->
             <Border Background="#FF1A1A1A"
                     CornerRadius="4"
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="타르코프 경로 설정"
+                    <TextBlock Text="{loc:Text Settings_Paths_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -32,7 +70,7 @@
 
                     <!-- 게임 폴더 경로 -->
                     <StackPanel Margin="0,3,0,8">
-                        <TextBlock Text="게임 폴더 경로 / Game Folder Path"
+                        <TextBlock Text="{loc:Text Settings_GameFolder}"
                                    FontSize="10"
                                    FontWeight="SemiBold"
                                    Foreground="White"
@@ -53,17 +91,17 @@
                                      BorderThickness="1"
                                      VerticalContentAlignment="Center"/>
                             <Button Grid.Column="1"
-                                    Content="찾아보기"
+                                    Content="{loc:Text Common_Browse}"
                                     Command="{Binding BrowseGameFolderCommand}"
                                     Style="{StaticResource DarkButton}"
-                                    Width="65"
+                                    MinWidth="65"
                                     Margin="4,0,0,0"/>
                         </Grid>
                     </StackPanel>
 
                     <!-- 스크린샷 폴더 경로 -->
                     <StackPanel Margin="0,3,0,4">
-                        <TextBlock Text="스크린샷 폴더 경로 / Screenshots Folder Path"
+                        <TextBlock Text="{loc:Text Settings_ScreenshotsFolder}"
                                    FontSize="10"
                                    FontWeight="SemiBold"
                                    Foreground="White"
@@ -84,10 +122,10 @@
                                      BorderThickness="1"
                                      VerticalContentAlignment="Center"/>
                             <Button Grid.Column="1"
-                                    Content="찾아보기"
+                                    Content="{loc:Text Common_Browse}"
                                     Command="{Binding BrowseScreenshotsFolderCommand}"
                                     Style="{StaticResource DarkButton}"
-                                    Width="65"
+                                    MinWidth="65"
                                     Margin="4,0,0,0"/>
                         </Grid>
                     </StackPanel>
@@ -100,7 +138,7 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="프로그램 설정"
+                    <TextBlock Text="{loc:Text Settings_Program_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -111,7 +149,7 @@
                     창 표시/숨김과 위치 갱신은 서로 다른 입력입니다. 앱을 종료하는 키나 게임의
                     스크린샷 키로 오해하지 않도록 두 키의 역할과 한 모니터에서의 핀 사용을 함께 설명합니다.
                     -->
-                    <TextBlock Text="미니맵 창 표시/숨김 단축키"
+                    <TextBlock Text="{loc:Text Settings_Hotkey_Title}"
                                FontSize="10"
                                FontWeight="SemiBold"
                                Foreground="White"
@@ -120,21 +158,21 @@
                     <!-- 단축키 활성화 -->
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox IsChecked="{Binding HotkeyEnabled}"
-                                  Content="창 표시/숨김 단축키 사용"
+                                  Content="{loc:Text Settings_Hotkey_Enable}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="이 키는 미니맵 창 전체를 숨기거나 다시 표시합니다. 숨겨도 앱은 종료되지 않고 트레이에서 계속 실행됩니다."
+                        <TextBlock Text="{loc:Text Settings_Hotkey_TrayHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    TextWrapping="Wrap"
                                    Margin="18,2,0,0"/>
-                        <TextBlock Text="위치를 갱신하려면 타르코프 설정의 Screenshot 키를 눌러야 합니다. Steam의 F12 스크린샷 키와는 다릅니다."
+                        <TextBlock Text="{loc:Text Settings_Hotkey_ScreenshotHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    TextWrapping="Wrap"
                                    Margin="18,4,0,0"/>
-                        <TextBlock Text="한 모니터에서 게임 위에 계속 띄우려면 상단 핀(항상 위)을 켜 주세요. 핀이 꺼져 있으면 다른 창에 가려질 수 있습니다."
+                        <TextBlock Text="{loc:Text Settings_Hotkey_PinHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    TextWrapping="Wrap"
@@ -156,14 +194,15 @@
                             </Style>
                         </StackPanel.Style>
                         <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                            <TextBlock Text="단축키:"
+                            <TextBlock Text="{loc:Text Settings_Hotkey_Key}"
                                        Foreground="White"
                                        VerticalAlignment="Center"
                                        FontSize="9"
                                        Margin="0,0,8,0"/>
+                            <!-- 입력 대기 안내("키를 눌러주세요...")는 언어에 따라 길어지므로 폭을 고정하지 않고 최소 폭만 둔다 -->
                             <Button Content="{Binding HotkeyKey}"
                                     Style="{StaticResource HotkeyCaptureButton}"
-                                    Width="100"
+                                    MinWidth="100"
                                     Focusable="True"
                                     IsTabStop="True"
                                     KeyboardNavigation.AcceptsReturn="False">
@@ -172,14 +211,14 @@
                                 </i:Interaction.Behaviors>
                             </Button>
                         </StackPanel>
-                        <TextBlock Text="(클릭 후 키를 눌러 설정하세요)"
+                        <TextBlock Text="{loc:Text Settings_Hotkey_CaptureHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="0,1,0,0"/>
                     </StackPanel>
 
                     <!-- 파일 자동 정리 설정 -->
-                    <TextBlock Text="파일 자동 정리"
+                    <TextBlock Text="{loc:Text Settings_Cleanup_Title}"
                                FontSize="10"
                                FontWeight="SemiBold"
                                Foreground="White"
@@ -188,11 +227,11 @@
                     <!-- 로그 폴더 자동 정리 -->
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox IsChecked="{Binding AutoDeleteLogs}"
-                                  Content="로그 폴더 자동 정리"
+                                  Content="{loc:Text Settings_Cleanup_Logs}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="프로그램 시작 시 이전 로그 폴더를 자동으로 삭제합니다"
+                        <TextBlock Text="{loc:Text Settings_Cleanup_LogsHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"/>
@@ -201,11 +240,11 @@
                     <!-- 스크린샷 자동 정리 -->
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding AutoDeleteScreenshots}"
-                                  Content="스크린샷 자동 정리"
+                                  Content="{loc:Text Settings_Cleanup_Screenshots}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="레이드 종료 시 스크린샷을 자동으로 삭제합니다"
+                        <TextBlock Text="{loc:Text Settings_Cleanup_ScreenshotsHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"/>
@@ -219,7 +258,7 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="자동 맵 전환"
+                    <TextBlock Text="{loc:Text Settings_AutoMap_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -227,11 +266,11 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding AutoMapSwitchEnabled}"
-                                  Content="맵 입장 시 자동 맵 변경"
+                                  Content="{loc:Text Settings_AutoMap_RaidEntry}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="게임 로그에서 입장한 맵을 감지해 화면을 그 맵으로 바꿉니다"
+                        <TextBlock Text="{loc:Text Settings_AutoMap_RaidEntryHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"/>
@@ -239,11 +278,11 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding ScreenshotMapSyncEnabled}"
-                                  Content="스크린샷 촬영 시 로그의 현재 맵으로 이동"
+                                  Content="{loc:Text Settings_AutoMap_Screenshot}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="레이드 도중 앱을 켜 입장을 놓쳤을 때를 위한 보정입니다. 게임 로그를 읽지 못하면 지난 맵으로 되돌아갈 수 있습니다"
+                        <TextBlock Text="{loc:Text Settings_AutoMap_ScreenshotHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    TextWrapping="Wrap"
@@ -258,7 +297,7 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="군즈 최근 목격 제보"
+                    <TextBlock Text="{loc:Text Goons_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -266,11 +305,11 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding GoonTrackerEnabled}"
-                                  Content="최근 목격 제보 표시"
+                                  Content="{loc:Text Settings_Goons_Enable}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="tarkov-goon-tracker.com의 PvE 최근 목격 제보를 표시합니다. 군즈는 확률에 따라 스폰하므로 제보와 실제 출현이 다를 수 있습니다."
+                        <TextBlock Text="{loc:Text Settings_Goons_Hint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    TextWrapping="Wrap"
@@ -285,7 +324,7 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="저장 공간"
+                    <TextBlock Text="{loc:Text Settings_Storage_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -300,7 +339,7 @@
                                    FontSize="10"
                                    Foreground="White"
                                    VerticalAlignment="Center">
-                            <Run Text="브라우저 캐시"/>
+                            <Run Text="{loc:Text Settings_Storage_BrowserCache}"/>
                             <Run Text="{Binding BrowserCacheSizeText, Mode=OneWay}"
                                  Foreground="#FF4A90D9"
                                  FontWeight="SemiBold"/>
@@ -311,7 +350,7 @@
                                 Style="{StaticResource DarkButton}"/>
                     </Grid>
 
-                    <TextBlock Text="맵 타일 이미지와 페이지 스크립트가 쌓인 자리입니다. 비워도 설정은 그대로이고, 맵을 다시 열 때 새로 받습니다"
+                    <TextBlock Text="{loc:Text Settings_Storage_Hint}"
                                Foreground="#FF888888"
                                FontSize="8"
                                Margin="0,4,0,0"
@@ -323,7 +362,7 @@
                                TextWrapping="Wrap"/>
 
                     <!-- 실행 중에는 CEF가 파일을 붙들고 있어 지울 수 없으므로 언제 지워지는지 알린다 -->
-                    <TextBlock Text="프로그램을 닫을 때 비웁니다"
+                    <TextBlock Text="{loc:Text Settings_Storage_ClearOnExit}"
                                Foreground="#FFD9A54A"
                                FontSize="8"
                                Margin="0,2,0,0"
@@ -348,7 +387,7 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="업데이트"
+                    <TextBlock Text="{loc:Text Settings_Update_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -357,11 +396,11 @@
                     <!-- 자동 업데이트 -->
                     <StackPanel Orientation="Vertical" Margin="12,2,0,8">
                         <CheckBox IsChecked="{Binding AutoUpdateEnabled}"
-                                  Content="자동 업데이트"
+                                  Content="{loc:Text Settings_Update_Auto}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="새 버전이 나오면 백그라운드로 받아 두고 프로그램을 닫을 때 적용합니다"
+                        <TextBlock Text="{loc:Text Settings_Update_AutoHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"/>
@@ -370,12 +409,12 @@
                     <!-- 버전 선택: 올리는 방향과 되돌리는 방향을 같은 목록에서 고른다 -->
                     <StackPanel>
                         <Grid Margin="0,4,0,4">
-                            <TextBlock Text="버전 선택"
+                            <TextBlock Text="{loc:Text Settings_Update_Version}"
                                        FontSize="10"
                                        FontWeight="SemiBold"
                                        Foreground="White"
                                        VerticalAlignment="Center"/>
-                            <Button Content="목록 새로고침"
+                            <Button Content="{loc:Text Settings_Update_Refresh}"
                                     Command="{Binding RefreshVersionsCommand}"
                                     Style="{StaticResource DarkButton}"
                                     HorizontalAlignment="Right"/>
@@ -399,18 +438,18 @@
                                 </ComboBox.ItemContainerStyle>
                             </ComboBox>
                             <Button Grid.Column="1"
-                                    Content="선택한 버전 설치"
+                                    Content="{loc:Text Settings_Update_Install}"
                                     Command="{Binding InstallSelectedVersionCommand}"
                                     Style="{StaticResource DarkButton}"
                                     Margin="4,0,0,0"/>
                         </Grid>
 
-                        <TextBlock Text="최신이 아닌 버전을 고르면 자동 업데이트가 함께 꺼집니다. 다만 이 설정이 없던 옛 버전에서는 그 버전이 스스로 최신을 받아 오므로 계속 머무를 수 없습니다"
+                        <TextBlock Text="{loc:Text Settings_Update_OlderVersionHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="0,6,0,0"
                                    TextWrapping="Wrap"/>
-                        <TextBlock Text="버전 전환은 전체 패키지를 받으므로 시간이 걸립니다"
+                        <TextBlock Text="{loc:Text Settings_Update_FullPackageHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="0,2,0,0"
@@ -467,7 +506,7 @@
                     </TextBlock>
 
                     <!-- 설치 관리자가 없는 실행 형태에서는 교체할 대상이 없다 -->
-                    <TextBlock Text="설치본에서만 버전을 바꿀 수 있습니다. 지금은 포터블이나 개발 빌드로 실행 중입니다"
+                    <TextBlock Text="{loc:Text Settings_Update_NotInstalled}"
                                Foreground="#FF888888"
                                FontSize="8"
                                Margin="0,6,0,0"
@@ -492,7 +531,7 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="실험적 기능"
+                    <TextBlock Text="{loc:Text Settings_Experimental_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
@@ -500,16 +539,16 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding PrereleaseEnabled}"
-                                  Content="베타 버전 받기"
+                                  Content="{loc:Text Settings_Beta_Enable}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="v0.1.1-beta처럼 정식 출시 전 버전을 버전 목록과 자동 업데이트 대상에 넣습니다"
+                        <TextBlock Text="{loc:Text Settings_Beta_Hint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"
                                    TextWrapping="Wrap"/>
-                        <TextBlock Text="시험 중인 빌드라 문제가 있을 수 있습니다. 되돌리려면 이 항목을 끄고 버전 목록에서 정식 버전을 골라 설치하세요"
+                        <TextBlock Text="{loc:Text Settings_Beta_RollbackHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"
@@ -523,11 +562,11 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding LocalMapEnabled}"
-                                  Content="로컬 맵 사용"
+                                  Content="{loc:Text Settings_LocalMap_Enable}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="상단 바에 Online/Local 전환이 생깁니다. Local은 앱에 담긴 지도에서 지형, 층, 진영별 추출구와 현재 위치/방향을 표시하고, 사이트가 바뀌어도 그대로 동작합니다. 퀘스트와 같은 사이트 기능은 Online에서 이용합니다"
+                        <TextBlock Text="{loc:Text Settings_LocalMap_Hint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"
@@ -537,7 +576,7 @@
                                    FontSize="8"
                                    Margin="18,2,0,0"
                                    TextWrapping="Wrap"/>
-                        <TextBlock Text="지도 데이터는 앱을 새 버전으로 업데이트할 때 함께 갱신됩니다"
+                        <TextBlock Text="{loc:Text Settings_LocalMap_DataUpdateHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"
@@ -552,14 +591,14 @@
                     Padding="10"
                     Margin="0,0,0,8">
                 <StackPanel>
-                    <TextBlock Text="개발자 도구"
+                    <TextBlock Text="{loc:Text Settings_Developer_Title}"
                                FontSize="12"
                                FontWeight="Bold"
                                Foreground="White"
                                Margin="0,0,0,6"/>
 
                     <!-- 업데이트 UI 확인: 개발 빌드에서는 실제 업데이트가 잡히지 않아 볼 방법이 없다 -->
-                    <TextBlock Text="업데이트 UI 확인"
+                    <TextBlock Text="{loc:Text Settings_Developer_UpdateUi}"
                                FontSize="10"
                                FontWeight="SemiBold"
                                Foreground="White"
@@ -567,43 +606,43 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox IsChecked="{Binding UpdateIconAlwaysVisible}"
-                                  Content="타이틀 바 다운로드 아이콘 항상 표시"
+                                  Content="{loc:Text Settings_Developer_UpdateIcon}"
                                   Foreground="White"
                                   FontSize="10"
                                   HorizontalAlignment="Left"/>
-                        <TextBlock Text="설정 파일에 저장하지 않으므로 프로그램을 다시 켜면 꺼집니다"
+                        <TextBlock Text="{loc:Text Settings_Developer_UpdateIconHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
                                    Margin="18,2,0,0"
                                    TextWrapping="Wrap"/>
                     </StackPanel>
 
-                    <Button Content="다운로드 진행률 미리보기"
+                    <Button Content="{loc:Text Settings_Developer_PreviewProgress}"
                             Command="{Binding PreviewDownloadProgressCommand}"
                             Style="{StaticResource DarkButton}"
                             HorizontalAlignment="Left"
                             Margin="12,0,0,0"/>
-                    <TextBlock Text="위쪽 업데이트 섹션의 진행률 막대를 실제 설치 없이 재생합니다. 눌러 두고 그쪽으로 올려서 보세요"
+                    <TextBlock Text="{loc:Text Settings_Developer_PreviewProgressHint}"
                                Foreground="#FF888888"
                                FontSize="8"
                                Margin="12,4,0,10"
                                TextWrapping="Wrap"/>
 
                     <!-- Pilot 설정 페이지로 이동 -->
-                    <Button Content="Tarkov Market 설정 페이지로 이동"
+                    <Button Content="{loc:Text Settings_Developer_OpenPilot}"
                             Command="{Binding NavigateToPilotCommand}"
                             Style="{StaticResource DarkButton}"
                             Height="28"
                             FontSize="10"
                             Padding="12,0"
                             HorizontalAlignment="Left"/>
-                    <TextBlock Text="tarkov-market.com/pilot 페이지를 표시합니다"
+                    <TextBlock Text="{loc:Text Settings_Developer_OpenPilotHint}"
                                Foreground="#FF888888"
                                FontSize="8"
                                Margin="0,4,0,0"/>
 
                     <!-- URL 직접 입력 -->
-                    <TextBlock Text="URL 직접 이동"
+                    <TextBlock Text="{loc:Text Settings_Developer_CustomUrl}"
                                FontSize="10"
                                FontWeight="SemiBold"
                                Foreground="White"
@@ -624,19 +663,19 @@
                                  BorderThickness="1"
                                  VerticalContentAlignment="Center"/>
                         <Button Grid.Column="1"
-                                Content="이동"
+                                Content="{loc:Text Settings_Developer_Go}"
                                 Command="{Binding NavigateToCustomUrlCommand}"
                                 Style="{StaticResource DarkButton}"
-                                Width="50"
+                                MinWidth="50"
                                 Margin="4,0,0,0"/>
                     </Grid>
-                    <TextBlock Text="디버그 모드로 지정된 URL로 이동합니다 (JavaScript 비활성화)"
+                    <TextBlock Text="{loc:Text Settings_Developer_CustomUrlHint}"
                                Foreground="#FF888888"
                                FontSize="8"
                                Margin="0,2,0,0"/>
 
                     <!-- 설정 파일 경로 -->
-                    <TextBlock Text="설정 파일 경로"
+                    <TextBlock Text="{loc:Text Settings_Developer_SettingsFile}"
                                FontSize="10"
                                FontWeight="SemiBold"
                                Foreground="White"
@@ -658,13 +697,13 @@
                                  BorderThickness="1"
                                  VerticalContentAlignment="Center"/>
                         <Button Grid.Column="1"
-                                Content="폴더 열기"
+                                Content="{loc:Text Settings_Developer_OpenFolder}"
                                 Command="{Binding OpenSettingsFolderCommand}"
                                 Style="{StaticResource DarkButton}"
-                                Width="60"
+                                MinWidth="60"
                                 Margin="4,0,0,0"/>
                     </Grid>
-                    <TextBlock Text="settings.json 파일이 저장된 폴더를 엽니다"
+                    <TextBlock Text="{loc:Text Settings_Developer_SettingsFileHint}"
                                Foreground="#FF888888"
                                FontSize="8"
                                Margin="0,2,0,0"/>
@@ -712,7 +751,7 @@
                     </StackPanel>
 
                     <Button Grid.Column="2"
-                            Content="GitHub에서 보기"
+                            Content="{loc:Text Settings_About_ViewOnGitHub}"
                             Command="{Binding OpenRepositoryCommand}"
                             Style="{StaticResource DarkButton}"
                             VerticalAlignment="Center"/>

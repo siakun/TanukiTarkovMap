@@ -10,6 +10,7 @@ using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Win32;
 using NuGet.Versioning;
 using Siakun.AutoUpdate;
+using TanukiTarkovMap.Localization;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Data;
 using TanukiTarkovMap.Models.Offline;
@@ -28,6 +29,7 @@ Architecture: 구획을 설정 화면의 섹션 순서와 맞춰 두었다. 한 
 
 Core Functionality:
 - 값 저장: 속성이 바뀌면 partial 메서드가 Save()를 불러 그 자리에서 파일에 쓴다
+- 화면 언어: 고르면 저장하고 AppLanguage.Apply로 앱 전체 문구를 그 자리에서 바꾼다
 - 브라우저 캐시: 크기 표시와 비우기 예약
 - 업데이트: 자동 갱신 스위치, 베타 수신, 버전 목록과 설치
 - 개발자 도구: 주소 이동, 업데이트 UI 미리보기
@@ -37,24 +39,73 @@ State Management:
 - _versionListLoaded: 설정을 열 때마다 GitHub을 부르지 않도록 첫 조회만 표시해 둔다
 - _versionRefreshRequested: 목록을 읽는 동안 또 요청이 오면 끝난 뒤 한 번만 더 읽는다
 - _installTargetBytes: 진행률을 MB로 환산할 때 쓰는 대상 패키지 크기
+- _browserCacheBytes, _measuringBrowserCache: 캐시 크기 문구를 만드는 상태
+- _updateStatus: 업데이트 실패 안내를 만드는 함수 (정상이면 null)
 
 Dependencies:
 - App/Settings: 설정 값의 실제 저장소
+- AppLanguage: 화면 언어 적용과 언어 이름
 - AppPaths: 설정 파일과 브라우저 캐시의 위치, 캐시 크기 조회와 비우기
 - UpdateService: 설치 가능한 버전 목록과 버전 설치
-- WeakReferenceMessenger: 화면이 열렸다는 신호를 받고, 핫키와 아이콘 변경을 알린다
+- WeakReferenceMessenger: 화면이 열렸다는 신호와 언어 변경을 받고, 핫키와 아이콘 변경을 알린다
 
-Last Updated: 2026-08-15 | .NET 8 | 구획을 기능 단위로 재배치
+Design Rationale: 화면에 내보내는 문구는 필드에 저장하지 않고 읽을 때 Strings에서 만든다. 언어는 실행 중에
+바뀌므로, 만들어 둔 문구는 그 언어로 남는다. 캐시 크기와 설치 진행률은 상태를 두고 문구를 계산하며, 경우가
+여럿인 업데이트 실패 안내는 문구를 만드는 함수를 저장한다. LanguageChangedMessage를 받으면 모든 속성이
+바뀌었다고 알려 WPF가 다시 읽게 한다.
+
+Last Updated: 2026-10-08 | .NET 8 | 화면 언어 설정 추가, 문구를 읽을 때 만들도록 변경
 */
 namespace TanukiTarkovMap.ViewModels
 {
     /// <summary>
     /// 설정 화면의 버전 목록 항목.
-    /// 표시 이름과 상태 판정을 미리 계산해 XAML에서 컨버터 없이 쓴다
+    /// 상태 판정은 미리 계산해 XAML에서 컨버터 없이 쓰고, 라벨(현재, 최신, 베타)은 읽을 때 화면 언어로 만든다.
+    /// 언어가 바뀌면 RefreshText로 다시 알린다
     /// </summary>
-    public sealed record VersionItem(ReleaseVersion Release, string DisplayName, bool IsCurrent, bool IsLatest);
+    public sealed class VersionItem(ReleaseVersion release, bool isCurrent, bool isLatest) : ObservableObject
+    {
+        public ReleaseVersion Release { get; } = release;
+        public bool IsCurrent { get; } = isCurrent;
+        public bool IsLatest { get; } = isLatest;
 
-    public partial class SettingsViewModel : ObservableObject, IRecipient<SettingsOpenedMessage>
+        public string DisplayName
+        {
+            get
+            {
+                var labels = new List<string>();
+                if (IsCurrent) labels.Add(Strings.Version_Current);
+                if (IsLatest) labels.Add(Strings.Version_Latest);
+                if (Release.IsPrerelease) labels.Add(Strings.Version_Beta);
+
+                return labels.Count == 0
+                    ? Release.Version.ToString()
+                    : $"{Release.Version}   ({string.Join(", ", labels)})";
+            }
+        }
+
+        public void RefreshText() => OnPropertyChanged(nameof(DisplayName));
+    }
+
+    /// <summary>
+    /// 설정 화면의 언어 선택지. Code가 빈 값이면 Windows 표시 언어를 따른다.
+    /// 언어 이름은 그 언어로 적어(한국어, English, 日本語) 지금 화면 언어를 읽지 못해도 찾게 한다.
+    /// Windows 항목의 설명만 화면 언어를 따르므로 언어가 바뀌면 RefreshText로 다시 알린다
+    /// </summary>
+    public sealed class LanguageOption(string code) : ObservableObject
+    {
+        public string Code { get; } = code;
+
+        public string DisplayName => Code.Length == 0
+            ? string.Format(Strings.Settings_Language_FollowWindows, AppLanguage.NativeName(AppLanguage.WindowsLanguage))
+            : AppLanguage.NativeName(Code);
+
+        public void RefreshText() => OnPropertyChanged(nameof(DisplayName));
+    }
+
+    public partial class SettingsViewModel : ObservableObject,
+        IRecipient<SettingsOpenedMessage>,
+        IRecipient<LanguageChangedMessage>
     {
         private bool _isLoading = false;
 
@@ -105,6 +156,18 @@ namespace TanukiTarkovMap.ViewModels
             _ = RefreshVersionsCommand.ExecuteAsync(null);
         }
 
+        /// <summary>
+        /// 화면 언어가 바뀌면 이 ViewModel이 만들어 내보내는 문구를 새 언어로 다시 읽게 한다.
+        /// 빈 속성 이름은 모든 속성이 바뀌었다는 뜻이라, 계산 속성을 하나씩 적다가 빠뜨리는 일이 없다.
+        /// 목록 항목은 따로 알린다
+        /// </summary>
+        public void Receive(LanguageChangedMessage message)
+        {
+            OnPropertyChanged(string.Empty);
+            foreach (var option in LanguageOptions) option.RefreshText();
+            foreach (var version in AvailableVersions) version.RefreshText();
+        }
+
         #region 저장과 불러오기
         /// <summary>
         /// 화면의 값을 settings.json에 쓴다.
@@ -118,6 +181,7 @@ namespace TanukiTarkovMap.ViewModels
             App.ScreenshotsFolder = ScreenshotsFolder;
 
             var settings = App.GetSettings();
+            settings.Language = SelectedLanguage?.Code ?? string.Empty;
             settings.GameFolder = GameFolder;
             settings.ScreenshotsFolder = ScreenshotsFolder;
             settings.HotkeyEnabled = HotkeyEnabled;
@@ -159,6 +223,9 @@ namespace TanukiTarkovMap.ViewModels
                 ScreenshotsFolder = App.ScreenshotsFolder ?? string.Empty;
 
                 var settings = App.GetSettings();
+                // 지원하지 않는 값(다른 버전이 남긴 언어 등)은 AppLanguage가 Windows 언어로 다루므로 화면도 그 항목을 고른다
+                SelectedLanguage = LanguageOptions.FirstOrDefault(option => option.Code == settings.Language)
+                                   ?? LanguageOptions[0];
                 HotkeyEnabled = settings.HotkeyEnabled;
                 HotkeyKey = settings.HotkeyKey ?? AppSettings.DefaultHotkeyKey;
                 AutoDeleteLogs = settings.autoDeleteLogs;
@@ -184,6 +251,25 @@ namespace TanukiTarkovMap.ViewModels
         {
             if (_isLoading) return;
             Save();
+        }
+        #endregion
+
+        #region 화면 언어
+        /// <summary> 언어 선택지. 첫 항목은 Windows 표시 언어를 따르고, 나머지는 AppLanguage.Supported 순서다 </summary>
+        public IReadOnlyList<LanguageOption> LanguageOptions { get; } =
+            [new LanguageOption(string.Empty), .. AppLanguage.Supported.Select(code => new LanguageOption(code))];
+
+        [ObservableProperty] public partial LanguageOption? SelectedLanguage { get; set; }
+
+        /// <summary>
+        /// 고른 언어를 저장하고 그 자리에서 앱 전체에 적용한다.
+        /// 적용이 끝나면 AppLanguage가 LanguageChangedMessage를 보내 이 화면의 계산 문구도 다시 읽는다
+        /// </summary>
+        partial void OnSelectedLanguageChanged(LanguageOption? value)
+        {
+            if (_isLoading || value == null) return;
+            Save();
+            AppLanguage.Apply(value.Code);
         }
         #endregion
 
@@ -217,7 +303,7 @@ namespace TanukiTarkovMap.ViewModels
         {
             var dialog = new OpenFolderDialog
             {
-                Title = "Select Escape From Tarkov game folder",
+                Title = Strings.Dialog_SelectGameFolder,
                 InitialDirectory = !string.IsNullOrEmpty(GameFolder) ? GameFolder : null,
                 Multiselect = false
             };
@@ -233,7 +319,7 @@ namespace TanukiTarkovMap.ViewModels
         {
             var dialog = new OpenFolderDialog
             {
-                Title = "Select Screenshots folder",
+                Title = Strings.Dialog_SelectScreenshotsFolder,
                 InitialDirectory = !string.IsNullOrEmpty(ScreenshotsFolder) ? ScreenshotsFolder : null,
                 Multiselect = false
             };
@@ -286,8 +372,21 @@ namespace TanukiTarkovMap.ViewModels
         #endregion
 
         #region 브라우저 캐시
-        /// <summary> 브라우저 캐시가 차지하는 크기 (예: 620.5 MB) </summary>
-        [ObservableProperty] public partial string BrowserCacheSizeText { get; set; } = string.Empty;
+        /// <summary> 마지막으로 잰 브라우저 캐시 크기(byte). 아직 재지 않았으면 null </summary>
+        private long? _browserCacheBytes;
+
+        /// <summary> 캐시 크기를 재는 중인지 여부 </summary>
+        private bool _measuringBrowserCache;
+
+        /// <summary> 브라우저 캐시가 차지하는 크기 (예: 620.5 MB). 화면 언어로 읽을 때 만든다 </summary>
+        public string BrowserCacheSizeText => _measuringBrowserCache
+            ? Strings.Cache_Measuring
+            : _browserCacheBytes switch
+            {
+                null => string.Empty,
+                { } bytes when bytes > 0 => $"{bytes / 1024d / 1024d:N1} MB",
+                _ => Strings.Cache_Empty,
+            };
 
         /// <summary>
         /// 앱을 닫을 때 캐시를 비우도록 예약했는지 여부.
@@ -297,11 +396,11 @@ namespace TanukiTarkovMap.ViewModels
         [NotifyPropertyChangedFor(nameof(CacheResetButtonText))]
         public partial bool CacheResetScheduled { get; set; } = false;
 
-        public string CacheResetButtonText => CacheResetScheduled ? "비우기 취소" : "캐시 비우기";
+        public string CacheResetButtonText => CacheResetScheduled ? Strings.Cache_CancelReset : Strings.Cache_Reset;
 
         /// <summary> 코드 캐시 자동 정리 안내. 기준 값은 AppPaths가 정하므로 여기서 다시 적지 않는다 </summary>
         public string CodeCacheLimitNotice =>
-            $"페이지 스크립트 캐시가 {AppPaths.CodeCacheLimitMegabytes}MB를 넘으면 시작할 때 자동으로 정리합니다. 맵 타일은 그대로 두므로 느려지지 않습니다";
+            string.Format(Strings.Cache_CodeCacheLimitNotice, AppPaths.CodeCacheLimitMegabytes);
 
         /// <summary>
         /// 브라우저 캐시 크기를 다시 잰다. 파일 수천 개를 훑으므로 백그라운드에서 돈다
@@ -309,12 +408,12 @@ namespace TanukiTarkovMap.ViewModels
         [RelayCommand]
         private async Task RefreshCacheSize()
         {
-            BrowserCacheSizeText = "확인 중...";
+            _measuringBrowserCache = true;
+            OnPropertyChanged(nameof(BrowserCacheSizeText));
 
-            var sizeInBytes = await Task.Run(AppPaths.GetBrowserCacheSize);
-            BrowserCacheSizeText = sizeInBytes > 0
-                ? $"{sizeInBytes / 1024d / 1024d:N1} MB"
-                : "비어 있음";
+            _browserCacheBytes = await Task.Run(AppPaths.GetBrowserCacheSize);
+            _measuringBrowserCache = false;
+            OnPropertyChanged(nameof(BrowserCacheSizeText));
         }
 
         /// <summary>
@@ -347,12 +446,12 @@ namespace TanukiTarkovMap.ViewModels
                     var path = Path.Combine(LocalViewer.Root, "resources", "manifest.json");
                     using var manifest = JsonDocument.Parse(File.ReadAllText(path));
                     var collected = manifest.RootElement.GetProperty("collectedAt").GetDateTime();
-                    return $"지도 데이터: {collected.ToLocalTime():yyyy-MM-dd} 기준";
+                    return string.Format(Strings.LocalMap_DataDate, $"{collected.ToLocalTime():yyyy-MM-dd}");
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException
                     or KeyNotFoundException or InvalidOperationException or FormatException)
                 {
-                    return "앱에 담긴 지도 데이터를 찾지 못했습니다. 앱을 다시 설치해 주세요";
+                    return Strings.LocalMap_DataMissing;
                 }
             }
         }
@@ -372,21 +471,50 @@ namespace TanukiTarkovMap.ViewModels
         public partial bool IsVersionListLoading { get; set; } = false;
 
         /// <summary>
+        /// 업데이트 실패 안내를 만드는 함수 (정상이면 null).
+        /// 문구 대신 함수를 저장해, 안내가 떠 있는 동안 화면 언어를 바꿔도 새 언어로 다시 만든다
+        /// </summary>
+        private Func<string>? _updateStatus;
+
+        /// <summary>
         /// 목록 조회나 설치가 뜻대로 되지 않았을 때 그 사정을 알리는 문구 (정상이면 빈 문자열).
         /// 진행률 표시는 설치가 끝나면 사라지므로 실패는 계속 남는 이 자리에 적는다
         /// </summary>
-        [ObservableProperty] public partial string UpdateStatusMessage { get; set; } = string.Empty;
+        public string UpdateStatusMessage => _updateStatus?.Invoke() ?? string.Empty;
+
+        private void ShowUpdateStatus(Func<string>? status)
+        {
+            _updateStatus = status;
+            OnPropertyChanged(nameof(UpdateStatusMessage));
+        }
 
         [ObservableProperty]
         [NotifyCanExecuteChangedFor(nameof(InstallSelectedVersionCommand))]
         [NotifyCanExecuteChangedFor(nameof(RefreshVersionsCommand))]
+        [NotifyPropertyChangedFor(nameof(InstallProgressText))]
         public partial bool IsInstalling { get; set; } = false;
 
         /// <summary> 다운로드 진행률 (0~100). Velopack이 정수 퍼센트만 알려준다 </summary>
-        [ObservableProperty] public partial int InstallProgress { get; set; } = 0;
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(InstallProgressText))]
+        public partial int InstallProgress { get; set; } = 0;
 
-        /// <summary> 진행 상황 문구 (예: 52% (133.2 / 253.9 MB)) </summary>
-        [ObservableProperty] public partial string InstallProgressText { get; set; } = string.Empty;
+        /// <summary>
+        /// 진행 상황 문구 (예: 52% (133.2 / 253.9 MB)).
+        /// 내려받은 뒤에도 검증과 압축 해제가 남아 있어 100%에서 잠시 멈춘 것처럼 보이므로 그때는 설치 중이라고 알린다
+        /// </summary>
+        public string InstallProgressText
+        {
+            get
+            {
+                if (!IsInstalling) return string.Empty;
+                if (InstallProgress >= 100) return Strings.Update_Installing;
+
+                var totalMegabytes = _installTargetBytes / 1024d / 1024d;
+                var receivedMegabytes = totalMegabytes * InstallProgress / 100d;
+                return $"{InstallProgress}% ({receivedMegabytes:F1} / {totalMegabytes:F1} MB)";
+            }
+        }
 
         /// <summary>
         /// 버전을 바꿀 수 있는 설치인지 여부.
@@ -480,30 +608,24 @@ namespace TanukiTarkovMap.ViewModels
                     var isLatest = latestRelease != null
                                    && release.Version.CompareTo(latestRelease.Version) == 0;
 
-                    AvailableVersions.Add(new VersionItem(
-                        release,
-                        BuildDisplayName(release, isCurrent, isLatest),
-                        isCurrent,
-                        isLatest));
+                    AvailableVersions.Add(new VersionItem(release, isCurrent, isLatest));
                 }
 
                 // 설치 버전을 기본으로 두고, 그 버전을 목록에서 찾지 못하면(개발 빌드 등) 최신을 보여준다
                 SelectedVersion = AvailableVersions.FirstOrDefault(item => item.IsCurrent)
                                   ?? AvailableVersions.FirstOrDefault();
-                UpdateStatusMessage = AvailableVersions.Count > 0
-                    ? string.Empty
-                    : "설치할 수 있는 버전이 없습니다";
+                ShowUpdateStatus(AvailableVersions.Count > 0 ? null : () => Strings.Update_NoVersions);
             }
             catch (HttpRequestException ex) when (
                 ex.StatusCode == HttpStatusCode.Forbidden || ex.StatusCode == HttpStatusCode.TooManyRequests)
             {
                 // 인증 없이 쓰는 GitHub API는 IP마다 시간당 60회로 묶여 있다. 연결 문제와 구분해서 알린다
-                UpdateStatusMessage = "GitHub 요청 한도를 넘었습니다. 한 시간쯤 뒤에 다시 시도하세요";
+                ShowUpdateStatus(() => Strings.Update_RateLimited);
                 Logger.SimpleLog($"[SettingsViewModel] Version list rate limited: {ex.Message}");
             }
             catch (Exception ex)
             {
-                UpdateStatusMessage = "버전 목록을 가져오지 못했습니다. 연결을 확인하고 다시 시도하세요";
+                ShowUpdateStatus(() => Strings.Update_ListFailed);
                 Logger.SimpleLog($"[SettingsViewModel] Version list load failed: {ex.Message}");
             }
         }
@@ -525,7 +647,7 @@ namespace TanukiTarkovMap.ViewModels
             }
 
             IsInstalling = true;
-            UpdateStatusMessage = string.Empty;
+            ShowUpdateStatus(null);
 
             // delta로 받을지는 서비스가 정하므로 처음에는 full 크기로 두고, 정해지면 갱신한다
             _installTargetBytes = selected.Release.PackageSize;
@@ -547,9 +669,10 @@ namespace TanukiTarkovMap.ViewModels
                 // 성공하면 UpdateService가 App의 정상 종료를 요청한다. 여기서는 다운로드나
                 // 패키지 준비가 실패했을 때만 설치 상태를 되돌린다
                 InstallProgress = 0;
-                InstallProgressText = string.Empty;
                 IsInstalling = false;
-                UpdateStatusMessage = $"v{selected.Release.Version} 설치에 실패했습니다: {ex.Message}";
+                var version = selected.Release.Version;
+                var reason = ex.Message;
+                ShowUpdateStatus(() => string.Format(Strings.Update_InstallFailed, version, reason));
                 Logger.SimpleLog($"[SettingsViewModel] Version install failed: {ex}");
             }
         }
@@ -558,28 +681,8 @@ namespace TanukiTarkovMap.ViewModels
         {
             InstallProgress = percent;
 
-            if (percent >= 100)
-            {
-                // 내려받은 뒤에도 검증과 압축 해제가 남아 있어 100%에서 잠시 멈춘 것처럼 보인다
-                InstallProgressText = "설치하는 중입니다. 곧 다시 시작합니다";
-                return;
-            }
-
-            var totalMegabytes = _installTargetBytes / 1024d / 1024d;
-            var receivedMegabytes = totalMegabytes * percent / 100d;
-            InstallProgressText = $"{percent}% ({receivedMegabytes:F1} / {totalMegabytes:F1} MB)";
-        }
-
-        private static string BuildDisplayName(ReleaseVersion release, bool isCurrent, bool isLatest)
-        {
-            var labels = new List<string>();
-            if (isCurrent) labels.Add("현재");
-            if (isLatest) labels.Add("최신");
-            if (release.IsPrerelease) labels.Add("베타");
-
-            return labels.Count == 0
-                ? release.Version.ToString()
-                : $"{release.Version}   ({string.Join(", ", labels)})";
+            // 진행률이 같아도 받을 크기(_installTargetBytes)가 바뀌었을 수 있으므로 문구는 늘 다시 알린다
+            OnPropertyChanged(nameof(InstallProgressText));
         }
         #endregion
 
@@ -656,7 +759,7 @@ namespace TanukiTarkovMap.ViewModels
             if (IsInstalling) return;
 
             IsInstalling = true;
-            UpdateStatusMessage = string.Empty;
+            ShowUpdateStatus(null);
             _installTargetBytes = 253_893_613;   // v0.1.0 전체 패키지 크기
 
             try
@@ -674,7 +777,6 @@ namespace TanukiTarkovMap.ViewModels
             {
                 IsInstalling = false;
                 InstallProgress = 0;
-                InstallProgressText = string.Empty;
             }
         }
         #endregion

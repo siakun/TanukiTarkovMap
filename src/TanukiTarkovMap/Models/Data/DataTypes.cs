@@ -25,6 +25,10 @@ namespace TanukiTarkovMap.Models.Data
         // 마지막 선택한 맵 (앱 시작 시 복원용)
         public string SelectedMapId { get; set; } = "";          // 마지막으로 선택한 맵 ID
 
+        // 화면 언어 코드 (ko, en, ja). 빈 값은 Windows 표시 언어를 따른다는 뜻이다.
+        // 이 값이 없던 예전 설정 파일도 빈 값으로 읽혀 Windows 언어를 따른다
+        public string Language { get; set; } = "";
+
         // 일반 모드 설정 추가
         public double NormalWidth { get; set; } = 0f;            // 일반 모드 창 너비
         public double NormalHeight { get; set; } = 0f;           // 일반 모드 창 높이

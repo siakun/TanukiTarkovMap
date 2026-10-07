@@ -123,6 +123,17 @@ namespace TanukiTarkovMap.Messages
     }
 
     /// <summary>
+    /// 화면 언어 변경 메시지 (AppLanguage → 문구를 직접 만드는 ViewModel)
+    /// XAML 문구는 문구 사전이 바뀌면 스스로 갱신되므로, ViewModel이 계산해 내보내는 문구와
+    /// Local 미니맵처럼 WPF 밖에서 그리는 문구만 이 메시지로 다시 만든다.
+    /// 값 = 새 언어 코드 (예: "ko")
+    /// </summary>
+    public class LanguageChangedMessage : ValueChangedMessage<string>
+    {
+        public LanguageChangedMessage(string value) : base(value) { }
+    }
+
+    /// <summary>
     /// 타이틀 바 업데이트 아이콘을 강제로 켜는 메시지 (SettingsViewModel → MainWindowViewModel)
     /// 개발 빌드에서는 Velopack 업데이트가 잡히지 않아 아이콘이 뜰 일이 없어, 모양을 확인할 길을 둔다
     /// </summary>

@@ -273,6 +273,32 @@ node tools/verify-map-docs.mjs --input <수집 폴더> --resources <후보 폴�
 않습니다. 그래서 실제 사이트에는 두 표시를 끄는 [headless-chrome.mjs](tools/headless-chrome.mjs)로만
 접속합니다.
 
+## 화면 언어
+
+설정 맨 위에서 고른 언어는 다시 시작하지 않고 그 자리에서 앱 전체 문구를 바꿉니다. 기본값은 Windows 표시
+언어이고, 번역이 없는 언어는 영어로 표시합니다. 지금 언어와 바꾸는 방법은
+[AppLanguage](src/TanukiTarkovMap/Localization/AppLanguage.cs) 한곳에 있고, 고를 수 있는 언어 목록의 원천은
+`AppLanguage.Supported`입니다.
+
+- 화면 문구는 `Localization/Strings.resx`(기본 언어, 영어)에 두고 같은 키로 언어별 `Strings.<코드>.resx`에
+  번역합니다. XAML은 `{loc:Text 키}`, C#은 `Strings.키`로 읽고, XAML이나 C#에 화면 문구를 직접 적지 않습니다.
+  로그와 예외 메시지는 화면 문구가 아니므로 번역하지 않습니다
+- ViewModel은 번역된 문구를 필드에 저장하지 않습니다. 언어가 실행 중에 바뀌면 저장해 둔 문구만 이전 언어로
+  남습니다. 읽을 때 `Strings`에서 만드는 계산 속성으로 두고 `LanguageChangedMessage`를 받아 다시 알립니다.
+  [SettingsViewModel](src/TanukiTarkovMap/ViewModels/SettingsViewModel.cs)이 이 방식을 씁니다
+- 언어를 바꾸면 창 안의 요소만 다시 그려집니다. 창 밖에서 코드로 만드는 트레이 메뉴는 메시지를 받아 새로
+  만들고, 툴팁 문구는 ToolTip 요소 안이 아니라 소유 요소의 `ToolTip` 속성에 둡니다. 꾸민 툴팁의 모양은
+  암시적 ToolTip 스타일로 입힙니다
+- Local 미니맵은 앱이 그리는 안내(로딩, 오류)만 번역하며 번역은 [viewer/i18n.js](viewer/i18n.js)에 있습니다.
+  앱이 주소의 `lang`과 `setLanguage`로 언어를 넘기고, 언어를 바꿔도 페이지를 다시 열지 않습니다. Levels 패널은
+  사이트 화면을 옮긴 것이라 영어로 둡니다
+- Online 사이트의 언어와 CEF 로캘은 앱 언어와 묶지 않습니다. 상단바의 PMC/SCAV 전환은 사이트 필터를 영어
+  라벨(`'PMC Extraction'`, `'Scav Extraction'`)로 찾으므로, 사이트를 다른 언어로 열면 코어인 진영 전환이
+  깨집니다. 사이트 언어를 맞추려면 먼저 필터를 언어와 무관하게 찾도록 바꾸고 `verify-online.mjs`로 확인합니다
+- 언어를 더하려면 `Strings.<코드>.resx`를 추가하고 `AppLanguage.Supported`와 `viewer/i18n.js`에 같은 언어를
+  넣습니다. 키, 자리 표시자, 언어 목록이 맞는지는 `node tools/verify-localization.mjs`가 확인합니다. 소수점에
+  쉼표를 쓰는 언어라면 WPF 바인딩의 `StringFormat`이 창 언어로 숫자를 쓰므로 소수를 표시하는 자리를 확인합니다
+
 ## CefSharp 렌더링 디버깅 (CDP)
 
 Debug 빌드는 CDP(Chrome DevTools Protocol) 원격 디버깅 포트 9222를 엽니다
