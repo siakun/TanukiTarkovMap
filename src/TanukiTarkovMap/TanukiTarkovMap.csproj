@@ -53,7 +53,8 @@
        그래서 XAML 컴파일보다 먼저 직접 생성하고 결과를 고정 경로의 Compile 항목으로 넣는다.
        번역 resx(Strings.ko.resx 등)는 기본 리소스 처리로 위성 어셈블리가 된다.
        Inputs/Outputs는 Strings.resx가 문자열만 담아 다른 파일을 링크하지 않는다는 전제다. 링크(ResXFileRef)를 넣으면
-       그 파일이 바뀌어도 다시 만들지 않으므로 이 조건을 지운다. -->
+       그 파일이 바뀌어도 다시 만들지 않으므로 이 조건을 지운다.
+       배경과 진단은 docs/20261008-wpf-localization-resx-and-live-switch.md에 있다. -->
   <ItemGroup>
     <Compile Include="$(IntermediateOutputPath)Strings.g.cs" />
   </ItemGroup>

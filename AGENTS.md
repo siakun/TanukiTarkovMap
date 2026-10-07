@@ -299,6 +299,9 @@ node tools/verify-map-docs.mjs --input <수집 폴더> --resources <후보 폴�
   넣습니다. 키, 자리 표시자, 언어 목록이 맞는지는 `node tools/verify-localization.mjs`가 확인합니다. 소수점에
   쉼표를 쓰는 언어라면 WPF 바인딩의 `StringFormat`이 창 언어로 숫자를 쓰므로 소수를 표시하는 자리를 확인합니다
 
+문구 클래스를 빌드할 때 만드는 방식이 WPF에서 실패하는 이유와, 언어 전환이 닿지 않는 곳의 원인과 진단은
+[WPF 다국어 레퍼런스](docs/20261008-wpf-localization-resx-and-live-switch.md)에 있습니다.
+
 ## CefSharp 렌더링 디버깅 (CDP)
 
 Debug 빌드는 CDP(Chrome DevTools Protocol) 원격 디버깅 포트 9222를 엽니다
