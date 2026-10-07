@@ -159,12 +159,10 @@ scene preset 줄 감지
 ### 6. CefSharp와 JavaScript 양방향 통신
 
 <!-- INTENT: 수정 직후 수동 확인에 그치지 않고, 사이트 접속 여부와 무관하게 같은 실패 조건을 다시 검사할 경로를 남긴다. -->
-위치 및 방향 연동을 수정한 뒤에는 Node 22 이상과 Chromium 계열 브라우저가 설치된 환경에서
-`node tools/verify-map-recovery.mjs`를 실행합니다. 브라우저는 창 없이 임시 프로필에서 실행되며,
-사이트가 판마다 바꾼 위치 입력 경로와 복구 동작을 재현 페이지로 검사합니다. 지도 맞춤
-(`verify-map-keep-visible.mjs`)과 Local 미니맵(`verify-viewer.mjs`) 검사와 함께 PR과 릴리스에서도
-실행되고, 실패하면 배포가 중단됩니다. 지금 온라인 사이트와의 호환은 `node tools/verify-online.mjs`로
-따로 확인합니다. 실제 게임에서의 창 순서와 포커스, WPF에서의 모드 전환은 별도로 확인해야 합니다.
+위치 및 방향 연동을 수정한 뒤에는 사이트 접속 여부와 무관하게 같은 실패 조건을 자동 검사로 다시
+확인합니다. 검사는 창 없는 Chromium에서 사이트를 흉내 낸 재현 페이지로 돌고, PR과 릴리스에서도
+실행되어 실패하면 배포가 중단됩니다. 지금 사이트와의 호환은 실제 사이트에 앱과 같은 스크립트를 넣는
+진단 도구로 따로 확인합니다. 검사 목록과 실행 방법은 [TESTING.md](TESTING.md)에 있습니다.
 
 웹 UI를 앱에 맞게 다듬는 로직은 JavaScript로 주입합니다. `.js` 파일을 Embedded Resource로 묶어 `JavaScriptLoader`로 읽고, 페이지 로드 후 `EvaluateScriptAsync`로 실행합니다(헤더와 푸터 제거, 패널 토글, 위치 마커에 방향 표시 추가 등). 반대로 웹에서 일어난 사건(맵 변경, 연결 상태)은 `postMessage`로 보내 `JavascriptMessageReceived`에서 받고, CommunityToolkit.Mvvm의 `WeakReferenceMessenger`로 ViewModel에 전달합니다. C#과 JS의 경계를 메시지로 느슨하게 연결했습니다. Local 미니맵에는 주입하지 않고 미니맵이 공개한 `window.tanukiViewer`의 함수만 부릅니다. 남의 사이트를 앱 안에서 고쳐 쓸 때 쓰는 기법과 겪은 함정은 [임베디드 웹페이지 제어 레퍼런스](docs/20260818-embedded-site-control.md)에 정리했습니다.
 
@@ -208,7 +206,7 @@ Velopack 패키지에 함께 넣습니다. 태그와 프로젝트 버전이 다�
 
 ## 개발 안내
 
-.NET 8 SDK 설치 후 `src` 폴더에서 `dotnet build`로 빌드할 수 있습니다. 리소스 검사와 `build.bat` 패키징에는 Node 22 이상이 필요합니다. 아키텍처와 설계 등 개발 관련 내용은 [`PROJECT.md`](PROJECT.md)를 참고하세요.
+.NET 8 SDK 설치 후 `src` 폴더에서 `dotnet build`로 빌드할 수 있습니다. 리소스 검사와 `build.bat` 패키징에는 Node 22 이상이 필요합니다. 아키텍처와 설계 등 개발 관련 내용은 [`PROJECT.md`](PROJECT.md), 테스트 실행 방법은 [`TESTING.md`](TESTING.md)를 참고하세요.
 
 ---
 

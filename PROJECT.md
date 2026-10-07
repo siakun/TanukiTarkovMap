@@ -9,7 +9,7 @@ CefSharp를 통해 tarkov-market.com의 맵을 표시하며, 게임 로그 감�
 그다음이 지도와 탈출구이고(상단바의 `PMC`/`SCAV` 구분이 여기 속합니다), 퀘스트와 키를 비롯한
 나머지는 부가 기능입니다. 로컬 모드는 사이트가 바뀌거나 죽어도 이 코어가 계속 돌게 하는 비상
 경로이며, 사이트 코드 없이 앱에 담긴 지도 데이터를 자체 미니맵으로 그립니다. 우선순위와 그로부터
-나오는 판단 기준은 [CLAUDE.md](CLAUDE.md)의 "이 프로젝트의 코어"에 있습니다.
+나오는 판단 기준은 [AGENTS.md](AGENTS.md)의 "이 프로젝트의 코어"에 있습니다.
 
 ---
 
@@ -354,12 +354,8 @@ Local은 전용 메모리 저장 공간에서 `https://tanuki-map.local/viewer/i
 엽니다. `LocalViewer`가 그 저장 공간에 CefSharp의 `FolderSchemeHandlerFactory`를 등록해 이 주소를
 실행 파일 옆 `LocalMap` 폴더로 응답합니다. 리소스를 읽지 못하면 미니맵이 오류를 표시하고 네트워크
 응답이나 Online으로 대체하지 않습니다. 화면과 동작의 작업 기준은 [AGENTS.md](AGENTS.md)의 Local 미니맵
-절, 리소스 계약과 설계 근거는 [로컬 맵 뷰어 설계](docs/20260821-local-viewer-design.md)에 있습니다.
-
-```bash
-node tools/resource-bundle.mjs check resources    # 리소스 계약
-node tools/verify-viewer.mjs                      # 미니맵 동작, --root publish/LocalMap이면 배포 결과
-```
+절, 리소스 계약과 설계 근거는 [로컬 맵 뷰어 설계](docs/20260821-local-viewer-design.md), 미니맵과 리소스의
+검사는 [TESTING.md](TESTING.md)에 있습니다.
 
 ---
 
@@ -710,18 +706,10 @@ sequenceDiagram
 
 ---
 
-## 위치 연동 검증
+## 테스트
 
-Online 위치 전달과 복구는 `tools/verify-map-recovery.mjs`, Online 맞춤과 이동 제한은
-`tools/verify-map-keep-visible.mjs`가 작은 재현 페이지로 검사합니다. Local은 `tools/verify-viewer.mjs`가
-미니맵과 리소스를 함께 열어 위치, 방향, 카메라, 오버레이 UI를 맵마다 검사하고, 리소스 계약은
-`tools/resource-bundle.mjs check`가 봅니다. PR과 릴리스가 실행하는 범위는
-`.github/workflows/verify-map-recovery.yml`이 기준입니다.
-
-재현 페이지의 통과는 지금 온라인 사이트에서 동작한다는 뜻이 아닙니다. 사이트는 배포로 입력 경로와
-지도 구조를 바꾸므로, 사이트 쪽 변화가 의심되면 `tools/verify-online.mjs`로 실제 사이트에 앱과 같은
-스크립트를 넣어 확인합니다. 네트워크와 사이트의 봇 확인에 좌우되어 CI에는 넣지 않습니다. 어느 검사도
-WPF 창을 실행하지 않으므로 CEF 컨트롤 교체와 게임 포커스 유지는 별도 실행 검증이 필요합니다.
+검사 목록, 상황별로 돌릴 검사, 자동 검사가 보지 못해 앱에서 직접 확인할 항목은 [TESTING.md](TESTING.md)에
+있습니다.
 
 ## 용어 정리
 
