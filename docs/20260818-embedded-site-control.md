@@ -844,14 +844,16 @@ INTENT: 그림을 재는 요소가 사라진 사건에서 일반 규칙만 남�
 - 사이트 캔버스를 줄여서 우리 캔버스(`willReadFrequently: true`)에 옮긴 뒤 읽습니다. 사이트
   캔버스에서는 `getImageData`를 부르지 않고, 읽는 양도 줄어듭니다. **예시**: 원본 해상도로 읽으면
   약 4ms, 가로세로를 1/4로 줄이면 1ms 미만이었습니다.
-- 결과는 확대와 이동이 걸리는 요소의 상자에 대한 비율로 저장합니다. 사이트가 캔버스와 그 상자를
+- 결과는 확대와 이동이 걸리는 상자에 대한 비율로 저장합니다. 사이트가 캔버스와 그 상자를
   같은 변환으로 움직이면 이 비율은 끌고 확대해도 그대로라, 끄는 도중에는 다시 잴 필요가 없습니다.
-  이 전제는 확대와 이동 전후의 비율을 비교해 확인합니다.
+  이 전제는 확대와 이동 전후의 비율을 비교해 확인합니다. 그 상자를 가진 요소가 없으면 사이트 상태의
+  변환과 크기로 같은 상자를 계산합니다. **예시**: 2026-10 판은 `.map-wrap`이 없어, 지도 상태의 panzoom
+  변환(x, y, zoom)과 회전을 반영한 맵 크기(`viewSize`)로 상자를 계산합니다.
 - 캔버스는 창에 보이는 부분만 그립니다. 범위가 캔버스 가장자리에 닿으면 잘린 값으로 보고, 먼저
   줄여서 다시 잽니다. 잘린 값으로 맞추면 창보다 큰 그림을 맞았다고 판단합니다.
-- 회전처럼 상자와 캔버스의 관계를 바꾸는 변환이 걸리면 다시 잽니다. **예시**: 이 사이트의 회전은
-  `.map-wrap`이 아니라 안쪽 `.map-scene`의 `transform`에 걸리므로, 그 값을 저장값을 다시 잴지 가리는
-  기준으로 씁니다.
+- 회전처럼 상자와 캔버스의 관계를 바꾸는 변환이 걸리면 다시 잽니다. **예시**: 예전 판의 회전은
+  `.map-wrap`이 아니라 안쪽 `.map-scene`의 `transform`에 걸렸고, 지금 판은 지도 상태의 `viewRotation`이
+  그 값입니다. 그 값을 저장값을 다시 잴지 가리는 기준으로 사용합니다.
 
 캐시의 소유자는 전체 컨테이너만으로 정하지 않습니다. 같은 컨테이너 안의 Canvas가 교체되면
 이전 지형 범위를 폐기해야 합니다. 같은 Canvas라도 층 전환으로 실제 지형이 달라질 수 있으므로
@@ -1006,10 +1008,10 @@ window.__tanukiKeepVisible = { version: 6, rule: 'fit-on-open + center-clamp, pi
 
 | 기대는 것 | 구현에서 확인할 대상 | 다시 재는 법 |
 |---|---|---|
-| 맵 요소 선택자 | `.map-wrap`, `.pan.map-cont` | 페이지에서 요소 구조 확인 |
+| 맵 요소 선택자 | `.pan.map-cont` (2026-10 판부터 `.map-wrap`은 없음) | 페이지에서 요소 구조 확인 |
 | 바닥 맵을 그리는 곳 | `canvas.doc-map-canvas` 가운데 화면에 표시된 하나 | `picture().source`를 보고, 같은 선택자의 후보마다 비트맵과 화면 크기, 표시 상태를 확인 |
 | 맵 컨테이너의 남길 층 | `web-elements-control.js`의 `MAP_LAYER_SELECTORS` | 컨테이너 직계 자식을 나열하고, 숨김을 켰을 때 사라지는 맵 요소가 있는지 비교 |
-| 지도 상태 | `map-state-capture.js`가 만들어질 때 기록한 reactive 프록시. 기록 조건은 컨테이너와 좌표 변환 둘이고, 화면 이동(`centerOnPosition`)과 맞춤(`panzoom`)도 씀 | `tanukiPilot.getMap()`이 객체를 돌려주는지, 없으면 `tanukiPilot.status()`의 `map-unavailable` 사유. `verify-online.mjs`에서 앱의 원이 사이트가 같은 파일명으로 그린 원과 겹치는지, `panzoom.moveBy` 뒤 캔버스와 마커가 함께 움직이는지 |
+| 지도 상태 | `map-state-capture.js`가 만들어질 때 기록한 reactive 프록시. 기록 조건은 컨테이너와 좌표 변환 둘이고, 화면 이동(`centerOnPosition`)과 맞춤(`panzoom`, `x`, `y`, `zoom`, `viewSize`, `viewRotation`)도 씀 | `tanukiPilot.getMap()`이 객체를 돌려주는지, 없으면 `tanukiPilot.status()`의 `map-unavailable` 사유. `verify-online.mjs`에서 앱의 원이 사이트가 같은 파일명으로 그린 원과 겹치는지, `panzoom.moveBy` 뒤 캔버스와 마커가 함께 움직이는지 |
 | 내 위치를 얹는 층 | 앱 표시(z-index 8)가 사이트의 내 위치 캔버스(7) 위, 설명 창(10) 아래 | 컨테이너 직계 자식의 계산된 z-index를 나열 |
 | 층 자동 선택의 입력 | 사이트의 층 선택이 지켜보는 지도 상태의 `playerPos`(x, y, z) | `tanukiPilot.levelSync()`의 `state`와 `level`, `verify-online.mjs`의 층 비교 |
 | 층 데이터 표 | `map-state-capture.js`가 기록한, 층 이름마다 `num`과 `visible`을 가진 표와 그 안에 나중에 채워지는 `height`, `zones` | 기록의 `levelSets()`가 표를 돌려주는지, 지도를 연 뒤 높이나 구역이 채워지는지 |

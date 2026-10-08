@@ -6,6 +6,7 @@
  * 최소 배율에서도 지형이 창보다 큰 맵에서 맞춘 뒤에도 내 위치 마커가 화면 안에 남는지 확인한다.
  * 판정은 주입 스크립트의 캐시 대신 원본 캔버스의 전체 픽셀을 읽어 수행한다.
  * 페이지는 외부 네트워크 없이 작은 지도 입력 모델로 실행하므로 라이브 사이트 호환성 검증은 별도다.
+ * 지금 사이트처럼 지도와 내 위치는 캔버스 그림뿐이고, 맵 상자는 지도 상태의 panzoom 변환과 맵 크기로만 알 수 있다.
  * Node 22+, CHROME_PATH로 브라우저 지정 가능. --script <path>로 이전 판과 비교할 수 있다.
  */
 import assert from 'node:assert/strict';
@@ -38,24 +39,21 @@ const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 function fixture({ overview = true, unrelated = true, ambiguous = false, hiddenSized = false, tall = false, marker = false } = {}, id) {
   return `<!doctype html><style>
     body{margin:0}.map-cont{position:relative;width:800px;height:600px;overflow:hidden}
-    .map-wrap{position:absolute;width:2000px;height:1800px;transform-origin:0 0}
     canvas{position:absolute;inset:0;width:800px;height:600px}
-    .map-scene{width:2000px;height:1800px}
-    .marker{position:absolute;left:1000px;top:1600px;width:20px;height:20px;margin:-10px 0 0 -10px}
     </style>
     ${unrelated ? '<canvas class="doc-map-canvas" width="800" height="600" id="unrelated"></canvas>' : ''}
     <div class="map-cont pan">
-    <div class="map-wrap"><div class="map-scene"></div>${marker ? '<div class="marker"></div>' : ''}</div>
     ${overview ? '<canvas class="doc-map-canvas" style="display:none" id="overview"></canvas>' : ''}
     ${hiddenSized ? '<canvas class="doc-map-canvas" width="800" height="600" style="visibility:hidden" id="hiddenSized"></canvas>' : ''}
     <canvas class="doc-map-canvas" width="800" height="600" id="terrain"></canvas>
     ${ambiguous ? '<canvas class="doc-map-canvas" width="800" height="600" id="ambiguous"></canvas>' : ''}
     </div><script>
-    const container=document.querySelector('.map-cont'),wrap=document.querySelector('.map-wrap');
+    const container=document.querySelector('.map-cont');
     let terrain=document.querySelector('#terrain'),world=${tall ? '{x:800,y:100,width:400,height:1600}' : '{x:800,y:650,width:400,height:500}'};
     const minScale=${tall ? 0.5 : 0},camera={x:0,y:0,scale:${tall ? 0.5 : 0.4}};let cursor=null;
+    // 내 위치는 맵 좌표 (1000, 1600)에 있다. 사이트처럼 캔버스 그림이라 DOM 요소는 없다
+    const markerAt={x:1000,y:1600},hasMarker=${marker};
     function draw(){
-      wrap.style.transform='translate('+camera.x+'px,'+camera.y+'px) scale('+camera.scale+')';
       const context=terrain.getContext('2d');context.clearRect(0,0,800,600);
       context.fillStyle='green';context.fillRect(camera.x+world.x*camera.scale,camera.y+world.y*camera.scale,world.width*camera.scale,world.height*camera.scale);
     }
@@ -71,16 +69,19 @@ function fixture({ overview = true, unrelated = true, ambiguous = false, hiddenS
     window.fixture={id:${id},replace(){
       const replacement=terrain.cloneNode();terrain.replaceWith(replacement);terrain=replacement;
       world={x:800,y:650,width:100,height:500};draw();
-    },state:()=>({...camera})};
-    // 사이트의 지도 객체처럼 panzoom의 moveBy를 내놓는다. 화면 이동은 Pilot 브리지가 찾은 지도 객체를 쓴다.
+    },state:()=>({...camera}),markerPoint:()=>({x:camera.x+markerAt.x*camera.scale,y:camera.y+markerAt.y*camera.scale})};
+    // 사이트의 지도 상태처럼 컨테이너, panzoom 변환(x, y, zoom), 회전을 반영한 맵 크기와 panzoom의 moveBy를
+    // 내놓는다. 맞춤 스크립트는 Pilot 브리지가 찾은 이 상태로 맵 상자를 계산하고 화면을 옮긴다.
     // revealPosition은 Pilot 브리지처럼 마커가 창 안쪽 70% 밖에 있을 때만 마커를 가운데로 옮긴다
-    window.tanukiPilot={getMap:()=>({panzoom:{moveBy(dx,dy){camera.x+=dx;camera.y+=dy;draw();}}}),
-      hasPosition:()=>!!document.querySelector('.marker'),
+    const mapState={cont:container,get x(){return camera.x;},get y(){return camera.y;},get zoom(){return camera.scale;},
+      viewSize:{width:2000,height:1800},viewRotation:0,panzoom:{moveBy(dx,dy){camera.x+=dx;camera.y+=dy;draw();}}};
+    window.tanukiPilot={getMap:()=>mapState,
+      hasPosition:()=>hasMarker,
       revealPosition(){
-        const m=document.querySelector('.marker');if(!m)return false;
-        const b=m.getBoundingClientRect(),v=container.getBoundingClientRect(),x=b.left+b.width/2,y=b.top+b.height/2;
-        if(x>=v.left+v.width*0.15&&x<=v.right-v.width*0.15&&y>=v.top+v.height*0.15&&y<=v.bottom-v.height*0.15)return false;
-        camera.x+=v.left+v.width/2-x;camera.y+=v.top+v.height/2-y;draw();return true;
+        if(!hasMarker)return false;
+        const p=fixture.markerPoint();
+        if(p.x>=800*0.15&&p.x<=800*0.85&&p.y>=600*0.15&&p.y<=600*0.85)return false;
+        camera.x+=400-p.x;camera.y+=300-p.y;draw();return true;
       }};
     for(const decoy of document.querySelectorAll('#unrelated, #hiddenSized'))decoy.getContext('2d').fillRect(0,0,800,600);
     draw();</script>`;
@@ -203,7 +204,7 @@ try {
   // 맞추기와 재확인이 끝난 뒤에도 마커가 창 안쪽에 남고, 배율이 바뀌지 않고, 화면이 더 움직이지 않아야 한다.
   await load({ tall: true, marker: true, overview: false, unrelated: false });
   await delay(4500);
-  const markerCheck = `(() => { const b=document.querySelector('.marker').getBoundingClientRect(),x=b.left+b.width/2,y=b.top+b.height/2;
+  const markerCheck = `(() => { const {x,y}=fixture.markerPoint();
     return { inside: x>=120&&x<=680&&y>=90&&y<=510, camera: fixture.state(), limited: window.__tanukiKeepVisible.zoomLimited?.() }; })()`;
   const settled = await evaluate(markerCheck);
   assert.ok(settled.inside, `position marker left the view after fitting: ${JSON.stringify(settled)}`);

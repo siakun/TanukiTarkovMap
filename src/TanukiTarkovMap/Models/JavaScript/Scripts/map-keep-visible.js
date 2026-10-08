@@ -7,13 +7,13 @@
  * 목적: 맵을 끌다가 화면에서 놓치지 않게 하고, 열자마자 쓸 수 있는 크기로 보이게 한다.
  *
  * 사이트가 쓰는 것 (번들에서 확인):
- *   panzoom(.map-wrap, { autocenter: true, bounds: true, smoothScroll: false, ... })
+ *   panzoom(.pan.map-cont, { autocenter: true, bounds: true, smoothScroll: false, ... })
  *
  * - anvaka/panzoom 이다. mousedown 때 커서 위치를 기억하고, mousemove마다
  *   dx = clientX - 기억한 위치 만큼 맵을 옮긴 뒤 그 위치를 갱신한다. 즉 커서와 1:1로 움직이며,
  *   배율이 달라도 화면 픽셀 기준이라 환산이 필요 없다 (실측: 커서 100px -> 맵 100px).
  * - smoothScroll: false 라 손을 뗀 뒤 관성이 없다 (실측: 놓은 뒤 이동 0px).
- * - bounds: true 라 사이트에도 경계가 있다. 다만 그 기준이 .map-wrap 상자이고 남기는 양이 창의
+ * - bounds: true 라 사이트에도 경계가 있다. 다만 그 기준이 맵 좌표 공간 전체이고 남기는 양이 창의
  *   5%뿐이라(실측: 오른쪽 끝 60.6px = 1211의 5%), 가장자리가 빈 여백인 맵은 화면에 아무것도
  *   없는 것처럼 된다. 그래서 우리가 더 엄한 규칙을 얹는다.
  *
@@ -21,18 +21,22 @@
  * 드래그는 움직이는 동안 막고, 휠 확대와 창 크기 변경은 사이트가 처리한 다음 프레임에 범위로
  * 되돌린다. 휠은 커서 자리를 기준으로 확대하므로 지형 바깥에서 확대하면 지형이 화면 밖으로 밀린다.
  *
- * 무엇을 "맵"으로 보는가: .map-wrap 상자가 아니라 그 안에 실제로 그려진 영역이다.
+ * 무엇을 "맵"으로 보는가: 맵 좌표 공간 전체(맵 상자)가 아니라 그 안에 실제로 그려진 영역이다.
  * 상자는 여백까지 포함한 맵 좌표 공간 전체(예: Ground Zero는 2800x3100)이고 그림은 그 안의
  * 일부(800x1100)뿐이라, 상자를 기준으로 막으면 상자가 가운데를 덮은 채로 그림만 화면 밖으로
  * 나간다. 실제로 겪은 증상이 그것이다.
+ *
+ * 맵 상자는 사이트의 지도 상태로 계산한다. 2026-10 판부터 지도를 캔버스로만 그려 이 상자를 가진
+ * 요소(예전의 .map-wrap)가 없다. 지도 상태의 panzoom 변환(x, y, zoom)과 회전을 반영한 맵 크기
+ * (viewSize)가 곧 그 상자이고, 사이트도 이 값으로 캔버스를 그린다. 지도 상태는 Pilot 브리지에서 얻는다.
  *
  * 그림은 사이트가 바닥 맵을 그리는 canvas.doc-map-canvas에서 투명하지 않은 픽셀의 범위로 잰다.
  * 같은 클래스의 캔버스가 둘이다. 지도 전체를 담은 캔버스와 창보다 조금 큰 캔버스이고, 사이트가
  * 배율에 따라 하나만 보인다(보통 배율에서는 첫째가 display: none, 많이 줄이면 둘째가 visibility:
  * hidden). 그래서 DOM 순서가 아니라 화면에 표시된 하나를 골라 잰다. 예전 판은 바닥 맵을
  * svg.svg-map으로 그렸고 그때는 svg 자식의 bbox를 쟀지만, 지금 판에는 그 svg가 없어 그 경로는 뺐다.
- * 잰 범위는 .map-wrap 상자에 대한 비율로 저장한다. 사이트는 캔버스와 상자를 같은 변환으로
- * 움직이므로 이 비율은 끌고 확대해도 그대로다(실측: 확대와 이동 뒤 차이 0.001 미만).
+ * 잰 범위는 맵 상자에 대한 비율로 저장한다. 사이트는 캔버스와 상자를 같은 변환으로 움직이므로
+ * 이 비율은 끌고 확대해도 그대로다(실측: 확대와 이동 뒤 차이 0.001 미만).
  *
  * 그림을 재지 못하면 상자로 대신하지 않는다. 예전에는 대신했는데, 사이트가 바닥 맵을 캔버스로
  * 옮기자 이 대체가 조용히 쓰여 맵이 창의 절반도 안 되게 뜨고 이동 제한도 헐거워졌다. 로그로는
@@ -72,12 +76,10 @@
 (function () {
     'use strict';
 
-    var WRAP_SELECTOR = '.map-wrap';
     var CONTAINER_SELECTOR = '.pan.map-cont';
 
-    // 지금 온라인 판이 바닥 맵을 그리는 캔버스와, 맵을 돌리면 회전이 걸리는 요소
+    // 지금 온라인 판이 바닥 맵을 그리는 캔버스
     var CANVAS_SELECTOR = 'canvas.doc-map-canvas';
-    var SCENE_SELECTOR = '.map-scene';
 
     // 캔버스를 이만큼 줄여서 읽는다. 그림 범위는 몇 px 틀려도 맞추기와 이동 제한에 지장이 없고,
     // 읽는 데 드는 시간이 크게 준다 (실측: 원본 약 4ms, 1/4로 줄이면 1ms 미만)
@@ -140,13 +142,48 @@
     var offsetX = 0;
     var offsetY = 0;
 
-    // 재 둔 그림 범위. .map-wrap 상자에 대한 비율(0~1)이라 끌고 확대해도 그대로 쓴다.
+    // 재 둔 그림 범위. 맵 상자에 대한 비율(0~1)이라 끌고 확대해도 그대로 쓴다.
     // source는 잰 곳(canvas)이고, complete는 그림 전체가 보일 때 쟀는지다.
     // 한 번 재는 비용은 작지만, 끄는 도중 이동마다 캔버스를 다시 읽지 않으려고 담아 둔다
     var contentCache = null;
 
     // 사이트 캔버스를 줄여 옮겨 두고 읽는 우리 쪽 캔버스
     var sampleCanvas = null;
+
+    function siteMap() {
+        var pilot = window.tanukiPilot;
+        return (pilot && typeof pilot.getMap === 'function' && pilot.getMap()) || null;
+    }
+
+    /**
+     * 지도 컨테이너와, 맵 좌표 공간 전체(맵 상자)가 화면에서 차지하는 자리를 구한다. 없으면 null.
+     *
+     * 상자는 지도 상태의 panzoom 변환과 회전을 반영한 맵 크기로 계산한다. 사이트가 캔버스에 맵을
+     * 그리는 변환과 같다. 변환은 컨테이너의 안쪽(테두리 안) 왼쪽 위가 원점이다.
+     * turn은 회전 각도다. 돌리면 같은 상자 안의 그림 자리가 달라지므로 다시 재는 기준으로 쓴다
+     */
+    function mapFrame() {
+        var map = siteMap();
+        var container = map && map.cont;
+        if (!container || !container.isConnected || !map.viewSize || !(map.zoom > 0)) return null;
+
+        var view = container.getBoundingClientRect();
+        if (!view.width || !view.height) return null;
+
+        var left = view.left + container.clientLeft + map.x;
+        var top = view.top + container.clientTop + map.y;
+        return {
+            container: container,
+            view: view,
+            box: { left: left, top: top, width: map.viewSize.width * map.zoom, height: map.viewSize.height * map.zoom },
+            turn: String(map.viewRotation || 0)
+        };
+    }
+
+    function mapContainer() {
+        var map = siteMap();
+        return (map && map.cont && map.cont.isConnected && map.cont) || document.querySelector(CONTAINER_SELECTOR);
+    }
 
     /**
      * 같은 맵 컨테이너에서 화면에 표시된 지형 캔버스를 찾는다.
@@ -155,10 +192,7 @@
      * 숨은 쪽은 display: none이라 화면 크기가 0이거나, visibility: hidden이라 크기는 있어도 보이지
      * 않는다. 표시된 후보가 여러 개면 어느 것이 지형인지 보장할 수 없어 측정을 중단한다.
      */
-    function findTerrainCanvas(wrap) {
-        var container = wrap.closest('.map-cont');
-        if (!container) return null;
-
+    function findTerrainCanvas(container) {
         var canvases = container.querySelectorAll(CANVAS_SELECTOR);
         var terrain = null;
 
@@ -178,7 +212,7 @@
     }
 
     /**
-     * 캔버스에서 투명하지 않은 픽셀의 범위를 .map-wrap 상자에 대한 비율로 구한다.
+     * 캔버스에서 투명하지 않은 픽셀의 범위를 맵 상자에 대한 비율로 구한다.
      *
      * 캔버스는 창에 보이는 부분만 그리므로, 그림이 창 밖으로 이어지면 가장자리에서 잘린다.
      * 그때는 complete를 false로 두어 맞추기가 먼저 줄여서 다시 재게 한다.
@@ -187,7 +221,7 @@
      * 읽는 양이 줄고, 브라우저는 자주 읽히는 캔버스를 그리기보다 읽기에 맞춰 다룰 수 있으므로
      * (willReadFrequently) 사이트의 그리기에 영향을 줄 여지를 남기지 않는다
      */
-    function readCanvasPicture(wrap, canvas) {
+    function readCanvasPicture(frame, canvas) {
         if (!canvas || !canvas.width || !canvas.height) return null;
 
         var width = Math.max(1, Math.round(canvas.width / PICTURE_SAMPLE_DIVISOR));
@@ -224,7 +258,7 @@
         if (right < 0) return null;
 
         var screen = canvas.getBoundingClientRect();
-        var box = wrap.getBoundingClientRect();
+        var box = frame.box;
         var unitX = screen.width / width;
         var unitY = screen.height / height;
 
@@ -240,24 +274,23 @@
     }
 
     /**
-     * 그림 범위를 .map-wrap 상자에 대한 비율로 돌려준다. 재지 못하면 null.
+     * 그림 범위를 맵 상자에 대한 비율로 돌려준다. 재지 못하면 null.
      *
      * allowMeasure가 false면 재 둔 값만 쓴다. 끄는 도중에는 이동마다 캔버스를 읽지 않으려고
-     * 그렇게 부른다. 맵을 바꾸거나 돌리면 그림이 달라지므로 다시 잰다. 돌렸는지는 .map-scene의
-     * transform으로 안다. 끌고 확대하는 변환은 .map-wrap에 걸리고 회전만 이 요소에 걸린다
+     * 그렇게 부른다. 맵을 바꾸거나 돌리면 그림이 달라지므로 다시 잰다. 돌렸는지는 지도 상태의
+     * 회전 각도로 안다. 끌고 확대하는 변환은 맵 상자를 옮길 뿐 상자 안의 그림 자리를 바꾸지 않는다
      */
-    function readPicture(wrap, allowMeasure) {
-        var scene = wrap.querySelector(SCENE_SELECTOR);
+    function readPicture(frame, allowMeasure) {
         // 캔버스가 교체되거나 사이트가 배율에 따라 보이는 캔버스를 맞바꾸면 이전 그림 범위를 버린다.
-        var owner = findTerrainCanvas(wrap);
-        var turn = scene ? getComputedStyle(scene).transform : '';
+        var owner = findTerrainCanvas(frame.container);
+        var turn = frame.turn;
 
         if (contentCache && (contentCache.owner !== owner || contentCache.turn !== turn)) contentCache = null;
         if (!owner) return null;
         if (contentCache && (contentCache.complete || !allowMeasure)) return contentCache;
         if (!allowMeasure) return null;
 
-        var picture = readCanvasPicture(wrap, owner);
+        var picture = readCanvasPicture(frame, owner);
         if (!picture) return null;
 
         picture.owner = owner;
@@ -272,16 +305,15 @@
      * @param {boolean} allowMeasure - 재 둔 그림 범위가 없거나 일부만 잰 것이면 새로 잰다
      */
     function readBounds(allowMeasure) {
-        var wrap = document.querySelector(WRAP_SELECTOR);
-        var container = document.querySelector(CONTAINER_SELECTOR);
-        if (!wrap || !container) return null;
+        var frame = mapFrame();
+        if (!frame) return null;
 
-        var box = wrap.getBoundingClientRect();
-        var view = container.getBoundingClientRect();
-        if (!box.width || !view.width) return null;
+        var box = frame.box;
+        var view = frame.view;
+        if (!box.width) return null;
 
         // 상자 안에서 그림이 차지하는 만큼으로 좁힌다. 재지 못했으면 상자로 대신하지 않는다
-        var picture = readPicture(wrap, allowMeasure);
+        var picture = readPicture(frame, allowMeasure);
         if (!picture) return null;
 
         var map = {
@@ -303,7 +335,7 @@
             source: picture.source,
             complete: picture.complete,
 
-            // .map-wrap 상자의 폭은 배율에만 따라 변한다. 그림이 잘려 재어지는 동안에는 그림 폭이 배율을
+            // 맵 상자의 폭은 배율에만 따라 변한다. 그림이 잘려 재어지는 동안에는 그림 폭이 배율을
             // 따라 변하지 않으므로, 배율이 움직였는지는 이 값으로 본다
             boxWidth: box.width,
             viewLeft: view.left,
@@ -359,7 +391,7 @@
      * 찾지 못하면 옮기지 않는다. 변환은 panzoom이 다음 프레임에 DOM에 쓴다
      */
     function panBy(dx, dy) {
-        var map = window.tanukiPilot && window.tanukiPilot.getMap && window.tanukiPilot.getMap();
+        var map = siteMap();
         var panzoom = map && map.panzoom;
         if (!panzoom || typeof panzoom.moveBy !== 'function') return false;
 
@@ -448,7 +480,7 @@
 
         clone[OURS] = true;
 
-        var container = document.querySelector(CONTAINER_SELECTOR);
+        var container = mapContainer();
         (container || document).dispatchEvent(clone);
     }
 
@@ -459,8 +491,8 @@
 
         // 끄는 도중에는 그림을 새로 재지 않으므로 누르는 순간에 잰다. 그림 전체를 보고 잰 값이
         // 이미 있으면 다시 재지 않고, 맵을 바꾸거나 돌렸으면 readPicture가 새로 잰다
-        var wrap = document.querySelector(WRAP_SELECTOR);
-        if (wrap) readPicture(wrap, true);
+        var frame = mapFrame();
+        if (frame) readPicture(frame, true);
 
         dragging = true;
         offsetX = 0;
@@ -526,7 +558,7 @@
      * 휠 한 칸을 보낸다. 사이트는 커서 자리를 고정점으로 삼아 배율을 바꾼다
      */
     function fireWheel(x, y, deltaY) {
-        var container = document.querySelector(CONTAINER_SELECTOR);
+        var container = mapContainer();
         if (!container) return;
 
         var event = new WheelEvent('wheel', {
@@ -729,8 +761,8 @@
     // 앱 안에서 어떤 판이 도는지 CDP로 바로 확인하기 위한 표시.
     // 옛 판이 남아 있는 채로 증상을 쫓다 시간을 버린 적이 있어 둔다
     window.__tanukiKeepVisible = {
-        version: 9,
-        rule: 'fit-on-open + center-clamp on drag, wheel and resize, picture from the displayed terrain canvas, position owns the center once shown',
+        version: 10,
+        rule: 'fit-on-open + center-clamp on drag, wheel and resize, picture from the displayed terrain canvas, map box from the site map state, position owns the center once shown',
         marginRatio: MARGIN_RATIO,
         // 맞추기가 사이트의 배율 한계에 닿아 채움 비율을 맞추지 못했는지
         zoomLimited: function () { return zoomLimited; },
@@ -752,5 +784,5 @@
     setTimeout(function () { fitWhenReady(Date.now() + FIT_WAIT); }, 600);
     watchMapChange();
 
-    console.log('[Map Keep Visible] Ready (v9 fit-on-open + center-clamp on drag, wheel and resize)');
+    console.log('[Map Keep Visible] Ready (v10 fit-on-open + center-clamp on drag, wheel and resize)');
 })();
