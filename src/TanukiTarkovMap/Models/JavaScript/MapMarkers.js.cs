@@ -1,29 +1,28 @@
 namespace TanukiTarkovMap.Models.JavaScript
 {
     /// <summary>
-    /// 맵 마커 및 방향 표시기 관련 JavaScript 스크립트
-    /// - 플레이어 위치에 방향 표시 삼각형 추가
-    /// - 스크린샷의 회전값과 지도의 좌표 변환을 적용한 방향 표시
+    /// Online 사이트 지도 위에 앱의 내 위치 표시(원과 방향 삼각형)를 그리는 스크립트
+    /// - 모양은 Local 미니맵의 내 위치와 같다
+    /// - 자리와 각도는 Pilot 브리지가 사이트 지도 상태의 좌표 변환으로 구해 넘긴다
     /// </summary>
     public static class MapMarkers
     {
         /// <summary>
-        /// 방향 표시기를 추가하는 스크립트
+        /// 내 위치 표시를 등록하는 스크립트
         ///
         /// JavaScript 파일 위치: Models/JavaScript/Scripts/map-markers.js
         ///
         /// 실행 절차:
-        /// 1. SVG 기반 삼각형 아이콘을 CSS 스타일로 정의
-        /// 2. 모든 마커(.marker) 요소를 찾아서 삼각형 추가
-        /// 3. 부모의 CSS 변환을 보존하고 자식 삼각형의 각도만 보정
-        /// 4. 지도 영역 밖의 마커도 MutationObserver로 감지 및 자동 처리
-        /// 5. 상태 확인 시 스타일과 DOM 감시를 복구하고 파일명에서 읽은 방향 적용
+        /// 1. Pilot 브리지가 위치를 받으면 show로 자리 계산 함수(locate)와 따라갈지 판정(alive)을 맡긴다
+        /// 2. locate가 알려 준 지도 컨테이너에 원 요소 하나(안에 방향 삼각형)를 붙인다
+        /// 3. alive가 참인 동안 매 프레임 자리와 화면 각도를 다시 맞춘다
+        /// 4. 브리지가 새 스크린샷이라고 알리면 보인 순간 한 번 핑을 켠다
+        /// 5. 상태 확인 시 지워진 표시와 멈춘 갱신을 복구한다
         /// </summary>
-        public static string ADD_DIRECTION_INDICATORS_SCRIPT =>
-            JavaScriptLoader.Load("map-markers.js");
+        public static string INIT_SCRIPT => JavaScriptLoader.Load("map-markers.js");
 
         public const string ENSURE_READY_SCRIPT =
-            "window.tanukiDirection?.version === 5 && typeof window.tanukiDirection.ensure === 'function' " +
-            "&& typeof window.tanukiDirection.setHeading === 'function' && window.tanukiDirection.ensure() === true;";
+            "window.tanukiMarker?.version === 7 && typeof window.tanukiMarker.ensure === 'function' " +
+            "&& typeof window.tanukiMarker.show === 'function' && window.tanukiMarker.ensure() === true;";
     }
 }

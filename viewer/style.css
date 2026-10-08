@@ -103,7 +103,7 @@ body {
   100% { width: var(--marker-size); height: var(--marker-size); }
 }
 
-/* 방향 삼각형: Online에서 map-markers.js가 사이트 마커에 붙이는 규칙과 같은 크기와 위치 */
+/* 방향 삼각형: Online의 map-markers.js가 그리는 삼각형과 같은 크기와 위치 */
 .triangle-indicator {
   position: absolute;
   top: 50%;

@@ -153,22 +153,40 @@ INTENT
    있거나 열리려는 맵에 묶어 최신 입력 하나로 보관하고, 페이지 로드 직후와 주기 점검
    (`MaintainPositionAsync`)에서 표시될 때까지 다시 보냅니다.
 3. Online은 [pilot-bridge.js](src/TanukiTarkovMap/Models/JavaScript/Scripts/pilot-bridge.js)의
-   `window.tanukiPilot.sendScreenshot`이 사이트의 위치 입력 경로로 넘기고, 방향 삼각형은
-   [map-markers.js](src/TanukiTarkovMap/Models/JavaScript/Scripts/map-markers.js)가 그립니다.
-   Local은 미니맵의 `window.tanukiViewer.showScreenshot`이 직접 그립니다.
+   `window.tanukiPilot.showScreenshot`이 파일명을 직접 읽고,
+   [map-markers.js](src/TanukiTarkovMap/Models/JavaScript/Scripts/map-markers.js)가 사이트 지도 위에 내
+   위치 원과 방향 삼각형을 그립니다. Local은 미니맵의 `window.tanukiViewer.showScreenshot`이 직접
+   그립니다. 두 모드의 파일명 해석과 표시 모양은 같습니다.
 
-성공은 호출이 예외 없이 끝난 것이 아니라 그 위치의 마커가 지도에 실제로 있는 것으로 판정합니다.
-브리지는 사이트 지도 객체의 `playerPos`가 보낸 좌표와 같고 마커 요소가 있을 때만 성공을 돌려줍니다.
-새 위치가 화면 밖이나 가장자리에 있으면 그 위치를 가운데로 옮기지만, 주기 점검은 화면을 옮기지
-않습니다. 사용자가 지도를 옮겨 마커가 화면 밖에 있어도 표시된 것입니다.
+Online에서 사이트로부터 빌리는 것은 지도 컨테이너와 좌표 변환(`gamePosToMapPos`, `mapPosToScreenPos`)
+뿐입니다. 사이트의 위치 입력 경로와 내 위치 그리기는 쓰지 않습니다. 둘은 배포 때마다 바뀌어 위치 표시를
+끊어 왔고, 좌표 변환은 그동안 같은 이름으로 남았습니다. 지형과 함께 움직이는 자리는 사이트와 같은 변환으로
+구해야 맞으므로 변환을 앱에 따로 구현하지 않습니다. 따로 구현하면 사이트가 식을 바꿀 때 경고 없이 틀린
+자리에 그립니다. 사이트의 다른 마커와 지도 기능은 사이트의 것을 그대로 씁니다. 이 결정의 근거와 버린 대안은
+[Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에 있습니다.
 
-사이트는 배포 때마다 위치를 받는 함수를 바꾸거나 없앴습니다. 브리지는 입력 경로마다 어댑터를 두고
-페이지에 실제로 있는 첫 경로를 쓰며, 함수 이름이 아니라 함수와 상태가 있는지로 판별합니다. 사이트의
-프로그램용 입력이 모두 사라진 판에서는 사용자가 파일명을 붙여 넣는 "Where am i" 입력의 처리기를
-렌더 중인 Vue 트리의 컴포넌트 props에서 찾아 씁니다. 번들을 압축해도 템플릿의 prop 이름은 남기
-때문입니다. 경로 목록과 판별 조건은 브리지의 `inputs`가 원천이고, 지금 쓰는 경로는
-`tanukiPilot.input()`으로 확인합니다. 사이트가 입력을 또 바꾸면 어댑터를 더하고 그 판의 재현
-페이지를 [verify-map-recovery.mjs](tools/verify-map-recovery.mjs)에 추가합니다.
+층은 사이트가 고릅니다. 사이트는 지도 문서에서 층마다 높이 범위와 구역을 받아 두고, 지도 상태의 `playerPos`가
+바뀌면 그 위치로 층을 바꿉니다. 그래서 브리지는 위치를 보일 때 같은 좌표를 `playerPos`에도 넣습니다. 사이트는
+층 데이터가 도착하기 전에 바뀐 위치로는 층을 고르지 않고 나중에 다시 고르지도 않으므로, 브리지는 층 데이터가
+채워질 때까지 기다렸다가 넣습니다. 사이트의 표시 상태는 켜지 않으므로 사이트가 자기 원을 그리지 않고, 층 선택
+말고 사이트의 내 위치 기능(스쿼드 공유, 사이트 UI의 위치 표시)에는 반영되지 않습니다. Local은 미니맵이 같은
+규칙(구역 먼저, 그다음 높이 범위)으로 직접 고르며, 그 식은
+[viewer/coords.js](viewer/coords.js)의 `levelAtPosition`입니다.
+
+성공은 호출이 예외 없이 끝난 것이 아니라 그 위치의 마커가 지도에 실제로 보이는 것으로 판정합니다.
+새 위치가 화면 밖이나 가장자리에 있으면 그 위치를 가운데로 옮기지만, 주기 점검은 화면을 옮기지 않습니다.
+사용자가 지도를 옮겨 마커가 화면 밖에 있어도 표시된 것입니다. 핑(마커가 커졌다 줄어드는 표시)은 새
+스크린샷이 처음 보일 때만 켭니다. 표시가 사라졌다고 판단해 같은 파일을 다시 보낼 때마다 켜면, 새
+스크린샷이 없는데도 마커가 커졌다 줄어듭니다. 다른 맵으로 옮기면 그 맵에서 표시한 위치는 끝납니다.
+
+좌표 변환은 사이트의 지도 상태 객체가 가집니다. 2026-10 판부터 사이트는 이 객체를 컴포넌트 props에 두지
+않아, 만들어진 뒤에는 닿을 경로가 없습니다. 그래서 앱은 로드 시작 시점(`FrameLoadStart`)에
+[map-state-capture.js](src/TanukiTarkovMap/Models/JavaScript/Scripts/map-state-capture.js)를 넣어,
+Vue가 지도 상태를 만들며 원본과 프록시를 WeakMap에 등록하는 순간 그 프록시를 기록합니다. 층 데이터 표도 같은
+방법으로 기록합니다. 브리지와 맞춤 스크립트는 그 기록에서 화면에 붙은 가장 최근 지도 상태를 사용합니다.
+사이트가 지도 상태의 모양이나 좌표 변환을 바꾸면 Online은 위치를 그리지 않고 `map-unavailable`로 알립니다.
+그때는 번들에서 지도 상태를 만드는 코드를 다시 찾고 [verify-map-recovery.mjs](tools/verify-map-recovery.mjs)의
+재현 페이지를 그 판에 맞춥니다.
 
 ### 위치가 바뀌지 않을 때
 
@@ -176,11 +194,15 @@ INTENT
    `Position rendered (screenshot: <파일명>)`, 못 하면 `Screenshot pending: <상태> (<파일명>)`이
    남습니다. 이 줄이 없으면 감지나 맵 판정 단계이므로 `[ScreenshotsWatcher]`와 `[MapEventService]`
    줄을 봅니다. 상태 값은 브리지의 `lastFailure`와 미니맵의 `state.status`가 원천입니다.
-   `pilot-unavailable`은 사이트에서 위치 입력 경로를 하나도 찾지 못했다는 뜻이고, 대부분 사이트
-   배포로 경로가 바뀐 경우입니다.
+   `map-unavailable`은 위치를 그릴 지도 상태가 없다는 뜻입니다. `capture-missing`이면 기록 스크립트가
+   들어가지 않은 것이고, `not-captured`이면 페이지가 지도 상태를 만든 뒤에 들어갔거나 사이트가 지도
+   상태의 모양을 바꾼 것입니다. `site-error`는 사이트의 좌표 변환이 예외를 던진 경우이고,
+   `position-not-shown`은 마커를 붙였지만 화면에 보이지 않는 경우(지도 영역이 숨겨진 경우 등)입니다.
+   층만 바뀌지 않으면 `tanukiPilot.levelSync()`를 봅니다. `state`가 `waiting`이면 사이트의 층 데이터를
+   기다리는 중이고, `no-level-data`면 층 데이터 표를 기록하지 못한 것(사이트가 표의 모양을 바꾼 경우)입니다.
 2. 앱 없이 지금 사이트에서 Online 경로를 확인합니다. `node tools/verify-online.mjs --maps customs`는
-   앱과 같은 스크립트를 같은 순서로 넣고 입력 경로, 마커와 방향 삼각형, 맞춤, 휠 확대 뒤 지형을
-   맵마다 판정합니다. 맵을 생략하면 전체를 검사합니다.
+   앱과 같은 스크립트를 같은 순서로 넣고 내 위치 원의 자리, 방향 삼각형의 각도, 층 자동 선택, 재전송과 핑,
+   맞춤, 휠 확대 뒤 지형, 지도 회전을 맵마다 판정합니다. 맵을 생략하면 전체를 검사합니다.
 3. 실행 중인 앱의 상태가 필요하면 사용자에게 Debug 빌드 실행을 요청하고 아래
    [CefSharp 렌더링 디버깅](#cefsharp-렌더링-디버깅-cdp) 절차로
    `node tools/cdp-debug.mjs eval "tanukiPilot.status()"`처럼 확인합니다.

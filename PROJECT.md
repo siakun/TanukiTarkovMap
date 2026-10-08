@@ -80,6 +80,7 @@ graph TB
         MM[MapMarkers]
         PB[PilotBridge]
         MKV[MapKeepVisible]
+        MSC[MapStateCapture]
     end
 
     subgraph External["External"]
@@ -140,7 +141,10 @@ graph TB
     JSL --> MM
     JSL --> PB
     JSL --> MKV
-    MKV -.->|페이지 안에서 지도 객체와 위치 표시 사용| PB
+    JSL --> MSC
+    MKV -.->|페이지 안에서 지도 상태와 위치 표시 사용| PB
+    PB -.->|페이지 안에서 내 위치 그리기를 맡김| MM
+    PB -.->|페이지 안에서 지도 상태 기록 사용| MSC
     WBVM -->|Online| PB
     WBVM -->|Local: window.tanukiViewer| VIEWER
 
@@ -492,10 +496,11 @@ XAML 문구는 DynamicResource로 사전을 가리키므로 창 안의 문구는
 
 ### 스크린샷 위치 표시와 퀘스트 완료 (Pilot 브리지)
 
-스크린샷 파일명의 좌표와 회전값으로 위치와 방향을 표시합니다. Online은 앱의 브리지가 사이트의
-위치 입력 경로와 지도별 좌표 변환을 이용하고, Local은 미니맵이 같은 식으로 직접 그립니다. 브리지는
-사이트가 제공하는 함수와 상태가 실제로 있는지로 입력 경로를 고릅니다. 사이트가 프로그램용 입력을
-모두 없앤 판에서는 "Where am i" 입력의 처리기를 씁니다.
+스크린샷 파일명의 좌표와 회전값으로 위치와 방향을 표시합니다. 두 모드 모두 앱이 파일명을 읽고 같은
+모양의 원과 방향 삼각형을 직접 그립니다. Online은 브리지가 사이트 지도 상태의 좌표 변환으로 자리를 구하고
+`map-markers.js`가 사이트 지도 위에 그리며, 사이트의 위치 입력 경로와 내 위치 그리기는 쓰지 않습니다.
+층은 사이트가 고르도록 같은 좌표를 사이트 지도 상태의 `playerPos`에 넘깁니다. Local은 미니맵이 리소스의 변환과
+층 데이터로 직접 그리고 층을 고릅니다.
 
 ```
 스크린샷 파일 생성
@@ -506,17 +511,17 @@ XAML 문구는 DynamicResource로 사전을 가리키므로 창 안의 문구는
        ↓
   WebBrowserViewModel이 대상 맵(MapInfo.Name)과 최신 입력 보관
        ↓
-  MaintainPositionAsync -> Online: 방향 표시와 브리지 스크립트 확인과 복구
+  MaintainPositionAsync -> Online: 내 위치 표시와 브리지 스크립트 확인과 복구
        ↓
-  Online: window.tanukiPilot.sendScreenshot / Local: window.tanukiViewer.showScreenshot
+  Online: window.tanukiPilot.showScreenshot / Local: window.tanukiViewer.showScreenshot
        ↓
-  지도에 위치 마커와 방향이 반영됐는지 확인 -> 성공하면 대기 해제
+  지도에 위치 마커와 방향이 보이는지 확인 -> 성공하면 대기 해제
 ```
 
-페이지 로드 완료, 스크린샷 수신과 주기 확인이 같은 경로를 사용합니다. 호출이 끝나도 지도 반영이
-확인되지 않으면 최신 입력을 다시 보냅니다. 주기 확인은 반영 여부만 보고 화면을 옮기지 않으므로,
+페이지 로드 완료, 스크린샷 수신과 주기 확인이 같은 경로를 사용합니다. 호출이 끝나도 마커가 지도에
+보이지 않으면 최신 입력을 다시 보냅니다. 주기 확인은 표시 여부만 보고 화면을 옮기지 않으므로,
 사용자가 지도를 옮겨 마커가 화면 밖에 있어도 재센터링하지 않습니다. 퀘스트 완료는 Online의
-`SendToPilot()`이 같은 사이트 서비스로 전달하지만 위치 재시도에는 넣지 않습니다.
+`SendToPilot()`이 사이트의 Pilot 서비스로 전달하지만 위치 재시도에는 넣지 않습니다.
 
 `WebBrowserLifecycleBehavior`는 모드 전환 때 브라우저를 교체합니다. Online은 기존 프로필을
 사용하고 Local은 독립된 메모리 `RequestContext`로 열어 DB와 캐시를 분리합니다.
@@ -525,9 +530,11 @@ XAML 문구는 DynamicResource로 사전을 가리키므로 창 안의 문구는
 [오프라인 맵 설계](docs/20260818-offline-map.md)에 정리했습니다.
 
 2026-08-17 Pilot v2 이전에는 포트 5123의 WebSocket 서버로 같은 사건을 넘겼으나, 사이트가
-로컬 앱에 접속하지 않게 되어 이 경로로 옮겼습니다. 무엇이 깨졌고 어떤 대안을 버렸는지,
-사이트가 또 바꿨을 때 어떻게 알아차리는지는 [Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에
-정리해 두었습니다. 이 경로를 고치기 전에 그 문서의 대안 비교와 전환 신호를 먼저 봅니다.
+로컬 앱에 접속하지 않게 되어 페이지 안의 위치 입력 경로로 옮겼습니다. 그 입력 경로와 사이트의 내 위치
+그리기가 배포마다 바뀌어, 지금은 앱이 직접 그리고 사이트에서는 좌표 변환만 빌립니다. 무엇이 깨졌고 어떤
+대안을 버렸는지, 사이트가 또 바꿨을 때 어떻게 알아차리는지는
+[Pilot 연동과 위치 전달 경로](docs/20260817-pilot-bridge.md)에 정리해 두었습니다. 이 경로를 고치기 전에
+그 문서의 대안 비교와 전환 신호를 먼저 봅니다.
 
 ---
 
@@ -614,7 +621,8 @@ resize 이벤트 발생 → SVG 맵 레이아웃 재계산
    레이어만 남기고 나머지를 모두 숨깁니다. 숨길 것을 나열하면 사이트가 맵 위에 UI를 얹을 때마다 목록을 고쳐야
    하지만, 맵 레이어는 그보다 드물게 바뀝니다. 대신 사이트가 맵 레이어를 새로 만들면 그 레이어가
    체크했을 때만 사라지므로, 그때는 `web-elements-control.js`의 `MAP_LAYER_SELECTORS`에 그 레이어를 추가합니다.
-   현재 위치 마커(`.marker`)를 담은 레이어는 목록과 무관하게 남깁니다
+   앱이 그리는 내 위치와 방향(`.tanuki-position`)도 이 목록에 있습니다.
+   예전 판의 현재 위치 마커(`.marker`)를 담은 레이어는 목록과 무관하게 남깁니다
 3. **레이아웃 재계산**: 요소 숨김 후 `window.dispatchEvent(new Event('resize'))` 호출로 검은 영역 방지
 4. **숨김은 스타일시트 규칙으로**: 요소의 `style.display`를 직접 넣지 않습니다. 인라인 방식은 나중에
    만들어진 요소를 놓치고, 다른 스크립트가 `style.cssText`를 대입하면 함께 지워집니다. 0.2.4에서
@@ -631,7 +639,7 @@ Models/JavaScript/
 ├── Scripts/                      # 실제 JavaScript 파일 (Embedded Resource)
 │   ├── web-elements-control.js   # UI 요소 제어 함수 정의
 │   ├── page-layout.js            # 마진/패딩 제거
-│   ├── pilot-bridge.js           # 사이트의 위치 입력 경로로 스크린샷 전달
+│   ├── pilot-bridge.js           # 스크린샷 파일명을 읽어 사이트 지도 위의 자리를 구함
 │   ├── map-keep-visible.js       # 맵을 창에 맞추고 지형이 화면 가운데를 벗어나지 않게 함
 │   └── ...
 ├── WebElementsControl.js.cs      # C# 래퍼 (함수 호출용 상수)
@@ -645,8 +653,9 @@ Models/JavaScript/
 2. `.js.cs` 파일: `JavaScriptLoader.Load()`로 스크립트 로드 + 함수 호출 상수 정의
 3. `BrowserUIService`: 초기화 스크립트 -> 함수 호출 순서로 실행
 
-페이지 후처리는 `FrameLoadEnd`에서 시작합니다. `page-health.js`는 사이트 초기화 중에 난 오류도
-잡아야 하므로 `FrameLoadStart`에 넣습니다. 방향 표시와 Pilot 브리지는
+페이지 후처리는 `FrameLoadEnd`에서 시작합니다. `page-health.js`(사이트 초기화 중에 난 오류)와
+`map-state-capture.js`(사이트가 지도 상태를 만드는 순간)는 페이지 스크립트보다 먼저 들어가야 하므로
+`FrameLoadStart`에 넣습니다. 내 위치 표시와 Pilot 브리지는
 페이지 로드뿐 아니라 주기 확인과 스크린샷 수신 때도 응답을 확인해 복구합니다. 상태 보고
 스크립트가 보낸 오류와 맵 렌더 여부는 앱 로그에 `[PageHealth]`로 남습니다.
 
@@ -746,6 +755,6 @@ sequenceDiagram
 | **핀 모드** | TopMost 설정 (항상 위에 표시) |
 | **UI 요소 숨김** | 맵 컨테이너에서 맵 레이어만 남기고 나머지 UI를 스타일시트로 숨김 (헤더/푸터는 별도로 항상 숨김) |
 | **TopBar 자동 숨김** | 핀 모드에서 2.5초 지연 후 상단 바 자동 숨김 |
-| **Pilot 브리지** | 사이트에 있는 위치 입력 경로(Pilot 함수나 "Where am i" 처리기)로 위치를 전달하고 퀘스트 완료를 넘기는 어댑터 |
+| **Pilot 브리지** | 스크린샷 파일명을 읽어 사이트 지도 상태의 좌표 변환으로 내 위치를 그릴 자리를 구하고, 사이트가 층을 고르도록 같은 좌표를 넘기며, 퀘스트 완료를 사이트의 Pilot 서비스로 넘기는 어댑터. 사이트의 위치 입력 경로는 쓰지 않음 |
 | **지도 맞춤** | 맵을 열 때 지형을 창에 맞추고, 끌거나 확대해도 지형이 화면 가운데를 벗어나지 않게 하는 규칙 (Online은 map-keep-visible.js, Local은 camera.js) |
 | **로컬 모드** | 독립된 브라우저 저장 공간에서 앱에 담긴 지도 데이터를 자체 미니맵으로 여는 상태 (실험적 기능) |

@@ -1,6 +1,7 @@
 /**
- * 좌표와 방향 식은 사이트(tarkov-market) 지도 번들의 식을 연산 그대로 옮긴다.
- * 같은 파일명이 Online과 Local에서 같은 자리, 같은 방향에 찍히도록 축 순서와 반올림까지 맞춘다.
+ * 좌표, 방향, 층 판정 식은 사이트(tarkov-market) 지도 번들의 식을 연산 그대로 옮긴다.
+ * 같은 파일명이 Online과 Local에서 같은 자리, 같은 방향, 같은 층에 찍히도록 축 순서와 반올림까지 맞춘다.
+ * Online은 이 식을 쓰지 않고 사이트가 직접 계산하므로, 검사 도구가 이 식으로 두 모드를 대조한다.
  */
 const ROUNDING = 1e4;
 const NUMBER = '-?(?:\\d+(?:\\.\\d*)?|\\.\\d+)(?:e[+-]?\\d+)?';
@@ -41,4 +42,42 @@ export function gamePositionToMapPosition(x, y, transform) {
 /** 게임 방향을 화면 회전각으로 바꾼다. 사이트가 방향 마커에 쓰는 식이다(위가 0도, 시계 방향) */
 export function gameDirectionToMapDirection(look, transform) {
   return normalizeDegrees(look + 270 - transform.rotate);
+}
+
+const inHeight = (range, height) => Array.isArray(range) && range.length === 2 && height >= range[0] && height < range[1];
+
+// 구역 안이면 true, 밖이면 false, 모양이 없는 구역(높이만 가진 구역)이면 null
+function inZone(zone, x, y) {
+  if (zone.rect?.length === 2) {
+    let [[left, top], [right, bottom]] = zone.rect;
+    if (zone.rotate) {
+      const radians = -zone.rotate * Math.PI / 180;
+      const rotate = ([px, py]) => [px * Math.cos(radians) - py * Math.sin(radians), px * Math.sin(radians) + py * Math.cos(radians)];
+      [x, y] = rotate([x, y]);
+      [left, top] = rotate([left, top]);
+      [right, bottom] = rotate([right, bottom]);
+    }
+    return x >= Math.min(left, right) && x <= Math.max(left, right) && y >= Math.min(top, bottom) && y <= Math.max(top, bottom);
+  }
+  if (zone.poly?.length >= 3) {
+    let inside = false;
+    for (let i = 0, j = zone.poly.length - 1; i < zone.poly.length; j = i++) {
+      const [xi, yi] = zone.poly[i], [xj, yj] = zone.poly[j];
+      if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+    }
+    return inside;
+  }
+  return null;
+}
+
+/**
+ * 게임 위치(평면 x, y와 높이)가 속한 층을 고른다. 사이트의 층 자동 선택과 같은 규칙이다. 구역(zones) 안이고
+ * 그 구역의 높이가 맞는 층을 먼저 찾고, 없으면 모양 없는 구역의 높이나 층의 높이 범위(height)로 찾는다.
+ * levels는 위층부터 놓인 { height, zones }를 가진 층 목록이고, 찾은 층 객체를 돌려준다. 없으면 null
+ */
+export function levelAtPosition(levels, x, y, height) {
+  const zoned = levels.find((level) => level.zones?.some((zone) => inZone(zone, x, y) === true && inHeight(zone.height, height)));
+  if (zoned) return zoned;
+  return levels.find((level) => level.zones?.some((zone) => inZone(zone, x, y) === null && inHeight(zone.height, height))
+    || inHeight(level.height, height)) ?? null;
 }

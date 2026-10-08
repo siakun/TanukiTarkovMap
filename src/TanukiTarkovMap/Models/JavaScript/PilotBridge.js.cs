@@ -3,15 +3,18 @@ using System.Text.Json;
 namespace TanukiTarkovMap.Models.JavaScript
 {
     /// <summary>
-    /// 온라인 페이지에 게임 사건을 넘기는 스크립트
+    /// 온라인 페이지에 내 위치를 표시하고 퀘스트 사건을 넘기는 스크립트
     ///
     /// 왜 이 방식인가:
-    /// 2026-08-17 Pilot v2부터 사이트가 로컬 앱의 WebSocket(포트 5123)에 접속하지 않는다.
-    /// 앱은 페이지 안의 입력 경로를 직접 호출하며, 사이트 판마다 다른 경로의 차이는 JS 어댑터가 맡는다.
+    /// 사이트의 위치 입력 경로와 내 위치 그리기는 배포 때마다 바뀌어 위치 표시를 끊어 왔다. 앱은 파일명을
+    /// 직접 읽고 내 위치와 방향을 직접 그리며(MapMarkers), 사이트에서는 지도 상태의 좌표 변환만 빌린다.
+    /// 층은 사이트가 고르도록 같은 좌표를 사이트 지도 상태의 playerPos에 넘긴다.
+    /// 퀘스트 완료는 사이트의 Pilot 서비스로 넘긴다.
     ///
     /// 동작 원리 (WebElementsControl과 같은 방식):
     /// 1. 상태 확인에 응답하지 않으면 INIT_SCRIPT로 window.tanukiPilot 복구
-    /// 2. 스크린샷 호출은 Promise의 결과까지 기다려 지도 반영 여부 확인
+    /// 2. 위치 표시는 마커가 지도에 실제로 보이는지까지 확인해 bool로 돌려준다 (LocalViewer와 같은 모양)
+    /// 3. 지도 상태는 로드 시작 때 넣은 MapStateCapture의 기록에서 찾는다
     ///
     /// JavaScript 파일 위치: Models/JavaScript/Scripts/pilot-bridge.js
     /// </summary>
@@ -23,18 +26,17 @@ namespace TanukiTarkovMap.Models.JavaScript
         public static string INIT_SCRIPT => JavaScriptLoader.Load("pilot-bridge.js");
 
         public const string IS_INSTALLED_SCRIPT =
-            "window.tanukiPilot?.version === 4 && typeof window.tanukiPilot.sendScreenshot === 'function' " +
-            "&& typeof window.tanukiPilot.isReady === 'function' && typeof window.tanukiPilot.status === 'function' " +
-            "&& typeof window.tanukiPilot.getMapHeading === 'function' " +
-            "&& typeof window.tanukiPilot.isRendered === 'function' " +
+            "window.tanukiPilot?.version === 7 && typeof window.tanukiPilot.showScreenshot === 'function' " +
+            "&& typeof window.tanukiPilot.isRendered === 'function' && typeof window.tanukiPilot.status === 'function' " +
+            "&& typeof window.tanukiPilot.hasPosition === 'function' " +
             "&& typeof window.tanukiPilot.revealPosition === 'function';";
         public const string STATUS_SCRIPT = "window.tanukiPilot?.status() ?? 'bridge-unavailable';";
 
         /// <summary>
-        /// 스크린샷 파일명 전달 호출문 생성
+        /// 스크린샷의 위치를 표시하는 호출문. 마커가 지도에 보이면 true
         /// </summary>
-        public static string SendScreenshot(string filename) =>
-            $"return window.tanukiPilot ? window.tanukiPilot.sendScreenshot({ToJsString(filename)}) : false;";
+        public static string ShowScreenshot(string filename) =>
+            $"window.tanukiPilot?.showScreenshot({ToJsString(filename)}) === true;";
 
         /// <summary>지도 교체나 DOM 초기화 뒤 마지막 위치가 아직 표시되는지 확인</summary>
         public static string IsRendered(string filename) =>

@@ -7,7 +7,8 @@
  * 사이트처럼 캔버스에 그리는 이유는 라벨 겹침을 화면 좌표에서 판정해야 하기 때문이다.
  *
  * 내 위치는 사이트의 .marker 요소(보라 원, 초록 테두리)에 앱의 방향 삼각형을 붙인 모양이다.
- * Online에서 앱이 사이트 마커에 붙이는 삼각형(map-markers.js)과 같은 모양과 위치를 쓴다.
+ * Online의 map-markers.js가 사이트 지도 위에 그리는 내 위치도 같은 크기, 색, 삼각형 위치, 핑을 쓴다.
+ * 모양을 바꾸면 두 곳을 함께 바꾼다.
  */
 
 // 사이트 아이콘 표의 Extractions 항목: 달리는 사람 아이콘, 기본 크기 25px, 외곽선 굵기 20
@@ -224,7 +225,7 @@ export function createExtractionLayer({ canvas, markerData, baseZoom, levelNumbe
   };
 }
 
-// map-markers.js의 삼각형과 같은 그림이다. 원 앞쪽에 붙어 바라보는 방향으로 돈다.
+// Online의 map-markers.js와 같은 삼각형 그림이다. 원 앞쪽에 붙어 바라보는 방향으로 돈다.
 const TRIANGLE_MARKUP = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">'
   + '<path d="M50,5 L85,75 Q50,45 15,75 Z" fill="#8a2be2" stroke="#70a800" stroke-width="2"/></svg>';
 

@@ -1,5 +1,5 @@
 import { createCamera } from './camera.js';
-import { gameDirectionToMapDirection, gamePositionToMapPosition, parseScreenshot } from './coords.js';
+import { gameDirectionToMapDirection, gamePositionToMapPosition, levelAtPosition, parseScreenshot } from './coords.js';
 import { message, resolveLanguage } from './i18n.js';
 import { createExtractionLayer, createPlayerMarker } from './markers.js';
 
@@ -133,42 +133,8 @@ function createLevels({ meta, svg, onChange }) {
     if (next.id !== selected) select(next.id);
   }
 
-  // 사이트의 높이 기반 층 선택: 영역(zones)에 들고 높이가 맞는 층을 먼저, 없으면 높이 범위로 고른다.
-  // 리소스에 높이 정보가 없는 맵은 층을 바꾸지 않는다.
-  function inHeight(range, height) {
-    return Array.isArray(range) && range.length === 2 && height >= range[0] && height < range[1];
-  }
-  function inZone(zone, x, y) {
-    if (zone.rect?.length === 2) {
-      let [[left, top], [right, bottom]] = zone.rect;
-      if (zone.rotate) {
-        const radians = -zone.rotate * Math.PI / 180;
-        const rotate = ([px, py]) => [px * Math.cos(radians) - py * Math.sin(radians), px * Math.sin(radians) + py * Math.cos(radians)];
-        [x, y] = rotate([x, y]);
-        [left, top] = rotate([left, top]);
-        [right, bottom] = rotate([right, bottom]);
-      }
-      return x >= Math.min(left, right) && x <= Math.max(left, right) && y >= Math.min(top, bottom) && y <= Math.max(top, bottom);
-    }
-    if (zone.poly?.length >= 3) {
-      let inside = false;
-      for (let i = 0, j = zone.poly.length - 1; i < zone.poly.length; j = i++) {
-        const [xi, yi] = zone.poly[i], [xj, yj] = zone.poly[j];
-        if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
-      }
-      return inside;
-    }
-    return null;
-  }
-  function levelAt(x, y, height) {
-    const zoned = levels.find((level) =>
-      level.zones?.some((zone) => inZone(zone, x, y) === true && inHeight(zone.height, height)));
-    if (zoned) return zoned.id;
-    const ranged = levels.find((level) =>
-      level.zones?.some((zone) => inZone(zone, x, y) === null && inHeight(zone.height, height))
-      || inHeight(level.height, height));
-    return ranged?.id ?? null;
-  }
+  // 사이트의 높이 기반 층 선택(coords.js의 levelAtPosition). 리소스에 높이 정보가 없는 맵은 층을 바꾸지 않는다.
+  const levelAt = (x, y, height) => levelAtPosition(levels, x, y, height)?.id ?? null;
 
   if (levels.length > 1) {
     for (const level of levels) {

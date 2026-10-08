@@ -28,6 +28,7 @@ Core Functionality:
 - 페이지 로드 후처리: Online은 UI 요소 제거, 마진 제거, 줌 적용. Local은 UI 숨김, 진영, 화면 언어만 전달
 - 로컬 모드: Behavior에 브라우저 교체를 요청하고 현재 맵과 마지막 좌표를 새 모드로 이어 간다
 - 상태 보고: 로드 시작 시점에 page-health.js를 넣어 페이지 오류와 맵 렌더 여부를 로그로 받기
+- 지도 상태 기록: 같은 시점에 map-state-capture.js를 넣어 사이트가 만드는 지도 상태를 브리지가 쓰게 하기
 - JavaScript 통신: CefSharp.PostMessage로 맵 정보/연결 상태 수신
 - 위치 전달: 페이지의 응답을 확인하고 통로를 복구한 뒤 최신 스크린샷 재전달.
   Online은 주입한 window.tanukiPilot, Local은 미니맵의 window.tanukiViewer를 같은 흐름으로 부른다
@@ -45,7 +46,7 @@ State Management:
 Method Flow:
   SetBrowser -> 이전 브라우저 응답 무효화 -> 필요하면 IsBrowserInitializedChanged 구독
              -> 기존 대기 URL 또는 NavigateToStartupUrl
-  FrameLoadStart -> page-health.js 주입 (로딩 중에 난 실패를 잡으려면 자원보다 먼저 들어가야 한다)
+  FrameLoadStart -> map-state-capture.js, page-health.js 주입 (페이지 스크립트보다 먼저 들어가야 한다)
   Navigate(준비 전) -> _pendingNavigationUrl 교체 -> 로드 보류
   IsBrowserInitializedChanged(true) -> 이벤트 해제 -> 마지막 대기 URL을 Navigate로 재전달
   Navigate(준비됨) -> 대기 URL 제거 -> 현재 주소 중복 확인 -> LoadUrl
@@ -56,7 +57,7 @@ Message Flow:
   MainWindowViewModel → ZoomLevelChangedMessage → ApplyZoomLevel
   MonitorRefreshRateBehavior → MonitorRefreshRateChangedMessage → ApplyWindowlessFrameRate
   MapEventService(ScreenshotTaken) -> 최신 입력 보관 -> MaintainPositionAsync
-    -> Online: window.tanukiPilot (사이트의 위치 입력 경로) / Local: window.tanukiViewer
+    -> Online: window.tanukiPilot (사이트 지도 위에 앱이 그림) / Local: window.tanukiViewer
   MapEventService(QuestCompleted) -> SendToPilot -> 페이지의 Pilot 서비스 (Online만)
   AppLanguage -> LanguageChangedMessage -> Local 미니맵의 안내 문구 언어 변경 (페이지는 다시 열지 않는다)
 
@@ -72,9 +73,13 @@ Load()를 호출했다. CEF 초기화가 느린 Windows Sandbox에서는 호출�
 CEF 준비 전에 들어온 자동 맵 전환이 사라지는 남은 경합을 모든 탐색의 공통 대기 경로로 합쳤다.
 0.3.x의 Local은 사이트 사본을 실행해 Online과 같은 스크립트를 주입했다. 자체 미니맵으로 바꾸면서
 Local은 주입 없이 미니맵의 API만 부르고, 위치 입력은 주소 대신 맵 이름으로 묶어 모드 전환 뒤에도 잇는다.
+Online은 2026-10-08 전까지 스크린샷 파일명을 사이트의 위치 입력 경로에 넘기고 사이트가 그린 위치를 확인했다.
+그 경로와 사이트의 내 위치 그리기가 배포마다 바뀌어, 지금은 앱이 사이트 지도 위에 직접 그리고 사이트에서는
+좌표 변환만 빌린다(층은 사이트가 고르도록 브리지가 같은 좌표를 넘긴다). 그래서 Online의 위치 표시도 Local처럼
+동기 호출 한 번으로 결과(bool)를 받는다.
 Known Limitations: 모드 전환 때 브라우저를 교체하므로 웹 페이지의 뒤로/앞으로 이동 기록은 초기화된다.
 
-Last Updated: 2026-10-08 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합과 Online 위치 입력 복구, 화면 언어 전달
+Last Updated: 2026-10-08 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합, 화면 언어 전달, 캔버스 판의 지도 상태 기록, Online 내 위치를 앱이 그림
 */
 namespace TanukiTarkovMap.ViewModels
 {
@@ -277,8 +282,10 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// 페이지 로드 시작 이벤트
         ///
-        /// 여기서는 상태 보고 스크립트만 넣는다. 로딩 중에 난 자원 실패와 스크립트 오류를 잡으려면
-        /// 자원을 받기 전에 들어가 있어야 하므로, 다른 스크립트와 달리 로드가 끝나기를 기다리지 않는다.
+        /// 여기서는 페이지 스크립트보다 먼저 들어가야 하는 두 스크립트만 넣는다. 다른 스크립트와 달리
+        /// 로드가 끝나기를 기다리지 않는다.
+        /// - map-state-capture.js: 사이트가 지도 상태를 만드는 순간을 기록한다. 만든 뒤에는 닿을 경로가 없다
+        /// - page-health.js: 로딩 중에 난 자원 실패와 스크립트 오류를 잡는다
         /// Local 미니맵은 앱의 페이지라 주입하지 않고, 오류는 미니맵이 화면에 직접 표시한다
         /// </summary>
         private void OnFrameLoadStart(object? sender, FrameLoadStartEventArgs e)
@@ -297,11 +304,12 @@ namespace TanukiTarkovMap.ViewModels
 
             try
             {
+                e.Frame.ExecuteJavaScriptAsync(MapStateCapture.INIT_SCRIPT);
                 e.Frame.ExecuteJavaScriptAsync(PageHealth.INIT_SCRIPT);
             }
             catch (Exception ex)
             {
-                Logger.SimpleLog($"[WebBrowserViewModel] Page health inject skipped: {ex.Message}");
+                Logger.SimpleLog($"[WebBrowserViewModel] Load-start inject skipped: {ex.Message}");
             }
         }
 
@@ -594,8 +602,7 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// JavaScript 스크립트 실행
         /// </summary>
-        public async Task<JavascriptResponse?> ExecuteScriptAsync(
-            string script, bool awaitPromise = false, int? documentVersion = null)
+        public async Task<JavascriptResponse?> ExecuteScriptAsync(string script, int? documentVersion = null)
         {
             var browser = ReadyBrowser;
             var version = documentVersion ?? _documentVersion;
@@ -605,9 +612,7 @@ namespace TanukiTarkovMap.ViewModels
 
             try
             {
-                var response = awaitPromise
-                    ? await browser.EvaluateScriptAsPromiseAsync(script, timeout: TimeSpan.FromSeconds(3))
-                    : await browser.EvaluateScriptAsync(script, timeout: TimeSpan.FromSeconds(3));
+                var response = await browser.EvaluateScriptAsync(script, timeout: TimeSpan.FromSeconds(3));
                 return ReferenceEquals(browser, _browser) && version == _documentVersion ? response : null;
             }
             catch (Exception ex)
@@ -836,7 +841,7 @@ namespace TanukiTarkovMap.ViewModels
         /// 로드 완료 이벤트만 믿으면 SPA 이동과 늦은 마운트가 빠진다. 주기 확인과 스크린샷 전달이
         /// 같은 경로를 사용하며, 중복 실행과 이전 문서에서 돌아온 응답은 완료 처리하지 않는다.
         ///
-        /// Online은 사이트에 주입한 방향 스크립트와 window.tanukiPilot을, Local은 미니맵의
+        /// Online은 사이트에 주입한 내 위치 표시(map-markers.js)와 window.tanukiPilot을, Local은 미니맵의
         /// window.tanukiViewer를 부른다. 두 API는 같은 결과(표시하면 true)를 돌려주므로 흐름은 같다.
         /// </summary>
         private async Task MaintainPositionAsync()
@@ -853,9 +858,9 @@ namespace TanukiTarkovMap.ViewModels
                 {
                     if (!ScriptSucceeded(await ExecuteScriptAsync(MapMarkers.ENSURE_READY_SCRIPT, documentVersion: version)))
                     {
-                        if (!ScriptSucceeded(await ExecuteScriptAsync(MapMarkers.ADD_DIRECTION_INDICATORS_SCRIPT, documentVersion: version))) return;
+                        if (!ScriptSucceeded(await ExecuteScriptAsync(MapMarkers.INIT_SCRIPT, documentVersion: version))) return;
                         _pendingScreenshot ??= _latestScreenshot;
-                        Logger.SimpleLog("[PilotBridge] Direction script restored");
+                        Logger.SimpleLog("[PilotBridge] Marker script restored");
                     }
                     if (!ScriptSucceeded(await ExecuteScriptAsync(PilotBridge.IS_INSTALLED_SCRIPT, documentVersion: version)))
                     {
@@ -881,9 +886,8 @@ namespace TanukiTarkovMap.ViewModels
 
                 var pending = _pendingScreenshot;
                 if (pending == null || pending.Map != MapKey(Address)) return;
-                var response = local
-                    ? await ExecuteScriptAsync(LocalViewer.ShowScreenshot(pending.Filename), documentVersion: version)
-                    : await ExecuteScriptAsync(PilotBridge.SendScreenshot(pending.Filename), awaitPromise: true, documentVersion: version);
+                var response = await ExecuteScriptAsync(local ? LocalViewer.ShowScreenshot(pending.Filename)
+                    : PilotBridge.ShowScreenshot(pending.Filename), documentVersion: version);
                 if (version != _documentVersion || !ReferenceEquals(pending, _pendingScreenshot)) return;
                 if (ScriptSucceeded(response))
                 {

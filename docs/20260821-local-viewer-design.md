@@ -95,12 +95,14 @@ Local은 사용자에게 같은 앱의 다른 화면일 뿐이므로 사이트 �
   `.squad-layer > .marker`, `.panel_right`의 Levels 패널. 색과 크기는 사이트 스타일시트의 값입니다
 - 추출구: 사이트의 마커 캔버스 그리기 규칙(아이콘 경로, 진영별 색, 그림자, 배율에 따른 축소, 라벨 겹침
   처리, 다른 층 표시)을 [markers.js](../viewer/markers.js)가 옮깁니다
-- 내 위치: 사이트의 `.marker`(보라 원, 초록 테두리)에 앱의 방향 삼각형을 붙입니다. Online에서
-  `map-markers.js`가 붙이는 삼각형과 같은 모양입니다
+- 내 위치: 사이트의 `.marker`(보라 원, 초록 테두리)에 앱의 방향 삼각형을 붙입니다. Online에서도
+  `map-markers.js`가 같은 크기, 색, 핑으로 사이트 지도 위에 그리므로 두 모드의 내 위치는 같은 모양입니다.
+  Online은 파일명 해석도 같은 식을 쓰며 `verify-map-recovery.mjs`가 두 해석을 대조합니다
 - 카메라: 사이트가 쓰는 anvaka/panzoom의 휠 배율과 끌기 감각에, 화면 가운데에 지형이 있어야 한다는
   규칙을 더했습니다([camera.js](../viewer/camera.js))
 - 층: 위치의 높이로 자동으로 고릅니다. 각 층의 구역(`zones`)이 먼저이고 그다음 높이 범위입니다.
-  사이트처럼 Levels 패널과 Alt 휠로 직접 바꿀 수도 있습니다
+  사이트처럼 Levels 패널과 Alt 휠로 직접 바꿀 수도 있습니다. 판정 식은 `viewer/coords.js`의
+  `levelAtPosition`이고, Online 검사(`verify-online.mjs`)도 사이트가 고른 층을 이 식으로 대조합니다
 - 오버레이: 조작 UI는 기본으로 숨기고 상단바의 "UI 요소 숨기기"를 끄면 보입니다
 
 ## 리소스 계약
