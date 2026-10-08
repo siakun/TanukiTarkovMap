@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net8.0-windows</TargetFramework>
     <!-- INTENT: 빌드와 패키지 버전을 맞추고, 릴리스 태그와의 일치 여부는 배포 전에 검사한다. -->
-    <Version>0.3.5</Version>
+    <Version>0.3.6</Version>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
