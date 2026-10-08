@@ -1,4 +1,10 @@
+<!--
+INTENT
+README.en.md와 README.ja.md가 이 문서의 번역이다. 이 문서를 수정하면 같은 커밋에서 두 번역도 갱신한다.
+-->
 # TanukiTarkovMap
+
+**한국어** | [English](README.en.md) | [日本語](README.ja.md)
 
 <div align="center">
 <img src="images/icon.png" alt="TanukiTarkovMap" width="120" />
