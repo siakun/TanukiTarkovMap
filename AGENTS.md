@@ -250,6 +250,24 @@ Local은 [camera.js](viewer/camera.js)가 같은 규칙을 직접 구현합니�
 WPF 창의 크기 변경, 포커스와 모드 전환 때의 브라우저 교체를 검증하지 않으므로, 그 부분은 사용자에게
 Debug 빌드 확인을 요청합니다.
 
+## 진영 전환 (PMC/SCAV)
+
+상단바의 `PMC`/`SCAV`는 그 진영이 쓸 수 있는 추출구를 지도에 표시합니다. Local은 미니맵의 `setFaction`이 직접
+고르고, Online은 [web-elements-control.js](src/TanukiTarkovMap/Models/JavaScript/Scripts/web-elements-control.js)의
+`setExtractionFaction`이 사이트 왼쪽 패널의 `PMC Extraction`, `Scav Extraction` 행을 사이트 사용자처럼 누릅니다.
+
+- 사이트의 선택 상태(localStorage의 `sel_cats_map`)를 직접 변경하지 않습니다. 저장은 되지만 사이트는 패널의
+  전환 처리기에서만 마커 목록을 다시 계산하므로 지도가 그대로입니다.
+- 창 폭이 900px 이하이면 사이트가 모바일 배치로 전환하고 왼쪽 패널을 렌더링하지 않습니다. 앱 창은 보통 이
+  폭이라, 그때는 하단 도크의 `Filters`로 같은 패널을 잠깐 열어 행을 누르고 열기 전 도크 상태로 되돌립니다.
+- 사이트는 필터 선택을 저장해 두었다가 맵을 열 때 그대로 불러와 그립니다. 앱의 진영은 저장하지 않아 늘 PMC로
+  시작하므로, 맵 페이지를 열 때마다 상단바의 진영을 적용합니다. 사이트는 마커 데이터를 받은 뒤에야 필터 행을
+  렌더링하므로 그 전의 결과(`rows-missing`, `no-filter-panel`)는 아직 준비되지 않은 것으로 보고, 데이터가 올
+  때까지 다시 시도합니다. 한 번만 시도하면 사이트의 지난 선택이 상단바와 어긋난 채 남습니다.
+- 넓은 창에서만 확인하면 이 경로를 놓칩니다. 확인은 앱 창 크기에서 하고, `verify-online.mjs`는 모바일 배치
+  폭에서 전환을 판정합니다. 결과는 앱 로그에 `Applied extraction filter` 또는 `Extraction filter not applied`와
+  이유로 남습니다.
+
 ## Local 미니맵
 
 <!--
@@ -316,9 +334,10 @@ node tools/verify-map-docs.mjs --input <수집 폴더> --resources <후보 폴�
 - Local 미니맵은 앱이 그리는 안내(로딩, 오류)만 번역하며 번역은 [viewer/i18n.js](viewer/i18n.js)에 있습니다.
   앱이 주소의 `lang`과 `setLanguage`로 언어를 넘기고, 언어를 바꿔도 페이지를 다시 열지 않습니다. Levels 패널은
   사이트 화면을 옮긴 것이라 영어로 둡니다
-- Online 사이트의 언어와 CEF 로캘은 앱 언어와 묶지 않습니다. 상단바의 PMC/SCAV 전환은 사이트 필터를 영어
-  라벨(`'PMC Extraction'`, `'Scav Extraction'`)로 찾으므로, 사이트를 다른 언어로 열면 코어인 진영 전환이
-  깨집니다. 사이트 언어를 맞추려면 먼저 필터를 언어와 무관하게 찾도록 바꾸고 `verify-online.mjs`로 확인합니다
+- Online 사이트의 언어와 CEF 로캘은 앱 언어와 묶지 않습니다. 상단바의 PMC/SCAV 전환은 사이트 필터와 모바일
+  도크 버튼을 영어 라벨(`'PMC Extraction'`, `'Scav Extraction'`, `'Filters'`)로 찾으므로, 사이트를 다른 언어로
+  열면 코어인 진영 전환이 깨집니다. 사이트 언어를 맞추려면 먼저 필터를 언어와 무관하게 찾도록 바꾸고
+  `verify-online.mjs`로 확인합니다
 - 언어를 더하려면 `Strings.<코드>.resx`를 추가하고 `AppLanguage.Supported`와 `viewer/i18n.js`에 같은 언어를
   넣습니다. 키, 자리 표시자, 언어 목록이 맞는지는 `node tools/verify-localization.mjs`가 확인합니다. 소수점에
   쉼표를 쓰는 언어라면 WPF 바인딩의 `StringFormat`이 창 언어로 숫자를 쓰므로 소수를 표시하는 자리를 확인합니다

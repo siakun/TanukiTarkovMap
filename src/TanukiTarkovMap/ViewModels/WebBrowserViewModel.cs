@@ -26,6 +26,8 @@ Core Functionality:
 - 시작 탐색: App.StartupUrl을 Navigate()에 전달해 다른 탐색 요청과 같은 준비 경로 사용
 - 모드별 주소: 같은 맵을 Online은 사이트 주소로, Local은 LocalViewer.PageUrl(화면 언어 포함)로 연다
 - 페이지 로드 후처리: Online은 UI 요소 제거, 마진 제거, 줌 적용. Local은 UI 숨김, 진영, 화면 언어만 전달
+- 진영 필터: 상단바 PMC/SCAV를 사이트 필터에 적용. 사이트는 지난 선택을 저장해 두고 그것으로 먼저 그리며 마커
+  데이터를 받기 전에는 필터 행이 없으므로, 페이지를 열 때마다 데이터가 올 때까지 다시 시도해 상단바 상태로 맞춘다
 - 로컬 모드: Behavior에 브라우저 교체를 요청하고 현재 맵과 마지막 좌표를 새 모드로 이어 간다
 - 상태 보고: 로드 시작 시점에 page-health.js를 넣어 페이지 오류와 맵 렌더 여부를 로그로 받기
 - 지도 상태 기록: 같은 시점에 map-state-capture.js를 넣어 사이트가 만드는 지도 상태를 브리지가 쓰게 하기
@@ -55,6 +57,7 @@ Method Flow:
 Message Flow:
   MainWindowViewModel → MapSelectionChangedMessage → NavigateToMap
   MainWindowViewModel → ZoomLevelChangedMessage → ApplyZoomLevel
+  MainWindowViewModel → ExtractionFilterChangedMessage → ApplyExtractionFilterAsync (Online: setExtractionFaction)
   MonitorRefreshRateBehavior → MonitorRefreshRateChangedMessage → ApplyWindowlessFrameRate
   MapEventService(ScreenshotTaken) -> 최신 입력 보관 -> MaintainPositionAsync
     -> Online: window.tanukiPilot (사이트 지도 위에 앱이 그림) / Local: window.tanukiViewer
@@ -77,9 +80,12 @@ Online은 2026-10-08 전까지 스크린샷 파일명을 사이트의 위치 입
 그 경로와 사이트의 내 위치 그리기가 배포마다 바뀌어, 지금은 앱이 사이트 지도 위에 직접 그리고 사이트에서는
 좌표 변환만 빌린다(층은 사이트가 고르도록 브리지가 같은 좌표를 넘긴다). 그래서 Online의 위치 표시도 Local처럼
 동기 호출 한 번으로 결과(bool)를 받는다.
+진영 필터는 2026-10-09 전까지 로드 0.7초 뒤 한 번만 적용했고 결과도 확인하지 않았다. 앱 창 폭(900px 이하)에서는
+사이트가 필터 패널을 렌더링하지 않아 늘 실패했고, 데이터가 늦으면 넓은 창에서도 사이트의 저장된 선택이 남았다.
 Known Limitations: 모드 전환 때 브라우저를 교체하므로 웹 페이지의 뒤로/앞으로 이동 기록은 초기화된다.
+진영은 저장하지 않아 앱은 늘 PMC로 시작한다. 사이트가 데이터를 받기 전 잠깐은 사이트의 지난 선택이 보인다.
 
-Last Updated: 2026-10-08 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합, 화면 언어 전달, 캔버스 판의 지도 상태 기록, Online 내 위치를 앱이 그림
+Last Updated: 2026-10-09 | .NET 8.0 / CefSharp 141.0.110 | By 자체 미니맵 통합, 화면 언어 전달, 캔버스 판의 지도 상태 기록, Online 내 위치를 앱이 그림, 진영 필터 재시도
 */
 namespace TanukiTarkovMap.ViewModels
 {
@@ -400,10 +406,11 @@ namespace TanukiTarkovMap.ViewModels
                         await ApplyUIVisibilityAsync();
                         if (!ReferenceEquals(sender, _browser) || version != _documentVersion) return;
 
-                        // 맵 페이지에서 Extraction 필터 적용 (맵 이동 직후이므로 DOM 대기 필요)
+                        // 맵 페이지에서 Extraction 필터 적용. 사이트가 마커 데이터를 받을 때까지 다시 시도하므로
+                        // 기다리지 않고 맡긴다. 사이트는 지난 선택을 저장해 두고 그것으로 먼저 그린다
                         if (loadedUrl.Contains("/maps/"))
                         {
-                            await ApplyExtractionFilterAsync(IsPmcExtraction, waitForDom: true);
+                            _ = ApplyExtractionFilterAsync(IsPmcExtraction);
                         }
                     }
 
@@ -602,7 +609,7 @@ namespace TanukiTarkovMap.ViewModels
         /// <summary>
         /// JavaScript 스크립트 실행
         /// </summary>
-        public async Task<JavascriptResponse?> ExecuteScriptAsync(string script, int? documentVersion = null)
+        public async Task<JavascriptResponse?> ExecuteScriptAsync(string script, int? documentVersion = null, bool awaitPromise = false)
         {
             var browser = ReadyBrowser;
             var version = documentVersion ?? _documentVersion;
@@ -612,7 +619,10 @@ namespace TanukiTarkovMap.ViewModels
 
             try
             {
-                var response = await browser.EvaluateScriptAsync(script, timeout: TimeSpan.FromSeconds(3));
+                // awaitPromise 스크립트는 함수 본문으로 감싸져 실행되므로 결과를 return으로 돌려준다
+                var response = awaitPromise
+                    ? await browser.EvaluateScriptAsPromiseAsync(script, timeout: TimeSpan.FromSeconds(3))
+                    : await browser.EvaluateScriptAsync(script, timeout: TimeSpan.FromSeconds(3));
                 return ReferenceEquals(browser, _browser) && version == _documentVersion ? response : null;
             }
             catch (Exception ex)
@@ -977,12 +987,17 @@ namespace TanukiTarkovMap.ViewModels
             }
         }
 
+        // 사이트는 마커 데이터를 받은 뒤에야 추출구 필터 행을 렌더링하고, 페이지가 막 열렸을 때는 버튼도 반응하지
+        // 않는다. 그동안 스크립트는 rows-missing이나 no-filter-panel을 돌려주므로 데이터가 올 때까지 다시 시도한다.
+        // 한 번만 시도하면 사이트가 저장해 둔 지난 선택(예: SCAV)이 상단바(PMC)와 어긋난 채 남는다
+        private static readonly TimeSpan ExtractionFilterPatience = TimeSpan.FromSeconds(20);
+        private static readonly TimeSpan ExtractionFilterRetryDelay = TimeSpan.FromMilliseconds(300);
+
         /// <summary>
-        /// Extraction 필터 적용 (PMC/SCAV)
+        /// Extraction 필터 적용 (PMC/SCAV). 사이트가 준비될 때까지 다시 시도하고, 그 사이 문서나 진영이 바뀌면 그만둔다
         /// </summary>
         /// <param name="isPmc">true = PMC, false = SCAV</param>
-        /// <param name="waitForDom">true = 맵 이동 직후 DOM 대기 필요</param>
-        private async Task ApplyExtractionFilterAsync(bool isPmc, bool waitForDom = false)
+        private async Task ApplyExtractionFilterAsync(bool isPmc)
         {
             var version = _documentVersion;
             if (ReadyBrowser == null)
@@ -1004,19 +1019,31 @@ namespace TanukiTarkovMap.ViewModels
                 // 먼저 초기화 스크립트 실행 (함수가 없을 수 있음)
                 await ExecuteScriptAsync(WebElementsControl.INIT_SCRIPT, documentVersion: version);
 
-                // 맵 이동 직후에만 DOM 렌더링 대기
-                if (waitForDom)
+                var faction = isPmc ? "PMC" : "SCAV";
+                var deadline = DateTime.UtcNow + ExtractionFilterPatience;
+                for (var attempt = 1; ; attempt++)
                 {
-                    await Task.Delay(700);
+                    if (version != _documentVersion || isPmc != IsPmcExtraction) return;
+
+                    // 사이트 필터를 찾지 못하면 스크립트는 실패 이유를 돌려준다. 성공으로 기록하지 않는다
+                    var response = await ExecuteScriptAsync(WebElementsControl.SetExtractionFaction(isPmc),
+                        documentVersion: version, awaitPromise: true);
+                    if (response?.Success == true && response.Result is true)
+                    {
+                        Logger.SimpleLog($"[WebBrowserViewModel] Applied extraction filter: {faction}"
+                            + (attempt > 1 ? $" (attempt {attempt})" : ""));
+                        return;
+                    }
+
+                    var reason = response?.Result as string ?? response?.Message ?? "no response";
+                    var siteNotReady = reason is "rows-missing" or "no-filter-panel";
+                    if (!siteNotReady || DateTime.UtcNow >= deadline)
+                    {
+                        Logger.SimpleLog($"[WebBrowserViewModel] Extraction filter not applied: {faction} ({reason}, attempt {attempt})");
+                        return;
+                    }
+                    await Task.Delay(ExtractionFilterRetryDelay);
                 }
-                if (version != _documentVersion || isPmc != IsPmcExtraction) return;
-
-                var script = isPmc
-                    ? WebElementsControl.CLICK_PMC_EXTRACTION
-                    : WebElementsControl.CLICK_SCAV_EXTRACTION;
-
-                await ExecuteScriptAsync(script, documentVersion: version);
-                Logger.SimpleLog($"[WebBrowserViewModel] Applied extraction filter: {(isPmc ? "PMC" : "SCAV")}");
             }
             catch (Exception ex)
             {

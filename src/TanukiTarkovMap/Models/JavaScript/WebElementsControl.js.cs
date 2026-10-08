@@ -3,7 +3,7 @@ namespace TanukiTarkovMap.Models.JavaScript
     /// <summary>
     /// 웹 요소 제어 관련 JavaScript 스크립트
     ///
-    /// tarkov-market.com 웹페이지의 UI 요소 가시성을 제어합니다.
+    /// tarkov-market.com 웹페이지의 UI 요소 가시성과 추출구 진영 필터를 제어합니다.
     ///
     /// 동작 원리:
     /// 1. 페이지 로드 시 INIT_SCRIPT를 먼저 실행하여 함수들을 window 객체에 등록
@@ -57,13 +57,10 @@ namespace TanukiTarkovMap.Models.JavaScript
         public const string RESTORE_PANELS = "window.restorePanels();";
 
         /// <summary>
-        /// PMC Extraction 필터 클릭
+        /// 추출구 진영 전환 (상단바 PMC/SCAV). 스크립트가 Promise를 돌려주므로 결과를 기다려 실행합니다.
+        /// 결과는 true 또는 실패 이유 문자열(no-filter-panel, rows-missing, not-applied, not-installed)입니다
         /// </summary>
-        public const string CLICK_PMC_EXTRACTION = "window.clickPmcExtraction();";
-
-        /// <summary>
-        /// SCAV Extraction 필터 클릭
-        /// </summary>
-        public const string CLICK_SCAV_EXTRACTION = "window.clickScavExtraction();";
+        public static string SetExtractionFaction(bool isPmc) =>
+            $"return window.setExtractionFaction ? window.setExtractionFaction({(isPmc ? "true" : "false")}) : 'not-installed';";
     }
 }

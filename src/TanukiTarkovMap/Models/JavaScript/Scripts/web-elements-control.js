@@ -1,12 +1,13 @@
 /**
  * 웹 요소 제어 스크립트
  *
- * tarkov-market.com 웹페이지의 UI 요소 가시성을 제어합니다.
+ * tarkov-market.com 웹페이지의 UI 요소 가시성과 추출구 진영 필터를 제어합니다.
  *
  * 구조:
  * - 각 함수는 window 객체에 등록되어 C#에서 호출 가능
  * - 헤더/푸터는 항상 숨김 유지
  * - "UI 요소 숨기기" 체크 시 맵 컨테이너에서 맵 레이어만 남기고 나머지 UI를 숨김
+ * - 상단바 PMC/SCAV는 사이트의 추출구 필터 행을 눌러 진영을 전환 (setExtractionFaction)
  */
 
 (function() {
@@ -142,80 +143,98 @@
         }
     };
 
-    function findExtractionFilter(items, name) {
-        if (!items) return null;
+    // ============================================================
+    // 추출구 진영 전환 (상단바 PMC/SCAV)
+    //
+    // 사이트 사용자가 왼쪽 패널의 PMC Extraction, Scav Extraction 행을 누르는 것과 같은 일을 한다. 행을 누르면
+    // 사이트가 선택을 저장하고 마커 목록을 다시 계산한다. 선택 상태(localStorage의 sel_cats_map과 그 반응형
+    // 객체)만 변경하면 저장은 되지만 지도는 그대로다. 사이트는 패널의 전환 처리기에서만 마커 목록을 다시 계산하고,
+    // 그 처리기는 production 빌드라 렌더 트리(setupState)에서 닿지 않는다.
+    //
+    // 창 폭이 900px 이하이면 사이트가 모바일 배치로 전환하고 왼쪽 패널을 렌더링하지 않는다. display:none이 아니라
+    // DOM에 없고, 앱 창은 보통 이 폭이다. 그때는 하단 도크의 Filters 버튼으로 같은 패널을 열어 행을 누르고, 열기 전
+    // 도크 상태로 되돌린다. 사이트의 도크 버튼은 같은 패널을 다시 누르면 닫는다.
+    //
+    // 행과 버튼은 영어 라벨로 찾는다. 사이트를 다른 언어로 열면 찾지 못한다.
+    // 결과는 Promise이고 true 또는 실패 이유(no-filter-panel, rows-missing, not-applied)로 끝난다.
+    // 사이트는 마커 데이터를 받은 순간에야 추출구 행을 한꺼번에 렌더링하고, 페이지가 막 열렸을 때는 도크 버튼도
+    // 아직 반응하지 않는다. 그동안은 rows-missing이나 no-filter-panel이 나오며, 다시 시도는 앱이 한다.
+    // ============================================================
+    // 상단바를 빠르게 연달아 누르면 앞 전환이 다시 그려지기 전에 다음 전환이 행의 상태를 읽는다. 전환을 한 줄로
+    // 세운다. 이 스크립트는 다시 주입될 때마다 새 클로저를 만들므로 줄은 window에 둔다
+    var FACTION_QUEUE = Symbol.for('TanukiTarkovMap.factionQueue');
 
-        for (var index = 0; index < items.children.length; index++) {
-            var row = items.children[index];
-            var label = row.firstElementChild;
-            if (label && label.textContent.trim() === name) return row;
+    function findFilterRow(name) {
+        var rows = document.querySelectorAll('.panel_left .items > div');
+        for (var index = 0; index < rows.length; index++) {
+            var label = rows[index].firstElementChild;
+            if (label && label.textContent.trim() === name) return rows[index];
         }
         return null;
     }
 
-    function setFilterActive(filter, active) {
-        if (!filter) return;
-        if (filter.classList.contains('inactive') === active) filter.click();
+    function findDockButton(matches) {
+        var buttons = document.querySelectorAll('nav.mobile-map-dock > button');
+        for (var index = 0; index < buttons.length; index++) {
+            if (matches(buttons[index])) return buttons[index];
+        }
+        return null;
     }
 
-    // ============================================================
-    // PMC Extraction 필터 활성화 (SCAV 비활성화 후 PMC 활성화)
-    // ============================================================
-    window.clickPmcExtraction = function() {
-        try {
-            var items = document.querySelector('.two-columns > div:nth-child(1) > div:nth-child(2)');
-            if (!items) {
-                console.warn('[WebElements] Extraction filter container not found');
-                return false;
-            }
-
-            var pmcFilter = findExtractionFilter(items, 'PMC Extraction');
-            var scavFilter = findExtractionFilter(items, 'Scav Extraction');
-
-            if (!pmcFilter || !scavFilter) {
-                console.warn('[WebElements] PMC or SCAV filter not found');
-                return false;
-            }
-
-            setFilterActive(pmcFilter, true);
-            setFilterActive(scavFilter, false);
-
-            console.log('[WebElements] PMC Extraction filter activated');
-            return true;
-        } catch (e) {
-            console.error('[WebElements] clickPmcExtraction error:', e);
-            return false;
+    // Vue는 클릭 처리 뒤 마이크로태스크에서 다시 그린다. 마이크로태스크로만 기다려 화면이 그려지기 전에 끝낸다.
+    // 그래야 패널을 열었다 닫는 모습이 보이지 않는다. setTimeout이나 requestAnimationFrame으로 기다리면 그 사이
+    // 열린 패널이 한 프레임 그려질 수 있다. 데이터가 있으면 행은 첫 마이크로태스크에서 나온다
+    async function waitUntil(condition) {
+        for (var turn = 0; turn < 20; turn++) {
+            if (condition()) return true;
+            await Promise.resolve();
         }
-    };
+        return condition();
+    }
 
-    // ============================================================
-    // SCAV Extraction 필터 활성화 (PMC 비활성화 후 SCAV 활성화)
-    // ============================================================
-    window.clickScavExtraction = function() {
-        try {
-            var items = document.querySelector('.two-columns > div:nth-child(1) > div:nth-child(2)');
-            if (!items) {
-                console.warn('[WebElements] Extraction filter container not found');
-                return false;
-            }
-
-            var pmcFilter = findExtractionFilter(items, 'PMC Extraction');
-            var scavFilter = findExtractionFilter(items, 'Scav Extraction');
-
-            if (!pmcFilter || !scavFilter) {
-                console.warn('[WebElements] PMC or SCAV filter not found');
-                return false;
-            }
-
-            setFilterActive(pmcFilter, false);
-            setFilterActive(scavFilter, true);
-
-            console.log('[WebElements] SCAV Extraction filter activated');
-            return true;
-        } catch (e) {
-            console.error('[WebElements] clickScavExtraction error:', e);
-            return false;
+    async function applyFaction(pmc) {
+        // 한쪽 진영의 추출구가 없는 맵은 그 행도 없다(Labs의 Scav Extraction 등). 있는 행만 맞춘다. 그런 맵에서
+        // SCAV를 고르면 PMC 추출구만 꺼지고 아무것도 남지 않는데, Local 미니맵도 같다. 행이 없는 진영의 저장된 선택은
+        // 앞 맵에서 남은 값 그대로지만 그 맵에는 그 진영의 마커가 없고, 그 진영이 있는 맵을 열면 다시 맞춘다
+        var targets = [{ name: 'PMC Extraction', active: pmc }, { name: 'Scav Extraction', active: !pmc }];
+        var anyRow = function () {
+            return targets.some(function (target) { return !!findFilterRow(target.name); });
+        };
+        var mismatched = function (target) {
+            var row = findFilterRow(target.name);
+            return !!row && row.classList.contains('inactive') === target.active;
+        };
+        var filtersButton = null;
+        var selectedBefore = null;
+        if (!anyRow()) {
+            filtersButton = findDockButton(function (button) { return button.textContent.trim() === 'Filters'; });
+            if (!filtersButton) return 'no-filter-panel';
+            selectedBefore = findDockButton(function (button) { return button.classList.contains('selected'); });
+            filtersButton.click();
         }
+        var rowsFound = await waitUntil(anyRow);
+        var applied = false;
+        if (rowsFound) {
+            targets.filter(mismatched).forEach(function (target) { findFilterRow(target.name).click(); });
+            applied = await waitUntil(function () { return !targets.some(mismatched); });
+        }
+        if (filtersButton) {
+            filtersButton.click();
+            if (selectedBefore && selectedBefore !== filtersButton) selectedBefore.click();
+        }
+        if (applied) return true;
+        return rowsFound ? 'not-applied' : 'rows-missing';
+    }
+
+    window.setExtractionFaction = function (pmc) {
+        var run = (window[FACTION_QUEUE] || Promise.resolve()).then(function () {
+            return applyFaction(!!pmc);
+        });
+        window[FACTION_QUEUE] = run.catch(function () {});
+        return run.catch(function (error) {
+            console.error('[WebElements] setExtractionFaction error:', error);
+            return 'error: ' + (error && error.message);
+        });
     };
 
 })();
