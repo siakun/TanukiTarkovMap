@@ -136,7 +136,7 @@ Win32 선언은 `PInvoke.cs`에 모았습니다. 예외로 `Program.cs`는 이�
 
 상단 바에서 Local을 고르면 사이트에 접속하지 않고 앱에 담긴 지도 데이터로 맵을 엽니다. 지도와 층, 선택한 진영의 추출구, 현재 위치와 방향만 남기므로 사이트가 죽어 있거나 사이트의 지도 구조가 바뀌어도 레이드에 필요한 정보가 동작합니다.
 
-처음에는 사이트가 내려보낸 응답을 통째로 저장한 사본을 요청 가로채기로 돌려줬습니다. 동작은 했지만 사본이 압축된 번들 덩어리라 무엇이 들었는지 읽을 수 없었고, 사이트가 구조를 바꾸면 통째로 다시 받는 것 말고는 방법이 없었습니다. 지금은 사이트의 지도 문서만 수집해 SVG와 JSON으로 변환해 Core DLL에 담고, 앱에 포함한 미니맵(`viewer/`)이 사이트의 지도 화면과 같은 모양으로 그립니다. 변환한 SVG는 수집한 사이트 렌더러로 그린 결과와 층마다 픽셀로 대조하고, 좌표 변환은 사이트가 계산한 값과 비교해 검증합니다.
+처음에는 사이트가 내려보낸 응답을 통째로 저장한 사본을 요청 가로채기로 돌려줬습니다. 동작은 했지만 사본이 압축된 번들 덩어리라 무엇이 들었는지 읽을 수 없었고, 사이트가 구조를 바꾸면 통째로 다시 받는 것 말고는 방법이 없었습니다. 지금은 사이트의 지도 문서만 수집해 SVG와 JSON으로 변환해 Core DLL에 담고, 앱에 포함한 미니맵(`src/viewer/`)이 사이트의 지도 화면과 같은 모양으로 그립니다. 변환한 SVG는 수집한 사이트 렌더러로 그린 결과와 층마다 픽셀로 대조하고, 좌표 변환은 사이트가 계산한 값과 비교해 검증합니다.
 
 Local은 독립된 임시 저장 공간에서 열어 사이트(Online, Origin)의 DB와 캐시가 섞이지 않게 합니다. 모드를 전환하면 같은 맵을 새 모드로 다시 열고 Local에는 마지막 위치를 전달합니다. 앱의 확대 설정은 모든 모드에, 진영과 UI 숨김 설정은 Online과 Local에 다시 적용합니다.
 
@@ -182,7 +182,7 @@ scene preset 줄 감지
 
 ### 8. 릴리스 자동화 (Velopack + GitHub Releases)
 
-버전 태그를 붙이면 빌드와 검사, self-contained publish와 Velopack 패키징을 거쳐 GitHub Releases에 설치 파일과 업데이트 패키지를 올립니다. 이 저장소에는 릴리스마다 그 버전의 소스를 커밋 하나로 올리고 같은 이름의 태그를 붙입니다. 릴리스 본문과 설치 패키지에 들어가는 업데이트 내역은 같은 파일에서 나오며, 태그와 프로젝트 버전이 다르거나 내역이 없으면 배포를 중단합니다. 설치된 앱의 업데이트는 메인 창이 열린 뒤 새 버전을 받고 정상 종료 시 CefSharp를 정리한 다음 적용합니다.
+버전 태그를 붙이면 빌드와 검사, self-contained publish와 Velopack 패키징을 거쳐 GitHub Releases에 설치 파일과 업데이트 패키지를 올립니다. 이 저장소에는 앱 릴리스마다 그 버전의 소스를 커밋 하나로 올리고 같은 이름의 태그를 붙입니다. README처럼 프로그램이 바뀌지 않는 변경은 태그 없이 커밋만 올립니다. 릴리스 본문과 설치 패키지에 들어가는 업데이트 내역은 같은 파일에서 나오며, 태그와 프로젝트 버전이 다르거나 내역이 없으면 배포를 중단합니다. 설치된 앱의 업데이트는 메인 창이 열린 뒤 새 버전을 받고 정상 종료 시 CefSharp를 정리한 다음 적용합니다.
 
 ### 9. 버전 선택과 되돌리기
 
@@ -221,11 +221,11 @@ scene preset 줄 감지
 Windows와 .NET 10 SDK 이상이 필요합니다. 앱은 .NET 8에서 실행되며, ViewModel의 partial 속성 생성(`LangVersion=preview`)에 최신 C# 컴파일러를 사용합니다.
 
 ```powershell
-dotnet build TanukiTarkovMap.csproj
-dotnet publish TanukiTarkovMap.csproj -c Release -r win-x64 --self-contained true -o publish
+dotnet build src/TanukiTarkovMap.csproj
+dotnet publish src/TanukiTarkovMap.csproj -c Release -r win-x64 --self-contained true -o publish
 ```
 
-좌표 계산, 설정, 파일 감시, 위치 공유와 사이트 제어는 `packages/`에 포함된 TanukiTarkovMap.Core 패키지가 담당합니다. 프로젝트 파일이 이 패키지의 버전을 고정하고, `NuGet.Config`가 Core는 저장소의 `packages/`에서, 나머지 의존성은 NuGet.org에서 복원하므로 별도 계정이나 인증이 필요하지 않습니다. Core DLL은 Obfuscar로 난독화되어 있으며 공개 API와 JSON 계약은 그대로입니다. Releases의 설치 파일은 같은 태그의 소스로 빌드합니다.
+앱 소스는 `src/`에 있습니다. 좌표 계산, 설정, 파일 감시, 위치 공유와 사이트 제어는 `src/packages/`에 포함된 TanukiTarkovMap.Core 패키지가 담당합니다. 프로젝트 파일이 이 패키지의 버전을 고정하고, `src/NuGet.Config`가 Core는 같은 폴더의 `packages/`에서, 나머지 의존성은 NuGet.org에서 복원하므로 별도 계정이나 인증이 필요하지 않습니다. Core DLL은 Obfuscar로 난독화되어 있으며 공개 API와 JSON 계약은 그대로입니다. Releases의 설치 파일은 같은 태그의 소스로 빌드합니다.
 
 ---
 

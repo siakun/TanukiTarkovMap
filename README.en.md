@@ -136,7 +136,7 @@ The site moved map state out of its regular reactive registration, so the old We
 
 Choosing Local in the top bar opens the map from map data bundled with the app, without connecting to the site. It keeps only the map and its levels, the extracts of the selected faction, and your current position and direction, so what you need in a raid keeps working even if the site is down or changes its map structure.
 
-At first, the app saved a full copy of the responses the site sent and served it back by intercepting requests. It worked, but the copy was a lump of minified bundles whose contents could not be read, and when the site changed its structure, the only option was to download everything again. Now the app collects only the site's map documents, converts them to SVG and JSON embedded in the Core DLL, and the minimap bundled with the app (`viewer/`) draws them to look like the site's map screen. The converted SVG is compared pixel by pixel, level by level, with what the collected site renderer draws, and the coordinate conversion is verified against the values the site computed.
+At first, the app saved a full copy of the responses the site sent and served it back by intercepting requests. It worked, but the copy was a lump of minified bundles whose contents could not be read, and when the site changed its structure, the only option was to download everything again. Now the app collects only the site's map documents, converts them to SVG and JSON embedded in the Core DLL, and the minimap bundled with the app (`src/viewer/`) draws them to look like the site's map screen. The converted SVG is compared pixel by pixel, level by level, with what the collected site renderer draws, and the coordinate conversion is verified against the values the site computed.
 
 Local opens in a separate temporary storage space so that it does not mix with the site's (Online, Origin) DB and cache. When you switch modes, the app reopens the same map in the new mode and passes the last position to Local. It reapplies the app's zoom in every mode, and the faction and "Hide UI elements" settings in Online and Local.
 
@@ -182,7 +182,7 @@ The project's rule is to keep logic out of code-behind (`*.xaml.cs`); the initia
 
 ### 8. Release automation (Velopack + GitHub Releases)
 
-A version tag goes through build, checks, a self-contained publish and Velopack packaging, and the installers and update packages are uploaded to GitHub Releases. This repository receives one commit with that version's source for each release, tagged with the same name. The release body and the update notes inside the installer package come from the same file, and the release stops if the tag and the project version differ or if the notes are missing. Installed apps download updates after the main window opens and apply them during normal shutdown after CefSharp releases its files.
+A version tag goes through build, checks, a self-contained publish and Velopack packaging, and the installers and update packages are uploaded to GitHub Releases. This repository receives one commit with that version's source for each app release, tagged with the same name. Changes that do not affect the program, such as README updates, are added as commits without a tag. The release body and the update notes inside the installer package come from the same file, and the release stops if the tag and the project version differ or if the notes are missing. Installed apps download updates after the main window opens and apply them during normal shutdown after CefSharp releases its files.
 
 ### 9. Choosing a version and rolling back
 
@@ -221,11 +221,11 @@ Sharing is a secondary feature, so its path is kept separate from your own posit
 Building requires Windows and the .NET 10 SDK or later. The app runs on .NET 8 and uses the latest C# compiler for the ViewModels' partial property generation (`LangVersion=preview`).
 
 ```powershell
-dotnet build TanukiTarkovMap.csproj
-dotnet publish TanukiTarkovMap.csproj -c Release -r win-x64 --self-contained true -o publish
+dotnet build src/TanukiTarkovMap.csproj
+dotnet publish src/TanukiTarkovMap.csproj -c Release -r win-x64 --self-contained true -o publish
 ```
 
-Coordinate calculation, settings, file watching, position sharing and site control are provided by the TanukiTarkovMap.Core package in `packages/`. The project file pins its version, and `NuGet.Config` restores Core from the repository's `packages/` and every other dependency from NuGet.org, so no extra account or authentication is needed. The Core DLL is obfuscated with Obfuscar, and its public API and JSON contracts are unchanged. The installers on the Releases page are built from the source of the same tag.
+The app source is in `src/`. Coordinate calculation, settings, file watching, position sharing and site control are provided by the TanukiTarkovMap.Core package in `src/packages/`. The project file pins its version, and `src/NuGet.Config` restores Core from `packages/` in the same folder and every other dependency from NuGet.org, so no extra account or authentication is needed. The Core DLL is obfuscated with Obfuscar, and its public API and JSON contracts are unchanged. The installers on the Releases page are built from the source of the same tag.
 
 ---
 
