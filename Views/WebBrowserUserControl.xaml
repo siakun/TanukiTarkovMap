@@ -1,0 +1,117 @@
+<UserControl x:Class="TanukiTarkovMap.Views.WebBrowserUserControl"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:i="http://schemas.microsoft.com/xaml/behaviors"
+             xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
+             xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
+             xmlns:loc="clr-namespace:TanukiTarkovMap.Localization"
+             mc:Ignorable="d"
+             d:DesignHeight="600" d:DesignWidth="800">
+
+    <UserControl.DataContext>
+        <vm:WebBrowserViewModel/>
+    </UserControl.DataContext>
+
+    <Grid>
+        <ContentControl HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+            <i:Interaction.Behaviors>
+                <behaviors:WebBrowserLifecycleBehavior/>
+            </i:Interaction.Behaviors>
+        </ContentControl>
+
+        <Grid IsHitTestVisible="False" ClipToBounds="True"
+              Visibility="{Binding Overlay.IsEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Canvas>
+                <Canvas.Clip>
+                    <RectangleGeometry Rect="{Binding Overlay.Clip}"/>
+                </Canvas.Clip>
+                <ItemsControl ItemsSource="{Binding Overlay.Teammates}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <Canvas/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemContainerStyle>
+                        <Style TargetType="ContentPresenter">
+                            <Setter Property="Canvas.Left" Value="{Binding X}"/>
+                            <Setter Property="Canvas.Top" Value="{Binding Y}"/>
+                        </Style>
+                    </ItemsControl.ItemContainerStyle>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Canvas Width="0" Height="0">
+                                <Path Fill="{Binding Fill}" Stroke="#262626" StrokeThickness="{Binding Overlay.Stroke}">
+                                    <Path.Data>
+                                        <EllipseGeometry RadiusX="{Binding Overlay.Radius}" RadiusY="{Binding Overlay.Radius}"/>
+                                    </Path.Data>
+                                </Path>
+                                <Canvas Width="100" Height="100">
+                                    <Canvas.RenderTransform>
+                                        <TransformGroup>
+                                            <ScaleTransform ScaleX="{Binding Overlay.ArrowScale}" ScaleY="{Binding Overlay.ArrowScale}"/>
+                                            <TranslateTransform X="{Binding Overlay.ArrowLeft}" Y="{Binding Overlay.ArrowTop}"/>
+                                            <RotateTransform Angle="{Binding Direction}"/>
+                                        </TransformGroup>
+                                    </Canvas.RenderTransform>
+                                    <Path Data="M50,5 L85,75 Q50,45 15,75 Z" Fill="{Binding Fill}" Stroke="#262626" StrokeThickness="2"/>
+                                </Canvas>
+                                <Grid Width="240" Canvas.Left="-120" Canvas.Top="{Binding Overlay.LabelTop}">
+                                    <Border HorizontalAlignment="Center" Background="#B3000000" Padding="4,1" CornerRadius="2">
+                                        <TextBlock Text="{Binding Nickname}" Foreground="White" FontSize="11"/>
+                                    </Border>
+                                </Grid>
+                            </Canvas>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <Canvas Canvas.Left="{Binding Overlay.MarkerX}" Canvas.Top="{Binding Overlay.MarkerY}"
+                      Width="0" Height="0"
+                      Visibility="{Binding Overlay.IsMarkerVisible, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <Canvas.RenderTransform>
+                        <ScaleTransform/>
+                    </Canvas.RenderTransform>
+                    <i:Interaction.Behaviors>
+                        <behaviors:MapMarkerPingBehavior Sequence="{Binding Overlay.Ping}"/>
+                    </i:Interaction.Behaviors>
+                    <Path Fill="#F5F5F5" Stroke="#262626" StrokeThickness="{Binding Overlay.Stroke}">
+                        <Path.Data>
+                            <EllipseGeometry RadiusX="{Binding Overlay.Radius}" RadiusY="{Binding Overlay.Radius}"/>
+                        </Path.Data>
+                    </Path>
+                    <Canvas Width="100" Height="100">
+                        <Canvas.RenderTransform>
+                            <TransformGroup>
+                                <ScaleTransform ScaleX="{Binding Overlay.ArrowScale}" ScaleY="{Binding Overlay.ArrowScale}"/>
+                                <TranslateTransform X="{Binding Overlay.ArrowLeft}" Y="{Binding Overlay.ArrowTop}"/>
+                                <RotateTransform Angle="{Binding Overlay.Direction}"/>
+                            </TransformGroup>
+                        </Canvas.RenderTransform>
+                        <Path Data="M50,5 L85,75 Q50,45 15,75 Z" Fill="#F5F5F5" Stroke="#262626" StrokeThickness="2"/>
+                    </Canvas>
+                </Canvas>
+            </Canvas>
+            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom" Margin="8" Padding="8,5"
+                    Background="#DC1A1A1A" CornerRadius="3"
+                    Visibility="{Binding Overlay.ShowNotice, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <TextBlock Text="{loc:Text MapOverlay_Unavailable}" Foreground="#FFF0D5A0" TextWrapping="Wrap"/>
+            </Border>
+        </Grid>
+
+        <TextBlock Text="{Binding PartyText}" HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                   Margin="8,0,8,5" FontSize="10" Foreground="#777777" IsHitTestVisible="False" Panel.ZIndex="101"/>
+
+        <Border Background="#DD1A1A1A"
+                Visibility="{Binding IsLoading, Converter={StaticResource BooleanToVisibilityConverter}}"
+                Panel.ZIndex="100">
+            <StackPanel HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <TextBlock Text="{loc:Text Browser_Loading}"
+                           FontSize="16"
+                           Foreground="#FF888888"
+                           HorizontalAlignment="Center"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>

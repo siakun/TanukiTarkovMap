@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests/**;packages/**</DefaultItemExcludes>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Version>0.4.0</Version>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+    <ApplicationIcon>Resources\icon.ico</ApplicationIcon>
+    <NeutralLanguage>en</NeutralLanguage>
+
+    <EnableDefaultApplicationDefinition>false</EnableDefaultApplicationDefinition>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Page Remove="App.xaml" />
+    <Page Include="App.xaml" />
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="ViewModels\" />
+    <ProjectReference Include="$(TanukiCoreProject)" Condition="'$(TanukiCoreProject)' != ''" />
+    <PackageReference Include="TanukiTarkovMap.Core" Version="[0.4.0]" Condition="'$(TanukiCoreProject)' == ''" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Resource Include="Resources\**\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="$(IntermediateOutputPath)Strings.g.cs" />
+  </ItemGroup>
+
+  <Target Name="GenerateLocalizedStrings" BeforeTargets="MarkupCompilePass1;CoreCompile" Inputs="Localization\Strings.resx" Outputs="$(IntermediateOutputPath)Strings.g.cs">
+    <GenerateResource Sources="Localization\Strings.resx" OutputResources="$(IntermediateOutputPath)Strings.class-only.resources" StronglyTypedLanguage="CSharp" StronglyTypedNamespace="TanukiTarkovMap.Localization" StronglyTypedClassName="Strings" StronglyTypedManifestPrefix="TanukiTarkovMap.Localization" StronglyTypedFileName="$(IntermediateOutputPath)Strings.g.cs" PublicClass="true" ExecuteAsTool="false" />
+  </Target>
+
+  <ItemGroup>
+    <Content Include="viewer\**\*" Link="LocalMap\viewer\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UpdateRepositoryUrl)' != ''">
+    <AssemblyMetadata Include="UpdateRepositoryUrl" Value="$(UpdateRepositoryUrl)" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CefSharp.Wpf.NETCore" Version="141.0.110" />
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="Hardcodet.NotifyIcon.Wpf" Version="2.0.1" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.13" />
+    <PackageReference Include="Microsoft.NET.ILLink.Tasks" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.135" />
+    <PackageReference Include="Siakun.AutoUpdate" Version="0.1.0" />
+  </ItemGroup>
+
+  <Target Name="ProtectPublishedCore" AfterTargets="Publish" Condition="'$(Configuration)' == 'Release' and '$(TanukiCoreProject)' != ''">
+    <Error Condition="'$(TanukiCoreProtectionScript)' == ''" Text="Source publish requires TanukiCoreProtectionScript." />
+    <Error Condition="'$(PublishSingleFile)' == 'true' or '$(PublishReadyToRun)' == 'true' or '$(PublishTrimmed)' == 'true'"
+           Text="Core protection requires separate, untrimmed IL assemblies. Disable PublishSingleFile, PublishReadyToRun and PublishTrimmed." />
+    <ItemGroup>
+      <_CoreProtectionInput Include="@(ResolvedFileToPublish)"
+                            Condition="'%(Filename)%(Extension)' == 'TanukiTarkovMap.Core.dll'" />
+    </ItemGroup>
+    <Error Condition="'@(_CoreProtectionInput->Count())' != '1'" Text="Expected exactly one Core DLL in publish inputs." />
+    <Copy SourceFiles="@(_CoreProtectionInput)" DestinationFolder="$(PublishDir)" SkipUnchangedFiles="false" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)"
+          Command="pwsh -NoProfile -File &quot;$(TanukiCoreProtectionScript)&quot; -PublishDirectory &quot;$([System.IO.Path]::Combine('$(PublishDir)', '.'))&quot; -WorkDirectory &quot;$(IntermediateOutputPath)core-protection&quot;" />
+  </Target>
+</Project>

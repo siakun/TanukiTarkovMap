@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data:; font-src 'self'; base-uri 'none'; form-action 'none'">
+  <title>Tanuki Local Map</title>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div id="mapCont" class="map-cont bg-grid controls-hidden">
+    <div id="mapWrap" class="map-wrap"></div>
+    <canvas id="markersCanvas" class="markers-canvas"></canvas>
+    <div class="squad-layer">
+      <div id="teammates"></div>
+      <div id="playerMarker" class="marker" hidden></div>
+    </div>
+    <div class="panel_right">
+      <div id="levelsPanel" class="d-flex h-space-between layers" hidden>
+        <div>
+          <div class="d-flex caption-row mb-5"><div class="bold big">Levels</div></div>
+          <div id="levelsList" class="levels-list scroll"></div>
+        </div>
+        <div>
+          <div class="d-flex h-center" title="Alt + Wheel">
+            <div class="no-wrap bold">Alt + </div>
+            <svg class="icon icon_mid_mouse" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 50 100" aria-hidden="true">
+              <rect x="6.377" y="18.032" width="37.246" height="63.935" rx="18.623" ry="18.623" class="mouse-outline"></rect>
+              <rect x="20.946" y="24.937" width="8.107" height="19.87" rx="2.859" ry="2.859" class="mouse-outline"></rect>
+              <path d="m25,96.196l-12.897-9.522c-.889-.656-1.077-1.908-.421-2.797.656-.889,1.908-1.078,2.797-.422l10.521,7.769,10.522-7.769c.89-.656,2.141-.467,2.797.422.655.889.467,2.141-.422,2.797l-12.897,9.522Z"></path>
+              <path d="m36.708,16.936c-.412,0-.828-.127-1.186-.391l-10.522-7.768-10.521,7.768c-.889.657-2.141.468-2.797-.421s-.468-2.141.421-2.797L25,3.805l12.897,9.522c.889.656,1.077,1.908.422,2.797-.393.531-.998.812-1.611.812Z"></path>
+            </svg>
+          </div>
+          <div class="bold text-center mt-5 layers-hint">Switch Level</div>
+        </div>
+      </div>
+    </div>
+    <div id="loadStatus" class="load-status" role="status"></div>
+  </div>
+  <script type="module" src="./main.js"></script>
+</body>
+</html>

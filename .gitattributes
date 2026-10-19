@@ -1,0 +1,12 @@
+* text=auto
+*.cs text eol=lf
+*.xaml text eol=lf
+*.csproj text eol=lf
+*.resx text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.html text eol=lf
+*.md text eol=lf
+*.nupkg binary
+*.png binary
+*.ico binary

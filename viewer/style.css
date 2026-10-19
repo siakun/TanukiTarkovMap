@@ -1,0 +1,279 @@
+:root {
+  --tm-text: hsl(39, 20%, 50%);
+  --tm-story: hsl(205, 16%, 59%);
+  --tm-plus: hsl(80, 100%, 33%);
+  --tm-marker-player: #f5f5f5;
+  --tanuki-marker-outline: #262626;
+  --marker-size: 20px;
+  --tm-font: bender, pretendard, "Source Sans Pro", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Malgun Gothic", "Apple SD Gothic Neo", sans-serif;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: #000;
+  color: var(--tm-text);
+  font-family: var(--tm-font);
+  font-size: 16px;
+}
+
+.map-cont {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  outline: none;
+  user-select: none;
+  cursor: grab;
+  touch-action: none;
+}
+
+.map-cont.panning {
+  cursor: grabbing;
+}
+
+.bg-grid {
+  --bgc: 6%;
+  --fgc: calc(var(--bgc) + 10%);
+  --bgv: hsl(0, 0%, var(--fgc));
+  background-color: hsl(0, 0%, var(--bgc));
+  background-image: linear-gradient(var(--bgv) 2px, transparent 0), linear-gradient(90deg, var(--bgv) 2px, transparent 0),
+    linear-gradient(var(--bgv) 1px, transparent 0), linear-gradient(90deg, var(--bgv) 1px, transparent 0);
+  background-position: -2px -2px;
+  background-size: 250.5px 250.5px, 250.5px 250.5px, 50.1px 50.1px, 50.1px 50.1px;
+}
+
+.map-wrap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+}
+
+.map-wrap > svg {
+  display: block;
+  overflow: visible;
+}
+
+.markers-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.squad-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 7;
+}
+
+.marker {
+  position: absolute;
+  z-index: 15;
+  box-sizing: border-box;
+  width: var(--marker-size);
+  height: var(--marker-size);
+  border: 2px solid var(--tanuki-marker-outline);
+  border-radius: 50%;
+  background: var(--tm-marker-player);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.marker.ping {
+  animation: markerSizeAnimation 0.7s ease-in-out;
+}
+
+@keyframes markerSizeAnimation {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(2.5); }
+}
+
+.triangle-indicator {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 25px;
+  height: 25px;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  pointer-events: none;
+  transform: translate(-50%, -50%) rotate(var(--tanuki-direction, 0deg))
+    translateY(calc(-25% - var(--marker-size) * 0.4 - 1px));
+  transform-origin: 50% 50%;
+}
+
+.marker.teammate {
+  z-index: 14;
+}
+
+.marker.teammate.other-level {
+  opacity: 0.45;
+}
+
+.teammate-label {
+  position: absolute;
+  top: calc(50% + var(--marker-size) * 0.4 + 20.5px);
+  left: 50%;
+  padding: 1px 4px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.7);
+  color: #fff;
+  font-size: 11px;
+  line-height: 16px;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.panel_right {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: end;
+  pointer-events: none;
+}
+
+.panel_right > div {
+  padding: 5px 15px;
+  border: 1px solid rgb(51, 51, 51);
+  background-color: rgba(0, 0, 0, 0.9);
+  cursor: default;
+  pointer-events: auto;
+}
+
+.controls-hidden .panel_right,
+[hidden] {
+  display: none !important;
+}
+
+.d-flex {
+  display: flex;
+  align-items: center;
+  gap: 0 5px;
+}
+
+.h-space-between {
+  justify-content: space-between;
+}
+
+.h-center {
+  justify-content: center;
+}
+
+.layers {
+  gap: 30px;
+}
+
+.caption-row {
+  gap: 8px;
+}
+
+.levels-list {
+  position: relative;
+  max-height: 80px;
+  padding-right: 10px;
+  overflow-y: auto;
+}
+
+.layers-hint {
+  max-width: 90px;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.big {
+  font-size: 1.2rem;
+}
+
+.mb-5 {
+  margin-bottom: 5px;
+}
+
+.mt-5 {
+  margin-top: 5px;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.no-wrap {
+  white-space: nowrap;
+}
+
+.pointer {
+  cursor: pointer;
+}
+
+.story {
+  color: var(--tm-story);
+}
+
+.levels-list input[type="radio"] {
+  width: 12px;
+  height: 12px;
+  margin: 0;
+  border: 1px solid #9a8866;
+  background: #000;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.levels-list input[type="radio"]:checked {
+  background: #9a8866;
+}
+
+.icon {
+  fill: #9a8866;
+}
+
+.icon_mid_mouse {
+  display: block;
+  width: 20px;
+  height: 40px;
+}
+
+.mouse-outline {
+  stroke: #000;
+  stroke-miterlimit: 10;
+  stroke-width: 3px;
+}
+
+.scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.scroll::-webkit-scrollbar-thumb {
+  background: #333;
+}
+
+.load-status {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 30;
+  max-width: calc(100% - 32px);
+  padding: 8px 12px;
+  border: 1px solid rgb(51, 51, 51);
+  background: rgba(0, 0, 0, 0.9);
+  color: var(--tm-text);
+  font-size: 14px;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.load-status.is-error {
+  border-color: #b33;
+  color: #f2b4a9;
+}
