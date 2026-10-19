@@ -102,117 +102,37 @@ Several tools like this already exist. The original is [ggdiam/TarkovPilot](http
 
 ## Technical Implementation
 
-The core of this project is "a native client doing what a web app cannot." This section explains which problem each feature solves and how.
+This app does not touch game memory or game files. It works only by reading the screenshot file names and logs that the game writes to disk.
 
-### 1. Porting from Edge WebView2 to CefSharp
+### 1. Showing your position from screenshots
 
-The tool this project started from used Edge WebView2, which is built into Windows, but this project replaced the web view engine with CefSharp (Chromium Embedded Framework). WebView2's runtime depends on the user's environment, whereas CefSharp ships Chromium with the app, so it does not depend on the environment and gives more direct control over the render process, script injection, zoom, and similar behavior. The app injects scripts when a page starts loading (`FrameLoadStart`) and when it finishes loading (`FrameLoadEnd`), and receives messages from the web page through `JavascriptMessageReceived`.
+The app watches the game's screenshot folder, and when a new file appears, it reads the coordinates and view direction recorded in the file name. It never opens the image itself. In Online, the app draws the position circle and direction arrow over the site's map; in Local, it draws them on the map bundled with the app. The height in the coordinates also selects the floor you are on.
 
-### 2. Native window control
+### 2. Local map that works without the site
 
-Window control at the OS level, which a web app cannot do, is handled directly in the desktop window. Pinning and transparency use WPF window properties, while behavior WPF does not provide, such as the global hotkey and restoring from the tray, uses P/Invoke (user32.dll).
+Local shows the terrain and floors, the extracts of the selected faction, and your position and direction on the map bundled with the app, without connecting to the site. It exists so that you can still see what you need in a raid when a site change stops the Online display or the site cannot be reached. The bundled map is converted from the site's map data and compared with the site's screen for every map and floor, and the position display is checked by automated tests every time the installers are built.
 
-- **Always-on-Top**: Binds the window's `Topmost` to the pin button to keep it above the game. When restoring from the tray, `SetWindowPos` raises the window without stealing focus and keeps the pin state (`HWND_TOPMOST` or `HWND_TOP`)
-- **Semi-transparent window**: Binds the content `Opacity` of a borderless transparent window (`AllowsTransparency`) to the opacity setting. It applies only while the top bar is hidden or the opacity slider is being dragged, so the window looks opaque while you operate it
-- **Global hotkey**: A low-level keyboard hook (`SetWindowsHookEx`) handles the toggle even while the game has focus
+### 3. Automatic map switching from game logs
 
-Win32 declarations are gathered in `PInvoke.cs`. The exception is `Program.cs`, which keeps its own declarations for the single-instance check that brings an already running window to the front.
+When you enter a raid, the game records the map it loaded in its log files. The app reads these logs and switches to the map you entered. The game folder is found automatically from the install information of the official launcher and Steam, and you can set it in Settings if it is not found. If you start the app in the middle of a raid, taking one screenshot in the raid switches to that map.
 
-### 3. Real-time coordinate sync (FileSystemWatcher + built-in minimap)
+### 4. A window that stays above the game
 
-The app watches the screenshot folder with `FileSystemWatcher` and ties the latest file name to the current map. In Online, the Core DLL calculates coordinates from the file name and resource constants, then a WPF Canvas draws the position circle and direction arrow over the browser using the site's live view state. The Local minimap reads coordinates and rotation from the file name to draw position and direction. Both modes select the floor from the position height. `LogsWatcher` switches maps when the player enters a raid.
+A web page cannot stay on top of the game or become semi-transparent, and it cannot receive hotkeys while you are playing. The app uses Windows window features for always-on-top, the semi-transparent window, and hotkeys that work during play, and it opens the map in a Chromium browser built into the app (CefSharp).
 
-The app retains one latest input for the current map. Switching modes on that map preserves it; changing maps expires it. Origin stores the input without displaying it. Online pings only when a file name first appears on screen and shows a log reason and Local fallback notice if view-state capture fails. Local checks and resends positions received during loading or lost after a reload.
+### 5. An Online view that keeps only the map
 
-Until 2026-08-17, the app ran a WebSocket server with ASP.NET Core Kestrel on port `5123`, and the site connected to that server to receive file names. That day, tarkov-market deployed Pilot v2, and the site switched to connecting only to its own server (`wss://tarkov-market.com/ws/pilot`) instead of the local app, so the server no longer had any clients. Following the server relay protocol would have meant implementing account authentication as well, while `window.pilot` did the same job without it, so the app dropped the WebSocket server and the ASP.NET Core dependency and switched to bridge calls.
+Online opens tarkov-market.com, hides the menus and panels you do not need for reading the map, and shows the extracts of the faction (PMC or SCAV) selected in the top bar. The app applies this by running scripts inside the page. Origin runs no scripts and opens the site as it is.
 
-On 2026-10-07, the site removed both the position function of `window.pilot` and the position input of the Pilot service. Only the "Where am i" input, where users paste a screenshot file name, remained, so the bridge found that input's handler in the Vue components being rendered on screen and passed the same file name to it. This relied on the fact that function names in the minified bundle change with every deployment, but prop names in templates remain.
+### 6. Raid position sharing
 
-On 2026-10-08, the site started drawing the map and your position on canvases and showing the direction arrow only to PRO users, which broke the Online direction display and position check again. The position input path and the site's own position drawing had changed with every deployment, while the map's coordinate transforms had stayed the same. So instead of passing the position to the site, the app drew the position and direction itself and borrowed only the coordinate transforms from the site.
+Friends who enter the same raid in the same squad exchange screenshot positions and see each other on the map. The app learns the current raid and squad from the game log and automatically joins the matching room on a server the developer runs. Whenever someone takes a screenshot, the position is delivered to the others in the room right away. Rooms are separated by a value the game assigns to each squad in each raid, so other squads in the same raid and stream viewers cannot join.
 
-The site moved map state out of its regular reactive registration, so the old WeakMap hook could no longer capture it. Online now records the required state when its Proxy is constructed, with coordinate and direction calculations in the Core DLL and marker rendering in WPF. Local remains independent of this site-state dependency.
+Your position, game account ID, and nickname are sent to the server. The server operator can see the IP, account ID, and last position of connected users. Participation records (account ID, nickname, mode, map, join and leave times) are kept for statistics, but IP addresses and coordinates are not stored. Sharing is a secondary feature, so your own position display keeps working even if the server is down or slow.
 
-### 4. Offline map (Local)
+### 7. Automatic updates and choosing a version
 
-Choosing Local in the top bar opens the map from map data bundled with the app, without connecting to the site. It keeps only the map and its levels, the extracts of the selected faction, and your current position and direction, so what you need in a raid keeps working even if the site is down or changes its map structure.
-
-At first, the app saved a full copy of the responses the site sent and served it back by intercepting requests. It worked, but the copy was a lump of minified bundles whose contents could not be read, and when the site changed its structure, the only option was to download everything again. Now the app collects only the site's map documents, converts them to SVG and JSON embedded in the Core DLL, and the minimap bundled with the app (`src/viewer/`) draws them to look like the site's map screen. The converted SVG is compared pixel by pixel, level by level, with what the collected site renderer draws, and the coordinate conversion is verified against the values the site computed.
-
-Local opens in a separate temporary storage space so that it does not mix with the site's (Online, Origin) DB and cache. When you switch modes, the app reopens the same map in the new mode and passes the last position to Local. It reapplies the app's zoom in every mode, and the faction and "Hide UI elements" settings in Online and Local.
-
-### 5. Automatic map switching by parsing game logs
-
-Each time the game starts, it creates a new session folder under its log folder (`<game folder>\Logs` for the official launcher, `<game folder>\build\Logs` for the Steam version) and records its state in files such as `application.log`. The game folder is detected automatically from the registry (official launcher first, then Steam), and if detection fails, you can set it yourself in Settings.
-
-- **Official launcher**: The `InstallLocation` value of `HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\EscapeFromTarkov` (used only if the folder actually exists)
-- **Steam**: Parses `steamapps\libraryfolders.vdf` under the `InstallPath` of `HKLM\SOFTWARE\WOW6432Node\Valve\Steam`, then checks `steamapps\common\Escape from Tarkov` in every library folder it finds
-
-`LogsWatcher` watches the most recent session folder (moving to a new folder automatically when one appears), and whenever a log file is updated, it reads only the newly added lines from where it last stopped (it opens files with `FileShare.ReadWrite`, so it does not conflict with the game's writes). Logs that had already accumulated before the app started never switch the view, which prevents switching to the map of a previous raid by mistake.
-
-The map is identified from the scene load log line (`scene preset`) by extracting the preset name from `path:maps/<preset>.bundle`. The `Location:` value in the match creation log (`TRACE-NetworkGameCreate profileStatus`) carries the same information, but the scene load line always comes first, and in some raids it is the only one recorded, so only the scene load line is used.
-
-The extracted preset name is resolved to a map right where it is detected. This keeps the code that interprets log strings in one place, `LogsWatcher`, and later stages exchange only map objects, not strings.
-
-```
-scene preset line detected
-  -> LogsWatcher          extract the preset name
-  -> MapConfiguration     resolve the preset to a map (stops here for unregistered values)
-  -> MapEventService      publish a map change event
-  -> MainWindowViewModel  assign SelectedMapInfo (where manual selection from the dropdown joins)
-  -> WebBrowserViewModel  navigate CefSharp to the new address
-```
-
-Maps and presets have a 1:N relationship. Ground Zero has a separate preset for each player level range, and Factory for each time of day, so each map is registered in `MapConfiguration` with a list of presets. When a preset that is not in any list appears, the app does not switch and only writes that name to the app log. That line tells you what to register when a new map is added to the game.
-
-Routing automatic switching through `SelectedMapInfo` is also intentional. Joining at the same point as when the user picks a map from the dropdown leaves only one copy of the code that changes the address and reinjects the scripts. Turning off automatic switching skips only this assignment, so manual selection keeps working.
-
-If you launch the app after entering a raid, the entry log has already gone by, so real-time detection cannot catch it. So the app still reads map names from past logs and remembers the last one, then uses a screenshot, which can only be taken in game, as the signal to correct to that map. If you are already viewing that map, nothing happens, so once the map has switched correctly, taking screenshots does not make the view jump.
-
-In addition, the BattlEye initialization log (`BEClient inited successfully`) serves as a raid boundary signal that triggers automatic screenshot cleanup.
-
-### 6. Two-way communication between CefSharp and JavaScript
-
-After the position and direction display is changed, the same failure conditions are checked again by automated tests, whether or not the site is reachable. The tests run in a windowless Chromium against the minimap and map resources bundled with the app, every time the installers are built. Whether Online state capture, map fitting, floor selection, UI hiding and faction switching still work on the current site is checked separately with a diagnostic tool that injects the same scripts as the app into the real site.
-
-The logic that adapts the web UI to the app is injected as JavaScript. The scripts injected into the site and their execution contract are embedded in the Core DLL as EmbeddedResource. Core `SiteControl` handles call order and faction retries; `OnlineOverlay` handles site reports and position synchronization. The app owns CEF lifetime, document validity checks and WPF presentation. Scripts run at two points. When a page starts loading, the app first injects map-state capture and page-error scripts; when loading finishes, it runs the rest with `EvaluateScriptAsync` (removing the header and footer, toggling panels, applying the faction filter, and so on). In the other direction, the page reports its state (errors, whether the map rendered) with `postMessage`, which the app receives in `JavascriptMessageReceived` and writes to its log. ViewModels pass messages to each other through CommunityToolkit.Mvvm's `WeakReferenceMessenger`. Messages keep the boundary between C# and JS loosely coupled. Nothing is injected into the Local minimap; the app only calls the functions the minimap exposes on `window.tanukiViewer`. Origin shows the site as it is, so nothing is injected there either. Whether to inject is decided when a page opens, so switching between Online and Origin reopens the current page.
-
-### 7. MVVM architecture and DI
-
-The project's rule is to keep logic out of code-behind (`*.xaml.cs`); the initialization logic still left in the main window is tracked as cleanup work. UI interactions are separated into Behaviors based on Microsoft.Xaml.Behaviors (window dragging, minimizing to the tray, capturing hotkey input, and so on), and data and business logic live in ViewModels and Services. Services are registered with Microsoft.Extensions.DependencyInjection and accessed through `ServiceLocator`, and ViewModels communicate through the Messenger instead of direct references to reduce coupling.
-
-### 8. Release automation (Velopack + GitHub Releases)
-
-A version tag goes through build, checks, a self-contained publish and Velopack packaging, and the installers and update packages are uploaded to GitHub Releases. This repository receives one commit with that version's source for each app release, tagged with the same name. Changes that do not affect the program, such as README updates, are added as commits without a tag. The release body and the update notes inside the installer package come from the same file, and the release stops if the tag and the project version differ or if the notes are missing. Installed apps download updates after the main window opens and apply them during normal shutdown after CefSharp releases its files.
-
-### 9. Choosing a version and rolling back
-
-Automatic updates only move toward the latest version. That leaves a user who runs into a problem in a new version with no way out on their own, so Settings lets you turn off automatic updates and choose the version you want.
-
-Velopack's default path cannot do this. `GithubSource` assumes that "all packages are gathered in the single latest release," so it reads only that release's `releases.win.json` and looks for download URLs only there. In this repository, a full package is hundreds of megabytes, so each tag uploads only its own version, and the default path shows only two versions: the latest and the one before it. So the app queries the release list directly with the GitHub Releases API, creates an `IUpdateSource` (`GitHubReleaseSource`) pinned to the chosen tag, and runs it through Velopack's download, checksum verification, and apply steps. This update code is split out into the [Siakun.AutoUpdate](https://github.com/siakun/Siakun.AutoUpdate) package so that other apps can use it.
-
-This is also why the app parses the feed JSON the release already contains instead of assembling package metadata itself. Velopack checks the SHA of a downloaded package against the value in the feed, and hand-built metadata has no such hash, so there would be no way to pass the check.
-
-When moving up, the app downloads the deltas of the versions in between and applies them in sequence. A full package is hundreds of megabytes, while each delta is a few hundred KB, so the difference is large. Rolling back always downloads the full package, because deltas are only created in the upward direction. The full package is also downloaded when an intermediate release has been deleted, when there are too many steps to skip, or when the deltas add up to a size that is large compared with the full package. Since this can take a while, progress is shown on screen. Even after the download finishes, the app does not kill its process; it shuts down normally so that CefSharp releases its cookie and IndexedDB files, and then applies the package.
-
-Choosing a version other than the latest also turns off automatic updates. If they stayed on, the next launch would immediately go back to the latest version, and the version the user chose would be lost.
-
-Turning on "Get beta versions" under "Experimental features" in Settings adds pre-release versions such as `v0.1.1-beta` to the list and to automatic updates. While it is off, they are excluded at the query stage, so what you see in the list and what automatic updates follow are always the same.
-
-This blocking works only from the version that introduced the automatic update setting. If you go down to an older version, that version's update code ignores the setting and fetches the latest, so you cannot stay there. Code that has already been released cannot be changed, so this cannot be prevented by design; instead, the Settings screen warns about it in advance.
-
-### 10. Raid position sharing (SignalR)
-
-Even when you enter a raid together with friends, the app shows only your own position. To draw your friends' screenshot positions on your map as well, positions are exchanged through a server the developer runs. The app contains the server address and access key, so it connects automatically when the app starts.
-
-Whether you entered the same raid in the same squad is decided from the game log. When the server creates a raid, the application log records the game server session the raid runs on, and when you return to the menu, a line that selects the profile again is recorded. The same log also gives the server mode (PvE or PvP) and your account ID. When a squad starts matchmaking, a notification in the push-notifications log carries the squad's group ID, and the assignment notification right after it carries the same server session. The app matches the two by server session, joins the room named `mode:squad group ID` on the server, and uploads the parsed coordinates each time you take a screenshot. At first the rooms were split by the raid ID shown at the bottom right of the screen (`shortId`), but its last character differs from player to player even in the same raid, so friends ended up in different rooms. The squad group ID is the same only for one squad in one raid and is never shown on screen, so other squads in the same raid and stream viewers cannot join the room. The server (an ASP.NET Core SignalR hub) pushes a position over WebSocket only to the other people in the same room, so a friend's screenshot appears on your map right away even if you take none yourself. Anyone who joins late receives the room's last positions. The server and the app read the hub contract from a single place in the Core DLL so that they cannot drift apart.
-
-Party notifications record squad members' account IDs and nicknames. Your own nickname can also appear in inventory error profile tags or dogtags carried by others. The app matches profile tags against the profile and account IDs from the same session. When no name is saved for your account, a bounded background search checks previous sessions. Your name is saved together with your account ID and restored only for that account. Current session logs take priority over names supplied by squad members, followed by past session logs and the saved name. The app announces your known name when joining or learning a new name. If none is found, the last four digits of the account ID are shown, and the tag is replaced as soon as the nickname becomes known. Friend markers are red, orange, yellow, and green in the order they first appear in the raid, and your own marker is a light gray that does not clash with those colors.
-
-Because the app is distributed publicly, the access key inside it is not a secret. The key keeps out connections that are not the app, and changing it cuts off older versions of the app. Filtering people is the job of the squad group ID, not the key. The server can turn off sharing for a mode by limiting the allowed modes.
-
-Membership notifications and a member list keep the party display independent of screenshots. WPF shows it in every view mode, with yourself first and friends ordered by color slot. The server operator can see each connection, including those outside a room, with its IP, app version, User-Agent, account ID, nickname, room ID, and last position. Participation accounts, nicknames, modes, maps, join and end times, and position counts are stored in SQLite for statistics; IP addresses and coordinates are not persisted. The original hub contract stays intact so servers and apps can update independently. On an older server, the app skips member-list and name exchange calls and builds the party display from received positions.
-
-Sharing is a secondary feature, so its path is kept separate from your own position display, which never waits even when the server is down or slow. The sharing service never lets an exception escape from the screenshot event and runs server calls separately, and friend markers are drawn in elements separate from your own marker.
+The installed app checks GitHub Releases for new versions and updates itself. A new version is downloaded after the app starts and applied when you close the app, and only the changed parts are downloaded when possible. If a new version has a problem, you can turn off automatic updates in Settings and roll back to an earlier version. Choosing a version other than the latest also turns off automatic updates, so the next launch does not return to the latest version. Turning on "Get beta versions" under "Experimental features" in Settings also lets you receive pre-release versions.
 
 ---
 
