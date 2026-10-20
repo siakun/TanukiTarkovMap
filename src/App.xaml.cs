@@ -21,16 +21,19 @@ using TanukiTarkovMap.Core.Services;
 using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.Core.Utils;
 using TanukiTarkovMap.Views;
+using TanukiTarkovMap.ViewModels;
 using Velopack;
 using Velopack.Sources;
 
 namespace TanukiTarkovMap
 {
+
     public partial class App : Application
     {
         private TaskbarIcon? _trayIcon;
         private MainWindow? _mainWindow;
         private SplashWindow? _splashWindow;
+        private SplashWindowViewModel? _splashViewModel;
         private UpdateService? _updateService;
         private bool _isExiting = false;
 
@@ -100,11 +103,12 @@ namespace TanukiTarkovMap
             if (_splashWindow == null)
             {
                 Logger.SimpleLog($"Startup is slow ({_startupWatch.ElapsedMilliseconds}ms), showing splash");
-                _splashWindow = new SplashWindow();
+                _splashViewModel = new SplashWindowViewModel();
+                _splashWindow = new SplashWindow { DataContext = _splashViewModel };
                 _splashWindow.Show();
             }
 
-            _splashWindow.SetStatus(status);
+            _splashWindow.Dispatcher.Invoke(() => _splashViewModel!.Status = status);
         }
 
         private async void Application_Startup(object sender, StartupEventArgs e)
@@ -155,6 +159,7 @@ namespace TanukiTarkovMap
                     Logger.SimpleLog($"Closing splash window (startup took {_startupWatch.ElapsedMilliseconds}ms)");
                     _splashWindow.Close();
                     _splashWindow = null;
+                    _splashViewModel = null;
                 }
 
                 Logger.SimpleLog("Showing main window...");
@@ -167,6 +172,7 @@ namespace TanukiTarkovMap
             {
                 _splashWindow?.Close();
                 _splashWindow = null;
+                _splashViewModel = null;
 
                 Logger.SimpleLog($"ERROR in Application_Startup: {ex}");
                 MessageBox.Show(string.Format(Strings.Startup_ErrorMessage, ex.Message), Strings.Startup_ErrorTitle,

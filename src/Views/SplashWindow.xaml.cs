@@ -8,9 +8,4 @@ public partial class SplashWindow : Window
     {
         InitializeComponent();
     }
-
-    public void SetStatus(string status)
-    {
-        Dispatcher.Invoke(() => StatusText.Text = status);
-    }
 }

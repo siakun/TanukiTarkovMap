@@ -41,6 +41,7 @@
             MainGridName="MainGrid"
             MaximizeRestoreButtonName="MaximizeRestoreButton"/>
         <behaviors:MonitorRefreshRateBehavior/>
+        <behaviors:MainWindowInitializationBehavior/>
     </i:Interaction.Behaviors>
 
     <Window.Resources>

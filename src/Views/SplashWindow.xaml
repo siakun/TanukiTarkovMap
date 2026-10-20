@@ -41,7 +41,7 @@
 
             <TextBlock Grid.Row="1"
                       x:Name="StatusText"
-                      Text="{loc:Text Startup_Starting}"
+                      Text="{Binding Status}"
                       FontSize="12"
                       Foreground="#a0a0b0"
                       HorizontalAlignment="Center"
