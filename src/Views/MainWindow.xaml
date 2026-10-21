@@ -161,7 +161,9 @@
                                   Foreground="White"
                                   WindowChrome.IsHitTestVisibleInChrome="True">
                             <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}">
+                                    <Setter Property="AutomationProperties.Name" Value="{Binding DisplayName}"/>
+                                </Style>
                             </ComboBox.ItemContainerStyle>
                         </ComboBox>
 

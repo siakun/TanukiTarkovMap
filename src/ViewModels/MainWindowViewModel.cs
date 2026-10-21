@@ -278,7 +278,8 @@ namespace TanukiTarkovMap.ViewModels
             Logger.SimpleLog($"[LoadSettings] Loading window size: {normalRect.Width}x{normalRect.Height}");
             Logger.SimpleLog($"[LoadSettings] CurrentWindowWidth={CurrentWindowWidth}, CurrentWindowHeight={CurrentWindowHeight}");
 
-            if (normalRect.Left >= 0 && normalRect.Top >= 0)
+            var positionSaved = !(normalRect.Left == -1 && normalRect.Top == -1);
+            if (positionSaved && MonitorLayout.IsOnAnyMonitor(new Point(normalRect.Left, normalRect.Top)))
             {
                 CurrentWindowLeft = normalRect.Left;
                 CurrentWindowTop = normalRect.Top;
@@ -288,7 +289,8 @@ namespace TanukiTarkovMap.ViewModels
             {
                 CurrentWindowLeft = (SystemParameters.PrimaryScreenWidth - normalRect.Width) / 2;
                 CurrentWindowTop = (SystemParameters.PrimaryScreenHeight - normalRect.Height) / 2;
-                Logger.SimpleLog($"[LoadSettings] Using center screen position: ({CurrentWindowLeft}, {CurrentWindowTop})");
+                var reason = positionSaved ? $"saved ({normalRect.Left}, {normalRect.Top}) is not on a connected monitor" : "no saved position";
+                Logger.SimpleLog($"[LoadSettings] Using center screen position: ({CurrentWindowLeft}, {CurrentWindowTop}), {reason}");
             }
         }
 

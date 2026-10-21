@@ -14,9 +14,12 @@ namespace TanukiTarkovMap.ViewModels;
 
 public partial class MapOverlayViewModel : ObservableObject
 {
+    private static readonly TimeSpan NoticeDelay = TimeSpan.FromSeconds(5);
     private readonly OnlineOverlay _state;
+    private readonly TimeProvider _time;
     private readonly HashSet<string> _pinged = [];
     private string? _map, _failure, _teammateFailure;
+    private DateTimeOffset? _hiddenSince;
     private IReadOnlyList<SharedTeammate> _teammates = [];
 
     [ObservableProperty] private bool _isEnabled;
@@ -43,8 +46,9 @@ public partial class MapOverlayViewModel : ObservableObject
 
     public ObservableCollection<TeammateMarker> Teammates { get; } = [];
 
-    public MapOverlayViewModel(Func<SiteScript, Task<bool>> execute)
+    public MapOverlayViewModel(Func<SiteScript, Task<bool>> execute, TimeProvider? time = null)
     {
+        _time = time ?? TimeProvider.System;
         _state = new OnlineOverlay(execute, MapResources.ReadMetadata);
         _state.Changed += Render;
         SetZoom(100);
@@ -83,7 +87,11 @@ public partial class MapOverlayViewModel : ObservableObject
         MarkerX = _state.Marker.X;
         MarkerY = _state.Marker.Y;
         Direction = _state.Direction;
-        ShowNotice = IsEnabled && _state.Failure != null;
+        var positionHidden = IsEnabled && !IsMarkerVisible && _state.Failure != null;
+        var now = _time.GetUtcNow();
+        if (!positionHidden) _hiddenSince = null;
+        else _hiddenSince ??= now;
+        ShowNotice = _hiddenSince is { } since && now - since >= NoticeDelay;
         if (_failure != _state.Failure)
         {
             _failure = _state.Failure;

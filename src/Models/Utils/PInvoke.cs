@@ -37,6 +37,15 @@ namespace TanukiTarkovMap.Models.Utils
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         internal static extern bool EnumDisplaySettings(string lpszDeviceName, int iModeNum, ref DEVMODE lpDevMode);
 
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        internal static extern bool EnumDisplayMonitors(IntPtr hdc, IntPtr lprcClip, MonitorEnumProc lpfnEnum, IntPtr dwData);
+
+        internal delegate bool MonitorEnumProc(IntPtr hMonitor, IntPtr hdcMonitor, ref RECT lprcMonitor, IntPtr dwData);
+
+        [DllImport("shcore.dll")]
+        internal static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern IntPtr SetWindowsHookEx(
             int idHook,
@@ -86,6 +95,7 @@ namespace TanukiTarkovMap.Models.Utils
 
         internal const uint MONITOR_DEFAULTTONEAREST = 2;
         internal const int ENUM_CURRENT_SETTINGS = -1;
+        internal const int MDT_EFFECTIVE_DPI = 0;
 
     }
 
