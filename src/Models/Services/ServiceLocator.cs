@@ -17,7 +17,8 @@ namespace TanukiTarkovMap.Models.Services
 
             services.AddSingleton(_ => new MapEventService());
             services.AddSingleton(_ => new WindowStateManager());
-            services.AddSingleton(_ => new HotkeyService());
+            services.AddSingleton<GameWindowTracker>();
+            services.AddSingleton(provider => new HotkeyService(provider.GetRequiredService<GameWindowTracker>()));
             services.AddSingleton(_ => new GoonTrackerService());
             services.AddSingleton(provider =>
             {
@@ -30,7 +31,7 @@ namespace TanukiTarkovMap.Models.Services
             services.AddSingleton<LogsWatcher>();
             services.AddSingleton<ScreenshotsWatcher>();
 
-            services.AddTransient<MainWindowViewModel>();
+            services.AddSingleton<MainWindowViewModel>();
 
             _serviceProvider = services.BuildServiceProvider();
         }
@@ -39,6 +40,10 @@ namespace TanukiTarkovMap.Models.Services
             ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
         public static ScreenshotsWatcher ScreenshotsWatcher => _serviceProvider?.GetRequiredService<ScreenshotsWatcher>()
             ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
+
+        public static GameWindowTracker GameWindowTracker
+            => _serviceProvider?.GetRequiredService<GameWindowTracker>()
+               ?? throw new InvalidOperationException("ServiceLocator가 초기화되지 않았습니다.");
 
         public static MapEventService MapEventService
             => _serviceProvider?.GetRequiredService<MapEventService>()

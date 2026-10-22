@@ -9,15 +9,17 @@ using TanukiTarkovMap.Messages;
 
 namespace TanukiTarkovMap.Behaviors
 {
+
     public class TopBarAnimationBehavior : Behavior<Window>
     {
         private TranslateTransform? _topBarTransform;
-        private Border? _browserContainer;
         private Border? _contentBorder;
         private DispatcherTimer? _hideDelayTimer;
+        private long _revealSuppressedUntil;
         private const double TopBarHeight = 20.0;
         private const int AnimationDurationMs = 200;
-        private const int HideDelayMs = 1500;
+        internal const int HideDelayMs = 1500;
+        private const int DodgeRevealGuardMs = 150;
 
         private static Color ActiveBorderColor => (Color)Application.Current.Resources["ActiveBorderColor"];
         private static Color InactiveBorderColor => (Color)Application.Current.Resources["InactiveBorderColor"];
@@ -33,19 +35,6 @@ namespace TanukiTarkovMap.Behaviors
         {
             get => (string)GetValue(TopBarTransformNameProperty);
             set => SetValue(TopBarTransformNameProperty, value);
-        }
-
-        public static readonly DependencyProperty BrowserContainerNameProperty =
-            DependencyProperty.Register(
-                nameof(BrowserContainerName),
-                typeof(string),
-                typeof(TopBarAnimationBehavior),
-                new PropertyMetadata("BrowserContainer"));
-
-        public string BrowserContainerName
-        {
-            get => (string)GetValue(BrowserContainerNameProperty);
-            set => SetValue(BrowserContainerNameProperty, value);
         }
 
         protected override void OnAttached()
@@ -75,7 +64,6 @@ namespace TanukiTarkovMap.Behaviors
         private void OnWindowLoaded(object sender, RoutedEventArgs e)
         {
             _topBarTransform = AssociatedObject.FindName(TopBarTransformName) as TranslateTransform;
-            _browserContainer = AssociatedObject.FindName(BrowserContainerName) as Border;
             _contentBorder = AssociatedObject.FindName("ContentBorder") as Border;
         }
 
@@ -93,6 +81,7 @@ namespace TanukiTarkovMap.Behaviors
 
         private void OnWindowMouseEnter(object sender, System.Windows.Input.MouseEventArgs e)
         {
+            if (Environment.TickCount64 < _revealSuppressedUntil) return;
             CancelHideTimer();
             AnimateTopBar(0);
             AnimateBorderColor(ActiveBorderColor, AnimationDurationMs);
@@ -101,6 +90,14 @@ namespace TanukiTarkovMap.Behaviors
         private void OnWindowMouseLeave(object sender, System.Windows.Input.MouseEventArgs e)
         {
             StartHideTimer();
+        }
+
+        internal void HideAfterDodge()
+        {
+            _revealSuppressedUntil = Environment.TickCount64 + DodgeRevealGuardMs;
+            CancelHideTimer();
+            AnimateTopBar(-TopBarHeight);
+            AnimateBorderColor(InactiveBorderColor, AnimationDurationMs);
         }
 
         private void StartHideTimer()
@@ -157,21 +154,6 @@ namespace TanukiTarkovMap.Behaviors
                         }
                     };
                     _topBarTransform.BeginAnimation(TranslateTransform.YProperty, topBarAnimation);
-                }
-
-                if (_browserContainer != null)
-                {
-                    var targetMarginTop = targetY == 0 ? TopBarHeight : 0.0;
-                    var marginAnimation = new ThicknessAnimation
-                    {
-                        To = new Thickness(0, targetMarginTop, 0, 0),
-                        Duration = TimeSpan.FromMilliseconds(AnimationDurationMs),
-                        EasingFunction = new CubicEase
-                        {
-                            EasingMode = EasingMode.EaseInOut
-                        }
-                    };
-                    _browserContainer.BeginAnimation(Border.MarginProperty, marginAnimation);
                 }
             }
             catch (System.Exception)

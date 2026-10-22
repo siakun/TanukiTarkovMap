@@ -10,6 +10,7 @@
         xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
         xmlns:views="clr-namespace:TanukiTarkovMap.Views"
         xmlns:loc="clr-namespace:TanukiTarkovMap.Localization"
+        xmlns:utils="clr-namespace:TanukiTarkovMap.Models.Utils"
         mc:Ignorable="d"
         DataContext="{Binding MainWindowViewModel, Source={StaticResource Locator}}"
         Language="{DynamicResource {x:Static loc:AppLanguage.XmlLanguageKey}}"
@@ -34,13 +35,13 @@
 
     <i:Interaction.Behaviors>
         <behaviors:TopBarAnimationBehavior
-            TopBarTransformName="TopBarTransform"
-            BrowserContainerName="BrowserContainer"/>
+            TopBarTransformName="TopBarTransform"/>
         <behaviors:TrayWindowBehavior x:Name="TrayBehavior"/>
         <behaviors:WindowStateBehavior
             MainGridName="MainGrid"
             MaximizeRestoreButtonName="MaximizeRestoreButton"/>
         <behaviors:MonitorRefreshRateBehavior/>
+        <behaviors:RaidFocusBehavior IsActive="{Binding IsRaidFocusActive}"/>
         <behaviors:MainWindowInitializationBehavior/>
     </i:Interaction.Behaviors>
 
@@ -92,7 +93,6 @@
                 <Border x:Name="BrowserContainer"
                         Background="#FF212121"
                         CornerRadius="0,0,8,8"
-                        Margin="0,20,0,0"
                         ClipToBounds="True"
                         Visibility="{Binding BrowserContainerVisibility}">
                     <views:WebBrowserUserControl x:Name="WebBrowser"/>
@@ -386,11 +386,8 @@
                             Style="{StaticResource DownloadIconButton}"
                             Command="{Binding RestartToApplyUpdateCommand}"
                             Visibility="{Binding ShowUpdateIcon, Converter={StaticResource BoolToVisibilityConverter}}"
-                            ToolTip="{loc:Text TopBar_UpdateReady_ToolTip}"
+                            AutomationProperties.Name="{loc:Text TopBar_UpdateReady_Bubble}"
                             WindowChrome.IsHitTestVisibleInChrome="True">
-                        <Button.Resources>
-                            <Style TargetType="ToolTip" BasedOn="{StaticResource CalloutToolTip}"/>
-                        </Button.Resources>
                         <Path Data="M8,2.5 L8,9.5 M4.5,6.5 L8,10 L11.5,6.5 M3.5,13 L12.5,13"
                               Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}"
                               StrokeThickness="1.6"
@@ -399,6 +396,51 @@
                               StrokeLineJoin="Round"
                               Width="16" Height="16"/>
                     </Button>
+
+                    <Canvas Grid.Column="2"
+                            Width="0"
+                            Height="0"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Bottom"
+                            IsHitTestVisible="False">
+                        <Grid Canvas.Right="-18"
+                              Margin="0,3,0,0"
+                              UseLayoutRounding="True">
+                            <Grid.Style>
+                                <Style TargetType="Grid">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                    <Style.Triggers>
+                                        <MultiDataTrigger>
+                                            <MultiDataTrigger.Conditions>
+                                                <Condition Binding="{Binding ShowUpdateIcon}" Value="True"/>
+                                                <Condition Binding="{Binding IsTopBarHidden}" Value="False"/>
+                                            </MultiDataTrigger.Conditions>
+                                            <Setter Property="Visibility" Value="Visible"/>
+                                        </MultiDataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Grid.Style>
+                            <Border Margin="0,6,0,0"
+                                    Background="#FF2A2A2A"
+                                    BorderBrush="#FF3A3A3A"
+                                    BorderThickness="1"
+                                    CornerRadius="6"
+                                    Padding="10,5">
+                                <TextBlock Text="{loc:Text TopBar_UpdateReady_Bubble}"
+                                           Foreground="#FFEAEAEA"
+                                           FontSize="12"/>
+                            </Border>
+                            <Path Width="12"
+                                  Height="7"
+                                  Margin="0,0,12,0"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Top"
+                                  Data="M0,7 L6,0 L12,7"
+                                  Fill="#FF2A2A2A"
+                                  Stroke="#FF3A3A3A"
+                                  StrokeThickness="1"/>
+                        </Grid>
+                    </Canvas>
 
                     <Button x:Name="SettingsButton"
                             Grid.Column="3"
@@ -459,6 +501,59 @@
             </Border>
             </Grid>
             </Border>
+        </Border>
+
+        <Border x:Name="RaidFocusHintBar"
+                Panel.ZIndex="900"
+                Margin="24,0,24,24"
+                VerticalAlignment="Bottom"
+                Padding="14,8"
+                CornerRadius="6"
+                Background="#EE141414"
+                BorderThickness="1"
+                IsHitTestVisible="False"
+                Opacity="0">
+            <Border.BorderBrush>
+                <SolidColorBrush Color="{StaticResource ActiveBorderColor}"/>
+            </Border.BorderBrush>
+            <Border.Style>
+                <Style TargetType="Border">
+                    <Style.Triggers>
+                        <DataTrigger Binding="{Binding IsRaidFocusHintVisible}" Value="True">
+                            <DataTrigger.EnterActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" To="1" Duration="0:0:0.15"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.EnterActions>
+                            <DataTrigger.ExitActions>
+                                <BeginStoryboard>
+                                    <Storyboard>
+                                        <DoubleAnimation Storyboard.TargetProperty="Opacity" To="0" Duration="0:0:0.2"/>
+                                    </Storyboard>
+                                </BeginStoryboard>
+                            </DataTrigger.ExitActions>
+                        </DataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </Border.Style>
+            <TextBlock Foreground="#FFFFFFFF"
+                       FontSize="13"
+                       FontWeight="SemiBold"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap">
+                <TextBlock.Style>
+                    <Style TargetType="TextBlock">
+                        <Setter Property="Text" Value="{loc:Text RaidFocus_Hint_PausePrompt}"/>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding RaidFocusHint}" Value="{x:Static utils:RaidFocusHint.Paused}">
+                                <Setter Property="Text" Value="{loc:Text RaidFocus_Hint_Paused}"/>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </TextBlock.Style>
+            </TextBlock>
         </Border>
 
         <Border x:Name="SettingsOverlay"

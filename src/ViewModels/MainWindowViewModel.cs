@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Threading;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Core.Data;
 using TanukiTarkovMap.Models.Services;
@@ -22,6 +23,36 @@ namespace TanukiTarkovMap.ViewModels
         private readonly MapEventService _mapEventService;
         private readonly GoonTrackerService _goonTrackerService;
         private AppSettings _settings;
+        private readonly GameWindowTracker _gameWindowTracker;
+        [ObservableProperty] public partial bool IsRaidFocusActive { get; set; }
+        [ObservableProperty] public partial RaidFocusHint RaidFocusHint { get; set; }
+        [ObservableProperty] public partial bool IsRaidFocusHintVisible { get; set; }
+        internal bool IsRaidFocusMove { get; set; }
+        internal Point? RaidFocusHomePosition { get; set; }
+        internal event EventHandler? WindowBoundsChangedByUser;
+
+        private void OnInRaidChanged(object? sender, bool inRaid)
+        {
+            var dispatcher = Application.Current?.Dispatcher;
+            if (dispatcher == null || dispatcher.HasShutdownStarted) return;
+            dispatcher.BeginInvoke(() =>
+            {
+                if (_mapEventService.IsInRaid && !_gameWindowTracker.State.IsRunning) _gameWindowTracker.RefreshGame();
+                UpdateRaidFocusState();
+            });
+        }
+
+        private void OnGameWindowChanged(object? sender, EventArgs e) => UpdateRaidFocusState();
+        private void UpdateRaidFocusState() => IsRaidFocusActive =
+            App.GetSettings().RaidFocusModeEnabled && _mapEventService.IsInRaid && _gameWindowTracker.State.CanTrack && _gameWindowTracker.State.IsRunning;
+
+        internal void StopRaidFocusTracking()
+        {
+            _mapEventService.InRaidChanged -= OnInRaidChanged;
+            _gameWindowTracker.StateChanged -= OnGameWindowChanged;
+            IsRaidFocusActive = false;
+        }
+
 
         [ObservableProperty] public partial double CurrentWindowWidth { get; set; }
         [ObservableProperty] public partial double CurrentWindowHeight { get; set; }
@@ -173,17 +204,22 @@ namespace TanukiTarkovMap.ViewModels
         public MainWindowViewModel(
             WindowStateManager windowStateManager,
             MapEventService mapEventService,
-            GoonTrackerService goonTrackerService)
+            GoonTrackerService goonTrackerService,
+            GameWindowTracker gameWindowTracker)
         {
             _windowStateManager = windowStateManager;
             _mapEventService = mapEventService;
             _goonTrackerService = goonTrackerService;
+            _gameWindowTracker = gameWindowTracker;
 
             LoadSettings();
             InitializeCommands();
             NotifyInitialMapSelection();
             SubscribeToMapEvents();
             SubscribeToGoonTrackerEvents();
+            _mapEventService.InRaidChanged += OnInRaidChanged;
+            _gameWindowTracker.StateChanged += OnGameWindowChanged;
+            UpdateRaidFocusState();
 
             WeakReferenceMessenger.Default.RegisterAll(this);
         }
@@ -270,6 +306,9 @@ namespace TanukiTarkovMap.ViewModels
             {
                 SelectedMapInfo = savedMap;
             }
+
+            UpdateRaidFocusState();
+            if (RaidFocusHomePosition.HasValue) return;
 
             var normalRect = _windowStateManager.NormalBounds;
             CurrentWindowWidth = normalRect.Width;
@@ -434,11 +473,36 @@ namespace TanukiTarkovMap.ViewModels
             CurrentWindowWidth = e.Bounds.Width;
             CurrentWindowHeight = e.Bounds.Height;
 
-            _windowStateManager.UpdateNormalBounds(new(e.Bounds.Left, e.Bounds.Top, e.Bounds.Width, e.Bounds.Height));
+            if (IsRaidFocusMove) return;
+            WindowBoundsChangedByUser?.Invoke(this, EventArgs.Empty);
+            var home = RaidFocusHomePosition;
+            _windowStateManager.UpdateNormalBounds(new(home?.X ?? e.Bounds.Left, home?.Y ?? e.Bounds.Top, e.Bounds.Width, e.Bounds.Height));
             var settings = App.GetSettings();
             _windowStateManager.SaveToSettings(settings);
             App.SetSettings(settings);
-            Settings.Save();
+            ScheduleBoundsSave();
+        }
+
+        private const int BoundsSaveDelayMs = 400;
+        private DispatcherTimer? _boundsSaveTimer;
+
+        private void ScheduleBoundsSave()
+        {
+            if (_boundsSaveTimer == null)
+            {
+                _boundsSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(BoundsSaveDelayMs) };
+                _boundsSaveTimer.Tick += (_, _) => FlushPendingBoundsSave();
+            }
+            _boundsSaveTimer.Stop();
+            _boundsSaveTimer.Start();
+        }
+
+        internal void FlushPendingBoundsSave()
+        {
+            if (_boundsSaveTimer?.IsEnabled != true) return;
+            _boundsSaveTimer.Stop();
+            try { Settings.Save(); }
+            catch (Exception ex) { Logger.Error("[MainWindowViewModel] Window bounds save failed", ex); }
         }
 
         partial void OnIsSettingsOpenChanged(bool value)

@@ -30,6 +30,8 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
         _hotkeyService = ServiceLocator.HotkeyService;
         AssociatedObject.Initialized += OnWindowInitialized;
         AssociatedObject.Loaded += OnWindowLoaded;
+        AssociatedObject.Closed += OnWindowClosed;
+        ServiceLocator.GameWindowTracker.GameExited += OnGameExited;
         if (AssociatedObject.IsInitialized)
         {
             InitializeWindow();
@@ -40,6 +42,8 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
     {
         AssociatedObject.Initialized -= OnWindowInitialized;
         AssociatedObject.Loaded -= OnWindowLoaded;
+        AssociatedObject.Closed -= OnWindowClosed;
+        ServiceLocator.GameWindowTracker.GameExited -= OnGameExited;
         WeakReferenceMessenger.Default.Unregister<HotkeySettingsChangedMessage>(this);
         _viewModel = null;
         _trayBehavior = null;
@@ -76,6 +80,7 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
         _trayBehavior = Interaction.GetBehaviors(window).OfType<TrayWindowBehavior>().FirstOrDefault();
         try
         {
+            ServiceLocator.GameWindowTracker.Start(window.Dispatcher);
             _hotkeyService!.Initialize(window, () => _trayBehavior?.ToggleVisibility());
             _hotkeyService.RegisterHotkey(_viewModel.HotkeyEnabled, _viewModel.HotkeyKey);
         }
@@ -83,6 +88,20 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
         {
             Logger.Error("Failed to initialize HotkeyService", ex);
         }
+    }
+
+    private void OnGameExited(object? sender, EventArgs e)
+    {
+        if (App.GetSettings().GameFocusHotkeyEnabled && (!AssociatedObject.IsVisible || AssociatedObject.WindowState == WindowState.Minimized))
+            _trayBehavior?.ShowFromTray();
+    }
+
+    private void OnWindowClosed(object? sender, EventArgs e)
+    {
+        _viewModel?.FlushPendingBoundsSave();
+        _viewModel?.StopRaidFocusTracking();
+        ServiceLocator.GameWindowTracker.GameExited -= OnGameExited;
+        ServiceLocator.GameWindowTracker.Dispose();
     }
 
     public void Receive(HotkeySettingsChangedMessage message)

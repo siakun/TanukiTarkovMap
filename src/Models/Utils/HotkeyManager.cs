@@ -1,17 +1,22 @@
 using TanukiTarkovMap.Core.Utils;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using TanukiTarkovMap.Behaviors;
 
 namespace TanukiTarkovMap.Models.Utils
 {
+
     public class HotkeyManager : IDisposable
     {
         private readonly Window _window;
+        public Func<bool>? CanHandleHotkey { get; set; }
         private IntPtr _hookID = IntPtr.Zero;
         private readonly PInvoke.LowLevelKeyboardProc _proc = HookCallback;
+        private Thread? _hookThread;
+        private uint _hookThreadId;
 
         private string _registeredKeyString;
         private uint _registeredVirtualKey;
@@ -60,8 +65,35 @@ namespace TanukiTarkovMap.Models.Utils
 
         private bool InstallHook()
         {
+            using var ready = new ManualResetEventSlim(false);
+            var thread = new Thread(() => RunHookThread(ready))
+            {
+                IsBackground = true,
+                Name = "LowLevelKeyboardHook",
+                Priority = ThreadPriority.Highest
+            };
+            _hookThread = thread;
+            thread.Start();
+
+            if (!ready.Wait(TimeSpan.FromSeconds(2)))
+            {
+                Logger.SimpleLog("Hook thread did not start in time");
+                return false;
+            }
+
+            bool success = _hookID != IntPtr.Zero;
+            Logger.SimpleLog($"Hook installed: {success}, HookID: {_hookID}");
+            Logger.SimpleLog($"Registered Key: {_registeredKeyString} (VK: 0x{_registeredVirtualKey:X2})");
+            return success;
+        }
+
+        private void RunHookThread(ManualResetEventSlim ready)
+        {
             try
             {
+                _hookThreadId = PInvoke.GetCurrentThreadId();
+                PInvoke.PeekMessage(out _, IntPtr.Zero, 0, 0, PInvoke.PM_NOREMOVE);
+
                 using (var curProcess = Process.GetCurrentProcess())
                 using (var curModule = curProcess.MainModule)
                 {
@@ -72,16 +104,29 @@ namespace TanukiTarkovMap.Models.Utils
                         0
                     );
                 }
-
-                bool success = _hookID != IntPtr.Zero;
-                Logger.SimpleLog($"Hook installed: {success}, HookID: {_hookID}");
-                Logger.SimpleLog($"Registered Key: {_registeredKeyString} (VK: 0x{_registeredVirtualKey:X2})");
-                return success;
             }
             catch (Exception ex)
             {
                 Logger.Error("InstallHook error", ex);
-                return false;
+            }
+            finally
+            {
+                ready.Set();
+            }
+
+            if (_hookID == IntPtr.Zero)
+                return;
+
+            try
+            {
+                while (PInvoke.GetMessage(out _, IntPtr.Zero, 0, 0) > 0)
+                {
+                }
+            }
+            finally
+            {
+                PInvoke.UnhookWindowsHookEx(_hookID);
+                _hookID = IntPtr.Zero;
             }
         }
 
@@ -95,10 +140,8 @@ namespace TanukiTarkovMap.Models.Utils
                     {
                         int vkCode = Marshal.ReadInt32(lParam);
 
-                        if (_instance.IsRegisteredHotkey((uint)vkCode))
+                        if (_instance.IsRegisteredHotkey((uint)vkCode) && (_instance.CanHandleHotkey?.Invoke() ?? true))
                         {
-                            Logger.SimpleLog("Hotkey matched! Executing action...");
-
                             _instance._window?.Dispatcher.BeginInvoke(_instance._registeredAction);
 
                             return (IntPtr)1;
@@ -151,7 +194,7 @@ namespace TanukiTarkovMap.Models.Utils
 
         private static bool IsKeyPressed(int vkCode)
         {
-            return (PInvoke.GetKeyState(vkCode) & 0x8000) != 0;
+            return (PInvoke.GetAsyncKeyState(vkCode) & 0x8000) != 0;
         }
 
         private (uint modifiers, uint virtualKey) ParseKeyString(string keyString)
@@ -207,10 +250,14 @@ namespace TanukiTarkovMap.Models.Utils
         {
             try
             {
-                if (_hookID != IntPtr.Zero)
+                var thread = _hookThread;
+                if (thread != null)
                 {
-                    PInvoke.UnhookWindowsHookEx(_hookID);
-                    _hookID = IntPtr.Zero;
+                    PInvoke.PostThreadMessage(_hookThreadId, PInvoke.WM_QUIT, IntPtr.Zero, IntPtr.Zero);
+                    if (!thread.Join(TimeSpan.FromSeconds(1)))
+                        Logger.SimpleLog("Hook thread did not stop in time");
+                    _hookThread = null;
+                    _hookThreadId = 0;
                 }
 
                 _registeredKeyString = null;
@@ -222,23 +269,6 @@ namespace TanukiTarkovMap.Models.Utils
                 _registeredAction = null;
             }
             catch (Exception) { }
-        }
-
-        public static bool IsValidKeyString(string keyString)
-        {
-            if (string.IsNullOrWhiteSpace(keyString))
-                return false;
-
-            try
-            {
-                var manager = new HotkeyManager(null);
-                var (modifiers, virtualKey) = manager.ParseKeyString(keyString);
-                return virtualKey != 0;
-            }
-            catch
-            {
-                return false;
-            }
         }
 
         public void Dispose()

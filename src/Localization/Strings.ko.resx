@@ -61,7 +61,7 @@
   <data name="TopBar_OpacitySlider_ToolTip" xml:space="preserve">
     <value>창 투명도 조절</value>
   </data>
-  <data name="TopBar_UpdateReady_ToolTip" xml:space="preserve">
+  <data name="TopBar_UpdateReady_Bubble" xml:space="preserve">
     <value>업데이트 준비 완료!</value>
   </data>
   <data name="Goons_Title" xml:space="preserve">
@@ -337,4 +337,10 @@
   <data name="MapOverlay_Unavailable" xml:space="preserve">
     <value>Online 위치 표시를 사용할 수 없습니다. Local로 전환해 위치를 확인해 주세요.</value>
   </data>
+  <data name="Settings_GameFocusHotkey_Enable" xml:space="preserve"><value>게임 포커스일 때만 단축키 사용</value></data>
+  <data name="Settings_GameFocusHotkey_Hint" xml:space="preserve"><value>타르코프나 이 지도 창에 포커스가 있을 때만 단축키가 동작하고, 다른 프로그램의 키 입력은 가로채지 않습니다. 게임을 끄면 숨겨 둔 지도가 다시 나타납니다.</value></data>
+  <data name="Settings_RaidFocus_Enable" xml:space="preserve"><value>레이드 집중 모드</value></data>
+  <data name="Settings_RaidFocus_Hint" xml:space="preserve"><value>레이드 중 게임과 지도가 같은 모니터에 있으면 마우스가 닿을 때 지도가 화면 반대편으로 비켜납니다. 그때 Alt 키를 누르면 일시중지되어 지도를 조작할 수 있고, 마우스가 지도를 벗어나면 다시 켜집니다. 인벤토리를 닫아 마우스가 화면 가운데로 돌아오면 지도가 원래 자리로 돌아옵니다.</value></data>
+  <data name="RaidFocus_Hint_PausePrompt" xml:space="preserve"><value>레이드 집중 모드를 일시중지하려면 Alt 키를 눌러 주세요</value></data>
+  <data name="RaidFocus_Hint_Paused" xml:space="preserve"><value>레이드 집중 모드가 일시중지되었습니다. 마우스가 지도를 벗어나면 다시 켜집니다</value></data>
 </root>

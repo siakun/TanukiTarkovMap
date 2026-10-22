@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -13,7 +14,12 @@ namespace TanukiTarkovMap.Behaviors
 {
     public class HotkeyInputBehavior : Behavior<Button>
     {
-        public static bool IsInInputMode { get; private set; } = false;
+        public static bool IsInInputMode
+        {
+            get => Volatile.Read(ref _isInInputMode);
+            private set => Volatile.Write(ref _isInInputMode, value);
+        }
+        private static bool _isInInputMode;
 
         private readonly SolidColorBrush _normalBrush = new(Color.FromRgb(0x3A, 0x3A, 0x3A));
         private readonly SolidColorBrush _inputModeBrush = new(Color.FromRgb(0x6A, 0x6A, 0x2A));

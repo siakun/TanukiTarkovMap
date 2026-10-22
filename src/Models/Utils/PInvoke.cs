@@ -4,6 +4,31 @@ namespace TanukiTarkovMap.Models.Utils
 {
     internal static class PInvoke
     {
+        internal delegate void WinEventProc(IntPtr hook, uint evt, IntPtr window, int obj, int child, uint thread, uint time);
+        [DllImport("user32.dll")]
+        internal static extern IntPtr SetWinEventHook(uint min, uint max, IntPtr module, WinEventProc callback, uint process, uint thread, uint flags);
+        [DllImport("user32.dll")]
+        internal static extern bool UnhookWinEvent(IntPtr hook);
+        [DllImport("user32.dll")]
+        internal static extern IntPtr GetForegroundWindow();
+        [DllImport("user32.dll")]
+        internal static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
+        [DllImport("user32.dll")]
+        internal static extern bool GetWindowRect(IntPtr window, out RECT rect);
+        [DllImport("user32.dll")]
+        internal static extern bool GetCursorInfo(ref CURSORINFO info);
+        [DllImport("user32.dll")]
+        internal static extern short GetAsyncKeyState(int key);
+        [DllImport("user32.dll")]
+        internal static extern bool GetClientRect(IntPtr window, out RECT rect);
+        [DllImport("user32.dll")]
+        internal static extern bool ClientToScreen(IntPtr window, ref POINT point);
+        [DllImport("user32.dll")]
+        internal static extern bool GetCursorPos(out POINT point);
+        internal const uint SWP_NOZORDER = 0x0004;
+        internal const uint EVENT_SYSTEM_FOREGROUND = 3;
+        internal const uint WINEVENT_OUTOFCONTEXT = 0;
+        internal const uint CURSOR_SHOWING = 1;
 
         [DllImport("user32.dll")]
         internal static extern bool ReleaseCapture();
@@ -68,11 +93,38 @@ namespace TanukiTarkovMap.Models.Utils
 
         internal delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
+        [DllImport("user32.dll")]
+        internal static extern int GetMessage(out MSG msg, IntPtr hWnd, uint filterMin, uint filterMax);
+
+        [DllImport("user32.dll")]
+        internal static extern bool PeekMessage(out MSG msg, IntPtr hWnd, uint filterMin, uint filterMax, uint remove);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool PostThreadMessage(uint threadId, uint msg, IntPtr wParam, IntPtr lParam);
+
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern IntPtr GetModuleHandle(string lpModuleName);
 
+        [DllImport("kernel32.dll")]
+        internal static extern uint GetCurrentThreadId();
+
         internal const int WM_NCLBUTTONDOWN = 0xA1;
         internal const int HT_CAPTION = 0x2;
+        internal const int WM_SIZING = 0x0214;
+        internal const int WM_MOVING = 0x0216;
+        internal const int WM_ENTERSIZEMOVE = 0x0231;
+        internal const int WM_EXITSIZEMOVE = 0x0232;
+        internal const uint WM_QUIT = 0x0012;
+        internal const uint PM_NOREMOVE = 0x0000;
+
+        internal const int WMSZ_LEFT = 1;
+        internal const int WMSZ_RIGHT = 2;
+        internal const int WMSZ_TOP = 3;
+        internal const int WMSZ_TOPLEFT = 4;
+        internal const int WMSZ_TOPRIGHT = 5;
+        internal const int WMSZ_BOTTOM = 6;
+        internal const int WMSZ_BOTTOMLEFT = 7;
+        internal const int WMSZ_BOTTOMRIGHT = 8;
 
         internal const int WH_KEYBOARD_LL = 13;
         internal const int WM_KEYDOWN = 0x0100;
@@ -97,6 +149,29 @@ namespace TanukiTarkovMap.Models.Utils
         internal const int ENUM_CURRENT_SETTINGS = -1;
         internal const int MDT_EFFECTIVE_DPI = 0;
 
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct POINT { public int X; public int Y; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct MSG
+    {
+        public IntPtr hwnd;
+        public uint message;
+        public IntPtr wParam;
+        public IntPtr lParam;
+        public uint time;
+        public POINT pt;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct CURSORINFO
+    {
+        public int cbSize;
+        public uint flags;
+        public IntPtr hCursor;
+        public POINT ptScreenPos;
     }
 
     [StructLayout(LayoutKind.Sequential)]

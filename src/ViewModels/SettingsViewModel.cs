@@ -122,6 +122,8 @@ namespace TanukiTarkovMap.ViewModels
             settings.ScreenshotMapSyncEnabled = ScreenshotMapSyncEnabled;
             settings.AutoUpdateEnabled = AutoUpdateEnabled;
             settings.PrereleaseEnabled = PrereleaseEnabled;
+            settings.GameFocusHotkeyEnabled = GameFocusHotkeyEnabled;
+            settings.RaidFocusModeEnabled = RaidFocusModeEnabled;
 
             App.SetSettings(settings);
             Settings.Save();
@@ -138,6 +140,7 @@ namespace TanukiTarkovMap.ViewModels
         {
             App.ResetSettings();
             LoadCurrentSettings();
+            WeakReferenceMessenger.Default.Send(new HotkeySettingsChangedMessage());
             ServiceLocator.RaidShareService.Configure(RaidShareSettings.From(App.GetSettings()));
         }
 
@@ -161,6 +164,8 @@ namespace TanukiTarkovMap.ViewModels
                 ScreenshotMapSyncEnabled = settings.ScreenshotMapSyncEnabled;
                 AutoUpdateEnabled = settings.AutoUpdateEnabled;
                 PrereleaseEnabled = settings.PrereleaseEnabled;
+                GameFocusHotkeyEnabled = settings.GameFocusHotkeyEnabled;
+                RaidFocusModeEnabled = settings.RaidFocusModeEnabled;
             }
             finally
             {
@@ -368,6 +373,11 @@ namespace TanukiTarkovMap.ViewModels
         }
 
         [ObservableProperty] public partial bool AutoUpdateEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool GameFocusHotkeyEnabled { get; set; } = true;
+        [ObservableProperty] public partial bool RaidFocusModeEnabled { get; set; } = false;
+        partial void OnGameFocusHotkeyEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
+        partial void OnRaidFocusModeEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
+
         [ObservableProperty] public partial bool PrereleaseEnabled { get; set; } = false;
 
         public ObservableCollection<VersionItem> AvailableVersions { get; } = new();
