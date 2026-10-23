@@ -5,11 +5,13 @@ using TanukiTarkovMap.Core.Utils;
 
 namespace TanukiTarkovMap.Models.Services
 {
+
     public class HotkeyService : IDisposable
     {
         private HotkeyManager? _hotkeyManager;
         private Window? _window;
         private Action? _hotkeyAction;
+        private Func<bool> _windowShown = () => true;
 
         private readonly GameWindowTracker _gameTracker;
         private volatile bool _gameFocusHotkeyEnabled = true;
@@ -18,17 +20,18 @@ namespace TanukiTarkovMap.Models.Services
         private bool CanHandleHotkey()
         {
             var state = _gameTracker.State;
-            return AllowsHotkey(_gameFocusHotkeyEnabled, state.CanTrack,
+            return AllowsHotkey(_windowShown(), _gameFocusHotkeyEnabled, state.CanTrack,
                 state.IsRunning, state.IsGameForeground, state.IsAppForeground);
         }
 
-        public static bool AllowsHotkey(bool enabled, bool canTrack, bool running, bool gameForeground, bool appForeground)
-            => !enabled || !canTrack || (running && (gameForeground || appForeground));
+        public static bool AllowsHotkey(bool windowShown, bool enabled, bool canTrack, bool running, bool gameForeground, bool appForeground)
+            => !windowShown || !enabled || !canTrack || (running && (gameForeground || appForeground));
 
-        public void Initialize(Window window, Action hotkeyAction)
+        public void Initialize(Window window, Action hotkeyAction, Func<bool> windowShown)
         {
             _window = window;
             _hotkeyAction = hotkeyAction;
+            _windowShown = windowShown;
             _hotkeyManager = new HotkeyManager(window) { CanHandleHotkey = CanHandleHotkey };
 
             Logger.SimpleLog("[HotkeyService] Initialized");

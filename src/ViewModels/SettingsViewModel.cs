@@ -75,6 +75,8 @@ namespace TanukiTarkovMap.ViewModels
 
         public string SettingsFilePath => AppPaths.SettingsFilePath;
 
+        public AppSettings Defaults { get; } = new();
+
         public SettingsViewModel()
         {
             LoadCurrentSettings();

@@ -2,6 +2,7 @@ using System.Runtime.InteropServices;
 
 namespace TanukiTarkovMap.Models.Utils
 {
+
     internal static class PInvoke
     {
         internal delegate void WinEventProc(IntPtr hook, uint evt, IntPtr window, int obj, int child, uint thread, uint time);
@@ -71,6 +72,9 @@ namespace TanukiTarkovMap.Models.Utils
         [DllImport("shcore.dll")]
         internal static extern int GetDpiForMonitor(IntPtr hmonitor, int dpiType, out uint dpiX, out uint dpiY);
 
+        [DllImport("user32.dll")]
+        internal static extern uint GetDpiForWindow(IntPtr hwnd);
+
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern IntPtr SetWindowsHookEx(
             int idHook,
@@ -116,6 +120,7 @@ namespace TanukiTarkovMap.Models.Utils
         internal const int WM_EXITSIZEMOVE = 0x0232;
         internal const uint WM_QUIT = 0x0012;
         internal const uint PM_NOREMOVE = 0x0000;
+        internal const int WM_GETDPISCALEDSIZE = 0x02E4;
 
         internal const int WMSZ_LEFT = 1;
         internal const int WMSZ_RIGHT = 2;

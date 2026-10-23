@@ -7,12 +7,24 @@
              xmlns:vm="clr-namespace:TanukiTarkovMap.ViewModels"
              xmlns:behaviors="clr-namespace:TanukiTarkovMap.Behaviors"
              xmlns:loc="clr-namespace:TanukiTarkovMap.Localization"
+             xmlns:views="clr-namespace:TanukiTarkovMap.Views"
              mc:Ignorable="d"
              d:DesignHeight="460" d:DesignWidth="620"
              Background="#FF000000">
     <UserControl.DataContext>
         <vm:SettingsViewModel/>
     </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <Style x:Key="SettingToggleLabel" TargetType="TextBlock">
+            <Setter Property="Margin" Value="0,0,6,0"/>
+        </Style>
+        <Style TargetType="views:DefaultValueNotice">
+            <Setter Property="Foreground" Value="#FF888888"/>
+            <Setter Property="FontSize" Value="8"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Resources>
 
     <ScrollViewer Style="{StaticResource OverlayScrollViewer}"
                   VerticalScrollBarVisibility="Auto"
@@ -142,10 +154,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox IsChecked="{Binding HotkeyEnabled}"
-                                  Content="{loc:Text Settings_Hotkey_Enable}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_Hotkey_Enable}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding HotkeyEnabled}" DefaultValue="{Binding Defaults.HotkeyEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Hotkey_TrayHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -207,10 +223,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox IsChecked="{Binding AutoDeleteLogs}"
-                                  Content="{loc:Text Settings_Cleanup_Logs}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_Cleanup_Logs}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding AutoDeleteLogs}" DefaultValue="{Binding Defaults.autoDeleteLogs}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Cleanup_LogsHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -219,10 +239,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding AutoDeleteScreenshots}"
-                                  Content="{loc:Text Settings_Cleanup_Screenshots}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_Cleanup_Screenshots}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding AutoDeleteScreenshots}" DefaultValue="{Binding Defaults.autoDeleteScreenshots}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Cleanup_ScreenshotsHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -244,10 +268,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding AutoMapSwitchEnabled}"
-                                  Content="{loc:Text Settings_AutoMap_RaidEntry}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_AutoMap_RaidEntry}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding AutoMapSwitchEnabled}" DefaultValue="{Binding Defaults.AutoMapSwitchEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_AutoMap_RaidEntryHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -256,10 +284,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding ScreenshotMapSyncEnabled}"
-                                  Content="{loc:Text Settings_AutoMap_Screenshot}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_AutoMap_Screenshot}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding ScreenshotMapSyncEnabled}" DefaultValue="{Binding Defaults.ScreenshotMapSyncEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_AutoMap_ScreenshotHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -282,10 +314,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding GoonTrackerEnabled}"
-                                  Content="{loc:Text Settings_Goons_Enable}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_Goons_Enable}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding GoonTrackerEnabled}" DefaultValue="{Binding Defaults.GoonTrackerEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Goons_Hint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -396,10 +432,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,8">
                         <CheckBox IsChecked="{Binding AutoUpdateEnabled}"
-                                  Content="{loc:Text Settings_Update_Auto}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_Update_Auto}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding AutoUpdateEnabled}" DefaultValue="{Binding Defaults.AutoUpdateEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Update_AutoHint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -545,10 +585,14 @@
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding PrereleaseEnabled}"
-                                  Content="{loc:Text Settings_Beta_Enable}"
                                   Foreground="White"
                                   FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_Beta_Enable}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding PrereleaseEnabled}" DefaultValue="{Binding Defaults.PrereleaseEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Beta_Hint}"
                                    Foreground="#FF888888"
                                    FontSize="8"
@@ -562,15 +606,23 @@
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding GameFocusHotkeyEnabled}"
-                                  Content="{loc:Text Settings_GameFocusHotkey_Enable}"
-                                  Foreground="White" FontSize="10" HorizontalAlignment="Left"/>
+                                  Foreground="White" FontSize="10" HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_GameFocusHotkey_Enable}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding GameFocusHotkeyEnabled}" DefaultValue="{Binding Defaults.GameFocusHotkeyEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_GameFocusHotkey_Hint}"
                                    Foreground="#FF888888" FontSize="8" Margin="18,2,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <CheckBox IsChecked="{Binding RaidFocusModeEnabled}"
-                                  Content="{loc:Text Settings_RaidFocus_Enable}"
-                                  Foreground="White" FontSize="10" HorizontalAlignment="Left"/>
+                                  Foreground="White" FontSize="10" HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <TextBlock Text="{loc:Text Settings_RaidFocus_Enable}" Style="{StaticResource SettingToggleLabel}"/>
+                                <views:DefaultValueNotice Value="{Binding RaidFocusModeEnabled}" DefaultValue="{Binding Defaults.RaidFocusModeEnabled}"/>
+                            </WrapPanel>
+                        </CheckBox>
                         <TextBlock Text="{loc:Text Settings_RaidFocus_Hint}"
                                    Foreground="#FF888888" FontSize="8" Margin="18,2,0,0" TextWrapping="Wrap"/>
                     </StackPanel>

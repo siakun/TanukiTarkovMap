@@ -271,6 +271,12 @@
   <data name="Settings_Experimental_Title" xml:space="preserve">
     <value>試験的な機能</value>
   </data>
+  <data name="Settings_Default_On" xml:space="preserve">
+    <value>初期値：オン</value>
+  </data>
+  <data name="Settings_Default_Off" xml:space="preserve">
+    <value>初期値：オフ</value>
+  </data>
   <data name="Settings_Beta_Enable" xml:space="preserve">
     <value>ベータ版を受け取る</value>
   </data>
@@ -337,8 +343,8 @@
   <data name="MapOverlay_Unavailable" xml:space="preserve">
     <value>Onlineで位置を表示できません。Localに切り替えて位置を確認してください。</value>
   </data>
-  <data name="Settings_GameFocusHotkey_Enable" xml:space="preserve"><value>ゲームにフォーカスがあるときだけショートカットを使用</value></data>
-  <data name="Settings_GameFocusHotkey_Hint" xml:space="preserve"><value>タルコフが起動中で、タルコフまたはこの地図アプリにフォーカスがあるときだけショートカットが動作し、ほかのアプリのキー入力を妨げません。ゲームを終了すると、隠れていた地図が再表示されます。</value></data>
+  <data name="Settings_GameFocusHotkey_Enable" xml:space="preserve"><value>ゲームにフォーカスがあるときだけショートカットで隠す</value></data>
+  <data name="Settings_GameFocusHotkey_Hint" xml:space="preserve"><value>タルコフが起動中で、タルコフまたはこの地図アプリにフォーカスがあるときだけショートカットで地図を隠します。地図が表示されている間、ほかのアプリで押したキーはそのアプリにそのまま届きます。隠した地図はどのウィンドウからでもショートカットで再び表示でき、ゲームを終了したときも自動で表示されます。</value></data>
   <data name="Settings_RaidFocus_Enable" xml:space="preserve"><value>レイド集中モード</value></data>
   <data name="Settings_RaidFocus_Hint" xml:space="preserve"><value>レイド中、ゲームと地図が同じモニターにある場合、マウスが触れると地図が画面の反対側へ移動します。そのときAltキーを押すと一時停止して地図を操作でき、マウスが地図から離れると再び有効になります。インベントリを閉じてマウスが画面中央に戻ると、地図は元の位置に戻ります。</value></data>
   <data name="RaidFocus_Hint_PausePrompt" xml:space="preserve"><value>レイド集中モードを一時停止するにはAltキーを押してください</value></data>

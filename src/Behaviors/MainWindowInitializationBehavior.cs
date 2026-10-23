@@ -1,9 +1,11 @@
 using System.Windows;
+using System.Windows.Interop;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Xaml.Behaviors;
 using TanukiTarkovMap.Core.Utils;
 using TanukiTarkovMap.Messages;
 using TanukiTarkovMap.Models.Services;
+using TanukiTarkovMap.Models.Utils;
 using TanukiTarkovMap.ViewModels;
 
 namespace TanukiTarkovMap.Behaviors;
@@ -13,6 +15,7 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
     private MainWindowViewModel? _viewModel;
     private HotkeyService? _hotkeyService;
     private TrayWindowBehavior? _trayBehavior;
+    private Rect _requestedBounds;
 
     public static readonly DependencyProperty LoadingPanelNameProperty =
         DependencyProperty.Register(nameof(LoadingPanelName), typeof(string), typeof(MainWindowInitializationBehavior),
@@ -29,6 +32,7 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
         base.OnAttached();
         _hotkeyService = ServiceLocator.HotkeyService;
         AssociatedObject.Initialized += OnWindowInitialized;
+        AssociatedObject.SourceInitialized += OnSourceInitialized;
         AssociatedObject.Loaded += OnWindowLoaded;
         AssociatedObject.Closed += OnWindowClosed;
         ServiceLocator.GameWindowTracker.GameExited += OnGameExited;
@@ -41,6 +45,7 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
     protected override void OnDetaching()
     {
         AssociatedObject.Initialized -= OnWindowInitialized;
+        AssociatedObject.SourceInitialized -= OnSourceInitialized;
         AssociatedObject.Loaded -= OnWindowLoaded;
         AssociatedObject.Closed -= OnWindowClosed;
         ServiceLocator.GameWindowTracker.GameExited -= OnGameExited;
@@ -61,8 +66,21 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
         window.Height = _viewModel.CurrentWindowHeight;
         window.Left = _viewModel.CurrentWindowLeft;
         window.Top = _viewModel.CurrentWindowTop;
+        _requestedBounds = new Rect(window.Left, window.Top, window.Width, window.Height);
         Logger.SimpleLog($"[Constructor] Set window size explicitly: {window.Width}x{window.Height} at ({window.Left}, {window.Top})");
         WeakReferenceMessenger.Default.Register(this);
+    }
+
+    private void OnSourceInitialized(object? sender, EventArgs e)
+    {
+        try
+        {
+            MonitorLayout.RestoreWindow(new WindowInteropHelper(AssociatedObject).Handle, _requestedBounds);
+        }
+        catch (Exception ex)
+        {
+            Logger.Error("[MainWindowInitializationBehavior] Failed to place window on its monitor", ex);
+        }
     }
 
     private void OnWindowLoaded(object sender, RoutedEventArgs e)
@@ -81,7 +99,7 @@ public sealed class MainWindowInitializationBehavior : Behavior<Window>, IRecipi
         try
         {
             ServiceLocator.GameWindowTracker.Start(window.Dispatcher);
-            _hotkeyService!.Initialize(window, () => _trayBehavior?.ToggleVisibility());
+            _hotkeyService!.Initialize(window, () => _trayBehavior?.ToggleVisibility(), () => _trayBehavior?.IsWindowShown ?? true);
             _hotkeyService.RegisterHotkey(_viewModel.HotkeyEnabled, _viewModel.HotkeyKey);
         }
         catch (Exception ex)

@@ -1,5 +1,6 @@
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Interop;
 using System.Windows.Media;
 using CommunityToolkit.Mvvm.Messaging;
 using Microsoft.Xaml.Behaviors;
@@ -10,11 +11,15 @@ using TanukiTarkovMap.ViewModels;
 
 namespace TanukiTarkovMap.Behaviors
 {
+
     public class TrayWindowBehavior : Behavior<Window>
     {
         private MainWindowViewModel? _viewModel;
         private TranslateTransform? _topBarTransform;
         private Border? _browserContainer;
+        private volatile bool _windowShown;
+
+        public bool IsWindowShown => _windowShown;
 
         public static readonly DependencyProperty TopBarTransformNameProperty =
             DependencyProperty.Register(
@@ -46,12 +51,43 @@ namespace TanukiTarkovMap.Behaviors
         {
             base.OnAttached();
             AssociatedObject.Loaded += OnWindowLoaded;
+            AssociatedObject.IsVisibleChanged += OnIsVisibleChanged;
+            AssociatedObject.StateChanged += OnStateChanged;
         }
 
         protected override void OnDetaching()
         {
             AssociatedObject.Loaded -= OnWindowLoaded;
+            AssociatedObject.IsVisibleChanged -= OnIsVisibleChanged;
+            AssociatedObject.StateChanged -= OnStateChanged;
             base.OnDetaching();
+        }
+
+        private void OnIsVisibleChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            _windowShown = IsShown();
+            if (e.NewValue is true) KeepWindowOnScreen();
+        }
+
+        private void OnStateChanged(object? sender, EventArgs e)
+        {
+            _windowShown = IsShown();
+            KeepWindowOnScreen();
+        }
+
+        private bool IsShown() => AssociatedObject.IsVisible && AssociatedObject.WindowState != WindowState.Minimized;
+
+        private void KeepWindowOnScreen()
+        {
+            if (!AssociatedObject.IsVisible || AssociatedObject.WindowState != WindowState.Normal) return;
+            try
+            {
+                MonitorLayout.KeepWindowOnScreen(new WindowInteropHelper(AssociatedObject).Handle);
+            }
+            catch (Exception ex)
+            {
+                Logger.Error("[TrayWindowBehavior] Failed to keep window on screen", ex);
+            }
         }
 
         private void OnWindowLoaded(object sender, RoutedEventArgs e)
@@ -123,7 +159,7 @@ namespace TanukiTarkovMap.Behaviors
 
         public void ToggleVisibility()
         {
-            if (AssociatedObject.IsVisible && AssociatedObject.WindowState != WindowState.Minimized)
+            if (IsShown())
             {
                 HideToTray();
             }
