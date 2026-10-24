@@ -23,6 +23,10 @@ namespace TanukiTarkovMap.Messages
         public ViewModeChangedMessage(MapViewMode value) : base(value) { }
     }
 
+    public class ViewModeSelectorChangedMessage
+    {
+    }
+
     public class HotkeySettingsChangedMessage
     {
     }

@@ -171,6 +171,7 @@
                                 Background="#FF3A3A3A"
                                 CornerRadius="3"
                                 Height="16"
+                                Visibility="{Binding IsViewModeSelectorVisible, Converter={StaticResource BoolToVisibilityConverter}}"
                                 WindowChrome.IsHitTestVisibleInChrome="True">
                             <Grid>
                                 <Grid.ColumnDefinitions>
@@ -231,7 +232,32 @@
                             </Grid>
                         </Border>
 
-                        <Border Margin="8,0,0,0"
+                        <TextBlock Text="🔍"
+                                   Foreground="#FF888888"
+                                   VerticalAlignment="Center"
+                                   Margin="16,0,4,0"
+                                   FontSize="12"
+                                   WindowChrome.IsHitTestVisibleInChrome="True"/>
+                        <ComboBox x:Name="ZoomSelector"
+                                  ItemsSource="{Binding AvailableZoomLevels}"
+                                  SelectedItem="{Binding SelectedZoomLevel, Mode=TwoWay}"
+                                  Style="{StaticResource DarkComboBox}"
+                                  Width="60"
+                                  Height="18"
+                                  FontSize="10"
+                                  Foreground="White"
+                                  WindowChrome.IsHitTestVisibleInChrome="True">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <TextBlock Text="{Binding StringFormat={}{0}%}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+
+                        <Border Margin="16,0,0,0"
                                 Background="#FF3A3A3A"
                                 CornerRadius="3"
                                 Height="16"
@@ -279,31 +305,6 @@
                                 </Border>
                             </Grid>
                         </Border>
-
-                        <TextBlock Text="🔍"
-                                   Foreground="#FF888888"
-                                   VerticalAlignment="Center"
-                                   Margin="16,0,4,0"
-                                   FontSize="12"
-                                   WindowChrome.IsHitTestVisibleInChrome="True"/>
-                        <ComboBox x:Name="ZoomSelector"
-                                  ItemsSource="{Binding AvailableZoomLevels}"
-                                  SelectedItem="{Binding SelectedZoomLevel, Mode=TwoWay}"
-                                  Style="{StaticResource DarkComboBox}"
-                                  Width="60"
-                                  Height="18"
-                                  FontSize="10"
-                                  Foreground="White"
-                                  WindowChrome.IsHitTestVisibleInChrome="True">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <TextBlock Text="{Binding StringFormat={}{0}%}"/>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                            <ComboBox.ItemContainerStyle>
-                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
-                            </ComboBox.ItemContainerStyle>
-                        </ComboBox>
 
                         <CheckBox x:Name="HideWebElementsCheckBox"
                                   IsChecked="{Binding HideWebElements, Mode=TwoWay}"

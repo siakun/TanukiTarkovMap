@@ -341,12 +341,14 @@
     <value>View on GitHub</value>
   </data>
   <data name="MapOverlay_Unavailable" xml:space="preserve">
-    <value>Online position unavailable. Switch to Local to see your position.</value>
+    <value>Online position unavailable. Switch to Local in the top bar to see your position. You can turn on the Local button under Experimental features in Settings.</value>
   </data>
   <data name="Settings_GameFocusHotkey_Enable" xml:space="preserve"><value>Hide with the hotkey only while the game is focused</value></data>
   <data name="Settings_GameFocusHotkey_Hint" xml:space="preserve"><value>The hotkey hides the map only while Tarkov is running and Tarkov or this map app is focused. While the map is visible, other programs keep receiving that key. A hidden map comes back with the hotkey from any window, and closing the game also brings it back.</value></data>
   <data name="Settings_RaidFocus_Enable" xml:space="preserve"><value>Raid focus mode</value></data>
   <data name="Settings_RaidFocus_Hint" xml:space="preserve"><value>During a raid, if the game and map are on the same monitor, the map moves to the opposite side when the mouse touches it. Press Alt at that moment to pause and interact with the map; it turns back on when the mouse leaves the map. When you close the inventory and the mouse returns to the center of the screen, the map moves back to its original place.</value></data>
+  <data name="Settings_ViewModeSelector_Enable" xml:space="preserve"><value>Show view modes (Online, Local, Origin) in the top bar</value></data>
+  <data name="Settings_ViewModeSelector_Hint" xml:space="preserve"><value>Adds Online, Local, and Origin buttons to the top bar so you can choose how the map opens. Local opens the map bundled with the app and keeps showing your position and direction even if the site changes or is down. Origin opens the site as it is, without the app's changes. When this is off, the map opens in Online.</value></data>
   <data name="RaidFocus_Hint_PausePrompt" xml:space="preserve"><value>Press Alt to pause raid focus mode</value></data>
   <data name="RaidFocus_Hint_Paused" xml:space="preserve"><value>Raid focus mode is paused. It turns back on when the mouse leaves the map</value></data>
 </root>

@@ -12,8 +12,21 @@ function wheelMultiplier(event) {
   return 1 - Math.sign(delta) * Math.min(0.25, Math.abs(delta) / 128);
 }
 
-export function createCamera({ container, wrap, minZoom, maxZoom, terrainBounds, onChange, onAltWheel }) {
+export function createCamera({ container, wrap, minZoom, maxZoom, terrainBounds, onChange, onAltWheel, rotation = 0, mapSize }) {
   const view = { x: 0, y: 0, zoom: 1 };
+  const [a, b, c, d, e, f] = rotation === 90 ? [0, 1, -1, 0, mapSize.height, 0]
+    : rotation === 180 ? [-1, 0, 0, -1, mapSize.width, mapSize.height]
+      : rotation === 270 ? [0, -1, 1, 0, 0, mapSize.width] : [1, 0, 0, 1, 0, 0];
+  const rotatePoint = ({ x, y }) => ({ x: a * x + c * y + e, y: b * x + d * y + f });
+
+  function viewBounds() {
+    const bounds = terrainBounds();
+    if (!bounds || rotation === 0) return bounds;
+    const first = rotatePoint({ x: bounds.left, y: bounds.top });
+    const last = rotatePoint({ x: bounds.right, y: bounds.bottom });
+    return { left: Math.min(first.x, last.x), top: Math.min(first.y, last.y),
+      right: Math.max(first.x, last.x), bottom: Math.max(first.y, last.y) };
+  }
   let animation = 0;
   let drag = null;
   let lastSize = { width: container.clientWidth, height: container.clientHeight };
@@ -23,7 +36,7 @@ export function createCamera({ container, wrap, minZoom, maxZoom, terrainBounds,
   }
 
   function keepTerrainCentered() {
-    const bounds = terrainBounds();
+    const bounds = viewBounds();
     if (!bounds) return;
     const { width, height } = viewSize();
     const terrainWidth = (bounds.right - bounds.left) * view.zoom;
@@ -36,7 +49,7 @@ export function createCamera({ container, wrap, minZoom, maxZoom, terrainBounds,
 
   function render() {
     keepTerrainCentered();
-    wrap.style.transform = `matrix(${view.zoom}, 0, 0, ${view.zoom}, ${view.x}, ${view.y})`;
+    wrap.style.transform = `matrix(${a * view.zoom}, ${b * view.zoom}, ${c * view.zoom}, ${d * view.zoom}, ${view.x + e * view.zoom}, ${view.y + f * view.zoom})`;
     onChange();
   }
 
@@ -56,7 +69,7 @@ export function createCamera({ container, wrap, minZoom, maxZoom, terrainBounds,
 
   function fit() {
     stopAnimation();
-    const bounds = terrainBounds();
+    const bounds = viewBounds();
     const { width, height } = viewSize();
     if (!bounds || !width || !height) return;
     const terrainWidth = bounds.right - bounds.left, terrainHeight = bounds.bottom - bounds.top;
@@ -68,6 +81,7 @@ export function createCamera({ container, wrap, minZoom, maxZoom, terrainBounds,
 
   function centerOn(point) {
     stopAnimation();
+    point = rotatePoint(point);
     const { width, height } = viewSize();
     const from = { x: view.x, y: view.y };
     const to = { x: width / 2 - point.x * view.zoom, y: height / 2 - point.y * view.zoom };
@@ -84,6 +98,7 @@ export function createCamera({ container, wrap, minZoom, maxZoom, terrainBounds,
   }
 
   function toScreen(point) {
+    point = rotatePoint(point);
     return { x: view.x + point.x * view.zoom, y: view.y + point.y * view.zoom };
   }
 

@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <DefaultItemExcludes>$(DefaultItemExcludes);tests/**;packages/**</DefaultItemExcludes>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Version>0.4.4</Version>
+    <Version>0.4.5</Version>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -27,7 +27,7 @@
   <ItemGroup>
     <Folder Include="ViewModels\" />
     <ProjectReference Include="$(TanukiCoreProject)" Condition="'$(TanukiCoreProject)' != ''" />
-    <PackageReference Include="TanukiTarkovMap.Core" Version="[0.4.4]" Condition="'$(TanukiCoreProject)' == ''" />
+    <PackageReference Include="TanukiTarkovMap.Core" Version="[0.4.5]" Condition="'$(TanukiCoreProject)' == ''" />
   </ItemGroup>
 
   <ItemGroup>

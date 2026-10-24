@@ -34,9 +34,9 @@ If you would rather not install it, download the portable version (`TanukiTarkov
 1. Launch TanukiTarkovMap. The game's screenshot folder is detected automatically, and you can set it yourself in Settings if needed.
 2. When you start the game, the app switches to the map you entered automatically.
 3. During the game, show or hide the map window with the hotkey (`F11` by default, configurable in Settings). The hotkey hides the map window only while the game is running and the game or the map window has focus, so other programs still receive that key while the map window is visible. A hidden map window comes back with the hotkey from any window, and closing the game brings it back automatically (the hide restriction is an experimental feature you can turn off in Settings).
-4. Press the in-game screenshot key (`PrtScn` by default) to update your position and direction in Online or Local. If Online reports that position tracking is unavailable, switch to Local in the top bar.
+4. Press the in-game screenshot key (`PrtScn` by default) to update your position and direction in Online or Local. If Online reports that position tracking is unavailable, switch to Local in the top bar (if the top bar shows no view modes, turn them on in Settings first).
 
-Choose a view mode in the top bar. `Online` opens tarkov-market.com focused on the map and overlays your position and direction, `Local` shows your current position and direction on the map bundled with the app, and `Origin` opens the site as it is, without the app's changes. In `Origin`, `PMC`/`SCAV` and "Hide UI elements" do not apply. The mode you choose is kept the next time you launch the app.
+The map opens in `Online` by default. Turn on "Show view modes (Online, Local, Origin) in the top bar" under "Experimental features" in Settings to choose a view mode in the top bar. `Online` opens tarkov-market.com focused on the map and overlays your position and direction, `Local` shows your current position and direction on the map bundled with the app, and `Origin` opens the site as it is, without the app's changes. In `Origin`, `PMC`/`SCAV` and "Hide UI elements" do not apply. The mode you choose is kept the next time you launch the app, and turning the setting off opens the map in `Online` again.
 
 The show/hide hotkey hides the whole minimap window to the tray or shows it again; it does not close the app. To update your position, use the game's Screenshot key. To keep the map above the game on a single monitor, turn on the pin (always on top) in the top bar.
 
@@ -52,7 +52,7 @@ In Settings, you can change the hotkey, opacity, UI visibility, automatic map sw
 |---------|-------------|
 | Map overlay | Interactive map that always stays on top of the game (Always-on-Top) |
 | Real-time position tracking | Updates position and direction in Online and Local from in-game screenshots |
-| View modes | Switches in the top bar between Online (the site with position and direction), Local (the bundled map with position and direction), and Origin (the original site) |
+| View modes | Switches in the top bar between Online (the site with position and direction), Local (the bundled map with position and direction), and Origin (the original site) (experimental, off by default; Online when off) |
 | Automatic map switching | Detects the map you entered from the game log and switches to it |
 | Global hotkey toggle | Shows or hides the map window with one hotkey (`F11` by default); supports modifier and special keys. Hides only while the game or the map window has focus (experimental, on by default) and shows from any window |
 | Raid focus mode | During a raid, the map window moves to the opposite side when the mouse touches it on the game's monitor; press Alt at that moment to pause and use it, and the map returns to its place when you close the inventory (experimental, off by default) |

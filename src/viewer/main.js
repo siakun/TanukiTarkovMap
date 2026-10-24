@@ -9,6 +9,10 @@ const REVEAL_INSET = 0.15;
 
 const DEFAULT_TEAMMATE_COLOR = '#e53935';
 
+const requestedRotation = Number(new URLSearchParams(location.search).get('rotation'));
+const rotation = Number.isFinite(requestedRotation) && requestedRotation % 90 === 0
+  ? ((requestedRotation % 360) + 360) % 360 : 0;
+
 const elements = {
   container: document.getElementById('mapCont'),
   wrap: document.getElementById('mapWrap'),
@@ -56,6 +60,11 @@ function insertTerrain(svgText) {
   const root = parsed.documentElement;
   if (root.localName !== 'svg' || parsed.querySelector('parsererror')) throw new ViewerError('terrainInvalid');
   const svg = document.importNode(root, true);
+  if (rotation) {
+    for (const group of new Set([...svg.querySelectorAll('text')].map(text => text.parentElement))) {
+      group.setAttribute('transform', `${group.getAttribute('transform') ?? ''} rotate(${-rotation})`);
+    }
+  }
   elements.wrap.replaceChildren(svg);
   return svg;
 }
@@ -142,7 +151,7 @@ function showPosition(filename) {
   const level = levels.levelAt(position.x, position.y, position.z);
   if (level && level !== levels.selected) levels.select(level);
   const point = gamePositionToMapPosition(position.x, position.y, meta.transform);
-  player.show(point, gameDirectionToMapDirection(position.look, meta.transform));
+  player.show(point, (gameDirectionToMapDirection(position.look, meta.transform) + rotation) % 360);
 
   const screen = camera.toScreen(point);
   const { width, height } = camera.viewSize();
@@ -163,7 +172,7 @@ function renderTeammates() {
         id, name: String(name ?? ''),
         color: /^#[0-9a-fA-F]{6}$/.test(color) ? color : DEFAULT_TEAMMATE_COLOR,
         position: gamePositionToMapPosition(x, y, meta.transform),
-        direction: gameDirectionToMapDirection(look, meta.transform), otherLevel: level !== null && level !== levels.selected,
+        direction: (gameDirectionToMapDirection(look, meta.transform) + rotation) % 360, otherLevel: level !== null && level !== levels.selected,
       }];
     }));
   } catch (error) {
@@ -226,6 +235,7 @@ async function initialize() {
     wrap: elements.wrap,
     minZoom: meta.minZoom,
     maxZoom: meta.maxZoom,
+    rotation, mapSize: meta.size,
     terrainBounds: levels.terrainBounds,
     onChange() { extractions?.redraw(); player?.place(); teammates?.place(); },
     onAltWheel: levels.step,

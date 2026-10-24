@@ -15,6 +15,7 @@ namespace TanukiTarkovMap.ViewModels
 {
     public partial class MainWindowViewModel : ObservableObject,
         IRecipient<TopBarHiddenChangedMessage>,
+        IRecipient<ViewModeSelectorChangedMessage>,
         IRecipient<OpacitySliderDragMessage>,
         IRecipient<UpdateReadyMessage>,
         IRecipient<UpdateIconPreviewMessage>
@@ -158,6 +159,8 @@ namespace TanukiTarkovMap.ViewModels
         [NotifyPropertyChangedFor(nameof(IsOnlineMode), nameof(IsLocalMode), nameof(IsOriginMode), nameof(AreMapControlsEnabled))]
         public partial MapViewMode ViewMode { get; set; } = MapViewMode.Online;
 
+        [ObservableProperty] public partial bool IsViewModeSelectorVisible { get; set; } = false;
+
         public bool IsOnlineMode => ViewMode == MapViewMode.Online;
         public bool IsLocalMode => ViewMode == MapViewMode.Local;
         public bool IsOriginMode => ViewMode == MapViewMode.Origin;
@@ -298,8 +301,8 @@ namespace TanukiTarkovMap.ViewModels
             _windowOpacity = _settings.WindowOpacity > 0 ? _settings.WindowOpacity : 1.0;
             OnPropertyChanged(nameof(WindowOpacity));
 
-            ViewMode = _settings.EffectiveViewMode;
-            Logger.SimpleLog($"[LoadSettings] View mode: {ViewMode} (saved: '{_settings.ViewMode}')");
+            ApplyViewModeSettings(_settings);
+            Logger.SimpleLog($"[LoadSettings] View mode: {ViewMode} (saved: '{_settings.ViewMode}', selector: {IsViewModeSelectorVisible})");
 
             var savedMap = MapNavigation.InitialMap(_settings);
             if (savedMap != null)
@@ -461,6 +464,12 @@ namespace TanukiTarkovMap.ViewModels
             WeakReferenceMessenger.Default.Send(new ViewModeChangedMessage(ViewMode));
         }
 
+        private void ApplyViewModeSettings(AppSettings settings)
+        {
+            IsViewModeSelectorVisible = settings.ViewModeSelectorEnabled;
+            ViewMode = settings.EffectiveViewMode;
+        }
+
         private void OnHideWebElementsChanged()
         {
             Logger.SimpleLog($"[OnHideWebElementsChanged] HideWebElements changed to: {HideWebElements}");
@@ -525,6 +534,12 @@ namespace TanukiTarkovMap.ViewModels
         public void Receive(TopBarHiddenChangedMessage message)
         {
             IsTopBarHidden = message.Value;
+        }
+
+        public void Receive(ViewModeSelectorChangedMessage message)
+        {
+            ApplyViewModeSettings(App.GetSettings());
+            Logger.SimpleLog($"[MainWindowViewModel] View mode selector: {IsViewModeSelectorVisible} (mode: {ViewMode})");
         }
 
         public void Receive(OpacitySliderDragMessage message)

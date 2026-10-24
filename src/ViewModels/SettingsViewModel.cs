@@ -126,6 +126,7 @@ namespace TanukiTarkovMap.ViewModels
             settings.PrereleaseEnabled = PrereleaseEnabled;
             settings.GameFocusHotkeyEnabled = GameFocusHotkeyEnabled;
             settings.RaidFocusModeEnabled = RaidFocusModeEnabled;
+            settings.ViewModeSelectorEnabled = ViewModeSelectorEnabled;
 
             App.SetSettings(settings);
             Settings.Save();
@@ -168,6 +169,7 @@ namespace TanukiTarkovMap.ViewModels
                 PrereleaseEnabled = settings.PrereleaseEnabled;
                 GameFocusHotkeyEnabled = settings.GameFocusHotkeyEnabled;
                 RaidFocusModeEnabled = settings.RaidFocusModeEnabled;
+                ViewModeSelectorEnabled = settings.ViewModeSelectorEnabled;
             }
             finally
             {
@@ -379,6 +381,16 @@ namespace TanukiTarkovMap.ViewModels
         [ObservableProperty] public partial bool RaidFocusModeEnabled { get; set; } = false;
         partial void OnGameFocusHotkeyEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
         partial void OnRaidFocusModeEnabledChanged(bool value) => AutoSaveAndUpdateHotkey();
+
+        [ObservableProperty] public partial bool ViewModeSelectorEnabled { get; set; } = false;
+
+        partial void OnViewModeSelectorEnabledChanged(bool value)
+        {
+            if (_isLoading) return;
+            Save();
+
+            WeakReferenceMessenger.Default.Send(new ViewModeSelectorChangedMessage());
+        }
 
         [ObservableProperty] public partial bool PrereleaseEnabled { get; set; } = false;
 
