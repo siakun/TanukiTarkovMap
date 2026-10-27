@@ -16,11 +16,53 @@
     </UserControl.DataContext>
 
     <UserControl.Resources>
+        <Style x:Key="SettingsSection" TargetType="Border">
+            <Setter Property="Background" Value="#FF1A1A1A"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="10"/>
+            <Setter Property="Margin" Value="0,0,0,8"/>
+        </Style>
+        <Style x:Key="SettingsSectionTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="0,0,0,6"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="SettingsGroupTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="SettingsHint" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="8"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedForegroundBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Height" Value="24"/>
+            <Setter Property="Padding" Value="6,4"/>
+            <Setter Property="FontSize" Value="9"/>
+            <Setter Property="Background" Value="#FF2A2A2A"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#FF3A3A3A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style TargetType="CheckBox" BasedOn="{StaticResource DarkCheckBox}">
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="VerticalContentAlignment" Value="Top"/>
+            <Setter Property="Padding" Value="6,-1,0,0"/>
+            <Setter Property="TextBlock.LineHeight" Value="14"/>
+            <Setter Property="TextBlock.LineStackingStrategy" Value="BlockLineHeight"/>
+        </Style>
         <Style x:Key="SettingToggleLabel" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,6,0"/>
         </Style>
         <Style TargetType="views:DefaultValueNotice">
-            <Setter Property="Foreground" Value="#FF888888"/>
+            <Setter Property="Foreground" Value="{StaticResource MutedForegroundBrush}"/>
             <Setter Property="FontSize" Value="8"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
@@ -31,53 +73,40 @@
                   HorizontalScrollBarVisibility="Disabled">
         <StackPanel Margin="12,8">
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Language_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
-                    <ComboBox ItemsSource="{Binding LanguageOptions}"
-                              SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
-                              DisplayMemberPath="DisplayName"
-                              Style="{StaticResource DarkComboBox}"
-                              Width="240"
-                              Height="24"
-                              FontSize="10"
-                              Foreground="White"
-                              HorizontalAlignment="Left">
-                        <ComboBox.ItemContainerStyle>
-                            <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
-                        </ComboBox.ItemContainerStyle>
-                    </ComboBox>
+                               Style="{StaticResource SettingsSectionTitle}"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MaxWidth="240"/>
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding LanguageOptions}"
+                                  SelectedItem="{Binding SelectedLanguage, Mode=TwoWay}"
+                                  DisplayMemberPath="DisplayName"
+                                  Style="{StaticResource DarkComboBox}"
+                                  Height="24"
+                                  FontSize="10"
+                                  Foreground="White">
+                            <ComboBox.ItemContainerStyle>
+                                <Style TargetType="ComboBoxItem" BasedOn="{StaticResource DarkComboBoxItem}"/>
+                            </ComboBox.ItemContainerStyle>
+                        </ComboBox>
+                    </Grid>
                     <TextBlock Text="{loc:Text Settings_Language_Hint}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="0,4,0,0"
-                               TextWrapping="Wrap"/>
+                               Style="{StaticResource SettingsHint}"
+                               Margin="0,4,0,0"/>
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Paths_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <StackPanel Margin="0,3,0,8">
                         <TextBlock Text="{loc:Text Settings_GameFolder}"
-                                   FontSize="10"
-                                   FontWeight="SemiBold"
-                                   Foreground="White"
+                                   Style="{StaticResource SettingsGroupTitle}"
                                    Margin="0,0,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -85,15 +114,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0"
-                                     Text="{Binding GameFolder, UpdateSourceTrigger=LostFocus}"
-                                     Height="24"
-                                     Padding="6,4"
-                                     FontSize="9"
-                                     Background="#FF2A2A2A"
-                                     Foreground="White"
-                                     BorderBrush="#FF3A3A3A"
-                                     BorderThickness="1"
-                                     VerticalContentAlignment="Center"/>
+                                     Text="{Binding GameFolder, UpdateSourceTrigger=LostFocus}"/>
                             <Button Grid.Column="1"
                                     Content="{loc:Text Common_Browse}"
                                     Command="{Binding BrowseGameFolderCommand}"
@@ -105,9 +126,7 @@
 
                     <StackPanel Margin="0,3,0,4">
                         <TextBlock Text="{loc:Text Settings_ScreenshotsFolder}"
-                                   FontSize="10"
-                                   FontWeight="SemiBold"
-                                   Foreground="White"
+                                   Style="{StaticResource SettingsGroupTitle}"
                                    Margin="0,0,0,3"/>
                         <Grid>
                             <Grid.ColumnDefinitions>
@@ -115,15 +134,7 @@
                                 <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBox Grid.Column="0"
-                                     Text="{Binding ScreenshotsFolder, UpdateSourceTrigger=LostFocus}"
-                                     Height="24"
-                                     Padding="6,4"
-                                     FontSize="9"
-                                     Background="#FF2A2A2A"
-                                     Foreground="White"
-                                     BorderBrush="#FF3A3A3A"
-                                     BorderThickness="1"
-                                     VerticalContentAlignment="Center"/>
+                                     Text="{Binding ScreenshotsFolder, UpdateSourceTrigger=LostFocus}"/>
                             <Button Grid.Column="1"
                                     Content="{loc:Text Common_Browse}"
                                     Command="{Binding BrowseScreenshotsFolderCommand}"
@@ -135,47 +146,30 @@
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Program_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <TextBlock Text="{loc:Text Settings_Hotkey_Title}"
-                               FontSize="10"
-                               FontWeight="SemiBold"
-                               Foreground="White"
+                               Style="{StaticResource SettingsGroupTitle}"
                                Margin="0,3,0,4"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
-                        <CheckBox IsChecked="{Binding HotkeyEnabled}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding HotkeyEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_Hotkey_Enable}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding HotkeyEnabled}" DefaultValue="{Binding Defaults.HotkeyEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Hotkey_TrayHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   TextWrapping="Wrap"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,2,0,0"/>
                         <TextBlock Text="{loc:Text Settings_Hotkey_ScreenshotHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   TextWrapping="Wrap"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,4,0,0"/>
                         <TextBlock Text="{loc:Text Settings_Hotkey_PinHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   TextWrapping="Wrap"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,4,0,0"/>
                     </StackPanel>
 
@@ -210,143 +204,98 @@
                             </Button>
                         </StackPanel>
                         <TextBlock Text="{loc:Text Settings_Hotkey_CaptureHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="0,1,0,0"/>
                     </StackPanel>
 
                     <TextBlock Text="{loc:Text Settings_Cleanup_Title}"
-                               FontSize="10"
-                               FontWeight="SemiBold"
-                               Foreground="White"
+                               Style="{StaticResource SettingsGroupTitle}"
                                Margin="0,3,0,4"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
-                        <CheckBox IsChecked="{Binding AutoDeleteLogs}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding AutoDeleteLogs}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_Cleanup_Logs}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding AutoDeleteLogs}" DefaultValue="{Binding Defaults.autoDeleteLogs}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Cleanup_LogsHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding AutoDeleteScreenshots}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding AutoDeleteScreenshots}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_Cleanup_Screenshots}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding AutoDeleteScreenshots}" DefaultValue="{Binding Defaults.autoDeleteScreenshots}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Cleanup_ScreenshotsHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_AutoMap_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding AutoMapSwitchEnabled}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding AutoMapSwitchEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_AutoMap_RaidEntry}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding AutoMapSwitchEnabled}" DefaultValue="{Binding Defaults.AutoMapSwitchEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_AutoMap_RaidEntryHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding ScreenshotMapSyncEnabled}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding ScreenshotMapSyncEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_AutoMap_Screenshot}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding ScreenshotMapSyncEnabled}" DefaultValue="{Binding Defaults.ScreenshotMapSyncEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_AutoMap_ScreenshotHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   TextWrapping="Wrap"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Goons_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding GoonTrackerEnabled}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding GoonTrackerEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_Goons_Enable}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding GoonTrackerEnabled}" DefaultValue="{Binding Defaults.GoonTrackerEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Goons_Hint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   TextWrapping="Wrap"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Share_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
                         <TextBlock Text="{loc:Text Settings_Share_Hint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   TextWrapping="Wrap"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="0,2,0,0"/>
                     </StackPanel>
 
@@ -358,16 +307,10 @@
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Storage_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -377,6 +320,7 @@
                         <TextBlock Grid.Column="0"
                                    FontSize="10"
                                    Foreground="White"
+                                   TextWrapping="Wrap"
                                    VerticalAlignment="Center">
                             <Run Text="{loc:Text Settings_Storage_BrowserCache}"/>
                             <Run Text="{Binding BrowserCacheSizeText, Mode=OneWay}"
@@ -390,15 +334,11 @@
                     </Grid>
 
                     <TextBlock Text="{loc:Text Settings_Storage_Hint}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="0,4,0,0"
-                               TextWrapping="Wrap"/>
+                               Style="{StaticResource SettingsHint}"
+                               Margin="0,4,0,0"/>
                     <TextBlock Text="{Binding CodeCacheLimitNotice}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="0,2,0,0"
-                               TextWrapping="Wrap"/>
+                               Style="{StaticResource SettingsHint}"
+                               Margin="0,2,0,0"/>
 
                     <TextBlock Text="{loc:Text Settings_Storage_ClearOnExit}"
                                Foreground="#FFD9A54A"
@@ -419,39 +359,27 @@
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Update_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,8">
-                        <CheckBox IsChecked="{Binding AutoUpdateEnabled}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding AutoUpdateEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_Update_Auto}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding AutoUpdateEnabled}" DefaultValue="{Binding Defaults.AutoUpdateEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Update_AutoHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
+                                   Style="{StaticResource SettingsHint}"
                                    Margin="18,2,0,0"/>
                     </StackPanel>
 
                     <StackPanel>
                         <Grid Margin="0,4,0,4">
                             <TextBlock Text="{loc:Text Settings_Update_Version}"
-                                       FontSize="10"
-                                       FontWeight="SemiBold"
-                                       Foreground="White"
+                                       Style="{StaticResource SettingsGroupTitle}"
                                        VerticalAlignment="Center"/>
                             <Button Content="{loc:Text Settings_Update_Refresh}"
                                     Command="{Binding RefreshVersionsCommand}"
@@ -484,15 +412,11 @@
                         </Grid>
 
                         <TextBlock Text="{loc:Text Settings_Update_OlderVersionHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   Margin="0,6,0,0"
-                                   TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}"
+                                   Margin="0,6,0,0"/>
                         <TextBlock Text="{loc:Text Settings_Update_FullPackageHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   Margin="0,2,0,0"
-                                   TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}"
+                                   Margin="0,2,0,0"/>
 
                         <StackPanel Margin="0,6,0,0"
                                     Visibility="{Binding IsInstalling, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -526,12 +450,9 @@
                     </StackPanel>
 
                     <TextBlock Text="{Binding UpdateStatusMessage}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="0,6,0,0"
-                               TextWrapping="Wrap">
+                               Margin="0,6,0,0">
                         <TextBlock.Style>
-                            <Style TargetType="TextBlock">
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource SettingsHint}">
                                 <Setter Property="Visibility" Value="Visible"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding UpdateStatusMessage}" Value="">
@@ -543,12 +464,9 @@
                     </TextBlock>
 
                     <TextBlock Text="{loc:Text Settings_Update_NotInstalled}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="0,6,0,0"
-                               TextWrapping="Wrap">
+                               Margin="0,6,0,0">
                         <TextBlock.Style>
-                            <Style TargetType="TextBlock">
+                            <Style TargetType="TextBlock" BasedOn="{StaticResource SettingsHint}">
                                 <Setter Property="Visibility" Value="Collapsed"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding CanSwitchVersion}" Value="False">
@@ -560,114 +478,81 @@
                     </TextBlock>
 
                     <TextBlock Text="{Binding LocalMapDataStatus}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="0,6,0,0"
-                               TextWrapping="Wrap"/>
+                               Style="{StaticResource SettingsHint}"
+                               Margin="0,6,0,0"/>
                     <TextBlock Text="{loc:Text Settings_LocalMap_DataUpdateHint}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="0,2,0,0"
-                               TextWrapping="Wrap"/>
+                               Style="{StaticResource SettingsHint}"
+                               Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Experimental_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding PrereleaseEnabled}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding PrereleaseEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_Beta_Enable}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding PrereleaseEnabled}" DefaultValue="{Binding Defaults.PrereleaseEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_Beta_Hint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   Margin="18,2,0,0"
-                                   TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}"
+                                   Margin="18,2,0,0"/>
                         <TextBlock Text="{loc:Text Settings_Beta_RollbackHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   Margin="18,2,0,0"
-                                   TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}"
+                                   Margin="18,2,0,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding GameFocusHotkeyEnabled}"
-                                  Foreground="White" FontSize="10" HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding GameFocusHotkeyEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_GameFocusHotkey_Enable}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding GameFocusHotkeyEnabled}" DefaultValue="{Binding Defaults.GameFocusHotkeyEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_GameFocusHotkey_Hint}"
-                                   Foreground="#FF888888" FontSize="8" Margin="18,2,0,0" TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}" Margin="18,2,0,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding RaidFocusModeEnabled}"
-                                  Foreground="White" FontSize="10" HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding RaidFocusModeEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_RaidFocus_Enable}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding RaidFocusModeEnabled}" DefaultValue="{Binding Defaults.RaidFocusModeEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_RaidFocus_Hint}"
-                                   Foreground="#FF888888" FontSize="8" Margin="18,2,0,0" TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}" Margin="18,2,0,0"/>
                     </StackPanel>
                     <StackPanel Orientation="Vertical" Margin="12,2,0,4">
-                        <CheckBox IsChecked="{Binding ViewModeSelectorEnabled}"
-                                  Foreground="White" FontSize="10" HorizontalAlignment="Left">
+                        <CheckBox IsChecked="{Binding ViewModeSelectorEnabled}">
                             <WrapPanel>
                                 <TextBlock Text="{loc:Text Settings_ViewModeSelector_Enable}" Style="{StaticResource SettingToggleLabel}"/>
                                 <views:DefaultValueNotice Value="{Binding ViewModeSelectorEnabled}" DefaultValue="{Binding Defaults.ViewModeSelectorEnabled}"/>
                             </WrapPanel>
                         </CheckBox>
                         <TextBlock Text="{loc:Text Settings_ViewModeSelector_Hint}"
-                                   Foreground="#FF888888" FontSize="8" Margin="18,2,0,0" TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}" Margin="18,2,0,0"/>
                     </StackPanel>
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1A1A1A"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}">
                 <StackPanel>
                     <TextBlock Text="{loc:Text Settings_Developer_Title}"
-                               FontSize="12"
-                               FontWeight="Bold"
-                               Foreground="White"
-                               Margin="0,0,0,6"/>
+                               Style="{StaticResource SettingsSectionTitle}"/>
 
                     <TextBlock Text="{loc:Text Settings_Developer_UpdateUi}"
-                               FontSize="10"
-                               FontWeight="SemiBold"
-                               Foreground="White"
+                               Style="{StaticResource SettingsGroupTitle}"
                                Margin="0,3,0,4"/>
 
                     <StackPanel Orientation="Vertical" Margin="12,2,0,6">
                         <CheckBox IsChecked="{Binding UpdateIconAlwaysVisible}"
-                                  Content="{loc:Text Settings_Developer_UpdateIcon}"
-                                  Foreground="White"
-                                  FontSize="10"
-                                  HorizontalAlignment="Left"/>
+                                  Content="{loc:Text Settings_Developer_UpdateIcon}"/>
                         <TextBlock Text="{loc:Text Settings_Developer_UpdateIconHint}"
-                                   Foreground="#FF888888"
-                                   FontSize="8"
-                                   Margin="18,2,0,0"
-                                   TextWrapping="Wrap"/>
+                                   Style="{StaticResource SettingsHint}"
+                                   Margin="18,2,0,0"/>
                     </StackPanel>
 
                     <Button Content="{loc:Text Settings_Developer_PreviewProgress}"
@@ -676,27 +561,19 @@
                             HorizontalAlignment="Left"
                             Margin="12,0,0,0"/>
                     <TextBlock Text="{loc:Text Settings_Developer_PreviewProgressHint}"
-                               Foreground="#FF888888"
-                               FontSize="8"
-                               Margin="12,4,0,10"
-                               TextWrapping="Wrap"/>
+                               Style="{StaticResource SettingsHint}"
+                               Margin="12,4,0,10"/>
 
                     <Button Content="{loc:Text Settings_Developer_OpenPilot}"
                             Command="{Binding NavigateToPilotCommand}"
                             Style="{StaticResource DarkButton}"
-                            Height="28"
-                            FontSize="10"
-                            Padding="12,0"
                             HorizontalAlignment="Left"/>
                     <TextBlock Text="{loc:Text Settings_Developer_OpenPilotHint}"
-                               Foreground="#FF888888"
-                               FontSize="8"
+                               Style="{StaticResource SettingsHint}"
                                Margin="0,4,0,0"/>
 
                     <TextBlock Text="{loc:Text Settings_Developer_CustomUrl}"
-                               FontSize="10"
-                               FontWeight="SemiBold"
-                               Foreground="White"
+                               Style="{StaticResource SettingsGroupTitle}"
                                Margin="0,12,0,4"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -704,15 +581,7 @@
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
                         <TextBox Grid.Column="0"
-                                 Text="{Binding CustomUrl, UpdateSourceTrigger=PropertyChanged}"
-                                 Height="24"
-                                 Padding="6,4"
-                                 FontSize="9"
-                                 Background="#FF2A2A2A"
-                                 Foreground="White"
-                                 BorderBrush="#FF3A3A3A"
-                                 BorderThickness="1"
-                                 VerticalContentAlignment="Center"/>
+                                 Text="{Binding CustomUrl, UpdateSourceTrigger=PropertyChanged}"/>
                         <Button Grid.Column="1"
                                 Content="{loc:Text Settings_Developer_Go}"
                                 Command="{Binding NavigateToCustomUrlCommand}"
@@ -721,14 +590,11 @@
                                 Margin="4,0,0,0"/>
                     </Grid>
                     <TextBlock Text="{loc:Text Settings_Developer_CustomUrlHint}"
-                               Foreground="#FF888888"
-                               FontSize="8"
+                               Style="{StaticResource SettingsHint}"
                                Margin="0,2,0,0"/>
 
                     <TextBlock Text="{loc:Text Settings_Developer_SettingsFile}"
-                               FontSize="10"
-                               FontWeight="SemiBold"
-                               Foreground="White"
+                               Style="{StaticResource SettingsGroupTitle}"
                                Margin="0,12,0,4"/>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -738,14 +604,7 @@
                         <TextBox Grid.Column="0"
                                  Text="{Binding SettingsFilePath, Mode=OneWay}"
                                  IsReadOnly="True"
-                                 Height="24"
-                                 Padding="6,4"
-                                 FontSize="9"
-                                 Background="#FF2A2A2A"
-                                 Foreground="#FFAAAAAA"
-                                 BorderBrush="#FF3A3A3A"
-                                 BorderThickness="1"
-                                 VerticalContentAlignment="Center"/>
+                                 Foreground="#FFAAAAAA"/>
                         <Button Grid.Column="1"
                                 Content="{loc:Text Settings_Developer_OpenFolder}"
                                 Command="{Binding OpenSettingsFolderCommand}"
@@ -754,16 +613,13 @@
                                 Margin="4,0,0,0"/>
                     </Grid>
                     <TextBlock Text="{loc:Text Settings_Developer_SettingsFileHint}"
-                               Foreground="#FF888888"
-                               FontSize="8"
+                               Style="{StaticResource SettingsHint}"
                                Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
 
-            <Border Background="#FF1E1E1E"
-                    CornerRadius="4"
-                    Padding="10"
-                    Margin="0,0,0,8">
+            <Border Style="{StaticResource SettingsSection}"
+                    Background="#FF1E1E1E">
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>

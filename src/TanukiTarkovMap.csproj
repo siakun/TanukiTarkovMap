@@ -4,7 +4,7 @@
     <OutputType>WinExe</OutputType>
     <DefaultItemExcludes>$(DefaultItemExcludes);tests/**;packages/**</DefaultItemExcludes>
     <TargetFramework>net8.0-windows</TargetFramework>
-    <Version>0.4.5</Version>
+    <Version>0.4.6</Version>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -27,7 +27,7 @@
   <ItemGroup>
     <Folder Include="ViewModels\" />
     <ProjectReference Include="$(TanukiCoreProject)" Condition="'$(TanukiCoreProject)' != ''" />
-    <PackageReference Include="TanukiTarkovMap.Core" Version="[0.4.5]" Condition="'$(TanukiCoreProject)' == ''" />
+    <PackageReference Include="TanukiTarkovMap.Core" Version="[0.4.6]" Condition="'$(TanukiCoreProject)' == ''" />
   </ItemGroup>
 
   <ItemGroup>
@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="$(IntermediateOutputPath)Strings.g.cs" />
+    <Compile Include="$(IntermediateOutputPath)Strings.g.cs" Visible="false" />
   </ItemGroup>
 
   <Target Name="GenerateLocalizedStrings" BeforeTargets="MarkupCompilePass1;CoreCompile" Inputs="Localization\Strings.resx" Outputs="$(IntermediateOutputPath)Strings.g.cs">

@@ -18,12 +18,16 @@
         <ContentControl HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
             <i:Interaction.Behaviors>
                 <behaviors:WebBrowserLifecycleBehavior/>
+                <behaviors:TopBarPushBehavior IsPushed="{Binding IsBelowTopBar}"/>
             </i:Interaction.Behaviors>
         </ContentControl>
 
         <Grid IsHitTestVisible="False" ClipToBounds="True"
               Visibility="{Binding Overlay.IsEnabled, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Canvas>
+                <i:Interaction.Behaviors>
+                    <behaviors:TopBarPushBehavior IsPushed="{Binding IsBelowTopBar}"/>
+                </i:Interaction.Behaviors>
                 <Canvas.Clip>
                     <RectangleGeometry Rect="{Binding Overlay.Clip}"/>
                 </Canvas.Clip>

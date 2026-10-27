@@ -13,10 +13,10 @@ namespace TanukiTarkovMap.Behaviors
     public class TopBarAnimationBehavior : Behavior<Window>
     {
         private TranslateTransform? _topBarTransform;
-        private Border? _contentBorder;
+        private Border? _windowOutline;
         private DispatcherTimer? _hideDelayTimer;
         private long _revealSuppressedUntil;
-        private const double TopBarHeight = 20.0;
+        internal const double TopBarHeight = 20.0;
         private const int AnimationDurationMs = 200;
         internal const int HideDelayMs = 1500;
         private const int DodgeRevealGuardMs = 150;
@@ -64,7 +64,7 @@ namespace TanukiTarkovMap.Behaviors
         private void OnWindowLoaded(object sender, RoutedEventArgs e)
         {
             _topBarTransform = AssociatedObject.FindName(TopBarTransformName) as TranslateTransform;
-            _contentBorder = AssociatedObject.FindName("ContentBorder") as Border;
+            _windowOutline = AssociatedObject.FindName("WindowOutline") as Border;
         }
 
         private void OnWindowActivated(object? sender, System.EventArgs e)
@@ -142,38 +142,33 @@ namespace TanukiTarkovMap.Behaviors
                 bool isHidden = targetY < 0;
                 WeakReferenceMessenger.Default.Send(new TopBarHiddenChangedMessage(isHidden));
 
-                if (_topBarTransform != null)
-                {
-                    var topBarAnimation = new DoubleAnimation
-                    {
-                        To = targetY,
-                        Duration = TimeSpan.FromMilliseconds(AnimationDurationMs),
-                        EasingFunction = new CubicEase
-                        {
-                            EasingMode = EasingMode.EaseInOut
-                        }
-                    };
-                    _topBarTransform.BeginAnimation(TranslateTransform.YProperty, topBarAnimation);
-                }
+                _topBarTransform?.BeginAnimation(TranslateTransform.YProperty, CreateSlideAnimation(targetY));
             }
             catch (System.Exception)
             {
             }
         }
 
+        internal static DoubleAnimation CreateSlideAnimation(double targetY) => new()
+        {
+            To = targetY,
+            Duration = TimeSpan.FromMilliseconds(AnimationDurationMs),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseInOut }
+        };
+
         private void AnimateBorderColor(Color targetColor, int durationMs)
         {
-            if (_contentBorder == null)
+            if (_windowOutline == null)
                 return;
 
             try
             {
-                var currentBrush = _contentBorder.BorderBrush as SolidColorBrush;
+                var currentBrush = _windowOutline.BorderBrush as SolidColorBrush;
                 if (currentBrush == null || currentBrush.IsFrozen)
                 {
                     var currentColor = currentBrush?.Color ?? InactiveBorderColor;
                     currentBrush = new SolidColorBrush(currentColor);
-                    _contentBorder.BorderBrush = currentBrush;
+                    _windowOutline.BorderBrush = currentBrush;
                 }
 
                 var animation = new ColorAnimation

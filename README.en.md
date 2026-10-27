@@ -65,7 +65,7 @@ In Settings, you can change the hotkey, opacity, UI visibility, automatic map sw
 
 Recent Goons sightings are off by default and can be turned on in Settings. The Goons spawn by chance, so reports may differ from where they actually appear.
 
-Raid position sharing connects automatically to a server run by the developer, with nothing to enter. People who entered the same raid in the same squad exchange screenshot positions, and your game account ID is sent to the server along with your position. Raids you enter alone are not shared, and other squads in the same raid do not receive your position. A friend's name tag uses the nickname found in your game's party notifications or supplied by someone in the room, or the last four digits of their account ID if none is found. The bottom left shows the sharing party, including yourself, as `InRaid: 3p (name, name, name)`, even before screenshots are taken. It is hidden in solo or local PvE raids, in the menu, or when disconnected.
+Raid position sharing connects automatically to a server run by the developer, with nothing to enter. People who entered the same raid in the same squad exchange screenshot positions. Raids you enter alone are not shared, and other squads in the same raid do not receive your position. A friend's name tag uses the nickname found in your game's party notifications or supplied by someone in the room, or the last four digits of their account ID if none is found. The bottom left shows the sharing party, including yourself, as `InRaid: 3p (name, name, name)`, even before screenshots are taken. It is hidden in solo or local PvE raids, in the menu, or when disconnected.
 
 ---
 
@@ -129,7 +129,7 @@ Online opens tarkov-market.com, hides the menus and panels you do not need for r
 
 Friends who enter the same raid in the same squad exchange screenshot positions and see each other on the map. The app learns the current raid and squad from the game log and automatically joins the matching room on a server the developer runs. Whenever someone takes a screenshot, the position is delivered to the others in the room right away. Rooms are separated by a value the game assigns to each squad in each raid, so other squads in the same raid and stream viewers cannot join.
 
-Your position, game account ID, and nickname are sent to the server. The server operator can see the IP, account ID, and last position of connected users. Participation records (account ID, nickname, mode, map, join and leave times) are kept for statistics, but IP addresses and coordinates are not stored. Sharing is a secondary feature, so your own position display keeps working even if the server is down or slow.
+Sharing is a secondary feature, so your own position display keeps working even if the server is down or slow.
 
 ### 7. Automatic updates and choosing a version
 

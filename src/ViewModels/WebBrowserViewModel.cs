@@ -25,7 +25,8 @@ namespace TanukiTarkovMap.ViewModels
         IRecipient<NavigateToUrlMessage>,
         IRecipient<MonitorRefreshRateChangedMessage>,
         IRecipient<ViewModeChangedMessage>,
-        IRecipient<LanguageChangedMessage>
+        IRecipient<LanguageChangedMessage>,
+        IRecipient<TopBarHiddenChangedMessage>
     {
         private readonly MapEventService _mapEventService;
         private readonly RaidShareService _raidShare;
@@ -51,6 +52,12 @@ namespace TanukiTarkovMap.ViewModels
 
         private bool InjectionEnabled => !_isDebugMode && Mode == MapViewMode.Online;
 
+        private bool _isTopBarHidden;
+
+        private bool IsPageUiVisible => !HideWebElements || (Mode != MapViewMode.Local && !InjectionEnabled);
+
+        public bool IsBelowTopBar => !_isTopBarHidden && IsPageUiVisible;
+
         private int _monitorRefreshRate = 60;
 
         private ChromiumWebBrowser? ReadyBrowser =>
@@ -66,6 +73,7 @@ namespace TanukiTarkovMap.ViewModels
         private string? _currentMap;
 
         [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(IsBelowTopBar))]
         private bool _hideWebElements = true;
 
         [ObservableProperty]
@@ -500,6 +508,7 @@ namespace TanukiTarkovMap.ViewModels
                 if (_isDebugMode)
                 {
                     _isDebugMode = false;
+                    OnPropertyChanged(nameof(IsBelowTopBar));
                     Logger.SimpleLog("[WebBrowserViewModel] Debug mode disabled - Map selected");
                 }
 
@@ -531,6 +540,7 @@ namespace TanukiTarkovMap.ViewModels
         public void Receive(NavigateToUrlMessage message)
         {
             _isDebugMode = true;
+            OnPropertyChanged(nameof(IsBelowTopBar));
             UpdateOverlayContext();
             Navigate(message.Value);
             Logger.SimpleLog($"[WebBrowserViewModel] Debug mode enabled - Navigate to: {message.Value}");
@@ -548,6 +558,7 @@ namespace TanukiTarkovMap.ViewModels
             if (previousMode == message.Value) return;
             Mode = message.Value;
             _isDebugMode = false;
+            OnPropertyChanged(nameof(IsBelowTopBar));
             UpdateOverlayContext();
             Logger.SimpleLog($"[WebBrowserViewModel] View mode via Messenger: {previousMode} -> {Mode}");
 
@@ -566,6 +577,13 @@ namespace TanukiTarkovMap.ViewModels
         {
             if (LocalViewer.MapName(Address) == null) return;
             _ = ExecuteScriptAsync(LocalViewer.SetLanguage(message.Value));
+        }
+
+        public void Receive(TopBarHiddenChangedMessage message)
+        {
+            if (_isTopBarHidden == message.Value) return;
+            _isTopBarHidden = message.Value;
+            OnPropertyChanged(nameof(IsBelowTopBar));
         }
 
         private void OnScreenshotTaken(object? sender, ScreenshotTakenEventArgs e)
